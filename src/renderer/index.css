@@ -1,108 +1,123 @@
+@import "./styles/variables.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   Base Styles — Minimal, Functional, Zero Decorative CSS
+   ============================================================ */
+
 @layer base {
-  * { @apply m-0 p-0 box-border; }
-  html, body, #root { @apply w-full h-full overflow-hidden; }
-  body { @apply bg-construct-bg-primary text-construct-text-primary font-sans text-base antialiased; font-family: "Inter", system-ui, sans-serif; }
+  *,
+  *::before,
+  *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-  /* Scrollbar enhancement */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #22222f; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #3a3a4f; }
-  ::-webkit-scrollbar-corner { background: transparent; }
+  html,
+  body,
+  #root {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    background-color: var(--c-base);
+    color: var(--c-text);
+    font-family: var(--font-mono);
+    font-size: var(--text-base);      /* 12px */
+    line-height: var(--leading-normal); /* 1.4 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ----------------------------------------------------------
+     Typography scale
+     ---------------------------------------------------------- */
+  h1, h2, h3, h4, h5, h6 {
+    font-size: var(--text-lg);        /* 13px */
+    font-weight: var(--weight-semibold); /* 600 */
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--c-text);
+  }
+
+  /* ----------------------------------------------------------
+     Focus — minimal, functional
+     ---------------------------------------------------------- */
+  :focus-visible {
+    outline: 1px solid var(--c-accent);
+    outline-offset: 1px;
+    border-radius: var(--radius-none);
+  }
+
+  /* Remove default focus ring where we handle it ourselves */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* ----------------------------------------------------------
+     Selection
+     ---------------------------------------------------------- */
+  ::selection {
+    background-color: rgba(99, 102, 241, 0.25);
+    color: var(--c-text);
+  }
+
+  /* ----------------------------------------------------------
+     Scrollbars — thin, minimal
+     ---------------------------------------------------------- */
+  ::-webkit-scrollbar {
+    width: var(--scrollbar-width);   /* 4px  */
+    height: var(--scrollbar-width);  /* 4px  */
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb); /* #22222e */
+    border-radius: var(--radius-none);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--c-s3);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  }
 }
 
-/* Mesh gradient background animation */
-@keyframes mesh-gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
+/* ============================================================
+   Utility Classes — Functional Only
+   ============================================================ */
 
-.mesh-gradient-bg {
-  background: linear-gradient(-45deg, #0a0a0f, #12121a, #1a1a25, #0a0a0f);
-  background-size: 400% 400%;
-  animation: mesh-gradient 15s ease infinite;
-}
+@layer utilities {
+  /* Tabular numbers for data columns */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
 
-/* Glass morphism panel */
-.glass-panel {
-  background: rgba(18, 18, 26, 0.85);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
+  /* Transition utility using design tokens */
+  .transition-fast {
+    transition-duration: var(--dur-fast);
+    transition-timing-function: var(--ease-default);
+  }
 
-/* Glow effects — indigo accent */
-.glow-accent { box-shadow: 0 0 20px rgba(99, 102, 241, 0.15); }
-.glow-success { box-shadow: 0 0 20px rgba(16, 185, 129, 0.15); }
-.glow-error { box-shadow: 0 0 20px rgba(239, 68, 68, 0.15); }
-
-/* Pulse animation for active agent */
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 5px rgba(99, 102, 241, 0.2); }
-  50% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.4), 0 0 40px rgba(99, 102, 241, 0.1); }
-}
-.pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
-
-/* Micro-interaction: button hover */
-.btn-interactive {
-  @apply transition-all duration-200 ease-out;
-}
-.btn-interactive:hover {
-  @apply scale-105;
-  filter: brightness(1.1);
-}
-.btn-interactive:active {
-  @apply scale-95;
-}
-
-/* Shimmer loading effect */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-.shimmer {
-  background: linear-gradient(90deg, transparent, rgba(99,102,241,0.08), transparent);
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite;
-}
-
-/* Toast slide-in */
-@keyframes toast-in {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-@keyframes toast-out {
-  from { transform: translateX(0); opacity: 1; }
-  to { transform: translateX(100%); opacity: 0; }
-}
-.toast-enter { animation: toast-in 0.3s ease-out; }
-.toast-exit { animation: toast-out 0.3s ease-in; }
-
-/* Fade in */
-@keyframes fade-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.fade-in { animation: fade-in 0.3s ease-out; }
-
-/* Slide in from bottom */
-@keyframes slide-up {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
-.slide-up { animation: slide-up 0.4s ease-out; }
-
-/* Skeleton loading */
-@keyframes skeleton-pulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
-}
-.skeleton {
-  @apply bg-construct-border/50 rounded;
-  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  .transition-normal {
+    transition-duration: var(--dur-normal);
+    transition-timing-function: var(--ease-default);
+  }
 }

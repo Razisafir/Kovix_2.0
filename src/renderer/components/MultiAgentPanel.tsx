@@ -1,548 +1,449 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Users,
-  Plus,
-  MessageSquare,
-  AlertCircle,
-  CircleDot,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  ChevronRight,
-  Send,
-  Bot,
-  Zap,
-  Shield,
-  Code,
-  Search,
-  Wrench,
-  MoreHorizontal,
-  Trash2,
-  X,
-} from "lucide-react";
-import { GlassCard } from "./premium/GlassCard";
-import { GlowButton } from "./premium/GlowButton";
-import { StatusBadge } from "./premium/StatusBadge";
-import { ProgressRing } from "./premium/ProgressRing";
 
-interface AgentRole {
+/* ─── Types ─── */
+interface Agent {
   id: string;
-  name: string;
   role: string;
-  status: "active" | "idle" | "error";
-  currentTask?: string;
+  status: "idle" | "working";
+  task: string;
   progress: number;
+  time: string;
   color: string;
 }
 
 interface AgentMessage {
-  type: string;
-  fromAgent: string;
-  toAgent?: string;
+  id: string;
+  timestamp: string;
+  from: string;
+  to: string;
+  type: "REQ" | "RES" | "CMP" | "ERR";
   content: string;
-  timestamp: number;
 }
 
-interface Task {
-  id: string;
-  title: string;
-  assignee: string;
-  status: "pending" | "active" | "completed" | "failed";
-  priority: "low" | "medium" | "high";
-}
+/* ─── Colors ─── */
+const BASE = "#0c0c10";
+const S1 = "#12121a";
+const S2 = "#1a1a24";
+const S3 = "#22222e";
+const ACCENT = "#6366f1";
+const TEXT = "#e8e8ec";
+const TEXT_MUTED = "#94949c";
+const TEXT_DIM = "#6b6b73";
+const TEXT_FAINT = "#4a4a52";
+const BORDER = "rgba(255,255,255,0.04)";
+const GREEN = "#22c55e";
+const RED = "#ef4444";
+const AMBER = "#f59e0b";
+const CYAN = "#06b6d4";
+const ff = '"Geist Mono", "JetBrains Mono", monospace';
 
-interface Conflict {
-  id: string;
-  agents: string[];
-  issue: string;
-  severity: "low" | "high";
-}
-
-const agentColors: Record<string, string> = {
-  Orchestrator: "#6366f1",
-  Developer: "#10b981",
-  Security: "#10b981",
-  Researcher: "#cba6f7",
+/* ─── Demo Data ─── */
+const roleColors: Record<string, string> = {
+  code: ACCENT,
+  security: GREEN,
+  ui: AMBER,
+  research: CYAN,
+  devops: "#ec4899",
+  test: "#a855f7",
 };
 
-const demoAgents: AgentRole[] = [
-  {
-    id: "a1",
-    name: "Alpha",
-    role: "Orchestrator",
-    status: "active",
-    currentTask: "Coordinating team workflow",
-    progress: 78,
-    color: "#6366f1",
-  },
-  {
-    id: "a2",
-    name: "Beta",
-    role: "Developer",
-    status: "active",
-    currentTask: "Implementing auth module",
-    progress: 45,
-    color: "#10b981",
-  },
-  {
-    id: "a3",
-    name: "Gamma",
-    role: "Security",
-    status: "idle",
-    currentTask: "Waiting for code review",
-    progress: 0,
-    color: "#10b981",
-  },
-  {
-    id: "a4",
-    name: "Delta",
-    role: "Researcher",
-    status: "active",
-    currentTask: "Analyzing API documentation",
-    progress: 62,
-    color: "#cba6f7",
-  },
+const demoAgents: Agent[] = [
+  { id: "a1", role: "code", status: "working", task: "DashboardLayout.tsx", progress: 67, time: "00:32", color: ACCENT },
+  { id: "a2", role: "security", status: "idle", task: "--", progress: 0, time: "--", color: GREEN },
+  { id: "a3", role: "ui", status: "idle", task: "--", progress: 0, time: "--", color: AMBER },
+  { id: "a4", role: "research", status: "idle", task: "--", progress: 0, time: "--", color: CYAN },
+  { id: "a5", role: "devops", status: "idle", task: "--", progress: 0, time: "--", color: "#ec4899" },
 ];
 
 const demoMessages: AgentMessage[] = [
-  {
-    type: "request",
-    fromAgent: "Orchestrator",
-    toAgent: "Developer",
-    content: "Please start implementing the authentication module. We need OAuth2 + JWT support.",
-    timestamp: Date.now() - 300000,
-  },
-  {
-    type: "response",
-    fromAgent: "Developer",
-    toAgent: "Orchestrator",
-    content: "On it. I'll set up Passport.js with OAuth2 strategy and JWT token management.",
-    timestamp: Date.now() - 240000,
-  },
-  {
-    type: "alert",
-    fromAgent: "Security",
-    content: "Heads up: The current JWT implementation doesn't include refresh token rotation. Recommend adding for security.",
-    timestamp: Date.now() - 180000,
-  },
-  {
-    type: "request",
-    fromAgent: "Orchestrator",
-    toAgent: "Security",
-    content: "Can you audit the auth flow once Developer pushes the initial implementation?",
-    timestamp: Date.now() - 120000,
-  },
-  {
-    type: "response",
-    fromAgent: "Security",
-    toAgent: "Orchestrator",
-    content: "Confirmed. I'll run a security audit including token validation, CSRF checks, and session management.",
-    timestamp: Date.now() - 60000,
-  },
-  {
-    type: "info",
-    fromAgent: "Researcher",
-    content: "Found relevant RFC 6749 and RFC 7636 (PKCE) documentation. Sharing with the team.",
-    timestamp: Date.now() - 30000,
-  },
+  { id: "m1", timestamp: "14:32:05", from: "code", to: "security", type: "REQ", content: "review auth implementation" },
+  { id: "m2", timestamp: "14:32:08", from: "security", to: "code", type: "RES", content: "approved, no issues found" },
+  { id: "m3", timestamp: "14:33:12", from: "code", to: "ui", type: "REQ", content: "design review for DashboardLayout" },
+  { id: "m4", timestamp: "14:33:45", from: "ui", to: "code", type: "RES", content: "spacing needs adjustment, check padding on sidebar" },
+  { id: "m5", timestamp: "14:34:01", from: "code", to: "ui", type: "CMP", content: "padding fixed, pushed changes" },
+  { id: "m6", timestamp: "14:34:22", from: "code", to: "devops", type: "REQ", content: "deploy staging build" },
+  { id: "m7", timestamp: "14:35:10", from: "devops", to: "code", type: "CMP", content: "deployed to staging" },
 ];
 
-const demoTasks: Task[] = [
-  { id: "t1", title: "Set up OAuth2 provider config", assignee: "Developer", status: "completed", priority: "high" },
-  { id: "t2", title: "Implement JWT token generation", assignee: "Developer", status: "active", priority: "high" },
-  { id: "t3", title: "Create refresh token rotation", assignee: "Developer", status: "pending", priority: "medium" },
-  { id: "t4", title: "Security audit auth flow", assignee: "Security", status: "pending", priority: "high" },
-  { id: "t5", title: "Document API endpoints", assignee: "Researcher", status: "active", priority: "low" },
-  { id: "t6", title: "Configure rate limiting", assignee: "Orchestrator", status: "completed", priority: "medium" },
-  { id: "t7", title: "Set up error monitoring", assignee: "Developer", status: "failed", priority: "medium" },
-  { id: "t8", title: "Review PKCE implementation", assignee: "Security", status: "pending", priority: "high" },
-];
-
-const demoConflicts: Conflict[] = [
-  {
-    id: "c1",
-    agents: ["Developer", "Security"],
-    issue: "Developer suggests storing JWTs in localStorage; Security recommends httpOnly cookies instead",
-    severity: "high",
-  },
-];
-
-const kanbanColumns = [
-  { id: "pending", label: "Pending", icon: <Clock size={12} />, color: "#64748b" },
-  { id: "active", label: "Active", icon: <Zap size={12} />, color: "#6366f1" },
-  { id: "completed", label: "Completed", icon: <CheckCircle2 size={12} />, color: "#10b981" },
-  { id: "failed", label: "Failed", icon: <XCircle size={12} />, color: "#10b981" },
-];
+const typeColors: Record<string, string> = {
+  REQ: ACCENT,
+  RES: GREEN,
+  CMP: CYAN,
+  ERR: RED,
+};
 
 export default function MultiAgentPanel() {
-  const [activeSubTab, setActiveSubTab] = useState<"team" | "chat" | "board">("team");
-  const [chatInput, setChatInput] = useState("");
+  const [agents] = useState<Agent[]>(demoAgents);
   const [messages, setMessages] = useState<AgentMessage[]>(demoMessages);
-  const [agents, setAgents] = useState<AgentRole[]>(demoAgents);
-  const [tasks, setTasks] = useState<Task[]>(demoTasks);
-  const [conflicts] = useState<Conflict[]>(demoConflicts);
-  const [showCreateTeam, setShowCreateTeam] = useState(false);
+  const [input, setInput] = useState("");
+  const goal = "build saas dashboard";
 
-  const formatTime = (ts: number) => {
-    const d = new Date(ts);
-    return d.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
-  };
+  const handleSend = () => {
+    if (!input.trim()) return;
+    const now = new Date();
+    const ts = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
 
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case "Orchestrator": return <Bot size={12} />;
-      case "Developer": return <Code size={12} />;
-      case "Security": return <Shield size={12} />;
-      case "Researcher": return <Search size={12} />;
-      default: return <Wrench size={12} />;
+    let from = "user";
+    let to = "all";
+    let content = input.trim();
+
+    const mentionMatch = content.match(/^@(\w+)\s+(.*)/);
+    if (mentionMatch) {
+      to = mentionMatch[1];
+      content = mentionMatch[2];
     }
-  };
 
-  const handleSendMessage = () => {
-    if (!chatInput.trim()) return;
     const newMsg: AgentMessage = {
-      type: "request",
-      fromAgent: "You",
-      content: chatInput,
-      timestamp: Date.now(),
+      id: `m-${Date.now()}`,
+      timestamp: ts,
+      from,
+      to,
+      type: "REQ",
+      content,
     };
-    setMessages([...messages, newMsg]);
-    setChatInput("");
+    setMessages((prev) => [...prev, newMsg]);
+    setInput("");
   };
 
-  const moveTask = (taskId: string, newStatus: Task["status"]) => {
-    setTasks(tasks.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t)));
+  const asciiBar = (pct: number): string => {
+    if (pct <= 0) return "--";
+    const filled = Math.round(pct / 10);
+    const empty = 10 - filled;
+    return `[${"=".repeat(filled)}${" ".repeat(empty)}] ${pct}%`;
   };
 
   return (
-    <div className="flex flex-col h-full overflow-auto">
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        overflow: "hidden",
+        fontFamily: ff,
+        background: BASE,
+        color: TEXT,
+      }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-construct-border/50">
-        <div className="flex items-center gap-2">
-          <Users size={16} className="text-construct-accent-primary" />
-          <span className="text-sm font-semibold text-construct-text-primary">Agent Team</span>
-          <span className="px-1.5 py-0.5 bg-construct-semantic-success/10 rounded text-[10px] text-construct-semantic-success">
-            {agents.filter((a) => a.status === "active").length} active
-          </span>
-          {conflicts.length > 0 && (
-            <span className="px-1.5 py-0.5 bg-construct-semantic-error/10 rounded text-[10px] text-construct-semantic-error">
-              {conflicts.length} conflict
-            </span>
-          )}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "8px 12px",
+          borderBottom: `1px solid ${BORDER}`,
+          flexShrink: 0,
+          background: S1,
+        }}
+      >
+        <span
+          style={{
+            fontSize: "10px",
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            color: TEXT_MUTED,
+          }}
+        >
+          Agent Team
+        </span>
+        <span style={{ fontSize: "10px", color: TEXT_DIM }}>
+          {agents.filter((a) => a.status === "working").length}/{agents.length} active
+        </span>
+      </div>
+
+      {/* Goal */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "6px 12px",
+          borderBottom: `1px solid ${BORDER}`,
+          flexShrink: 0,
+          background: S1,
+        }}
+      >
+        <span
+          style={{
+            fontSize: "10px",
+            fontWeight: 500,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            color: TEXT_DIM,
+          }}
+        >
+          Goal
+        </span>
+        <span style={{ fontSize: "11px", color: TEXT_MUTED }}>{goal}</span>
+      </div>
+
+      {/* Agent Table */}
+      <div style={{ flexShrink: 0, borderBottom: `1px solid ${BORDER}` }}>
+        {/* Table Header */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            background: S1,
+          }}
+        >
+          {["ROLE", "STATUS", "TASK", "PROGRESS", "TIME"].map((h) => (
+            <div
+              key={h}
+              style={{
+                flex: h === "TASK" ? 2 : 1,
+                padding: "6px 8px",
+                fontSize: "10px",
+                fontWeight: 500,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: TEXT_DIM,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {h}
+            </div>
+          ))}
         </div>
-        <GlowButton size="sm" onClick={() => setShowCreateTeam(true)}>
-          <Plus size={12} />
-          Create Team
-        </GlowButton>
+
+        {/* Agent Rows */}
+        {agents.map((agent) => (
+          <div
+            key={agent.id}
+            style={{
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            {/* ROLE */}
+            <div
+              style={{
+                flex: 1,
+                padding: "5px 8px",
+                fontSize: "11px",
+                fontWeight: 600,
+                color: roleColors[agent.role] || TEXT_MUTED,
+                fontFamily: ff,
+                textTransform: "lowercase",
+              }}
+            >
+              {agent.role}
+            </div>
+            {/* STATUS */}
+            <div
+              style={{
+                flex: 1,
+                padding: "5px 8px",
+                fontSize: "11px",
+                color: agent.status === "working" ? ACCENT : TEXT_DIM,
+                fontFamily: ff,
+                textTransform: "lowercase",
+              }}
+            >
+              {agent.status}
+            </div>
+            {/* TASK */}
+            <div
+              style={{
+                flex: 2,
+                padding: "5px 8px",
+                fontSize: "11px",
+                color: agent.task === "--" ? TEXT_DIM : TEXT_MUTED,
+                fontFamily: ff,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+            >
+              {agent.task}
+            </div>
+            {/* PROGRESS */}
+            <div
+              style={{
+                flex: 1,
+                padding: "5px 8px",
+                fontSize: "10px",
+                color: agent.progress > 0 ? ACCENT : TEXT_DIM,
+                fontFamily: ff,
+                whiteSpace: "nowrap",
+              }}
+            >
+              {asciiBar(agent.progress)}
+            </div>
+            {/* TIME */}
+            <div
+              style={{
+                flex: 1,
+                padding: "5px 8px",
+                fontSize: "11px",
+                color: agent.time === "--" ? TEXT_DIM : TEXT_MUTED,
+                fontFamily: ff,
+              }}
+            >
+              {agent.time}
+            </div>
+          </div>
+        ))}
       </div>
 
-      {/* Conflict Alerts */}
-      <AnimatePresence>
-        {conflicts.map((conflict) => (
-          <motion.div
-            key={conflict.id}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="mx-4 mt-2 p-2.5 rounded-xl border border-construct-semantic-error/30 bg-construct-semantic-error/5 flex items-start gap-2">
-              <AlertCircle size={14} className="text-construct-semantic-error shrink-0 mt-0.5" />
-              <div>
-                <div className="text-[11px] font-semibold text-construct-semantic-error">
-                  Conflict: {conflict.agents.join(" vs ")}
-                </div>
-                <div className="text-[10px] text-construct-text-muted">{conflict.issue}</div>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </AnimatePresence>
+      {/* Messages Section */}
+      <div
+        style={{
+          flex: 1,
+          overflow: "auto",
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        {/* Messages Header */}
+        <div
+          style={{
+            padding: "6px 12px",
+            fontSize: "10px",
+            fontWeight: 500,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            color: TEXT_DIM,
+            borderBottom: `1px solid ${BORDER}`,
+            background: S1,
+            position: "sticky",
+            top: 0,
+            zIndex: 1,
+          }}
+        >
+          Messages
+        </div>
 
-      {/* Sub-tabs */}
-      <div className="flex items-center gap-1 px-4 py-1 border-b border-construct-border/30">
-        {[
-          { id: "team" as const, label: "Team", icon: <Users size={10} /> },
-          { id: "chat" as const, label: "Chat", icon: <MessageSquare size={10} /> },
-          { id: "board" as const, label: "Board", icon: <CheckCircle2 size={10} /> },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveSubTab(tab.id)}
-            className={`
-              flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-medium transition-all
-              ${activeSubTab === tab.id
-                ? "bg-construct-accent-primary/15 text-construct-accent-primary"
-                : "text-construct-text-muted hover:text-construct-text-primary"
-              }
-            `}
-          >
-            {tab.icon}
-            {tab.label}
-          </button>
-        ))}
+        {/* Message Rows */}
+        <div style={{ flex: 1 }}>
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                gap: "0",
+                padding: "3px 12px",
+                fontSize: "11px",
+                borderBottom: `1px solid ${BORDER}`,
+              }}
+            >
+              {/* Timestamp */}
+              <span
+                style={{
+                  color: TEXT_FAINT,
+                  fontFamily: ff,
+                  minWidth: "56px",
+                  flexShrink: 0,
+                }}
+              >
+                {msg.timestamp}
+              </span>
+
+              {/* From */}
+              <span
+                style={{
+                  color: roleColors[msg.from] || TEXT_MUTED,
+                  fontWeight: 600,
+                  minWidth: "60px",
+                  flexShrink: 0,
+                  textTransform: "lowercase",
+                }}
+              >
+                {msg.from}
+              </span>
+
+              {/* Arrow */}
+              <span style={{ color: TEXT_FAINT, margin: "0 4px" }}>→</span>
+
+              {/* To */}
+              <span
+                style={{
+                  color: roleColors[msg.to] || TEXT_MUTED,
+                  minWidth: "60px",
+                  flexShrink: 0,
+                  textTransform: "lowercase",
+                }}
+              >
+                {msg.to}
+              </span>
+
+              {/* Type Badge */}
+              <span
+                style={{
+                  fontSize: "9px",
+                  fontWeight: 600,
+                  color: typeColors[msg.type] || TEXT_DIM,
+                  background: S2,
+                  padding: "1px 4px",
+                  borderRadius: "2px",
+                  marginRight: "8px",
+                  minWidth: "26px",
+                  textAlign: "center",
+                  flexShrink: 0,
+                }}
+              >
+                {msg.type}
+              </span>
+
+              {/* Content */}
+              <span style={{ color: TEXT_MUTED }}>{msg.content}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Tab Content */}
-      <div className="flex-1 overflow-auto px-4 py-3">
-        {/* Team Tab */}
-        {activeSubTab === "team" && (
-          <div className="space-y-3">
-            {/* Agent Cards Row */}
-            <div className="grid grid-cols-2 xl:grid-cols-4 gap-2">
-              {agents.map((agent) => (
-                <GlassCard
-                  key={agent.id}
-                  className="p-2.5 relative"
-                  glow={agent.status === "active" ? "accent" : "none"}
-                >
-                  {/* Pulse glow for active agents */}
-                  {agent.status === "active" && (
-                    <motion.div
-                      className="absolute inset-0 rounded-[20px] pointer-events-none"
-                      style={{
-                        boxShadow: `0 0 20px ${agent.color}20`,
-                      }}
-                      animate={{
-                        boxShadow: [
-                          `0 0 10px ${agent.color}10`,
-                          `0 0 30px ${agent.color}25`,
-                          `0 0 10px ${agent.color}10`,
-                        ],
-                      }}
-                      transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                  )}
-
-                  <div className="flex items-center gap-2 mb-2">
-                    {/* Avatar */}
-                    <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-construct-bg-primary-tertiary"
-                      style={{ backgroundColor: agent.color }}
-                    >
-                      {agent.name[0]}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-semibold text-construct-text-primary truncate">{agent.name}</div>
-                      <div className="flex items-center gap-1 text-[10px]" style={{ color: agent.color }}>
-                        {getRoleIcon(agent.role)}
-                        {agent.role}
-                      </div>
-                    </div>
-                  </div>
-
-                  <StatusBadge
-                    status={agent.status}
-                    text={agent.status === "active" ? "Active" : agent.status === "idle" ? "Idle" : "Error"}
-                    pulse={agent.status === "active"}
-                    className="mb-2"
-                  />
-
-                  {agent.currentTask && (
-                    <div className="text-[10px] text-construct-text-muted truncate mb-1.5">
-                      {agent.currentTask}
-                    </div>
-                  )}
-
-                  {/* Progress */}
-                  {agent.progress > 0 && (
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1 bg-[rgba(255,255,255,0.06)] rounded-full overflow-hidden">
-                        <motion.div
-                          className="h-full rounded-full"
-                          style={{ backgroundColor: agent.color }}
-                          initial={{ width: 0 }}
-                          animate={{ width: `${agent.progress}%` }}
-                          transition={{ duration: 1, ease: "easeOut" }}
-                        />
-                      </div>
-                      <span className="text-[9px] text-construct-text-muted">{agent.progress}%</span>
-                    </div>
-                  )}
-                </GlassCard>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Chat Tab */}
-        {activeSubTab === "chat" && (
-          <div className="flex flex-col h-full">
-            {/* Messages */}
-            <div className="flex-1 space-y-2 overflow-auto mb-3">
-              {messages.map((msg, index) => {
-                const isFromYou = msg.fromAgent === "You";
-                const agentColor = agentColors[msg.fromAgent] || "#64748b";
-
-                return (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.03 }}
-                    className={`flex gap-2 ${isFromYou ? "flex-row-reverse" : ""}`}
-                  >
-                    {/* Avatar */}
-                    <div
-                      className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-construct-bg-primary-tertiary shrink-0"
-                      style={{ backgroundColor: agentColor }}
-                    >
-                      {msg.fromAgent[0]}
-                    </div>
-
-                    <div className={`max-w-[80%] ${isFromYou ? "items-end" : "items-start"}`}>
-                      {/* Meta */}
-                      <div className="flex items-center gap-1.5 mb-0.5">
-                        <span className="text-[9px] font-medium" style={{ color: agentColor }}>
-                          {msg.fromAgent}
-                        </span>
-                        {msg.toAgent && (
-                          <>
-                            <ChevronRight size={8} className="text-construct-text-muted" />
-                            <span className="text-[9px] text-construct-text-muted">{msg.toAgent}</span>
-                          </>
-                        )}
-                        <span className="text-[9px] text-construct-text-muted">{formatTime(msg.timestamp)}</span>
-                      </div>
-
-                      {/* Message Bubble */}
-                      <div
-                        className={`px-2.5 py-1.5 rounded-xl text-[11px] ${
-                          isFromYou
-                            ? "bg-construct-accent-primary/20 text-construct-text-primary border border-construct-accent-primary/20"
-                            : "bg-[rgba(255,255,255,0.04)] text-construct-text-primary border border-construct-border/30"
-                        }`}
-                      >
-                        {msg.content}
-                      </div>
-
-                      {/* Type Badge */}
-                      <span
-                        className={`inline-block mt-0.5 px-1 rounded text-[8px] capitalize ${
-                          msg.type === "alert"
-                            ? "bg-construct-semantic-warning/10 text-construct-semantic-warning"
-                            : msg.type === "request"
-                            ? "bg-construct-accent-primary/10 text-construct-accent-primary"
-                            : "bg-[rgba(255,255,255,0.04)] text-construct-text-muted"
-                        }`}
-                      >
-                        {msg.type}
-                      </span>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-
-            {/* @mention Input */}
-            <div className="flex items-center gap-2 pt-2 border-t border-construct-border/30">
-              <div className="relative flex-1">
-                <input
-                  type="text"
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                  placeholder="@agent_name message..."
-                  className="w-full h-8 px-3 bg-[rgba(255,255,255,0.04)] border border-construct-border/50 rounded-lg text-xs text-construct-text-primary placeholder-construct-text-muted outline-none focus:border-construct-accent-primary/50 transition-colors"
-                />
-              </div>
-              <GlowButton size="sm" onClick={handleSendMessage} disabled={!chatInput.trim()}>
-                <Send size={10} />
-              </GlowButton>
-            </div>
-          </div>
-        )}
-
-        {/* Board Tab */}
-        {activeSubTab === "board" && (
-          <div className="grid grid-cols-4 gap-2">
-            {kanbanColumns.map((col) => {
-              const colTasks = tasks.filter((t) => t.status === col.id);
-              return (
-                <div key={col.id} className="flex flex-col">
-                  {/* Column Header */}
-                  <div className="flex items-center gap-1.5 px-2 py-1.5 mb-2 rounded-lg bg-[rgba(255,255,255,0.03)]">
-                    <span style={{ color: col.color }}>{col.icon}</span>
-                    <span className="text-[11px] font-semibold text-construct-text-primary">{col.label}</span>
-                    <span className="ml-auto text-[10px] text-construct-text-muted">{colTasks.length}</span>
-                  </div>
-
-                  {/* Task Cards */}
-                  <div className="space-y-1.5">
-                    {colTasks.map((task) => (
-                      <motion.div
-                        key={task.id}
-                        layout
-                        className="p-2 rounded-xl bg-[rgba(255,255,255,0.04)] border border-construct-border/30 hover:border-construct-border/60 transition-colors"
-                      >
-                        <div className="text-[10px] font-medium text-construct-text-primary mb-1">{task.title}</div>
-                        <div className="flex items-center justify-between">
-                          <span
-                            className="px-1 rounded text-[8px]"
-                            style={{
-                              backgroundColor: `${agentColors[task.assignee] || "#64748b"}20`,
-                              color: agentColors[task.assignee] || "#64748b",
-                            }}
-                          >
-                            {task.assignee}
-                          </span>
-                          <span
-                            className={`text-[8px] capitalize ${
-                              task.priority === "high"
-                                ? "text-construct-semantic-error"
-                                : task.priority === "medium"
-                                ? "text-construct-semantic-warning"
-                                : "text-construct-text-muted"
-                            }`}
-                          >
-                            {task.priority}
-                          </span>
-                        </div>
-
-                        {/* Move buttons */}
-                        <div className="flex gap-1 mt-1.5 pt-1.5 border-t border-construct-border/20">
-                          {col.id !== "pending" && (
-                            <button
-                              onClick={() => moveTask(task.id, "pending")}
-                              className="text-[8px] text-construct-text-muted hover:text-construct-text-primary transition-colors"
-                            >
-                              To Do
-                            </button>
-                          )}
-                          {col.id !== "active" && (
-                            <button
-                              onClick={() => moveTask(task.id, "active")}
-                              className="text-[8px] text-construct-text-muted hover:text-construct-accent-primary transition-colors"
-                            >
-                              Start
-                            </button>
-                          )}
-                          {col.id !== "completed" && (
-                            <button
-                              onClick={() => moveTask(task.id, "completed")}
-                              className="text-[8px] text-construct-text-muted hover:text-construct-semantic-success transition-colors"
-                            >
-                              Done
-                            </button>
-                          )}
-                          {col.id !== "failed" && (
-                            <button
-                              onClick={() => moveTask(task.id, "failed")}
-                              className="text-[8px] text-construct-text-muted hover:text-construct-semantic-error transition-colors"
-                            >
-                              Fail
-                            </button>
-                          )}
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+      {/* Input */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "6px 12px",
+          borderTop: `1px solid ${BORDER}`,
+          flexShrink: 0,
+          background: S1,
+        }}
+      >
+        <span style={{ fontSize: "12px", color: ACCENT, fontWeight: 600 }}>{" > "}</span>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") handleSend();
+          }}
+          placeholder="@role message"
+          style={{
+            flex: 1,
+            padding: "4px 0",
+            fontSize: "11px",
+            fontFamily: ff,
+            background: "transparent",
+            color: TEXT,
+            border: "none",
+            outline: "none",
+          }}
+        />
+        <button
+          onClick={handleSend}
+          disabled={!input.trim()}
+          style={{
+            padding: "3px 10px",
+            fontSize: "10px",
+            fontFamily: ff,
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            background: S2,
+            color: input.trim() ? ACCENT : TEXT_DIM,
+            border: "none",
+            borderRadius: "2px",
+            cursor: input.trim() ? "pointer" : "default",
+          }}
+        >
+          SEND
+        </button>
       </div>
     </div>
   );

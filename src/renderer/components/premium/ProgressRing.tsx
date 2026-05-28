@@ -1,67 +1,31 @@
-import { motion } from "framer-motion";
-
-interface ProgressRingProps {
-  percent: number;
-  size?: number;
-  strokeWidth?: number;
-  color?: string;
+interface ProgressBarProps {
+  progress: number;
+  width?: number;
   showPercent?: boolean;
-  className?: string;
 }
 
 export function ProgressRing({
-  percent,
-  size = 48,
-  strokeWidth = 4,
-  color = "url(#progressGradient)",
+  progress,
+  width = 20,
   showPercent = true,
-  className = "",
-}: ProgressRingProps) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (Math.min(percent, 100) / 100) * circumference;
+}: ProgressBarProps) {
+  const clamped = Math.max(0, Math.min(100, progress));
+  const filled = Math.round((clamped / 100) * width);
+  const empty = width - filled;
+
+  const bar = "█".repeat(filled) + "░".repeat(empty);
 
   return (
-    <div className={`relative inline-flex items-center justify-center ${className}`}>
-      <svg width={size} height={size} className="-rotate-90">
-        <defs>
-          <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#6366f1" />
-            <stop offset="100%" stopColor="#10b981" />
-          </linearGradient>
-        </defs>
-        {/* Background ring */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="rgba(255,255,255,0.06)"
-          strokeWidth={strokeWidth}
-        />
-        {/* Progress ring */}
-        <motion.circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1, ease: "easeOut" }}
-        />
-      </svg>
+    <span
+      className="inline-flex items-center gap-2 font-mono text-[10px] whitespace-pre"
+      style={{ color: "#6366f1" }}
+    >
+      <span style={{ color: "#6366f1" }}>{bar}</span>
       {showPercent && (
-        <span
-          className="absolute inset-0 flex items-center justify-center text-[10px] font-semibold text-construct-text-primary"
-          style={{ fontSize: size * 0.28 }}
-        >
-          {Math.round(percent)}%
+        <span style={{ color: "#e2e2e2", fontSize: 10 }}>
+          {Math.round(clamped)}%
         </span>
       )}
-    </div>
+    </span>
   );
 }

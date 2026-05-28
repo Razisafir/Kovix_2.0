@@ -27,7 +27,35 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from enum import Enum
 
+try:
+    import yaml
+    _HAS_YAML = True
+except ImportError:
+    _HAS_YAML = False
+
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Kimi skill format constants
+# ---------------------------------------------------------------------------
+
+# Pattern for Kimi /command syntax (e.g., "/legal-risk-assessment", "/fix-bug")
+_KIMI_COMMAND_PATTERN = re.compile(r"^/([a-zA-Z][-a-zA-Z0-9]*)(?:\s+|$)")
+
+# Pattern to detect Kimi markdown format (frontmatter + structured sections)
+_KIMI_FRONTMATTER_PATTERN = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+
+# Kimi section headers commonly used in skill definitions
+_KIMI_SECTION_HEADERS = {
+    "checks performed": "checks",
+    "execution steps": "steps",
+    "examples": "examples",
+    "validation criteria": "validation",
+    "best practices": "best_practices",
+    "tools required": "tools",
+    "related skills": "related_skills",
+    "overview": "overview",
+}
 
 # ---------------------------------------------------------------------------
 # Data models
@@ -371,6 +399,649 @@ def _calculate_parse_confidence(
 
 
 # ---------------------------------------------------------------------------
+# Standalone tag extraction (used by both SkillParser and Kimi parsers)
+# ---------------------------------------------------------------------------
+
+
+def _extract_tags_standalone(text: str, category: SkillCategory) -> List[str]:
+    """Extract relevant tags from text — standalone version for Kimi parsers."""
+    tags = [category.value]
+
+    tag_patterns = [
+        ("python", r"\b[Pp]ython\b"),
+        ("javascript", r"\b[Jj]ava[Ss]cript\b|\b[jsJS]\b"),
+        ("typescript", r"\b[Tt]ype[Ss]cript\b"),
+        ("react", r"\b[Rr]eact\b"),
+        ("vue", r"\b[Vv]ue\.?js?\b"),
+        ("docker", r"\b[Dd]ocker\b"),
+        ("kubernetes", r"\b[Kk]ubernetes\b|\bk8s\b"),
+        ("aws", r"\bAWS\b|\bAmazon Web Services\b"),
+        ("git", r"\b[Gg]it\b"),
+        ("api", r"\bAPI\b"),
+        ("testing", r"\b[Tt]est(?:ing)?\b"),
+        ("database", r"\b[Dd]atabase\b|\bDB\b|\bSQL\b"),
+        ("frontend", r"\b[Ff]ront[- ]?[Ee]nd\b"),
+        ("backend", r"\b[Bb]ack[- ]?[Ee]nd\b"),
+        ("tutorial", r"\b[Tt]utorial\b|\b[Gg]uide\b|\b[Hh]ow[- ][Tt]o\b"),
+        ("legal", r"\b[Ll]egal\b|\b[Ll]icense\b|\b[Gg]DPR\b|\b[ Cc]ompliance\b"),
+        ("security", r"\b[Ss]ecurity\b|\b[Vv]ulnerability\b|\b[Cc][Vv][Ee]\b"),
+        ("branding", r"\b[Bb]rand\b|\b[Tt]rademark\b|\b[Dd]omain\b"),
+        ("research", r"\b[Rr]esearch\b|\b[Mm]arket\b|\b[Tt]rend\b"),
+        ("audit", r"\b[Aa]udit\b|\b[Qq]uality\b|\b[Hh]ealth\b"),
+    ]
+
+    for tag, pattern in tag_patterns:
+        if re.search(pattern, text):
+            tags.append(tag)
+
+    return sorted(set(tags))
+
+
+# ---------------------------------------------------------------------------
+# Kimi format detection and parsing
+# ---------------------------------------------------------------------------
+
+
+def detect_kimi_format(content: str) -> bool:
+    """Detect whether the given content uses Kimi skill format.
+
+    Kimi skills are identified by either:
+    - YAML frontmatter with ``---`` delimiters containing skill metadata
+    - A leading ``/command-name`` line (slash-command syntax)
+    - Presence of structured markdown sections (Overview, Steps, Examples)
+
+    Parameters
+    ----------
+    content:
+        Raw file content to analyze.
+
+    Returns
+    -------
+    bool
+        True if the content appears to be in Kimi format.
+    """
+    if not content or not content.strip():
+        return False
+
+    # Check for YAML frontmatter
+    if _KIMI_FRONTMATTER_PATTERN.search(content):
+        return True
+
+    # Check for /command-name as first non-whitespace line
+    first_line = content.strip().splitlines()[0].strip()
+    if _KIMI_COMMAND_PATTERN.match(first_line):
+        return True
+
+    # Check for characteristic Kimi section headers (at least 3)
+    content_lower = content.lower()
+    section_hits = sum(
+        1 for header in _KIMI_SECTION_HEADERS
+        if header in content_lower
+    )
+    if section_hits >= 3:
+        return True
+
+    return False
+
+
+def parse_kimi_skill(content: str) -> Skill:
+    """Parse a Kimi-format skill definition into a :class:`Skill`.
+
+    Handles two Kimi input styles:
+    1. **Markdown with YAML frontmatter** (the standard bundled skill format):
+       ``---\nname: ...\n---\n# Heading...``
+    2. **Slash-command style**: ``/command-name`` followed by description
+       and structured sections.
+
+    Parameters
+    ----------
+    content:
+        Raw Kimi skill content.
+
+    Returns
+    -------
+    Skill
+        Parsed skill in Construct format.
+
+    Raises
+    ------
+    ValueError
+        If the content cannot be parsed as a Kimi skill.
+    """
+    if not content or not content.strip():
+        raise ValueError("Empty content — cannot parse Kimi skill")
+
+    # Strategy 1: YAML frontmatter present (standard bundled format)
+    frontmatter_match = _KIMI_FRONTMATTER_PATTERN.search(content)
+    if frontmatter_match and _HAS_YAML:
+        try:
+            metadata = yaml.safe_load(frontmatter_match.group(1))
+        except Exception as exc:
+            logger.warning("Failed to parse YAML frontmatter: %s", exc)
+            metadata = {}
+
+        # Extract markdown body (everything after frontmatter)
+        body_start = frontmatter_match.end()
+        body = content[body_start:]
+
+        return _parse_kimi_frontmatter_skill(metadata, body, content)
+
+    # Strategy 2: Slash-command style (/command-name)
+    first_line = content.strip().splitlines()[0].strip()
+    cmd_match = _KIMI_COMMAND_PATTERN.match(first_line)
+    if cmd_match:
+        command_name = cmd_match.group(1)
+        # Body is everything after the command line
+        body_lines = content.strip().splitlines()[1:]
+        body = "\n".join(body_lines)
+        return _parse_kimi_slash_command(command_name, body, content)
+
+    # Strategy 3: Plain markdown with characteristic sections
+    return _parse_kimi_plain_markdown(content)
+
+
+def _parse_kimi_frontmatter_skill(
+    metadata: Dict[str, Any], body: str, raw_content: str
+) -> Skill:
+    """Parse a Kimi skill that has YAML frontmatter + markdown body."""
+    name = metadata.get("name", "")
+    description = metadata.get("description", "")
+    category_str = metadata.get("category", "coding")
+    version = metadata.get("version", "1.0")
+    author = metadata.get("author", "")
+    tags = metadata.get("tags", [])
+
+    # Resolve category
+    category = _resolve_category(category_str)
+
+    # Extract title from first # heading if name not in frontmatter
+    if not name:
+        heading_match = re.search(r"^#\s+(.+)$", body, re.MULTILINE)
+        name = _slugify(heading_match.group(1)) if heading_match else "untitled_skill"
+
+    # If description is still empty, extract from first paragraph
+    if not description:
+        description = _extract_first_paragraph(body)
+
+    # Extract steps from the body
+    steps = _extract_kimi_steps(body)
+    if not steps:
+        steps = _extract_steps(body)
+
+    # Extract examples from code blocks
+    examples = _extract_kimi_examples(body)
+
+    # Extract tools from Tools Required section
+    tools_needed = _extract_kimi_tools(body)
+    if not tools_needed:
+        tools_needed = _extract_tools(body)
+
+    # Build tags
+    if not tags:
+        tags = _extract_tags_standalone(body, category)
+    if author and author not in tags:
+        tags.append(author.lower().replace(" ", "-"))
+
+    confidence = _calculate_parse_confidence(raw_content, steps, fallback_used=False)
+
+    return Skill(
+        name=name,
+        description=description,
+        category=category,
+        steps=steps,
+        tools_needed=tools_needed,
+        examples=examples,
+        confidence=confidence,
+        source_document="kimi_frontmatter_skill",
+        version=version,
+        tags=tags,
+    )
+
+
+def _parse_kimi_slash_command(command_name: str, body: str, raw_content: str) -> Skill:
+    """Parse a Kimi skill that starts with ``/command-name``."""
+    # Extract description from first paragraph after command
+    description = _extract_first_paragraph(body)
+
+    # Detect category from content
+    category = _detect_category(body)
+
+    # Extract steps
+    steps = _extract_kimi_steps(body)
+    if not steps:
+        steps = _extract_steps(body)
+
+    # Extract examples
+    examples = _extract_kimi_examples(body)
+
+    # Extract tools
+    tools_needed = _extract_kimi_tools(body)
+    if not tools_needed:
+        tools_needed = _extract_tools(body)
+
+    # Tags
+    tags = _extract_tags_standalone(body, category)
+    tags.append("slash-command")
+
+    confidence = _calculate_parse_confidence(raw_content, steps, fallback_used=False)
+
+    return Skill(
+        name=command_name,
+        description=description,
+        category=category,
+        steps=steps,
+        tools_needed=tools_needed,
+        examples=examples,
+        confidence=confidence,
+        source_document="kimi_slash_command",
+        version="1.0",
+        tags=tags,
+    )
+
+
+def _parse_kimi_plain_markdown(content: str) -> Skill:
+    """Parse a Kimi skill written as plain markdown without frontmatter or slash-command."""
+    # Extract name from first heading
+    heading_match = re.search(r"^#\s+(.+)$", content, re.MULTILINE)
+    name = _slugify(heading_match.group(1)) if heading_match else "untitled_skill"
+
+    description = _extract_first_paragraph(content)
+    category = _detect_category(content)
+
+    steps = _extract_kimi_steps(content)
+    if not steps:
+        steps = _extract_steps(content)
+
+    examples = _extract_kimi_examples(content)
+    tools_needed = _extract_kimi_tools(content)
+    if not tools_needed:
+        tools_needed = _extract_tools(content)
+
+    tags = _extract_tags_standalone(content, category)
+    confidence = _calculate_parse_confidence(content, steps, fallback_used=False)
+
+    return Skill(
+        name=name,
+        description=description,
+        category=category,
+        steps=steps,
+        tools_needed=tools_needed,
+        examples=examples,
+        confidence=confidence,
+        source_document="kimi_plain_markdown",
+        version="1.0",
+        tags=tags,
+    )
+
+
+def _extract_kimi_steps(text: str) -> List[SkillStep]:
+    """Extract structured steps from Kimi skill markdown.
+
+    Looks for numbered lists inside ``## Execution Steps`` or similar sections.
+    """
+    steps: List[SkillStep] = []
+
+    # Find "Execution Steps" or "Steps" section
+    # Note: (?=^##[^#]) ensures we only match exactly ## (not ###) headers
+    section_pattern = re.compile(
+        r"(?:^##\s*(?:Execution\s+)?Steps?\s*\n)(.*?)(?=^##[^#]|\Z)",
+        re.MULTILINE | re.DOTALL | re.IGNORECASE,
+    )
+    section_match = section_pattern.search(text)
+
+    if not section_match:
+        return steps
+
+    section_body = section_match.group(1)
+
+    # Match numbered steps: "1. **Action** — Description" or "1. Action"
+    step_pattern = re.compile(
+        r"^\s*(?:\d+[.\)])\s+(?:\*\*?([^*\n]+)\*\*?\s*(?:[:\-—]\s*)?)?(.+?)$",
+        re.MULTILINE,
+    )
+
+    for order, match in enumerate(step_pattern.finditer(section_body), start=1):
+        action = (match.group(1) or "").strip()
+        description = match.group(2).strip()
+
+        # If no bold action, use the first sentence/phrase as action
+        if not action:
+            action = description.split(".")[0][:80]
+
+        # Detect tool references
+        tool: Optional[str] = None
+        params: Dict[str, Any] = {}
+        for tool_name in _TOOL_NAMES:
+            if tool_name in description.lower():
+                tool = tool_name
+                break
+
+        # Extract code commands
+        code_match = re.search(r"`([^`]+)`", description)
+        if code_match:
+            params["command"] = code_match.group(1)
+
+        steps.append(
+            SkillStep(
+                order=order,
+                action=action[:120] if action else f"Step {order}",
+                description=description,
+                tool=tool,
+                parameters=params,
+            )
+        )
+
+    return steps
+
+
+def _extract_kimi_examples(text: str) -> List[str]:
+    """Extract examples from Kimi ``## Examples`` section.
+
+    Captures code blocks with their preceding context (input/output descriptions).
+    """
+    examples: List[str] = []
+
+    # Find Examples section
+    # Note: (?=^##[^#]) ensures we only match exactly ## (not ###) headers
+    section_pattern = re.compile(
+        r"(?:^##\s*Examples?\s*\n)(.*?)(?=^##[^#]|\Z)",
+        re.MULTILINE | re.DOTALL | re.IGNORECASE,
+    )
+    section_match = section_pattern.search(text)
+
+    if not section_match:
+        # Fallback: extract all code blocks
+        return list(
+            {
+                ex.strip()[:500]
+                for ex in re.findall(r"```(?:\w+)?\n(.*?)```", text, re.DOTALL)
+                if len(ex.strip()) > 10
+            }
+        )
+
+    section_body = section_match.group(1)
+
+    # Extract Example subsections (### Example 1: ...)
+    example_blocks = re.findall(
+        r"###\s*Example.*?\n(.*?)(?=###\s*Example|\Z)",
+        section_body,
+        re.DOTALL | re.IGNORECASE,
+    )
+
+    if example_blocks:
+        for block in example_blocks:
+            cleaned = block.strip()
+            if len(cleaned) > 10:
+                examples.append(cleaned[:800])
+    else:
+        # No subsections — grab all code blocks from examples section
+        code_blocks = re.findall(
+            r"```(?:\w+)?\n(.*?)```", section_body, re.DOTALL
+        )
+        for code in code_blocks:
+            cleaned = code.strip()
+            if len(cleaned) > 10:
+                examples.append(cleaned[:500])
+
+    return examples[:5]  # max 5 examples
+
+
+def _extract_kimi_tools(text: str) -> List[str]:
+    """Extract tool names from Kimi ``## Tools Required`` section."""
+    section_pattern = re.compile(
+        r"(?:^##\s*(?:Tools?\s+Required|Required\s+Tools?)\s*\n)(.*?)(?=^##[^#]|\Z)",
+        re.MULTILINE | re.DOTALL | re.IGNORECASE,
+    )
+    section_match = section_pattern.search(text)
+
+    if not section_match:
+        return []
+
+    section_body = section_match.group(1)
+    found: List[str] = []
+
+    # Look for inline code tool names and table rows
+    for tool_name in _TOOL_NAMES:
+        # Check for tool in table cells or inline code
+        patterns = [
+            rf"`{re.escape(tool_name)}`",
+            rf"\b{re.escape(tool_name)}\b",
+        ]
+        for pat in patterns:
+            if re.search(pat, section_body, re.IGNORECASE):
+                found.append(tool_name)
+                break
+
+    # Also check for any ``command-name`` entries in table cells
+    table_tools = re.findall(
+        r"\|\s*`?([a-z][-a-z0-9]+)`?\s*\|", section_body
+    )
+    for t in table_tools:
+        if t not in found:
+            found.append(t)
+
+    return sorted(set(found))
+
+
+def _resolve_category(category_str: str) -> SkillCategory:
+    """Resolve a category string to a :class:`SkillCategory` enum member."""
+    if isinstance(category_str, SkillCategory):
+        return category_str
+
+    category_map = {
+        "coding": SkillCategory.CODING,
+        "design": SkillCategory.DESIGN,
+        "research": SkillCategory.RESEARCH,
+        "devops": SkillCategory.DEVOPS,
+        "security": SkillCategory.SECURITY,
+        "testing": SkillCategory.TESTING,
+    }
+
+    normalized = category_str.lower().strip().replace(" ", "_")
+
+    # Direct match
+    if normalized in category_map:
+        return category_map[normalized]
+
+    # Keyword-based fallback
+    keyword_map = {
+        "code": SkillCategory.CODING,
+        "program": SkillCategory.CODING,
+        "develop": SkillCategory.CODING,
+        "design": SkillCategory.DESIGN,
+        "ui": SkillCategory.DESIGN,
+        "ux": SkillCategory.DESIGN,
+        "research": SkillCategory.RESEARCH,
+        "market": SkillCategory.RESEARCH,
+        "analysis": SkillCategory.RESEARCH,
+        "deploy": SkillCategory.DEVOPS,
+        "infrastructure": SkillCategory.DEVOPS,
+        "ci/cd": SkillCategory.DEVOPS,
+        "pipeline": SkillCategory.DEVOPS,
+        "cloud": SkillCategory.DEVOPS,
+        "security": SkillCategory.SECURITY,
+        "legal": SkillCategory.SECURITY,
+        "compliance": SkillCategory.SECURITY,
+        "test": SkillCategory.TESTING,
+        "quality": SkillCategory.TESTING,
+    }
+
+    for keyword, cat in keyword_map.items():
+        if keyword in normalized:
+            return cat
+
+    logger.warning("Unknown category '%s', defaulting to CODING", category_str)
+    return SkillCategory.CODING
+
+
+def _extract_first_paragraph(text: str) -> str:
+    """Extract the first meaningful paragraph from text (excluding headings)."""
+    lines = text.splitlines()
+    for line in lines:
+        stripped = line.strip()
+        if (
+            stripped
+            and not stripped.startswith("#")
+            and not stripped.startswith("---")
+            and not stripped.startswith("|")
+            and len(stripped) > 20
+        ):
+            return stripped[:200]
+    return text[:200] if text else "Skill extracted from document"
+
+
+def convert_kimi_to_construct(kimi_skill: Dict[str, Any]) -> Skill:
+    """Convert a parsed Kimi skill dictionary to a Construct :class:`Skill`.
+
+    This is the inverse of ``parse_kimi_skill`` — useful when Kimi skills
+    are pre-parsed into dictionaries (e.g., from JSON API responses).
+
+    Parameters
+    ----------
+    kimi_skill:
+        Dictionary with keys like ``name``, ``description``, ``category``,
+        ``steps``, ``examples``, ``tools``, etc.
+
+    Returns
+    -------
+    Skill
+        A fully populated Construct-format Skill instance.
+
+    Raises
+    ------
+    ValueError
+        If required fields are missing.
+    """
+    name = kimi_skill.get("name") or kimi_skill.get("command", "").lstrip("/")
+    if not name:
+        raise ValueError("Kimi skill must have a 'name' or 'command' field")
+
+    description = kimi_skill.get("description", "")
+    category = _resolve_category(kimi_skill.get("category", "coding"))
+    version = kimi_skill.get("version", "1.0")
+    tags = kimi_skill.get("tags", [])
+
+    # Convert steps
+    steps: List[SkillStep] = []
+    for i, step_data in enumerate(kimi_skill.get("steps", []), start=1):
+        if isinstance(step_data, str):
+            steps.append(
+                SkillStep(
+                    order=i,
+                    action=step_data[:120],
+                    description=step_data,
+                )
+            )
+        elif isinstance(step_data, dict):
+            steps.append(
+                SkillStep(
+                    order=step_data.get("order", i),
+                    action=step_data.get("action", f"Step {i}"),
+                    description=step_data.get("description", ""),
+                    tool=step_data.get("tool"),
+                    parameters=step_data.get("parameters", {}),
+                    validation=step_data.get("validation"),
+                )
+            )
+
+    # Extract tools
+    tools_needed: List[str] = []
+    if "tools" in kimi_skill:
+        tools_needed = kimi_skill["tools"]
+    elif "tools_needed" in kimi_skill:
+        tools_needed = kimi_skill["tools_needed"]
+
+    # Extract examples
+    examples: List[str] = []
+    if "examples" in kimi_skill:
+        raw_examples = kimi_skill["examples"]
+        for ex in raw_examples:
+            if isinstance(ex, str):
+                examples.append(ex[:500])
+            elif isinstance(ex, dict):
+                # Kimi often structures examples as {input, code, output}
+                parts = []
+                for key in ("input", "code", "output"):
+                    if key in ex:
+                        parts.append(f"**{key.capitalize()}:**\n{ex[key]}")
+                if parts:
+                    examples.append("\n\n".join(parts)[:800])
+
+    confidence = kimi_skill.get("confidence", 0.95)
+
+    return Skill(
+        name=name,
+        description=description,
+        category=category,
+        steps=steps,
+        tools_needed=tools_needed,
+        examples=examples,
+        confidence=confidence,
+        source_document=kimi_skill.get("source_document", "kimi_converted"),
+        version=version,
+        tags=tags,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Top-level convenience API
+# ---------------------------------------------------------------------------
+
+
+def parse_skill_file(file_path: str) -> Skill:
+    """Parse a skill file, auto-detecting Kimi vs Construct format.
+
+    This is the primary entry point for skill parsing. It reads the file,
+    detects whether it is in Kimi format (YAML frontmatter, /command syntax,
+    or structured markdown) or legacy Construct format, and parses
+    accordingly.
+
+    Parameters
+    ----------
+    file_path:
+        Absolute or relative path to the skill file.
+
+    Returns
+    -------
+    Skill
+        Parsed skill in unified Construct format.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the file does not exist.
+    ValueError
+        If the file format cannot be determined or parsed.
+
+    Examples
+    --------
+    >>> skill = parse_skill_file("skills/legal-risk-assessment/SKILL.md")
+    >>> print(skill.name)
+    'legal-risk-assessment'
+    >>> print(skill.category)
+    <SkillCategory.SECURITY: 'security'>
+    """
+    path = Path(file_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Skill file not found: {file_path}")
+
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    # Detect format
+    if detect_kimi_format(content):
+        logger.info("Detected Kimi format for %s", file_path)
+        skill = parse_kimi_skill(content)
+        skill.source_document = str(path.resolve())
+        return skill
+
+    # Fall back to legacy Construct format via SkillParser
+    logger.info("Falling back to Construct format parser for %s", file_path)
+    parser = SkillParser()
+    return parser.parse(file_path)
+
+
+# ---------------------------------------------------------------------------
 # Skill Parser
 # ---------------------------------------------------------------------------
 
@@ -434,8 +1105,21 @@ class SkillParser:
             text = self._parse_pdf(source)
         elif ext in (".md", ".mdx"):
             text = self._parse_markdown(source)
+            # Check if Kimi format was detected during markdown parsing
+            if getattr(self, "_kimi_detected", False):
+                kimi_content = getattr(self, "_kimi_content", text)
+                skill = parse_kimi_skill(kimi_content)
+                skill.source_document = source
+                self._kimi_detected = False
+                delattr(self, "_kimi_content")
+                return skill
         elif ext in (".txt", ".rst"):
             text = self._parse_text(source)
+            # Also check plain text files for Kimi /command syntax
+            if detect_kimi_format(text):
+                skill = parse_kimi_skill(text)
+                skill.source_document = source
+                return skill
         elif ext == ".docx":
             text = self._parse_docx(source)
         elif ext in (".html", ".htm"):
@@ -553,6 +1237,9 @@ class SkillParser:
     def _parse_markdown(self, path: str) -> str:
         """Read markdown file, strip frontmatter.
 
+        Also detects Kimi-format skills and raises a signal so that
+        the caller can route to ``parse_kimi_skill`` instead.
+
         Parameters
         ----------
         path:
@@ -565,6 +1252,17 @@ class SkillParser:
         """
         with open(path, "r", encoding="utf-8") as f:
             content = f.read()
+
+        # Detect Kimi format and route appropriately
+        if detect_kimi_format(content):
+            logger.info("Kimi format detected in markdown file: %s", path)
+            # Store a marker so parse() knows to use Kimi parser
+            self._kimi_detected = True
+            self._kimi_content = content
+            # Return the body only (legacy behavior for compatibility)
+            # The full parsing happens in parse() when it sees _kimi_detected
+        else:
+            self._kimi_detected = False
 
         # Strip YAML/TOML frontmatter
         content = re.sub(r"^---\n.*?\n---\n", "", content, count=1, flags=re.DOTALL)

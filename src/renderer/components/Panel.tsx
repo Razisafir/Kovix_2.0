@@ -2,24 +2,31 @@ import { useState } from "react";
 import {
   Terminal,
   MessageSquare,
-  ListChecks,
-  X,
-  ChevronUp,
-  Brain,
   Bot,
-  Zap,
+  Brain,
   Wrench,
   Plug,
   Monitor,
   Users,
+  Zap,
+  X,
+  ChevronUp,
 } from "lucide-react";
-import MemoryPanel from "./MemoryPanel";
-import AgentPanel from "./AgentPanel";
-import AutonomousPanel from "./AutonomousPanel";
-import SkillMarketplace from "./SkillMarketplace";
-import MCPConnector from "./MCPConnector";
-import ScreenControl from "./ScreenControl";
-import MultiAgentPanel from "./MultiAgentPanel";
+
+const COLORS = {
+  base: "#0c0c10",
+  surface1: "#12121a",
+  surface2: "#1a1a24",
+  surface3: "#22222e",
+  accent: "#6366f1",
+  textPrimary: "#e8e8ec",
+  textSecondary: "#94949c",
+  muted: "#6b6b73",
+  dim: "#4a4a52",
+  border: "rgba(255,255,255,0.04)",
+  success: "#22c55e",
+  error: "#ef4444",
+};
 
 interface Tab {
   id: string;
@@ -28,120 +35,309 @@ interface Tab {
 }
 
 const tabs: Tab[] = [
-  { id: "autonomous", icon: <Zap size={14} />, label: "Autonomous" },
-  { id: "terminal", icon: <Terminal size={14} />, label: "Terminal" },
-  { id: "problems", icon: <ListChecks size={14} />, label: "Problems" },
-  { id: "chat", icon: <MessageSquare size={14} />, label: "Chat" },
-  { id: "agent", icon: <Bot size={14} />, label: "Agent" },
-  { id: "memory", icon: <Brain size={14} />, label: "Memory" },
-  { id: "skills", icon: <Wrench size={14} />, label: "Skills" },
-  { id: "mcp", icon: <Plug size={14} />, label: "MCP" },
-  { id: "screen", icon: <Monitor size={14} />, label: "Screen" },
-  { id: "agents", icon: <Users size={14} />, label: "Agents" },
+  { id: "terminal", icon: <Terminal size={13} />, label: "Terminal" },
+  { id: "chat", icon: <MessageSquare size={13} />, label: "Chat" },
+  { id: "agent", icon: <Bot size={13} />, label: "Agent" },
+  { id: "memory", icon: <Brain size={13} />, label: "Memory" },
+  { id: "skills", icon: <Wrench size={13} />, label: "Skills" },
+  { id: "mcp", icon: <Plug size={13} />, label: "MCP" },
+  { id: "screen", icon: <Monitor size={13} />, label: "Screen" },
+  { id: "agents", icon: <Users size={13} />, label: "Agents" },
+  { id: "auto", icon: <Zap size={13} />, label: "Auto" },
 ];
 
 function Panel() {
   const [activeTab, setActiveTab] = useState("terminal");
 
+  const renderTerminal = () => (
+    <div
+      style={{
+        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+        fontSize: 11,
+        lineHeight: "18px",
+        padding: 8,
+      }}
+    >
+      <div style={{ color: COLORS.muted }}>$ construct --version</div>
+      <div style={{ color: COLORS.textPrimary }}>0.1.0-alpha</div>
+      <div style={{ color: COLORS.muted, marginTop: 4 }}>$ npm run dev</div>
+      <div style={{ color: COLORS.success }}>vite v6.0 ready in 342ms</div>
+      <div style={{ color: COLORS.accent }}>
+        local: http://localhost:5173/
+      </div>
+      <div style={{ color: COLORS.muted, marginTop: 4 }}>
+        $ cargo tauri dev
+      </div>
+      <div style={{ color: COLORS.textPrimary }}>Running ConstructApp...</div>
+      <div style={{ color: COLORS.accent, marginTop: 4 }}>_</div>
+    </div>
+  );
+
+  const renderChat = () => (
+    <div style={{ padding: 8 }}>
+      <div
+        style={{
+          fontSize: 11,
+          color: COLORS.muted,
+          marginBottom: 8,
+        }}
+      >
+        AI assistant panel. Type to send messages.
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+        }}
+      >
+        <input
+          type="text"
+          placeholder="Ask anything..."
+          style={{
+            flex: 1,
+            height: 26,
+            padding: "0 8px",
+            backgroundColor: COLORS.base,
+            border: `1px solid ${COLORS.border}`,
+            borderRadius: 2,
+            fontSize: 11,
+            fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+            color: COLORS.textPrimary,
+            outline: "none",
+          }}
+        />
+        <button
+          style={{
+            height: 26,
+            padding: "0 12px",
+            backgroundColor: COLORS.accent,
+            border: "none",
+            borderRadius: 2,
+            fontSize: 10,
+            fontWeight: 600,
+            fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+            color: "#fff",
+            cursor: "pointer",
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+          }}
+        >
+          Send
+        </button>
+      </div>
+    </div>
+  );
+
+  const renderAgent = () => (
+    <div style={{ padding: 8 }}>
+      <div
+        style={{
+          fontSize: 10,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: COLORS.muted,
+          marginBottom: 8,
+          fontWeight: 600,
+        }}
+      >
+        Agent Status
+      </div>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 6,
+        }}
+      >
+        <span style={{ fontSize: 10, color: COLORS.dim, width: 60 }}>State</span>
+        <span style={{ fontSize: 11, color: COLORS.textSecondary }}>
+          idle
+        </span>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 10, color: COLORS.dim, width: 60 }}>Model</span>
+        <span style={{ fontSize: 11, color: COLORS.textSecondary }}>
+          claude-sonnet-4-20250514
+        </span>
+      </div>
+    </div>
+  );
+
+  const renderMemory = () => (
+    <div style={{ padding: 8 }}>
+      <div
+        style={{
+          fontSize: 10,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: COLORS.muted,
+          marginBottom: 8,
+          fontWeight: 600,
+        }}
+      >
+        Memory Usage
+      </div>
+      <div
+        style={{
+          fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+          fontSize: 11,
+          color: COLORS.textSecondary,
+          lineHeight: "18px",
+        }}
+      >
+        <div>Contexts: 1,247</div>
+        <div>Vectors: 8,932</div>
+        <div>Tokens: 12,456 / 200,000</div>
+        <div>Usage: 6.2%</div>
+      </div>
+    </div>
+  );
+
+  const renderPlaceholder = (label: string) => (
+    <div style={{ padding: 8 }}>
+      <div
+        style={{
+          fontSize: 11,
+          color: COLORS.muted,
+          fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+        }}
+      >
+        {label} panel content.
+      </div>
+    </div>
+  );
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "terminal":
+        return renderTerminal();
+      case "chat":
+        return renderChat();
+      case "agent":
+        return renderAgent();
+      case "memory":
+        return renderMemory();
+      case "skills":
+        return renderPlaceholder("Skills");
+      case "mcp":
+        return renderPlaceholder("MCP");
+      case "screen":
+        return renderPlaceholder("Screen");
+      case "agents":
+        return renderPlaceholder("Multi-agent");
+      case "auto":
+        return renderPlaceholder("Autonomous");
+      default:
+        return renderTerminal();
+    }
+  };
+
   return (
-    <div className="flex flex-col w-full h-full">
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        height: "100%",
+        backgroundColor: COLORS.surface1,
+      }}
+    >
       {/* Tab Bar */}
-      <div className="flex items-center justify-between h-8 bg-construct-bg-primary-tertiary border-b border-construct-border">
-        <div className="flex overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`
-                flex items-center h-8 px-3 gap-1.5 text-xs border-r border-construct-border
-                transition-colors duration-100 shrink-0 whitespace-nowrap
-                ${
-                  activeTab === tab.id
-                    ? "bg-construct-bg-primary text-construct-text-primary border-t-2 border-t-construct-accent-primary"
-                    : "text-construct-text-muted hover:text-construct-text-primary hover:bg-construct-bg-primary-elevated"
-                }
-              `}
-            >
-              {tab.icon}
-              <span>{tab.label}</span>
-            </button>
-          ))}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          height: 28,
+          backgroundColor: COLORS.base,
+          borderBottom: `1px solid ${COLORS.border}`,
+          flexShrink: 0,
+        }}
+      >
+        <div style={{ display: "flex", overflow: "hidden", flex: 1 }}>
+          {tabs.map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  height: "100%",
+                  padding: "0 10px",
+                  gap: 5,
+                  border: "none",
+                  borderRight: `1px solid ${COLORS.border}`,
+                  borderBottom: isActive
+                    ? `2px solid ${COLORS.accent}`
+                    : `2px solid transparent`,
+                  backgroundColor: isActive ? COLORS.surface2 : "transparent",
+                  color: isActive ? COLORS.textPrimary : COLORS.muted,
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  whiteSpace: "nowrap",
+                  fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+                  fontSize: 10,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  fontWeight: 600,
+                  transition: "background-color 50ms",
+                }}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
-        <div className="flex items-center pr-1 shrink-0">
+        <div style={{ display: "flex", alignItems: "center", paddingRight: 4, flexShrink: 0 }}>
           <button
-            onClick={() => {}}
-            className="flex items-center justify-center w-6 h-6 rounded text-construct-text-muted hover:text-construct-text-primary hover:bg-construct-bg-primary-elevated transition-colors"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 22,
+              height: 22,
+              borderRadius: 2,
+              border: "none",
+              cursor: "pointer",
+              backgroundColor: "transparent",
+              color: COLORS.muted,
+            }}
           >
-            <ChevronUp size={14} />
+            <ChevronUp size={12} />
           </button>
           <button
-            onClick={() => {}}
-            className="flex items-center justify-center w-6 h-6 rounded text-construct-text-muted hover:text-construct-text-primary hover:bg-construct-bg-primary-elevated transition-colors"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 22,
+              height: 22,
+              borderRadius: 2,
+              border: "none",
+              cursor: "pointer",
+              backgroundColor: "transparent",
+              color: COLORS.muted,
+            }}
           >
-            <X size={14} />
+            <X size={12} />
           </button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-auto p-0">
-        {activeTab === "terminal" && (
-          <div className="font-mono text-xs space-y-1 p-3">
-            <div className="text-construct-text-muted">
-              $ construct --version
-            </div>
-            <div className="text-construct-text-primary">0.1.0</div>
-            <div className="text-construct-text-muted mt-2">
-              $ npm run dev
-            </div>
-            <div className="text-construct-semantic-success">
-              VITE v6.0 ready in 342 ms
-            </div>
-            <div className="text-construct-accent-primary">
-              ➜ Local: http://localhost:5173/
-            </div>
-            <div className="text-construct-text-muted mt-2">
-              $ cargo tauri dev
-            </div>
-            <div className="text-construct-text-primary">
-              Running ConstructApp...
-            </div>
-            <div className="text-construct-text-muted animate-pulse">_</div>
-          </div>
-        )}
-
-        {activeTab === "problems" && (
-          <div className="text-xs p-3">
-            <div className="flex items-center py-1.5 px-2 text-construct-semantic-success border-b border-construct-border">
-              <ListChecks size={14} className="mr-2" />
-              No problems detected
-            </div>
-          </div>
-        )}
-
-        {activeTab === "chat" && (
-          <div className="text-xs text-construct-text-muted p-3">
-            <p>AI Assistant chat panel.</p>
-            <div className="mt-3 flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="Ask anything..."
-                className="flex-1 h-7 px-2 bg-construct-bg-primary border border-construct-border rounded text-xs text-construct-text-primary placeholder-construct-text-muted outline-none focus:border-construct-accent-primary transition-colors"
-              />
-              <button className="h-7 px-3 bg-construct-accent-primary hover:bg-construct-accent-primary-primaryHover text-construct-bg-primary-tertiary rounded text-xs font-medium transition-colors">
-                Send
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "autonomous" && <AutonomousPanel />}
-        {activeTab === "agent" && <AgentPanel />}
-        {activeTab === "memory" && <MemoryPanel />}
-        {activeTab === "skills" && <SkillMarketplace />}
-        {activeTab === "mcp" && <MCPConnector />}
-        {activeTab === "screen" && <ScreenControl />}
-        {activeTab === "agents" && <MultiAgentPanel />}
+      {/* Content Area */}
+      <div
+        style={{
+          flex: 1,
+          overflow: "auto",
+          backgroundColor: COLORS.surface1,
+        }}
+      >
+        {renderContent()}
       </div>
     </div>
   );

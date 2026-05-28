@@ -1,132 +1,145 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Construct — Multi-Agent Team</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script>tailwind.config={theme:{extend:{colors:{c:{bg0:'#0a0a0f',bg1:'#12121a',bg2:'#1a1a25',bg3:'#22222f',accent:'#6366f1',accent2:'#8b5cf6',text:'#f1f5f9',text2:'#94a3b8',muted:'#64748b',ok:'#10b981',warn:'#f59e0b',err:'#ef4444',info:'#60a5fa',bdr:'rgba(255,255,255,0.06)',agent:{code:'#6366f1',legal:'#f43f5e',sec:'#10b981',ui:'#ec4899',devops:'#f59e0b',test:'#06b6d4',research:'#8b5cf6'}}},fontFamily:{sans:['Inter','system-ui']}}}}</script>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',system-ui,sans-serif;background:#0a0a0f;color:#f1f5f9;min-height:100vh;padding:20px}
-.glass{background:rgba(17,17,27,0.7);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.06);border-radius:16px}
-.pulse-glow{animation:pulseGlow 2s ease-in-out infinite}@keyframes pulseGlow{0%,100%{box-shadow:0 0 5px rgba(99,102,241,0.2)}50%{box-shadow:0 0 15px rgba(99,102,241,0.4)}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Construct — Agent Team</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.4; background: #0c0c10; color: #e8e8ec; padding: 24px; }
+    .panel { max-width: 1200px; margin: 0 auto; }
+    .border-t { border-top: 1px solid rgba(255,255,255,0.04); }
+    .header { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b73; padding: 6px 0; }
+    .goal { font-size: 12px; font-weight: 600; padding: 6px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    th { text-align: left; padding: 5px 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b73; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    td { padding: 4px 8px; color: #94949c; font-variant-numeric: tabular-nums; }
+    tr:hover td { background: #1a1a24; }
+    .role-code { color: #6366f1; }
+    .role-sec { color: #10b981; }
+    .role-ui { color: #f59e0b; }
+    .role-dev { color: #ef4444; }
+    .role-test { color: #60a5fa; }
+    .role-res { color: #c084fc; }
+    .role-pm { color: #ec4899; }
+    .st-working { color: #6366f1; }
+    .st-idle { color: #4a4a52; }
+    .badge { display: inline-block; padding: 1px 4px; border-radius: 2px; font-size: 9px; background: #1a1a24; }
+    .msg { font-size: 11px; font-variant-numeric: tabular-nums; padding: 2px 0; }
+    .msg .ts { color: #4a4a52; }
+    .msg .from { color: #94949c; }
+    .msg .arrow { color: #4a4a52; }
+    .msg .to { color: #94949c; }
+    .msg .type { font-size: 9px; padding: 1px 3px; border-radius: 2px; background: #1a1a24; margin: 0 4px; }
+    .msg .type-req { color: #60a5fa; }
+    .msg .type-res { color: #10b981; }
+    .msg .type-cmp { color: #6366f1; }
+    .msg .type-err { color: #ef4444; }
+    .msg .body { color: #94949c; }
+    .input-line { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12px; border-top: 1px solid rgba(255,255,255,0.04); margin-top: 8px; }
+    .input-line .prompt { color: #6366f1; }
+    .input-line input { flex: 1; background: transparent; border: none; outline: none; color: #e8e8ec; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  </style>
 </head>
 <body>
-<div class="max-w-6xl mx-auto space-y-4">
-
-<!-- Header -->
-<div class="flex items-center justify-between">
-  <div><h1 class="text-xl font-bold text-c-text">Agent Team</h1><p class="text-xs text-c-muted mt-0.5">Multi-agent collaboration for: Build authentication system</p></div>
-  <button class="px-3 py-1.5 rounded-lg text-xs font-medium bg-c-accent/20 text-c-accent border border-c-accent/30">+ Create Team</button>
-</div>
-
-<!-- Agent Roster -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-  <div class="glass p-3">
-    <div class="flex items-center gap-2 mb-2">
-      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background:rgba(99,102,241,0.2);color:#818cf8">CE</div>
-      <div><div class="text-xs font-semibold text-c-text">Code Engineer</div><div class="text-[9px] text-c-muted">Primary coding</div></div>
-      <div class="ml-auto w-2 h-2 rounded-full bg-c-ok pulse-glow"></div>
-    </div>
-    <div class="text-[10px] text-c-text2 mb-1">Writing auth middleware</div>
-    <div class="w-full h-1 bg-white/10 rounded-full"><div class="h-full rounded-full bg-c-agent-code" style="width:65%"></div></div>
-  </div>
-  <div class="glass p-3">
-    <div class="flex items-center gap-2 mb-2">
-      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background:rgba(16,185,129,0.2);color:#34d399">SA</div>
-      <div><div class="text-xs font-semibold text-c-text">Security Auditor</div><div class="text-[9px] text-c-muted">Security review</div></div>
-      <div class="ml-auto w-2 h-2 rounded-full bg-c-ok pulse-glow"></div>
-    </div>
-    <div class="text-[10px] text-c-text2 mb-1">Reviewing JWT implementation</div>
-    <div class="w-full h-1 bg-white/10 rounded-full"><div class="h-full rounded-full bg-c-agent-sec" style="width:40%"></div></div>
-  </div>
-  <div class="glass p-3">
-    <div class="flex items-center gap-2 mb-2">
-      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background:rgba(6,182,212,0.2);color:#22d3ee">TE</div>
-      <div><div class="text-xs font-semibold text-c-text">Test Engineer</div><div class="text-[9px] text-c-muted">Testing</div></div>
-      <div class="ml-auto w-2 h-2 rounded-full bg-c-warn"></div>
-    </div>
-    <div class="text-[10px] text-c-text2 mb-1">Waiting for code to test</div>
-    <div class="w-full h-1 bg-white/10 rounded-full"><div class="h-full rounded-full bg-c-agent-test" style="width:10%"></div></div>
-  </div>
-  <div class="glass p-3">
-    <div class="flex items-center gap-2 mb-2">
-      <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background:rgba(139,92,246,0.2);color:#a78bfa">RE</div>
-      <div><div class="text-xs font-semibold text-c-text">Researcher</div><div class="text-[9px] text-c-muted">Research</div></div>
-      <div class="ml-auto w-2 h-2 rounded-full bg-c-muted"></div>
-    </div>
-    <div class="text-[10px] text-c-text2 mb-1">Best practices for auth</div>
-    <div class="w-full h-1 bg-white/10 rounded-full"><div class="h-full rounded-full bg-c-agent-research" style="width:85%"></div></div>
-  </div>
-</div>
-
-<!-- Communication Log -->
-<div class="glass p-4">
-  <h3 class="text-[10px] font-semibold text-c-muted uppercase tracking-wider mb-3">Communication Log</h3>
-  <div class="space-y-2 max-h-48 overflow-y-auto">
-    <div class="flex gap-3">
-      <span class="text-[10px] font-mono px-1.5 py-0.5 rounded shrink-0" style="background:rgba(99,102,241,0.15);color:#818cf8">CE</span>
-      <span class="text-[10px] text-c-muted shrink-0">→ SA</span>
-      <span class="text-[11px] text-c-text2 flex-1">Can you review the JWT token handling? I'm using HS256 for now.</span>
-    </div>
-    <div class="flex gap-3">
-      <span class="text-[10px] font-mono px-1.5 py-0.5 rounded shrink-0" style="background:rgba(16,185,129,0.15);color:#34d399">SA</span>
-      <span class="text-[10px] text-c-muted shrink-0">→ CE</span>
-      <span class="text-[11px] text-c-text2 flex-1">HS256 is fine for internal, but use RS256 if you need key rotation. Also add token expiry check.</span>
-    </div>
-    <div class="flex gap-3">
-      <span class="text-[10px] font-mono px-1.5 py-0.5 rounded shrink-0" style="background:rgba(16,185,129,0.15);color:#34d399">SA</span>
-      <span class="text-[10px] text-c-muted shrink-0">→ TE</span>
-      <span class="text-[11px] text-c-text2 flex-1">Code ready for testing. Check: token validation, refresh flow, edge cases with expired tokens.</span>
-    </div>
-    <div class="flex gap-3">
-      <span class="text-[10px] font-mono px-1.5 py-0.5 rounded shrink-0" style="background:rgba(6,182,212,0.15);color:#22d3ee">TE</span>
-      <span class="text-[10px] text-c-muted shrink-0">→ CE</span>
-      <span class="text-[11px] text-c-text2 flex-1">Found issue: refresh token doesn't invalidate old access tokens. Need token blacklist.</span>
-    </div>
-    <div class="flex gap-3">
-      <span class="text-[10px] font-mono px-1.5 py-0.5 rounded shrink-0" style="background:rgba(99,102,241,0.15);color:#818cf8">CE</span>
-      <span class="text-[10px] text-c-muted shrink-0">→ TE</span>
-      <span class="text-[11px] text-c-text2 flex-1">Good catch! I'll add a Redis-based token blacklist. Will push fix in 2 min.</span>
-    </div>
-  </div>
-</div>
-
-<!-- Task Board -->
-<div class="glass p-4">
-  <h3 class="text-[10px] font-semibold text-c-muted uppercase tracking-wider mb-3">Task Board</h3>
-  <div class="grid grid-cols-4 gap-3">
-    <div>
-      <div class="text-[10px] font-medium text-c-muted mb-2 flex items-center gap-1"><div class="w-1.5 h-1.5 rounded-full bg-c-muted"></div>Pending</div>
-      <div class="space-y-1.5">
-        <div class="p-2 rounded-lg bg-c-bg2 border border-c-bdr text-[10px] text-c-text2">Set up Redis for token blacklist</div>
-        <div class="p-2 rounded-lg bg-c-bg2 border border-c-bdr text-[10px] text-c-text2">Add rate limiting middleware</div>
+  <div class="panel">
+    <div class="header">AGENT TEAM</div>
+    <div class="border-t"></div>
+    <div class="goal">GOAL: build saas dashboard with auth, billing, analytics</div>
+    <div class="border-t"></div>
+    <table>
+      <thead><tr><th>Role</th><th>Status</th><th>Task</th><th>Progress</th><th>Time</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="role-code">code</td>
+          <td class="st-working">working</td>
+          <td>DashboardLayout.tsx</td>
+          <td>[====      ] 67%</td>
+          <td>00:32</td>
+        </tr>
+        <tr>
+          <td class="role-sec">security</td>
+          <td class="st-idle">idle</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td class="role-ui">ui</td>
+          <td class="st-idle">idle</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td class="role-dev">devops</td>
+          <td class="st-idle">idle</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td class="role-test">test</td>
+          <td class="st-idle">idle</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td class="role-res">research</td>
+          <td class="st-idle">idle</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+        <tr>
+          <td class="role-pm">pm</td>
+          <td class="st-idle">idle</td>
+          <td>--</td>
+          <td>--</td>
+          <td>--</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="border-t" style="margin-top: 8px;"></div>
+    <div class="header">MESSAGES</div>
+    <div style="padding: 4px 0;">
+      <div class="msg">
+        <span class="ts">14:32:05</span>
+        <span class="from">code</span> <span class="arrow">&rarr;</span> <span class="to">security</span>
+        <span class="type type-req">REQ</span>
+        <span class="body">review auth implementation</span>
+      </div>
+      <div class="msg">
+        <span class="ts">14:32:08</span>
+        <span class="from">security</span> <span class="arrow">&rarr;</span> <span class="to">code</span>
+        <span class="type type-res">RES</span>
+        <span class="body">approved, no issues found</span>
+      </div>
+      <div class="msg">
+        <span class="ts">14:32:12</span>
+        <span class="from">code</span> <span class="arrow">&rarr;</span> <span class="to">pm</span>
+        <span class="type type-cmp">CMP</span>
+        <span class="body">DashboardLayout.tsx complete</span>
+      </div>
+      <div class="msg">
+        <span class="ts">14:32:15</span>
+        <span class="from">code</span> <span class="arrow">&rarr;</span> <span class="to">test</span>
+        <span class="type type-req">REQ</span>
+        <span class="body">write tests for DashboardLayout</span>
+      </div>
+      <div class="msg">
+        <span class="ts">14:32:18</span>
+        <span class="from">test</span> <span class="arrow">&rarr;</span> <span class="to">code</span>
+        <span class="type type-err">ERR</span>
+        <span class="body">missing test for sidebar collapse</span>
       </div>
     </div>
-    <div>
-      <div class="text-[10px] font-medium text-c-accent mb-2 flex items-center gap-1"><div class="w-1.5 h-1.5 rounded-full bg-c-accent"></div>Active</div>
-      <div class="space-y-1.5">
-        <div class="p-2 rounded-lg bg-c-accent/10 border border-c-accent/20 text-[10px] text-c-text">Write auth middleware <span class="text-c-agent-code ml-1">CE</span></div>
-        <div class="p-2 rounded-lg bg-c-accent/10 border border-c-accent/20 text-[10px] text-c-text">Review JWT security <span class="text-c-agent-sec ml-1">SA</span></div>
-      </div>
-    </div>
-    <div>
-      <div class="text-[10px] font-medium text-c-ok mb-2 flex items-center gap-1"><div class="w-1.5 h-1.5 rounded-full bg-c-ok"></div>Completed</div>
-      <div class="space-y-1.5">
-        <div class="p-2 rounded-lg bg-c-ok/10 border border-c-ok/20 text-[10px] text-c-text2 line-through">Design auth schema <span class="text-c-agent-research ml-1">RE</span></div>
-        <div class="p-2 rounded-lg bg-c-ok/10 border border-c-ok/20 text-[10px] text-c-text2 line-through">Research best practices <span class="text-c-agent-research ml-1">RE</span></div>
-      </div>
-    </div>
-    <div>
-      <div class="text-[10px] font-medium text-c-err mb-2 flex items-center gap-1"><div class="w-1.5 h-1.5 rounded-full bg-c-err"></div>Failed</div>
-      <div class="space-y-1.5">
-        <div class="p-2 rounded-lg bg-c-err/10 border border-c-err/20 text-[10px] text-c-text2">OAuth integration <span class="text-c-agent-code ml-1">CE</span></div>
-      </div>
+    <div class="input-line">
+      <span class="prompt">&gt;</span>
+      <input type="text" value="@security review DashboardLayout.tsx" autofocus>
     </div>
   </div>
-</div>
-
-</div>
 </body>
 </html>

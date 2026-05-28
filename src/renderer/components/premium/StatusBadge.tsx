@@ -1,83 +1,31 @@
-import { motion } from "framer-motion";
-
 interface StatusBadgeProps {
-  status: "active" | "idle" | "error" | "warning" | "connected" | "disconnected";
+  status: "idle" | "working" | "success" | "warning" | "error";
   text?: string;
-  pulse?: boolean;
   className?: string;
 }
 
 export function StatusBadge({
   status,
   text,
-  pulse = true,
   className = "",
 }: StatusBadgeProps) {
-  const statusConfig = {
-    active: {
-      color: "#10b981",
-      bg: "rgba(166,227,161,0.12)",
-      border: "rgba(166,227,161,0.25)",
-      label: text || "Active",
-    },
-    connected: {
-      color: "#10b981",
-      bg: "rgba(166,227,161,0.12)",
-      border: "rgba(166,227,161,0.25)",
-      label: text || "Connected",
-    },
-    idle: {
-      color: "#64748b",
-      bg: "rgba(108,112,134,0.12)",
-      border: "rgba(108,112,134,0.25)",
-      label: text || "Idle",
-    },
-    disconnected: {
-      color: "#64748b",
-      bg: "rgba(108,112,134,0.12)",
-      border: "rgba(108,112,134,0.25)",
-      label: text || "Disconnected",
-    },
-    error: {
-      color: "#ef4444",
-      bg: "rgba(243,139,168,0.12)",
-      border: "rgba(243,139,168,0.25)",
-      label: text || "Error",
-    },
-    warning: {
-      color: "#f59e0b",
-      bg: "rgba(249,226,175,0.12)",
-      border: "rgba(249,226,175,0.25)",
-      label: text || "Warning",
-    },
+  const config = {
+    idle:    { color: "#555",  label: text || "idle" },
+    working: { color: "#6366f1", label: text || "working" },
+    success: { color: "#10b981", label: text || "success" },
+    warning: { color: "#f59e0b", label: text || "warning" },
+    error:   { color: "#ef4444", label: text || "error" },
   };
 
-  const config = statusConfig[status];
+  const c = config[status];
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium border ${className}`}
-      style={{
-        backgroundColor: config.bg,
-        borderColor: config.border,
-        color: config.color,
-      }}
+      className={`inline-flex items-center gap-1 font-mono text-[9px] ${className}`}
+      style={{ color: c.color }}
     >
-      <span className="relative flex h-1.5 w-1.5">
-        {pulse && (
-          <motion.span
-            className="absolute inline-flex h-full w-full rounded-full opacity-75"
-            style={{ backgroundColor: config.color }}
-            animate={{ scale: [1, 2], opacity: [0.75, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
-          />
-        )}
-        <span
-          className="relative inline-flex rounded-full h-1.5 w-1.5"
-          style={{ backgroundColor: config.color }}
-        />
-      </span>
-      {config.label}
+      <span style={{ color: c.color }}>●</span>
+      {c.label}
     </span>
   );
 }

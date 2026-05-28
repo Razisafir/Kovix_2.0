@@ -1,146 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Construct — Skill Marketplace</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script>tailwind.config={theme:{extend:{colors:{c:{bg0:'#0a0a0f',bg1:'#12121a',bg2:'#1a1a25',bg3:'#22222f',accent:'#6366f1',accent2:'#8b5cf6',accentH:'#818cf8',text:'#f1f5f9',text2:'#94a3b8',muted:'#64748b',ok:'#10b981',warn:'#f59e0b',err:'#ef4444',info:'#60a5fa',bdr:'rgba(255,255,255,0.06)'}},fontFamily:{sans:['Inter','system-ui']}}}}</script>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',system-ui,sans-serif;background:#0a0a0f;color:#f1f5f9;min-height:100vh;padding:20px}
-.glass{background:rgba(17,17,27,0.7);backdrop-filter:blur(24px) saturate(180%);border:1px solid rgba(255,255,255,0.06);border-radius:20px;box-shadow:0 8px 32px rgba(0,0,0,0.4);transition:all .3s}
-.glass:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(99,102,241,0.15)}
-.glow-btn{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 0 20px rgba(99,102,241,0.3)}
-.glow-btn:hover{box-shadow:0 0 30px rgba(99,102,241,0.5)}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Construct — Skills</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.4; background: #0c0c10; color: #e8e8ec; padding: 24px; }
+    .panel { max-width: 1200px; margin: 0 auto; }
+    .border-t { border-top: 1px solid rgba(255,255,255,0.04); }
+    .header { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b73; padding: 6px 0; }
+    .tabs { display: flex; gap: 2px; padding: 6px 0; }
+    .tab { padding: 3px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #4a4a52; cursor: pointer; border-bottom: 2px solid transparent; }
+    .tab:hover { color: #6b6b73; background: #1a1a24; }
+    .tab.active { color: #e8e8ec; background: #1a1a24; border-bottom-color: #6366f1; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    th { text-align: left; padding: 6px 8px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b73; font-weight: 500; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    td { padding: 5px 8px; color: #94949c; white-space: nowrap; }
+    tr:hover td { background: #1a1a24; }
+    .cat { display: inline-block; padding: 1px 4px; background: #1a1a24; border-radius: 2px; font-size: 9px; text-transform: uppercase; color: #94949c; }
+    .btn-s { display: inline-block; padding: 1px 4px; background: #1a1a24; border-radius: 2px; font-size: 9px; cursor: pointer; color: #6b6b73; margin-right: 2px; }
+    .btn-s:hover { background: #22222e; color: #e8e8ec; }
+    .installed-y { color: #4a4a52; }
+    .installed-n { color: #6366f1; }
+    .detail { background: #1a1a24; padding: 12px; margin-top: 8px; }
+    .detail .title { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+    .detail .row { font-size: 10px; color: #6b6b73; padding: 2px 0; }
+    .detail .step { font-size: 11px; color: #94949c; padding: 1px 0; }
+    .detail .step::before { content: attr(data-n) ". "; color: #6366f1; }
+    .gh-bar { display: flex; gap: 8px; padding: 6px 0; align-items: center; }
+    .gh-bar input { flex: 1; background: #12121a; border: 1px solid rgba(255,255,255,0.04); padding: 4px 8px; color: #94949c; font-family: 'JetBrains Mono', monospace; font-size: 11px; outline: none; }
+    .gh-bar input:focus { border-color: rgba(99,102,241,0.3); }
+  </style>
 </head>
 <body>
-<div class="max-w-6xl mx-auto space-y-4">
-
-<!-- Header -->
-<div class="flex items-center justify-between">
-  <div><h1 class="text-xl font-bold text-c-text">Skill Marketplace</h1><p class="text-xs text-c-muted mt-0.5">20 bundled skills + community marketplace</p></div>
-  <div class="flex items-center gap-2">
-    <div class="flex items-center gap-2 px-3 py-1.5 bg-c-bg2 rounded-xl border border-c-bdr">
-      <svg width="14" height="14" class="text-c-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" placeholder="Search skills..." class="bg-transparent text-xs text-c-text outline-none w-40 placeholder-c-muted">
+  <div class="panel">
+    <div class="header">SKILLS</div>
+    <div class="border-t"></div>
+    <div class="tabs">
+      <div class="tab active">All</div>
+      <div class="tab">Coding</div>
+      <div class="tab">Design</div>
+      <div class="tab">Research</div>
+      <div class="tab">DevOps</div>
+      <div class="tab">Security</div>
+      <div class="tab">Testing</div>
     </div>
-    <button class="glow-btn px-4 py-1.5 rounded-xl text-xs font-semibold text-white flex items-center gap-1.5"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload</button>
-  </div>
-</div>
-
-<!-- Category Tabs -->
-<div class="flex gap-2 overflow-x-auto pb-1">
-  <button class="px-3 py-1 rounded-lg text-xs font-medium bg-c-accent/20 text-c-accent border border-c-accent/30">All</button>
-  <button class="px-3 py-1 rounded-lg text-xs font-medium text-c-muted hover:bg-white/5 border border-transparent">Coding</button>
-  <button class="px-3 py-1 rounded-lg text-xs font-medium text-c-muted hover:bg-white/5 border border-transparent">Design</button>
-  <button class="px-3 py-1 rounded-lg text-xs font-medium text-c-muted hover:bg-white/5 border border-transparent">Research</button>
-  <button class="px-3 py-1 rounded-lg text-xs font-medium text-c-muted hover:bg-white/5 border border-transparent">DevOps</button>
-  <button class="px-3 py-1 rounded-lg text-xs font-medium text-c-muted hover:bg-white/5 border border-transparent">Security</button>
-  <button class="px-3 py-1 rounded-lg text-xs font-medium text-c-muted hover:bg-white/5 border border-transparent">Testing</button>
-</div>
-
-<!-- Skill Grid -->
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-
-<!-- Skill Card 1 -->
-<div class="glass p-4 skill-card">
-  <div class="flex items-start justify-between mb-2">
-    <span class="px-2 py-0.5 rounded text-[9px] font-medium bg-c-ok/15 text-c-ok border border-c-ok/25">coding</span>
-    <div class="flex items-center gap-1"><svg width="10" height="10" class="text-c-warn" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span class="text-[10px] text-c-muted">4.9</span></div>
-  </div>
-  <h3 class="text-sm font-semibold text-c-text mb-1">Spec-Driven Development</h3>
-  <p class="text-[11px] text-c-muted leading-relaxed mb-3">Write a detailed specification first, then implement against it. Ensures clear requirements and reduces rework.</p>
-  <div class="flex items-center justify-between">
-    <span class="text-[10px] text-c-muted">8 steps</span>
-    <button class="glow-btn px-3 py-1 rounded-lg text-[10px] font-medium text-white">Install</button>
-  </div>
-</div>
-
-<!-- Skill Card 2 -->
-<div class="glass p-4 skill-card">
-  <div class="flex items-start justify-between mb-2">
-    <span class="px-2 py-0.5 rounded text-[9px] font-medium bg-c-info/15 text-c-info border border-c-info/25">testing</span>
-    <div class="flex items-center gap-1"><svg width="10" height="10" class="text-c-warn" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span class="text-[10px] text-c-muted">4.8</span></div>
-  </div>
-  <h3 class="text-sm font-semibold text-c-text mb-1">Test-Driven Development</h3>
-  <p class="text-[11px] text-c-muted leading-relaxed mb-3">Write failing tests first, implement minimum code to pass, then refactor. Red-green-refactor cycle.</p>
-  <div class="flex items-center justify-between">
-    <span class="text-[10px] text-c-muted">6 steps</span>
-    <button class="glow-btn px-3 py-1 rounded-lg text-[10px] font-medium text-white">Install</button>
-  </div>
-</div>
-
-<!-- Skill Card 3 -->
-<div class="glass p-4 skill-card">
-  <div class="flex items-start justify-between mb-2">
-    <span class="px-2 py-0.5 rounded text-[9px] font-medium bg-c-accent/15 text-c-accent border border-c-accent/25">design</span>
-    <div class="flex items-center gap-1"><svg width="10" height="10" class="text-c-warn" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span class="text-[10px] text-c-muted">4.7</span></div>
-  </div>
-  <h3 class="text-sm font-semibold text-c-text mb-1">Frontend UI Engineering</h3>
-  <p class="text-[11px] text-c-muted leading-relaxed mb-3">Build React components with TypeScript, Tailwind CSS, and accessibility. Component-first approach.</p>
-  <div class="flex items-center justify-between">
-    <span class="text-[10px] text-c-muted">7 steps</span>
-    <button class="glow-btn px-3 py-1 rounded-lg text-[10px] font-medium text-white">Install</button>
-  </div>
-</div>
-
-<!-- Skill Card 4 -->
-<div class="glass p-4 skill-card">
-  <div class="flex items-start justify-between mb-2">
-    <span class="px-2 py-0.5 rounded text-[9px] font-medium bg-c-warn/15 text-c-warn border border-c-warn/25">devops</span>
-    <div class="flex items-center gap-1"><svg width="10" height="10" class="text-c-warn" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span class="text-[10px] text-c-muted">4.6</span></div>
-  </div>
-  <h3 class="text-sm font-semibold text-c-text mb-1">CI/CD & Automation</h3>
-  <p class="text-[11px] text-c-muted leading-relaxed mb-3">GitHub Actions, Docker, deployment pipelines. Automate testing, building, and deployment.</p>
-  <div class="flex items-center justify-between">
-    <span class="text-[10px] text-c-muted">5 steps</span>
-    <button class="glow-btn px-3 py-1 rounded-lg text-[10px] font-medium text-white">Install</button>
-  </div>
-</div>
-
-<!-- Skill Card 5 -->
-<div class="glass p-4 skill-card">
-  <div class="flex items-start justify-between mb-2">
-    <span class="px-2 py-0.5 rounded text-[9px] font-medium bg-c-ok/15 text-c-ok border border-c-ok/25">security</span>
-    <div class="flex items-center gap-1"><svg width="10" height="10" class="text-c-warn" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span class="text-[10px] text-c-muted">4.9</span></div>
-  </div>
-  <h3 class="text-sm font-semibold text-c-text mb-1">Security & Hardening</h3>
-  <p class="text-[11px] text-c-muted leading-relaxed mb-3">OWASP checks, secrets scanning, input validation, dependency auditing. Apply defense in depth.</p>
-  <div class="flex items-center justify-between">
-    <span class="text-[10px] text-c-muted">8 steps</span>
-    <button class="glow-btn px-3 py-1 rounded-lg text-[10px] font-medium text-white">Install</button>
-  </div>
-</div>
-
-<!-- Skill Card 6 -->
-<div class="glass p-4 skill-card">
-  <div class="flex items-start justify-between mb-2">
-    <span class="px-2 py-0.5 rounded text-[9px] font-medium bg-c-info/15 text-c-info border border-c-info/25">testing</span>
-    <div class="flex items-center gap-1"><svg width="10" height="10" class="text-c-warn" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg><span class="text-[10px] text-c-muted">4.5</span></div>
-  </div>
-  <h3 class="text-sm font-semibold text-c-text mb-1">Performance Optimization</h3>
-  <p class="text-[11px] text-c-muted leading-relaxed mb-3">Profile, benchmark, optimize. Identify bottlenecks, apply caching, reduce bundle size.</p>
-  <div class="flex items-center justify-between">
-    <span class="text-[10px] text-c-muted">6 steps</span>
-    <button class="glow-btn px-3 py-1 rounded-lg text-[10px] font-medium text-white">Install</button>
-  </div>
-</div>
-
-</div>
-
-<!-- Install from GitHub -->
-<div class="glass p-4 mt-4">
-  <h3 class="text-sm font-semibold text-c-text mb-2">Install from GitHub</h3>
-  <div class="flex items-center gap-2">
-    <div class="flex items-center gap-2 flex-1 px-3 py-2 bg-c-bg2 rounded-xl border border-c-bdr">
-      <svg width="14" height="14" class="text-c-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-      <input type="text" placeholder="owner/repo" class="bg-transparent text-xs text-c-text outline-none flex-1 placeholder-c-muted">
+    <div class="border-t"></div>
+    <table>
+      <thead><tr><th>Name</th><th>Category</th><th>Version</th><th>Installed</th><th>Actions</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="color:#e8e8ec;">spec-driven-development</td>
+          <td><span class="cat">coding</span></td>
+          <td class="tab-nums">1.2.0</td>
+          <td class="installed-y">yes</td>
+          <td><span class="btn-s">VIEW</span><span class="btn-s">RUN</span></td>
+        </tr>
+        <tr>
+          <td style="color:#e8e8ec;">test-driven-development</td>
+          <td><span class="cat">testing</span></td>
+          <td class="tab-nums">1.0.0</td>
+          <td class="installed-y">yes</td>
+          <td><span class="btn-s">VIEW</span><span class="btn-s">RUN</span></td>
+        </tr>
+        <tr>
+          <td style="color:#e8e8ec;">security-hardening</td>
+          <td><span class="cat">security</span></td>
+          <td class="tab-nums">2.1.0</td>
+          <td class="installed-y">yes</td>
+          <td><span class="btn-s">VIEW</span><span class="btn-s">RUN</span></td>
+        </tr>
+        <tr>
+          <td style="color:#e8e8ec;">frontend-ui-engineering</td>
+          <td><span class="cat">design</span></td>
+          <td class="tab-nums">1.3.0</td>
+          <td class="installed-n">no</td>
+          <td><span class="btn-s">VIEW</span><span class="btn-s">INST</span></td>
+        </tr>
+        <tr>
+          <td style="color:#e8e8ec;">ci-cd-automation</td>
+          <td><span class="cat">devops</span></td>
+          <td class="tab-nums">1.0.0</td>
+          <td class="installed-n">no</td>
+          <td><span class="btn-s">VIEW</span><span class="btn-s">INST</span></td>
+        </tr>
+        <tr>
+          <td style="color:#e8e8ec;">performance-optimization</td>
+          <td><span class="cat">testing</span></td>
+          <td class="tab-nums">1.1.0</td>
+          <td class="installed-y">yes</td>
+          <td><span class="btn-s">VIEW</span><span class="btn-s">RUN</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="border-t"></div>
+    <div class="gh-bar">
+      <span class="header" style="padding:0;">INSTALL FROM GITHUB</span>
+      <input type="text" placeholder="owner/repo" value="construct-ai/skills">
+      <span class="btn-s" style="padding:4px 10px;">INSTALL</span>
     </div>
-    <button class="glow-btn px-4 py-2 rounded-xl text-xs font-semibold text-white">Install</button>
+    <div class="border-t"></div>
+    <div class="header" style="margin-top:8px;">SELECTED: spec-driven-development</div>
+    <div class="detail">
+      <div class="title">spec-driven-development</div>
+      <div class="row">CATEGORY: coding | VERSION: 1.2.0 | AUTHOR: construct</div>
+      <div class="border-t" style="margin:6px 0;"></div>
+      <div class="header" style="padding:4px 0;">Steps</div>
+      <div class="step" data-n="1">define specification</div>
+      <div class="step" data-n="2">review specification</div>
+      <div class="step" data-n="3">implement against specification</div>
+      <div class="step" data-n="4">verify against specification</div>
+      <div class="step" data-n="5">refactor if needed</div>
+      <div class="step" data-n="6">document changes</div>
+      <div class="border-t" style="margin:6px 0;"></div>
+      <div class="header" style="padding:4px 0;">Tools</div>
+      <div class="row">file_tools, code_tools, shell_tools</div>
+      <div class="border-t" style="margin:6px 0;"></div>
+      <div class="header" style="padding:4px 0;">Examples</div>
+      <div class="row">3 examples available</div>
+    </div>
   </div>
-</div>
-
-</div>
 </body>
 </html>

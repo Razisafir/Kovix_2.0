@@ -1,738 +1,515 @@
-import { useState, useRef, useEffect, useCallback } from "react";
-import {
-  MessagesSquare,
-  FileCode,
-  Settings,
-  Search,
-  Brain,
-  Send,
-  ChevronDown,
-  ChevronRight,
-  User,
-  Bot,
-  Cpu,
-  GitCommit,
-  Clock,
-  Sparkles,
-} from "lucide-react";
-import { invoke } from "@tauri-apps/api/core";
-import useAppStore from "../stores/useAppStore";
-import type {
-  ConversationMessage,
-  ContextItem,
-  Preference,
-  CodeEvent,
-  MemoryTab,
-} from "../types/memory";
+import { useState, useCallback } from "react";
 
-// ─── Tauri Command Wrappers ───────────────────────────────────────
+/* ─────────────────────── types ─────────────────────── */
 
-const recordConversation = async (msg: ConversationMessage) => {
-  await invoke("record_conversation", { message: msg });
-};
+type MemoryType = "EPI" | "SEM" | "PRC" | "REF";
 
-const recallContext = async (
-  query: string,
-  limit?: number
-): Promise<ContextItem[]> => {
-  return await invoke("recall_context", { query, limit });
-};
-
-const getPreferences = async (): Promise<Preference[]> => {
-  return await invoke("get_preferences");
-};
-
-// ─── Helpers ──────────────────────────────────────────────────────
-
-function formatTime(ts: number): string {
-  const d = new Date(ts);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+interface MemoryEntry {
+  id: string;
+  type: MemoryType;
+  timestamp: string;
+  relativeTime: string;
+  source: string;
+  content: string;
+  fullContent: string;
+  confidence?: number;
+  relatedFiles?: string[];
 }
 
-function formatDate(ts: number): string {
-  const d = new Date(ts);
-  return d.toLocaleDateString([], { month: "short", day: "numeric" });
+interface MemoryState {
+  entries: MemoryEntry[];
+  selectedId: string | null;
+  query: string;
 }
 
-function generateId(): string {
-  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-}
+/* ─────────────────────── colors ─────────────────────── */
 
-// ─── Demo Data ────────────────────────────────────────────────────
+const C = {
+  base: "#0c0c10",
+  s1: "#12121a",
+  s2: "#1a1a24",
+  s3: "#22222e",
+  accent: "#6366f1",
+  t1: "#e8e8ec",
+  t2: "#94949c",
+  t3: "#6b6b73",
+  t4: "#4a4a52",
+  epi: "#3b82f6",
+  sem: "#a855f7",
+  prc: "#f59e0b",
+  ref: "#22c55e",
+};
 
-const DEMO_CONVERSATIONS: ConversationMessage[] = [
+const typeColor: Record<MemoryType, string> = {
+  EPI: C.epi,
+  SEM: C.sem,
+  PRC: C.prc,
+  REF: C.ref,
+};
+
+/* ─────────────────────── demo data ─────────────────────── */
+
+const DEMO_ENTRIES: MemoryEntry[] = [
   {
     id: "1",
-    timestamp: Date.now() - 1000 * 60 * 30,
-    role: "user",
-    content:
-      "Can you help me refactor the authentication middleware to use JWT tokens instead of session cookies?",
+    type: "EPI",
+    timestamp: "2026-05-28T14:32:00Z",
+    relativeTime: "2h ago",
+    source: "auth.ts",
+    content: "implemented JWT middleware with 15min expiry",
+    fullContent:
+      "Implemented JWT authentication middleware using jsonwebtoken library. Token expiry set to 15 minutes based on previous project preferences. RS256 algorithm selected for asymmetric signing. Refresh token rotation implemented with httpOnly cookie storage.",
+    confidence: 0.94,
+    relatedFiles: ["middleware.ts", "types.ts", "api.ts"],
   },
   {
     id: "2",
-    timestamp: Date.now() - 1000 * 60 * 29,
-    role: "assistant",
-    content:
-      "I'll help you refactor the auth middleware to use JWT. First, let's look at the current session-based implementation and then create a JWT strategy.",
+    type: "EPI",
+    timestamp: "2026-05-28T13:15:00Z",
+    relativeTime: "3h ago",
+    source: "cors.ts",
+    content: "fixed CORS configuration for staging deployment",
+    fullContent:
+      "Updated CORS configuration to allow staging domain origins. Added allowedHeaders for Authorization and Content-Type. Preflight cache duration set to 86400 seconds.",
+    confidence: 0.91,
+    relatedFiles: ["server.ts", "config.ts"],
   },
   {
     id: "3",
-    timestamp: Date.now() - 1000 * 60 * 25,
-    role: "system",
-    content:
-      "Code event recorded: Modified src/middleware/auth.ts — switched from express-session to jsonwebtoken",
+    type: "SEM",
+    timestamp: "2026-05-27T16:00:00Z",
+    relativeTime: "1d ago",
+    source: "--",
+    content: "react hooks patterns for data fetching",
+    fullContent:
+      "Extracted common pattern for data fetching with useSWR. Caching strategy uses stale-while-revalidate with 5min deduping interval. Error retry uses exponential backoff capped at 30 seconds.",
+    confidence: 0.87,
+    relatedFiles: ["useFetch.ts", "useCache.ts"],
   },
   {
     id: "4",
-    timestamp: Date.now() - 1000 * 60 * 20,
-    role: "user",
-    content:
-      "Great! Now let's add refresh token rotation and secure token storage.",
+    type: "PRC",
+    timestamp: "2026-05-26T09:20:00Z",
+    relativeTime: "2d ago",
+    source: "--",
+    content: "prisma schema naming conventions: camelCase fields, PascalCase models",
+    fullContent:
+      "Established Prisma schema conventions: model names in PascalCase (e.g., UserProfile), field names in camelCase (e.g., createdAt), table names in snake_case via @@map directive. Enum values in SCREAMING_SNAKE_CASE.",
+    confidence: 0.82,
+    relatedFiles: ["schema.prisma"],
   },
   {
     id: "5",
-    timestamp: Date.now() - 1000 * 60 * 15,
-    role: "assistant",
-    content:
-      "Good idea. I'll implement refresh token rotation with a sliding expiration window. The refresh tokens will be stored in an httpOnly cookie.",
+    type: "REF",
+    timestamp: "2026-05-25T11:00:00Z",
+    relativeTime: "3d ago",
+    source: "README.md",
+    content: "project uses pnpm workspace with turbo repo",
+    fullContent:
+      "Monorepo structure using pnpm workspaces with Turborepo for task orchestration. Shared packages: @acme/ui, @acme/utils, @acme/config. Pipeline tasks: build, lint, test, typecheck.",
+    confidence: 0.96,
+    relatedFiles: ["turbo.json", "pnpm-workspace.yaml"],
   },
   {
     id: "6",
-    timestamp: Date.now() - 1000 * 60 * 5,
-    role: "user",
-    content: "Please also add rate limiting for the token refresh endpoint.",
-  },
-  {
-    id: "7",
-    timestamp: Date.now() - 1000 * 60 * 2,
-    role: "assistant",
-    content:
-      "Rate limiting added using express-rate-limit. The refresh endpoint is now capped at 5 requests per minute per IP with a 15-minute block window after exceeded attempts.",
-  },
-];
-
-const DEMO_CODE_EVENTS: CodeEvent[] = [
-  {
-    id: "ce1",
-    timestamp: Date.now() - 1000 * 60 * 60 * 2,
-    file_path: "src/middleware/auth.ts",
-    change_type: "refactor",
-    summary: "Migrated from session-based auth to JWT tokens",
-  },
-  {
-    id: "ce2",
-    timestamp: Date.now() - 1000 * 60 * 45,
-    file_path: "src/routes/login.ts",
-    change_type: "modify",
-    summary: "Updated login route to issue JWT access & refresh tokens",
-  },
-  {
-    id: "ce3",
-    timestamp: Date.now() - 1000 * 60 * 30,
-    file_path: "src/utils/token.ts",
-    change_type: "create",
-    summary: "Created token utilities for sign, verify, and refresh operations",
-  },
-  {
-    id: "ce4",
-    timestamp: Date.now() - 1000 * 60 * 20,
-    file_path: "src/middleware/rateLimit.ts",
-    change_type: "create",
-    summary: "Added rate limiting middleware for auth endpoints",
-  },
-  {
-    id: "ce5",
-    timestamp: Date.now() - 1000 * 60 * 10,
-    file_path: "src/types/auth.d.ts",
-    change_type: "modify",
-    summary: "Extended auth types with JwtPayload and TokenPair interfaces",
-  },
-  {
-    id: "ce6",
-    timestamp: Date.now() - 1000 * 60 * 5,
-    file_path: "src/config/auth.ts",
-    change_type: "refactor",
-    summary: "Consolidated auth configuration into single config object",
+    type: "EPI",
+    timestamp: "2026-05-28T10:00:00Z",
+    relativeTime: "6h ago",
+    source: "billing.ts",
+    content: "integrated stripe webhook handler for subscription events",
+    fullContent:
+      "Stripe webhook endpoint handles checkout.session.completed, invoice.paid, invoice.payment_failed, customer.subscription.updated events. Idempotency enforced via event ID lookup in processed_events table. Signature verification uses stripe-node library with webhook secret from env.",
+    confidence: 0.89,
+    relatedFiles: ["stripe.ts", "webhook.ts", "schema.prisma"],
   },
 ];
 
-const DEMO_PREFERENCES: Preference[] = [
-  {
-    key: "auth.strategy",
-    value: "jwt",
-    confidence: 0.95,
-    last_updated: Date.now() - 1000 * 60 * 60 * 2,
-  },
-  {
-    key: "code.style.semicolons",
-    value: "true",
-    confidence: 0.88,
-    last_updated: Date.now() - 1000 * 60 * 60 * 24,
-  },
-  {
-    key: "framework.backend",
-    value: "express",
-    confidence: 0.92,
-    last_updated: Date.now() - 1000 * 60 * 60 * 5,
-  },
-  {
-    key: "language.primary",
-    value: "typescript",
-    confidence: 0.97,
-    last_updated: Date.now() - 1000 * 60 * 60 * 48,
-  },
-  {
-    key: "db.orm",
-    value: "prisma",
-    confidence: 0.76,
-    last_updated: Date.now() - 1000 * 60 * 60 * 12,
-  },
-  {
-    key: "testing.framework",
-    value: "vitest",
-    confidence: 0.83,
-    last_updated: Date.now() - 1000 * 60 * 60 * 36,
-  },
-];
+/* ─────────────────────── sub-components ─────────────────────── */
 
-const DEMO_SEARCH_RESULTS: ContextItem[] = [
-  {
-    id: "sr1",
-    source: "code_event",
-    content:
-      "Rate limiting middleware uses express-rate-limit with a 5 req/min window...",
-    relevance: 0.94,
-    timestamp: Date.now() - 1000 * 60 * 20,
-  },
-  {
-    id: "sr2",
-    source: "conversation",
-    content:
-      "User requested refresh token rotation with sliding expiration window...",
-    relevance: 0.87,
-    timestamp: Date.now() - 1000 * 60 * 15,
-  },
-  {
-    id: "sr3",
-    source: "preference",
-    content: "Preference: auth.strategy = jwt (confidence: 95%)",
-    relevance: 0.72,
-    timestamp: Date.now() - 1000 * 60 * 60 * 2,
-  },
-  {
-    id: "sr4",
-    source: "code_event",
-    content:
-      "Token utilities support sign, verify, and refresh operations with RS256...",
-    relevance: 0.68,
-    timestamp: Date.now() - 1000 * 60 * 30,
-  },
-];
-
-// ─── Sub-Components ───────────────────────────────────────────────
-
-function RoleBadge({ role }: { role: ConversationMessage["role"] }) {
-  const config = {
-    user: {
-      icon: <User size={10} />,
-      label: "You",
-      classes: "bg-construct-accent-primary/15 text-construct-accent-primary border-construct-accent-primary/25",
-    },
-    assistant: {
-      icon: <Bot size={10} />,
-      label: "AI",
-      classes: "bg-construct-semantic-success/15 text-construct-semantic-success border-construct-semantic-success/25",
-    },
-    system: {
-      icon: <Cpu size={10} />,
-      label: "System",
-      classes: "bg-construct-text-muted/10 text-construct-text-muted border-construct-text-muted/20",
-    },
-  };
-  const c = config[role];
+function TypeBadge({ type }: { type: MemoryType }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium border rounded ${c.classes}`}
+      style={{
+        fontSize: "9px",
+        fontWeight: 700,
+        letterSpacing: "0.06em",
+        color: typeColor[type],
+        backgroundColor: C.s2,
+        borderRadius: "2px",
+        padding: "1px 5px",
+        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+        minWidth: "28px",
+        textAlign: "center",
+        display: "inline-block",
+      }}
     >
-      {c.icon}
-      {c.label}
+      {type}
     </span>
   );
 }
 
-function ChangeTypeBadge({ type }: { type: CodeEvent["change_type"] }) {
-  const config = {
-    create: { label: "CREATE", classes: "bg-construct-semantic-success/15 text-construct-semantic-success border-construct-semantic-success/25" },
-    modify: { label: "MODIFY", classes: "bg-construct-accent-primary/15 text-construct-accent-primary border-construct-accent-primary/25" },
-    delete: { label: "DELETE", classes: "bg-construct-semantic-error/15 text-construct-semantic-error border-construct-semantic-error/25" },
-    refactor: { label: "REFACTOR", classes: "bg-construct-semantic-warning/15 text-construct-semantic-warning border-construct-semantic-warning/25" },
-  };
-  const c = config[type];
+function SearchInput({
+  value,
+  onChange,
+  onSearch,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSearch: () => void;
+}) {
   return (
-    <span
-      className={`inline-flex items-center px-1.5 py-0.5 text-[9px] font-bold tracking-wider border rounded ${c.classes}`}
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+        padding: "6px 12px",
+        borderBottom: "1px solid rgba(255,255,255,0.04)",
+      }}
     >
-      {c.label}
-    </span>
-  );
-}
-
-function SourceBadge({ source }: { source: ContextItem["source"] }) {
-  const config = {
-    conversation: { label: "Conversation", classes: "bg-blue-500/15 text-blue-400 border-blue-500/25" },
-    code_event: { label: "Code", classes: "bg-emerald-500/15 text-emerald-400 border-emerald-500/25" },
-    preference: { label: "Preference", classes: "bg-purple-500/15 text-purple-400 border-purple-500/25" },
-  };
-  const c = config[source];
-  return (
-    <span
-      className={`inline-flex items-center px-1.5 py-0.5 text-[9px] font-medium border rounded ${c.classes}`}
-    >
-      {c.label}
-    </span>
-  );
-}
-
-function ConfidenceBar({ confidence }: { confidence: number }) {
-  const pct = Math.round(confidence * 100);
-  let colorClass = "bg-construct-semantic-success";
-  if (pct < 60) colorClass = "bg-construct-semantic-error";
-  else if (pct < 80) colorClass = "bg-construct-semantic-warning";
-
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex-1 h-1.5 bg-construct-border/50 rounded-full overflow-hidden">
-        <div
-          className={`h-full ${colorClass} rounded-full transition-all duration-500`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <span className="text-[10px] text-construct-text-muted w-8 text-right">
-        {pct}%
+      <span
+        style={{
+          fontSize: "10px",
+          color: C.t4,
+          fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+        }}
+      >
+        QUERY:
       </span>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && onSearch()}
+        style={{
+          flex: 1,
+          backgroundColor: C.base,
+          border: "1px solid rgba(255,255,255,0.04)",
+          outline: "none",
+          fontSize: "11px",
+          color: C.t1,
+          fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+          padding: "3px 8px",
+          borderRadius: "0px",
+          caretColor: C.accent,
+        }}
+        spellCheck={false}
+        autoComplete="off"
+      />
+      <button
+        onClick={onSearch}
+        style={{
+          fontSize: "10px",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          backgroundColor: C.s2,
+          color: C.t2,
+          border: "1px solid rgba(255,255,255,0.04)",
+          borderRadius: "2px",
+          padding: "3px 10px",
+          cursor: "pointer",
+          fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+        }}
+        onMouseEnter={(e) => {
+          (e.target as HTMLElement).style.backgroundColor = C.s3;
+        }}
+        onMouseLeave={(e) => {
+          (e.target as HTMLElement).style.backgroundColor = C.s2;
+        }}
+      >
+        SEARCH
+      </button>
     </div>
   );
 }
 
-// ─── Tab Content Components ───────────────────────────────────────
+function DetailPanel({ entry }: { entry: MemoryEntry }) {
+  return (
+    <div
+      style={{
+        backgroundColor: C.s2,
+        border: "1px solid rgba(255,255,255,0.04)",
+        margin: "6px 12px 6px 12px",
+        padding: "8px 10px",
+        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+      }}
+    >
+      {/* metadata row */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "16px",
+          fontSize: "10px",
+          color: C.t3,
+          marginBottom: "6px",
+          flexWrap: "wrap",
+        }}
+      >
+        <span>
+          TYPE:{" "}
+          <span style={{ color: typeColor[entry.type] }}>{entry.type}</span>
+        </span>
+        <span>
+          TIME:{" "}
+          <span style={{ color: C.t2 }}>{entry.timestamp}</span>
+        </span>
+        <span>
+          CONFIDENCE:{" "}
+          <span style={{ color: C.t2 }}>{(entry.confidence ?? 0).toFixed(2)}</span>
+        </span>
+        <span>
+          SOURCE:{" "}
+          <span style={{ color: C.t2 }}>{entry.source}</span>
+        </span>
+      </div>
 
-function ConversationsTab() {
-  const conversations = useAppStore((s) => s.conversations);
-  const addConversation = useAppStore((s) => s.addConversation);
-  const [inputValue, setInputValue] = useState("");
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const scrollRef = useRef<HTMLDivElement>(null);
+      {/* divider */}
+      <div
+        style={{
+          height: "1px",
+          backgroundColor: "rgba(255,255,255,0.04)",
+          margin: "6px 0",
+        }}
+      />
 
-  // Auto-scroll to bottom when conversations change
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      {/* content */}
+      <div
+        style={{
+          fontSize: "11px",
+          color: C.t1,
+          lineHeight: "16px",
+          wordBreak: "break-word",
+        }}
+      >
+        {entry.fullContent}
+      </div>
+
+      {/* related files */}
+      {entry.relatedFiles && entry.relatedFiles.length > 0 && (
+        <>
+          <div
+            style={{
+              height: "1px",
+              backgroundColor: "rgba(255,255,255,0.04)",
+              margin: "6px 0",
+            }}
+          />
+          <div
+            style={{
+              fontSize: "10px",
+              color: C.t3,
+            }}
+          >
+            RELATED:{" "}
+            {entry.relatedFiles.map((f, i) => (
+              <span key={f} style={{ color: C.t2 }}>
+                {f}
+                {i < entry.relatedFiles!.length - 1 ? "  " : ""}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────── main component ─────────────────────── */
+
+function MemoryPanel() {
+  const [state, setState] = useState<MemoryState>({
+    entries: DEMO_ENTRIES,
+    selectedId: null,
+    query: "",
+  });
+
+  const handleSelect = useCallback((id: string) => {
+    setState((prev) => ({
+      ...prev,
+      selectedId: prev.selectedId === id ? null : id,
+    }));
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    if (!state.query.trim()) {
+      setState((prev) => ({ ...prev, entries: DEMO_ENTRIES }));
+      return;
     }
-  }, [conversations.length]);
+    const q = state.query.toLowerCase();
+    setState((prev) => ({
+      ...prev,
+      entries: DEMO_ENTRIES.filter(
+        (e) =>
+          e.content.toLowerCase().includes(q) ||
+          e.source.toLowerCase().includes(q) ||
+          e.type.toLowerCase().includes(q)
+      ),
+    }));
+  }, [state.query]);
 
-  const toggleExpand = (id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const handleSend = useCallback(async () => {
-    if (!inputValue.trim()) return;
-    const msg: ConversationMessage = {
-      id: generateId(),
-      timestamp: Date.now(),
-      role: "user",
-      content: inputValue.trim(),
-    };
-    addConversation(msg);
-    setInputValue("");
-    try {
-      await recordConversation(msg);
-    } catch {
-      // Silently fail if Tauri command not registered
-    }
-
-    // Simulate assistant reply after a short delay
-    setTimeout(() => {
-      const reply: ConversationMessage = {
-        id: generateId(),
-        timestamp: Date.now(),
-        role: "assistant",
-        content: `I've noted your message about "${msg.content.slice(0, 40)}${msg.content.length > 40 ? "..." : ""}". This is a demo reply from the memory panel.`,
-      };
-      addConversation(reply);
-      try {
-        recordConversation(reply);
-      } catch {
-        // Silently fail
-      }
-    }, 800);
-  }, [inputValue, addConversation]);
+  const selectedEntry = state.entries.find((e) => e.id === state.selectedId);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Messages list */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1 space-y-2">
-        {conversations.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-construct-text-muted">
-            <MessagesSquare size={24} className="mb-2 opacity-50" />
-            <p className="text-xs">No conversation history yet</p>
-          </div>
-        )}
-        {conversations.map((msg) => {
-          const isExpanded = expandedIds.has(msg.id);
-          const isLong = msg.content.length > 120;
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        backgroundColor: C.base,
+        border: "1px solid rgba(255,255,255,0.04)",
+        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+        overflow: "hidden",
+      }}
+    >
+      {/* ── HEADER ── */}
+      <div
+        style={{
+          padding: "8px 12px",
+          fontSize: "10px",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: C.t3,
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
+        }}
+      >
+        MEMORY
+      </div>
+
+      {/* ── SEARCH ── */}
+      <SearchInput
+        value={state.query}
+        onChange={(v) => setState((prev) => ({ ...prev, query: v }))}
+        onSearch={handleSearch}
+      />
+
+      {/* ── TABLE HEADER ── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "44px 80px 100px 1fr",
+          gap: "8px",
+          padding: "4px 12px",
+          fontSize: "10px",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: C.t4,
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
+        }}
+      >
+        <span>TYPE</span>
+        <span>TIMESTAMP</span>
+        <span>SOURCE</span>
+        <span>CONTENT</span>
+      </div>
+
+      {/* ── TABLE BODY ── */}
+      <div
+        style={{
+          flex: 1,
+          overflow: "auto",
+          scrollbarWidth: "thin",
+          scrollbarColor: `${C.s3} transparent`,
+        }}
+      >
+        {state.entries.map((entry) => {
+          const isSelected = state.selectedId === entry.id;
           return (
-            <div
-              key={msg.id}
-              className="group flex flex-col gap-1 p-2 rounded bg-construct-bg-primary-tertiary/50 border border-construct-border/40 hover:border-construct-border transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <RoleBadge role={msg.role} />
-                <span className="text-[10px] text-construct-text-muted">
-                  {formatTime(msg.timestamp)}
+            <div key={entry.id}>
+              <div
+                onClick={() => handleSelect(entry.id)}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "44px 80px 100px 1fr",
+                  gap: "8px",
+                  padding: "4px 12px",
+                  fontSize: "11px",
+                  fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+                  color: C.t2,
+                  backgroundColor: isSelected ? C.s2 : "transparent",
+                  borderBottom: "1px solid rgba(255,255,255,0.04)",
+                  cursor: "pointer",
+                  alignItems: "center",
+                  transition: "background-color 0.05s",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSelected) {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = C.s1;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) {
+                    (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                  }
+                }}
+              >
+                <TypeBadge type={entry.type} />
+                <span
+                  style={{
+                    fontSize: "10px",
+                    color: C.t3,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {entry.relativeTime}
+                </span>
+                <span
+                  style={{
+                    fontSize: "10px",
+                    color: entry.source === "--" ? C.t4 : C.t2,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {entry.source}
+                </span>
+                <span
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    color: C.t2,
+                  }}
+                >
+                  {entry.content}
                 </span>
               </div>
-              <p
-                className={`text-xs text-construct-text-primary leading-relaxed ${
-                  !isExpanded && isLong ? "line-clamp-2" : ""
-                }`}
-              >
-                {msg.content}
-              </p>
-              {isLong && (
-                <button
-                  onClick={() => toggleExpand(msg.id)}
-                  className="self-start flex items-center gap-0.5 text-[10px] text-construct-accent-primary hover:text-construct-accent-primary-primaryHover transition-colors"
-                >
-                  {isExpanded ? (
-                    <>
-                      <ChevronDown size={10} /> Show less
-                    </>
-                  ) : (
-                    <>
-                      <ChevronRight size={10} /> Show more
-                    </>
-                  )}
-                </button>
+
+              {/* detail panel */}
+              {isSelected && selectedEntry && (
+                <DetailPanel entry={selectedEntry} />
               )}
             </div>
           );
         })}
-      </div>
 
-      {/* Input */}
-      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-construct-border">
-        <input
-          type="text"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
-          placeholder="Type a message..."
-          className="flex-1 h-7 px-2.5 bg-construct-bg-primary border border-construct-border rounded text-xs text-construct-text-primary placeholder-construct-text-muted outline-none focus:border-construct-accent-primary transition-colors"
-        />
-        <button
-          onClick={handleSend}
-          disabled={!inputValue.trim()}
-          className="flex items-center justify-center w-7 h-7 bg-construct-accent-primary hover:bg-construct-accent-primary-primaryHover disabled:opacity-40 disabled:hover:bg-construct-accent-primary text-construct-bg-primary-tertiary rounded transition-colors"
-        >
-          <Send size={12} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function CodeEventsTab() {
-  const [codeEvents] = useState<CodeEvent[]>(DEMO_CODE_EVENTS);
-
-  return (
-    <div className="flex flex-col h-full overflow-y-auto pr-1 space-y-1.5">
-      {codeEvents.map((event) => (
-        <div
-          key={event.id}
-          className="flex flex-col gap-1.5 p-2.5 rounded bg-construct-bg-primary-tertiary/50 border border-construct-border/40 hover:border-construct-border transition-colors"
-        >
-          <div className="flex items-center justify-between">
-            <ChangeTypeBadge type={event.change_type} />
-            <span className="text-[10px] text-construct-text-muted flex items-center gap-1">
-              <Clock size={10} />
-              {formatTime(event.timestamp)}
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-construct-text-primary">
-            <FileCode size={13} className="text-construct-text-muted shrink-0" />
-            <span className="font-mono text-construct-accent-primary truncate">
-              {event.file_path}
-            </span>
-          </div>
-          <p className="text-[11px] text-construct-text-muted leading-relaxed">
-            {event.summary}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function PreferencesTab() {
-  const [preferences, setPreferences] = useState<Preference[]>(DEMO_PREFERENCES);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    // Attempt to load real preferences from backend
-    setLoading(true);
-    getPreferences()
-      .then((prefs) => {
-        if (prefs && prefs.length > 0) setPreferences(prefs);
-      })
-      .catch(() => {
-        // Fallback to demo data
-      })
-      .finally(() => setLoading(false));
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full text-construct-text-muted">
-        <div className="animate-pulse text-xs">Loading preferences...</div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 gap-2 overflow-y-auto pr-1">
-      {preferences.map((pref) => (
-        <div
-          key={pref.key}
-          className="flex flex-col gap-2 p-2.5 rounded bg-construct-bg-primary-tertiary/50 border border-construct-border/40 hover:border-construct-border transition-colors"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-construct-accent-primary truncate">
-              {pref.key}
-            </span>
-            <span className="text-[10px] text-construct-text-muted flex items-center gap-1">
-              <Clock size={10} />
-              {formatDate(pref.last_updated)}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-construct-text-primary font-medium">
-              {pref.value}
-            </span>
-          </div>
-          <ConfidenceBar confidence={pref.confidence} />
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SearchTab() {
-  const memorySearchQuery = useAppStore((s) => s.memorySearchQuery);
-  const setMemorySearchQuery = useAppStore((s) => s.setMemorySearchQuery);
-  const memorySearchResults = useAppStore((s) => s.memorySearchResults);
-  const setMemorySearchResults = useAppStore((s) => s.setMemorySearchResults);
-  const [isSearching, setIsSearching] = useState(false);
-
-  const handleSearch = useCallback(async () => {
-    if (!memorySearchQuery.trim()) return;
-    setIsSearching(true);
-    try {
-      const results = await recallContext(memorySearchQuery.trim(), 10);
-      if (results && results.length > 0) {
-        setMemorySearchResults(results);
-      } else {
-        // Fallback to demo results filtered by query
-        const filtered = DEMO_SEARCH_RESULTS.filter((r) =>
-          r.content.toLowerCase().includes(memorySearchQuery.toLowerCase())
-        );
-        setMemorySearchResults(
-          filtered.length > 0 ? filtered : DEMO_SEARCH_RESULTS
-        );
-      }
-    } catch {
-      setMemorySearchResults(DEMO_SEARCH_RESULTS);
-    } finally {
-      setIsSearching(false);
-    }
-  }, [memorySearchQuery, setMemorySearchResults]);
-
-  // Auto-search on query change with debounce
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (memorySearchQuery.trim()) {
-        handleSearch();
-      } else {
-        setMemorySearchResults(DEMO_SEARCH_RESULTS);
-      }
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [memorySearchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Search input */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="flex-1 flex items-center gap-2 h-8 px-2.5 bg-construct-bg-primary border border-construct-border rounded focus-within:border-construct-accent-primary transition-colors">
-          <Search size={13} className="text-construct-text-muted shrink-0" />
-          <input
-            type="text"
-            value={memorySearchQuery}
-            onChange={(e) => setMemorySearchQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSearch();
+        {state.entries.length === 0 && (
+          <div
+            style={{
+              padding: "16px 12px",
+              fontSize: "10px",
+              color: C.t4,
+              textAlign: "center",
             }}
-            placeholder="Search memory semantically..."
-            className="flex-1 bg-transparent text-xs text-construct-text-primary placeholder-construct-text-muted outline-none"
-          />
-          {isSearching && (
-            <div className="w-3.5 h-3.5 border-2 border-construct-accent-primary border-t-transparent rounded-full animate-spin" />
-          )}
-        </div>
-      </div>
-
-      {/* Results */}
-      <div className="flex-1 overflow-y-auto pr-1 space-y-2">
-        {memorySearchResults.map((result) => {
-          const pct = Math.round(result.relevance * 100);
-          return (
-            <div
-              key={result.id}
-              className="flex flex-col gap-1.5 p-2.5 rounded bg-construct-bg-primary-tertiary/50 border border-construct-border/40 hover:border-construct-border transition-colors"
-            >
-              <div className="flex items-center justify-between">
-                <SourceBadge source={result.source} />
-                <div className="flex items-center gap-1.5">
-                  <Sparkles
-                    size={10}
-                    className={
-                      pct >= 80
-                        ? "text-construct-semantic-success"
-                        : pct >= 50
-                          ? "text-construct-semantic-warning"
-                          : "text-construct-text-muted"
-                    }
-                  />
-                  <span
-                    className={`text-[10px] font-medium ${
-                      pct >= 80
-                        ? "text-construct-semantic-success"
-                        : pct >= 50
-                          ? "text-construct-semantic-warning"
-                          : "text-construct-text-muted"
-                    }`}
-                  >
-                    {pct}% match
-                  </span>
-                </div>
-              </div>
-              <p className="text-xs text-construct-text-primary leading-relaxed">
-                {result.content}
-              </p>
-              <span className="text-[10px] text-construct-text-muted">
-                {formatTime(result.timestamp)} · {formatDate(result.timestamp)}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─── Main MemoryPanel ─────────────────────────────────────────────
-
-const subTabs: { id: MemoryTab; icon: React.ReactNode; label: string }[] = [
-  {
-    id: "conversations",
-    icon: <MessagesSquare size={12} />,
-    label: "Conversations",
-  },
-  { id: "code", icon: <FileCode size={12} />, label: "Code Events" },
-  { id: "preferences", icon: <Settings size={12} />, label: "Preferences" },
-  { id: "search", icon: <Search size={12} />, label: "Search" },
-];
-
-function MemoryPanel() {
-  const memoryPanelTab = useAppStore((s) => s.memoryPanelTab);
-  const setMemoryPanelTab = useAppStore((s) => s.setMemoryPanelTab);
-  const conversations = useAppStore((s) => s.conversations);
-
-  // Load demo conversations on first mount if empty
-  useEffect(() => {
-    const current = useAppStore.getState().conversations;
-    if (current.length === 0) {
-      useAppStore.getState().setConversations(DEMO_CONVERSATIONS);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const conversationCount = conversations.length;
-  const codeEventCount = DEMO_CODE_EVENTS.length;
-  const preferenceCount = DEMO_PREFERENCES.length;
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* ── Stats Bar ── */}
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-construct-bg-primary-tertiary border-b border-construct-border">
-        <Brain size={12} className="text-construct-accent-primary shrink-0" />
-        <div className="flex items-center gap-1.5">
-          {/* Conversation chip */}
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/15 text-blue-400 border border-blue-500/20">
-            <MessagesSquare size={9} />
-            {conversationCount} Conversations
-          </span>
-          {/* Code chip */}
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
-            <GitCommit size={9} />
-            {codeEventCount} Code Changes
-          </span>
-          {/* Preference chip */}
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-purple-500/15 text-purple-400 border border-purple-500/20">
-            <Settings size={9} />
-            {preferenceCount} Preferences
-          </span>
-        </div>
-      </div>
-
-      {/* ── Sub-Tab Navigation ── */}
-      <div className="flex items-center h-7 bg-construct-bg-primary-tertiary border-b border-construct-border">
-        {subTabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setMemoryPanelTab(tab.id)}
-            className={`
-              flex items-center h-7 px-3 gap-1.5 text-[11px] border-r border-construct-border
-              transition-colors duration-100
-              ${
-                memoryPanelTab === tab.id
-                  ? "bg-construct-bg-primary text-construct-text-primary border-t-2 border-t-construct-accent-primary"
-                  : "text-construct-text-muted hover:text-construct-text-primary hover:bg-construct-bg-primary-elevated"
-              }
-            `}
           >
-            {tab.icon}
-            <span>{tab.label}</span>
-          </button>
-        ))}
+            -- no results --
+          </div>
+        )}
       </div>
 
-      {/* ── Content Area ── */}
-      <div className="flex-1 overflow-hidden p-3 min-h-0">
-        {memoryPanelTab === "conversations" && <ConversationsTab />}
-        {memoryPanelTab === "code" && <CodeEventsTab />}
-        {memoryPanelTab === "preferences" && <PreferencesTab />}
-        {memoryPanelTab === "search" && <SearchTab />}
-      </div>
+      {/* scrollbar styles */}
+      <style>{`
+        div::-webkit-scrollbar { width: 4px; height: 4px; }
+        div::-webkit-scrollbar-track { background: transparent; }
+        div::-webkit-scrollbar-thumb { background: ${C.s3}; border-radius: 2px; }
+        div::-webkit-scrollbar-thumb:hover { background: #3a3a4f; }
+      `}</style>
     </div>
   );
 }

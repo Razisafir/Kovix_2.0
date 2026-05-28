@@ -1,821 +1,447 @@
-import { useState, useEffect, useRef } from "react";
-import {
-  Zap,
-  CheckCircle2,
-  Circle,
-  Play,
-  Pause,
-  Square,
-  Save,
-  Shield,
-  ShieldCheck,
-  ShieldAlert,
-  Clock,
-  Cpu,
-  HardDrive,
-  Activity,
-  ChevronRight,
-  Sparkles,
-  Bot,
-  FileCode2,
-  GitBranch,
-  AlertTriangle,
-  Radio,
-} from "lucide-react";
-import type {
-  AutonomousStatus,
-  LogEntry,
-  SafetySetting,
-  QueuedGoal,
-  GoalPriority,
-} from "../types/autonomous";
+import { useState, useCallback } from "react";
+import { TerminalOutput } from "./TerminalOutput";
+import type { LogEntry } from "./TerminalOutput";
 
-/* ───────────────────────── styles ───────────────────────── */
+/* ─────────────────────── types ─────────────────────── */
 
-const glassCard =
-  "bg-construct-bg-primary-tertiary/60 backdrop-blur-md border border-construct-border/50 rounded-lg";
+type TaskStatus = "OK" | "WRK" | "ERR" | "PND";
 
-const glowAccent = {
-  boxShadow:
-    "0 0 20px rgba(137, 180, 250, 0.15), 0 0 40px rgba(137, 180, 250, 0.05)",
+interface Task {
+  id: string;
+  number: number;
+  status: TaskStatus;
+  description: string;
+  time: string;
+  agent: string;
+}
+
+interface ResourceMetrics {
+  cpu: number;
+  memUsed: number;
+  memTotal: number;
+  diskSpeed: string;
+}
+
+interface AutonomousState {
+  goal: string;
+  progress: number;
+  tasksCompleted: number;
+  totalTasks: number;
+  eta: string;
+  autoMode: boolean;
+  tasks: Task[];
+  resources: ResourceMetrics;
+  logs: LogEntry[];
+}
+
+/* ─────────────────────── colors ─────────────────────── */
+
+const C = {
+  base: "#0c0c10",
+  s1: "#12121a",
+  s2: "#1a1a24",
+  s3: "#22222e",
+  accent: "#6366f1",
+  t1: "#e8e8ec",
+  t2: "#94949c",
+  t3: "#6b6b73",
+  t4: "#4a4a52",
+  ok: "#22c55e",
+  wrn: "#f59e0b",
+  err: "#ef4444",
+  block: "#6366f1",
+  track: "#1a1a24",
 };
 
-const pulseGlow = "animate-pulse-glow";
+const statusColor: Record<TaskStatus, string> = {
+  OK: C.ok,
+  WRK: C.wrn,
+  ERR: C.err,
+  PND: C.t4,
+};
 
-/* ────────────────────── sub-components ────────────────────── */
+/* ─────────────────────── demo data ─────────────────────── */
 
-function ProgressRing({
-  percent,
-  size = 120,
-  strokeWidth = 8,
-}: {
-  percent: number;
-  size?: number;
-  strokeWidth?: number;
-}) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (percent / 100) * circumference;
+const DEMO_STATE: AutonomousState = {
+  goal: "build saas dashboard with auth, billing, analytics",
+  progress: 34,
+  tasksCompleted: 4,
+  totalTasks: 12,
+  eta: "04:00:00",
+  autoMode: true,
+  tasks: [
+    { id: "1", number: 1, status: "OK", description: "set up project structure", time: "00:15", agent: "code" },
+    { id: "2", number: 2, status: "OK", description: "initialize database schema", time: "00:22", agent: "code" },
+    { id: "3", number: 3, status: "WRK", description: "build dashboard layout component", time: "00:32", agent: "ui" },
+    { id: "4", number: 4, status: "PND", description: "add analytics charts", time: "--", agent: "--" },
+    { id: "5", number: 5, status: "PND", description: "implement billing page", time: "--", agent: "--" },
+    { id: "6", number: 6, status: "PND", description: "set up stripe integration", time: "--", agent: "--" },
+    { id: "7", number: 7, status: "PND", description: "add subscription management", time: "--", agent: "--" },
+    { id: "8", number: 8, status: "PND", description: "implement auth guards", time: "--", agent: "--" },
+    { id: "9", number: 9, status: "PND", description: "add audit logging", time: "--", agent: "--" },
+    { id: "10", number: 10, status: "PND", description: "write integration tests", time: "--", agent: "--" },
+    { id: "11", number: 11, status: "PND", description: "deploy to staging", time: "--", agent: "--" },
+    { id: "12", number: 12, status: "PND", description: "run e2e verification", time: "--", agent: "--" },
+  ],
+  resources: {
+    cpu: 23,
+    memUsed: 456,
+    memTotal: 2048,
+    diskSpeed: "12MB/s",
+  },
+  logs: [
+    { timestamp: "12:00:05", level: "INF", message: "autonomous mode initialized", source: "orchestrator" },
+    { timestamp: "12:00:08", level: "INF", message: "goal: build saas dashboard with auth, billing, analytics", source: "planner" },
+    { timestamp: "12:00:12", level: "INF", message: "task plan: 12 tasks, ETA 04:00:00", source: "planner" },
+    { timestamp: "12:00:15", level: "OK", message: "task 1/12: set up project structure -- completed (00:15)", source: "code" },
+    { timestamp: "12:00:32", level: "OK", message: "task 2/12: initialize database schema -- completed (00:22)", source: "code" },
+    { timestamp: "12:01:05", level: "WRK", message: "task 3/12: build dashboard layout component", source: "ui" },
+    { timestamp: "12:01:12", level: "INF", message: "checkpoint saved (auto)", source: "checkpoint" },
+  ],
+};
 
-  return (
-    <svg width={size} height={size} className="transform -rotate-90">
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="#22222f"
-        strokeWidth={strokeWidth}
-      />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        stroke="#6366f1"
-        strokeWidth={strokeWidth}
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        strokeLinecap="round"
-        className="transition-all duration-700 ease-out"
-      />
-    </svg>
-  );
-}
+/* ─────────────────────── sub-components ─────────────────────── */
 
-function ResourceBar({
+function ControlButton({
   label,
-  percent,
-  color = "bg-construct-accent-primary",
-  icon,
+  onClick,
 }: {
   label: string;
-  percent: number;
-  color?: string;
-  icon?: React.ReactNode;
+  onClick?: () => void;
 }) {
-  return (
-    <div className="flex items-center gap-2">
-      {icon && (
-        <span className="text-construct-text-muted w-4">{icon}</span>
-      )}
-      <span className="text-[10px] text-construct-text-muted w-10">
-        {label}
-      </span>
-      <div className="flex-1 h-2 bg-construct-border/40 rounded-full overflow-hidden">
-        <div
-          className={`h-full ${color} rounded-full transition-all duration-500`}
-          style={{ width: `${Math.min(100, Math.max(0, percent))}%` }}
-        />
-      </div>
-      <span className="text-[10px] text-construct-text-muted w-8 text-right">
-        {Math.round(percent)}%
-      </span>
-    </div>
-  );
-}
-
-function ToggleSwitch({
-  enabled,
-  onChange,
-  size = "md",
-}: {
-  enabled: boolean;
-  onChange: (v: boolean) => void;
-  size?: "sm" | "md" | "lg";
-}) {
-  const sizeMap = {
-    sm: { w: "w-10", h: "h-5", knob: "w-4 h-4", translate: enabled ? "translate-x-5" : "translate-x-0.5" },
-    md: { w: "w-14", h: "h-7", knob: "w-6 h-6", translate: enabled ? "translate-x-7" : "translate-x-0.5" },
-    lg: { w: "w-20", h: "h-10", knob: "w-9 h-9", translate: enabled ? "translate-x-10" : "translate-x-0.5" },
-  };
-  const s = sizeMap[size];
-
   return (
     <button
-      onClick={() => onChange(!enabled)}
-      className={`relative ${s.w} ${s.h} rounded-full transition-colors duration-300 ${
-        enabled ? "bg-construct-accent-primary" : "bg-construct-border"
-      }`}
+      onClick={onClick}
+      style={{
+        fontSize: "10px",
+        fontWeight: 600,
+        textTransform: "uppercase",
+        letterSpacing: "0.08em",
+        backgroundColor: C.s2,
+        color: C.t2,
+        border: "1px solid rgba(255,255,255,0.04)",
+        borderRadius: "2px",
+        padding: "3px 8px",
+        cursor: "pointer",
+        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+        transition: "background-color 0.1s",
+      }}
+      onMouseEnter={(e) => {
+        (e.target as HTMLElement).style.backgroundColor = C.s3;
+      }}
+      onMouseLeave={(e) => {
+        (e.target as HTMLElement).style.backgroundColor = C.s2;
+      }}
     >
-      <span
-        className={`absolute top-0.5 ${s.knob} bg-white rounded-full shadow transition-transform duration-300 ${s.translate}`}
-      />
+      {label}
     </button>
   );
 }
 
-function SafetyCheckbox({
-  setting,
+function AutoToggle({
+  enabled,
   onToggle,
 }: {
-  setting: SafetySetting;
-  onToggle: (id: string) => void;
+  enabled: boolean;
+  onToggle: () => void;
 }) {
   return (
     <button
-      onClick={() => onToggle(setting.id)}
-      className="flex items-start gap-2 w-full text-left group"
+      onClick={onToggle}
+      style={{
+        fontSize: "10px",
+        fontWeight: 600,
+        textTransform: "uppercase",
+        letterSpacing: "0.08em",
+        backgroundColor: enabled ? C.s2 : C.base,
+        color: enabled ? C.ok : C.t4,
+        border: `1px solid ${enabled ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.04)"}`,
+        borderRadius: "2px",
+        padding: "3px 8px",
+        cursor: "pointer",
+        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+        marginLeft: "auto",
+      }}
     >
-      <div className="mt-0.5">
-        {setting.enabled ? (
-          <ShieldCheck size={14} className="text-construct-semantic-success" />
-        ) : (
-          <Shield size={14} className="text-construct-text-muted group-hover:text-construct-text-primary" />
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div
-          className={`text-[11px] leading-tight ${
-            setting.enabled
-              ? "text-construct-text-primary"
-              : "text-construct-text-muted group-hover:text-construct-text-primary"
-          }`}
-        >
-          {setting.label}
-        </div>
-        <div className="text-[10px] text-construct-text-muted/70 leading-tight mt-0.5">
-          {setting.description}
-        </div>
-      </div>
+      AUTO:{enabled ? "ON" : "OFF"}
     </button>
   );
 }
 
-function TerminalOutput({ logs }: { logs: LogEntry[] }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [logs]);
-
-  const levelColors: Record<string, string> = {
-    info: "text-construct-text-primary",
-    warn: "text-construct-semantic-warning",
-    error: "text-construct-semantic-error",
-  };
-
-  const levelIcons: Record<string, string> = {
-    info: ">",
-    warn: "⚠",
-    error: "✖",
-  };
-
+function StatusBadge({ status }: { status: TaskStatus }) {
+  const label = `[${status}]`;
   return (
-    <div
-      ref={scrollRef}
-      className="font-mono text-[10px] leading-relaxed h-40 overflow-y-auto space-y-0.5 pr-1 scrollbar-thin"
+    <span
+      style={{
+        fontSize: "9px",
+        fontWeight: 700,
+        letterSpacing: "0.04em",
+        color: statusColor[status],
+        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+        minWidth: "28px",
+        display: "inline-block",
+      }}
     >
-      {logs.map((log, i) => (
-        <div key={i} className={`${levelColors[log.level] || "text-construct-text-primary"} flex gap-1.5`}>
-          <span className="text-construct-text-muted/50 select-none shrink-0">
-            {levelIcons[log.level] || ">"}
-          </span>
-          <span className="break-all">{log.message}</span>
-        </div>
-      ))}
-      <div className="text-construct-accent-primary animate-pulse">_</div>
-    </div>
+      {label}
+    </span>
   );
 }
 
-function GoalQueueItem({ goal }: { goal: QueuedGoal }) {
-  const priorityColors: Record<GoalPriority, string> = {
-    critical: "text-construct-semantic-error",
-    high: "text-construct-semantic-warning",
-    normal: "text-construct-accent-primary",
-    low: "text-construct-text-muted",
-  };
-
-  const statusIcon =
-    goal.status === "completed" ? (
-      <CheckCircle2 size={14} className="text-construct-semantic-success shrink-0" />
-    ) : goal.status === "active" ? (
-      <Activity size={14} className="text-construct-accent-primary shrink-0 animate-pulse" />
-    ) : (
-      <Circle size={14} className="text-construct-text-muted/50 shrink-0" />
-    );
+function ASCIIProgressBar({ percent }: { percent: number }) {
+  const total = 20;
+  const filled = Math.round((percent / 100) * total);
+  const empty = total - filled;
+  const bar = "█".repeat(filled) + "░".repeat(empty);
 
   return (
-    <div
-      className={`flex items-center gap-2 py-1.5 px-2 rounded-md ${
-        goal.status === "active" ? "bg-construct-accent-primary/5 border border-construct-accent-primary/20" : ""
-      }`}
+    <span
+      style={{
+        fontSize: "10px",
+        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+        color: C.t2,
+        whiteSpace: "nowrap",
+      }}
     >
-      {statusIcon}
-      <span className="flex-1 text-[11px] text-construct-text-primary truncate">
-        {goal.description}
-      </span>
-      <span className={`text-[9px] uppercase tracking-wider ${priorityColors[goal.priority]}`}>
-        {goal.priority}
-      </span>
-      <span className="text-[10px] text-construct-text-muted w-16 text-right">
-        {goal.status}
-      </span>
-    </div>
+      {bar}  {percent}%
+    </span>
   );
 }
 
-function StatusBadge({ status }: { status: AutonomousStatus }) {
-  const config: Record<AutonomousStatus, { color: string; icon: React.ReactNode; label: string }> = {
-    disabled: {
-      color: "bg-construct-text-muted/20 text-construct-text-muted",
-      icon: <Zap size={12} />,
-      label: "DISABLED",
-    },
-    idle: {
-      color: "bg-construct-accent-primary/20 text-construct-accent-primary",
-      icon: <Bot size={12} />,
-      label: "IDLE",
-    },
-    running: {
-      color: "bg-construct-semantic-success/20 text-construct-semantic-success",
-      icon: <Radio size={12} className="animate-pulse" />,
-      label: "ACTIVE",
-    },
-    paused: {
-      color: "bg-construct-semantic-warning/20 text-construct-semantic-warning",
-      icon: <Pause size={12} />,
-      label: "PAUSED",
-    },
-    throttled: {
-      color: "bg-construct-semantic-warning/20 text-construct-semantic-warning",
-      icon: <AlertTriangle size={12} />,
-      label: "THROTTLED",
-    },
-    error: {
-      color: "bg-construct-semantic-error/20 text-construct-semantic-error",
-      icon: <ShieldAlert size={12} />,
-      label: "ERROR",
-    },
-  };
-
-  const c = config[status];
-  return (
-    <div
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wider ${c.color}`}
-    >
-      {c.icon}
-      {c.label}
-    </div>
-  );
-}
-
-/* ────────────────────── demo data ────────────────────── */
-
-const DEMO_GOALS: QueuedGoal[] = [
-  {
-    id: "1",
-    description: "Create login component with form UI",
-    priority: "high",
-    status: "completed",
-    progress_percent: 100,
-  },
-  {
-    id: "2",
-    description: "Add form validation (email, password)",
-    priority: "high",
-    status: "completed",
-    progress_percent: 100,
-  },
-  {
-    id: "3",
-    description: "Connect to auth API endpoint",
-    priority: "critical",
-    status: "active",
-    progress_percent: 67,
-  },
-  {
-    id: "4",
-    description: "Write unit tests for login flow",
-    priority: "normal",
-    status: "pending",
-    progress_percent: 0,
-  },
-  {
-    id: "5",
-    description: "Run tests and verify coverage",
-    priority: "normal",
-    status: "pending",
-    progress_percent: 0,
-  },
-];
-
-const DEMO_LOGS: LogEntry[] = [
-  { timestamp: Date.now() - 1000 * 60 * 15, level: "info", message: "Autonomous mode initialized", source: "orchestrator" },
-  { timestamp: Date.now() - 1000 * 60 * 14, level: "info", message: "Loading goal queue: 5 tasks", source: "planner" },
-  { timestamp: Date.now() - 1000 * 60 * 13, level: "info", message: "Analyzing project structure...", source: "analyzer" },
-  { timestamp: Date.now() - 1000 * 60 * 12, level: "info", message: "Found: src/, components/, hooks/, lib/", source: "analyzer" },
-  { timestamp: Date.now() - 1000 * 60 * 11, level: "info", message: "Planning tasks for: Build login system", source: "planner" },
-  { timestamp: Date.now() - 1000 * 60 * 10, level: "info", message: "Task 1/5: Create login component", source: "executor" },
-  { timestamp: Date.now() - 1000 * 60 * 9, level: "info", message: "Generating Login.tsx with form fields", source: "codegen" },
-  { timestamp: Date.now() - 1000 * 60 * 8, level: "info", message: "File written: src/components/Login.tsx", source: "fs" },
-  { timestamp: Date.now() - 1000 * 60 * 7, level: "info", message: "Task 2/5: Add form validation", source: "executor" },
-  { timestamp: Date.now() - 1000 * 60 * 6, level: "info", message: "Using zod schema for validation", source: "codegen" },
-  { timestamp: Date.now() - 1000 * 60 * 5, level: "info", message: "File updated: src/components/Login.tsx", source: "fs" },
-  { timestamp: Date.now() - 1000 * 60 * 4, level: "info", message: "Checkpoint saved (auto)", source: "checkpoint" },
-  { timestamp: Date.now() - 1000 * 60 * 3, level: "warn", message: "Task 3/5: Connect to auth API — needs API key", source: "executor" },
-  { timestamp: Date.now() - 1000 * 60 * 2, level: "info", message: "Using VITE_AUTH_API_ENDPOINT from .env", source: "config" },
-  { timestamp: Date.now() - 1000 * 60 * 1, level: "info", message: "Writing auth hook: useAuth.ts", source: "codegen" },
-  { timestamp: Date.now() - 1000 * 30, level: "info", message: "File written: src/hooks/useAuth.ts", source: "fs" },
-  { timestamp: Date.now() - 1000 * 15, level: "info", message: "Implementing login mutation with error handling", source: "codegen" },
-  { timestamp: Date.now() - 1000 * 5, level: "info", message: "Progress: 67% — 2/5 tasks completed", source: "orchestrator" },
-];
-
-const DEMO_SAFETY: SafetySetting[] = [
-  {
-    id: "delete-files",
-    label: "Require approval for file deletion",
-    enabled: true,
-    description: "Prompts before deleting any source file",
-  },
-  {
-    id: "git-reset",
-    label: "Require approval for git reset --hard",
-    enabled: true,
-    description: "Prevents destructive git operations",
-  },
-  {
-    id: "architecture",
-    label: "Require approval for architecture decisions",
-    enabled: true,
-    description: "Asks before changing project structure",
-  },
-  {
-    id: "auth-payment",
-    label: "Require approval for auth/payment code changes",
-    enabled: true,
-    description: "Extra safeguard for sensitive code",
-  },
-  {
-    id: "test-exec",
-    label: "Require approval for test execution",
-    enabled: false,
-    description: "Prompts before running test suites",
-  },
-];
-
-/* ────────────────────── main panel ────────────────────── */
+/* ─────────────────────── main component ─────────────────────── */
 
 function AutonomousPanel() {
-  const [enabled, setEnabled] = useState(false);
-  const [status, setStatus] = useState<AutonomousStatus>("disabled");
-  const [progress, setProgress] = useState(67);
-  const [goals, setGoals] = useState<QueuedGoal[]>(DEMO_GOALS);
-  const [logs, setLogs] = useState<LogEntry[]>(DEMO_LOGS);
-  const [safety, setSafety] = useState<SafetySetting[]>(DEMO_SAFETY);
-  const [currentGoal, setCurrentGoal] = useState<string | null>(
-    "Build complete login system with authentication"
-  );
-  const [checkpoints, setCheckpoints] = useState(12);
-  const [tasksCompleted, setTasksCompleted] = useState(2);
-  const [cpuLimit, setCpuLimit] = useState(40);
-  const [memLimit, setMemLimit] = useState(2048);
+  const [state, setState] = useState<AutonomousState>(DEMO_STATE);
+  const [showLog, setShowLog] = useState(false);
 
-  /* simulated live resource metrics */
-  const [cpuUsage, setCpuUsage] = useState(34);
-  const [memUsage, setMemUsage] = useState(28);
+  const toggleAuto = useCallback(() => {
+    setState((prev) => ({ ...prev, autoMode: !prev.autoMode }));
+  }, []);
 
-  useEffect(() => {
-    if (!enabled) return;
-    const interval = setInterval(() => {
-      setCpuUsage((prev) => Math.max(20, Math.min(60, prev + (Math.random() - 0.5) * 10)));
-      setMemUsage((prev) => Math.max(20, Math.min(50, prev + (Math.random() - 0.5) * 6)));
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [enabled]);
-
-  const handleToggle = (val: boolean) => {
-    setEnabled(val);
-    if (val) {
-      setStatus("running");
-      addLog({
-        timestamp: Date.now(),
-        level: "info",
-        message: "Autonomous mode ENABLED — starting execution",
-        source: "orchestrator",
-      });
-    } else {
-      setStatus("disabled");
-      setCurrentGoal(null);
-      addLog({
-        timestamp: Date.now(),
-        level: "warn",
-        message: "Autonomous mode DISABLED — execution halted",
-        source: "orchestrator",
-      });
-    }
-  };
-
-  const addLog = (entry: LogEntry) => {
-    setLogs((prev) => [...prev.slice(-99), entry]);
-  };
-
-  const handlePause = () => {
-    setStatus("paused");
-    addLog({
-      timestamp: Date.now(),
-      level: "warn",
-      message: "Execution paused by user",
-      source: "orchestrator",
-    });
-  };
-
-  const handleResume = () => {
-    setStatus("running");
-    addLog({
-      timestamp: Date.now(),
-      level: "info",
-      message: "Execution resumed",
-      source: "orchestrator",
-    });
-  };
-
-  const handleStop = () => {
-    setStatus("idle");
-    setProgress(0);
-    addLog({
-      timestamp: Date.now(),
-      level: "error",
-      message: "Execution stopped — progress reset",
-      source: "orchestrator",
-    });
-  };
-
-  const handleCheckpoint = () => {
-    setCheckpoints((c) => c + 1);
-    addLog({
-      timestamp: Date.now(),
-      level: "info",
-      message: `Checkpoint saved manually (#${checkpoints + 1})`,
-      source: "checkpoint",
-    });
-  };
-
-  const toggleSafety = (id: string) => {
-    setSafety((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s))
-    );
-  };
-
-  /* ──────────────── disabled view ──────────────── */
-
-  if (!enabled) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full gap-6 p-6">
-        <div
-          className={`${glassCard} p-8 max-w-md w-full flex flex-col items-center gap-5`}
-        >
-          {/* Header */}
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-2 text-construct-accent-primary">
-              <Sparkles size={20} />
-              <span className="text-xs font-semibold tracking-[0.2em] uppercase">
-                Construct
-              </span>
-              <Sparkles size={20} />
-            </div>
-            <h2 className="text-lg font-bold text-construct-text-primary tracking-tight">
-              Autonomous Mode
-            </h2>
-            <p className="text-[11px] text-construct-text-muted text-center leading-relaxed max-w-xs">
-              Let the agent work 24/7 toward your goals. It plans, codes, tests,
-              and commits — even while you sleep.
-            </p>
-          </div>
-
-          {/* Big Toggle */}
-          <div className="flex flex-col items-center gap-3 py-2">
-            <span className="text-[10px] text-construct-text-muted uppercase tracking-wider">
-              Autonomous Mode
-            </span>
-            <div className="flex items-center gap-3">
-              <span
-                className={`text-xs font-semibold ${
-                  enabled ? "text-construct-accent-primary" : "text-construct-text-muted"
-                }`}
-              >
-                OFF
-              </span>
-              <ToggleSwitch enabled={enabled} onChange={handleToggle} size="lg" />
-              <span
-                className={`text-xs font-semibold ${
-                  enabled ? "text-construct-semantic-success" : "text-construct-text-muted"
-                }`}
-              >
-                ON
-              </span>
-            </div>
-          </div>
-
-          {/* Features */}
-          <div className="w-full space-y-2">
-            <div className="text-[10px] text-construct-text-muted uppercase tracking-wider mb-2">
-              Features
-            </div>
-            {[
-              "Background execution with progress tracking",
-              "Automatic checkpoints every 5 minutes",
-              "Resume after interruption seamlessly",
-              "Resource-aware throttling (CPU / Memory)",
-              "Smart safety pauses for destructive actions",
-            ].map((feature, i) => (
-              <div key={i} className="flex items-center gap-2">
-                <CheckCircle2 size={12} className="text-construct-semantic-success shrink-0" />
-                <span className="text-[11px] text-construct-text-primary">{feature}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  /* ──────────────── enabled view ──────────────── */
+  const handleCommand = useCallback((cmd: string) => {
+    setState((prev) => ({
+      ...prev,
+      logs: [
+        ...prev.logs,
+        {
+          timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
+          level: "INF",
+          message: `> ${cmd}`,
+          source: "user",
+        },
+      ],
+    }));
+  }, []);
 
   return (
-    <div className="flex flex-col h-full gap-2 p-1 overflow-auto">
-      {/* Top bar: status + toggle */}
-      <div className="flex items-center justify-between px-2 py-1">
-        <div className="flex items-center gap-3">
-          <StatusBadge status={status} />
-          {status === "running" && (
-            <span className="text-[10px] text-construct-text-muted animate-pulse">
-              Working on: {currentGoal}
-            </span>
-          )}
-        </div>
-        <ToggleSwitch enabled={enabled} onChange={handleToggle} />
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        backgroundColor: C.base,
+        border: "1px solid rgba(255,255,255,0.04)",
+        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+        overflow: "hidden",
+      }}
+    >
+      {/* ── HEADER ── */}
+      <div
+        style={{
+          padding: "8px 12px",
+          fontSize: "10px",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: C.t3,
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
+        }}
+      >
+        AUTONOMOUS MODE
       </div>
 
-      {/* Main content grid */}
-      <div className="grid grid-cols-[220px_1fr] gap-2 min-h-0">
-        {/* Left column */}
-        <div className="flex flex-col gap-2">
-          {/* Progress Ring Card */}
-          <div
-            className={`${glassCard} p-3 flex flex-col items-center gap-2 ${
-              status === "running" ? pulseGlow : ""
-            }`}
-            style={status === "running" ? glowAccent : undefined}
-          >
-            <div className="relative">
-              <ProgressRing percent={progress} size={110} strokeWidth={8} />
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-xl font-bold text-construct-text-primary">
-                  {Math.round(progress)}%
-                </span>
-                <span className="text-[9px] text-construct-text-muted uppercase tracking-wider">
-                  progress
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 text-[10px] text-construct-text-muted">
-              <div className="flex items-center gap-1">
-                <CheckCircle2 size={10} className="text-construct-semantic-success" />
-                <span>{tasksCompleted} done</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Save size={10} className="text-construct-accent-primary" />
-                <span>{checkpoints} CPs</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Goal Card */}
-          <div className={`${glassCard} p-3`}>
-            <div className="flex items-center gap-1.5 text-construct-accent-primary mb-2">
-              <ChevronRight size={12} />
-              <span className="text-[10px] font-semibold uppercase tracking-wider">
-                Current Goal
-              </span>
-            </div>
-            <p className="text-[11px] text-construct-text-primary leading-relaxed">
-              {currentGoal || "No active goal"}
-            </p>
-            <div className="flex items-center gap-1.5 mt-2 text-[10px] text-construct-text-muted">
-              <Clock size={10} />
-              <span>Started {new Date(Date.now() - 1000 * 60 * 15).toLocaleTimeString()}</span>
-            </div>
-          </div>
-
-          {/* Control Buttons */}
-          <div className={`${glassCard} p-2 grid grid-cols-2 gap-1.5`}>
-            {status === "running" ? (
-              <button
-                onClick={handlePause}
-                className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-construct-semantic-warning/10 hover:bg-construct-semantic-warning/20 text-construct-semantic-warning text-[10px] font-medium transition-colors"
-              >
-                <Pause size={12} />
-                Pause
-              </button>
-            ) : (
-              <button
-                onClick={handleResume}
-                className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-construct-semantic-success/10 hover:bg-construct-semantic-success/20 text-construct-semantic-success text-[10px] font-medium transition-colors"
-              >
-                <Play size={12} />
-                Resume
-              </button>
-            )}
-            <button
-              onClick={handleStop}
-              className="flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-construct-semantic-error/10 hover:bg-construct-semantic-error/20 text-construct-semantic-error text-[10px] font-medium transition-colors"
-            >
-              <Square size={12} />
-              Stop
-            </button>
-            <button
-              onClick={handleCheckpoint}
-              className="col-span-2 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md bg-construct-accent-primary/10 hover:bg-construct-accent-primary/20 text-construct-accent-primary text-[10px] font-medium transition-colors"
-            >
-              <Save size={12} />
-              Force Checkpoint
-            </button>
-          </div>
-        </div>
-
-        {/* Right column */}
-        <div className="flex flex-col gap-2 min-h-0">
-          {/* Task Queue */}
-          <div className={`${glassCard} p-3`}>
-            <div className="flex items-center gap-1.5 text-construct-accent-primary mb-2">
-              <FileCode2 size={12} />
-              <span className="text-[10px] font-semibold uppercase tracking-wider">
-                Task Queue
-              </span>
-              <span className="text-[10px] text-construct-text-muted ml-auto">
-                {goals.filter((g) => g.status === "completed").length}/{goals.length}
-              </span>
-            </div>
-            <div className="space-y-0.5 max-h-36 overflow-y-auto pr-1 scrollbar-thin">
-              {goals.map((goal) => (
-                <GoalQueueItem key={goal.id} goal={goal} />
-              ))}
-            </div>
-          </div>
-
-          {/* Resources */}
-          <div className={`${glassCard} p-3`}>
-            <div className="flex items-center gap-1.5 text-construct-accent-primary mb-2">
-              <Cpu size={12} />
-              <span className="text-[10px] font-semibold uppercase tracking-wider">
-                Resources
-              </span>
-            </div>
-            <div className="space-y-2">
-              <ResourceBar
-                label="CPU"
-                percent={cpuUsage}
-                color={cpuUsage > 50 ? "bg-construct-semantic-warning" : "bg-construct-accent-primary"}
-                icon={<Cpu size={10} />}
-              />
-              <ResourceBar
-                label="Mem"
-                percent={memUsage}
-                color={memUsage > 50 ? "bg-construct-semantic-warning" : "bg-construct-semantic-success"}
-                icon={<HardDrive size={10} />}
-              />
-            </div>
-          </div>
-
-          {/* Terminal Output */}
-          <div className={`${glassCard} p-3 flex-1 min-h-0`}>
-            <div className="flex items-center gap-1.5 text-construct-accent-primary mb-2">
-              <Terminal size={12} />
-              <span className="text-[10px] font-semibold uppercase tracking-wider">
-                Live Output
-              </span>
-              {status === "running" && (
-                <span className="ml-auto flex items-center gap-1 text-[9px] text-construct-semantic-success">
-                  <span className="w-1.5 h-1.5 rounded-full bg-construct-semantic-success animate-pulse" />
-                  LIVE
-                </span>
-              )}
-            </div>
-            <TerminalOutput logs={logs} />
-          </div>
-        </div>
+      {/* ── GOAL ── */}
+      <div
+        style={{
+          padding: "6px 12px",
+          fontSize: "12px",
+          fontWeight: 600,
+          color: C.t1,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
+        }}
+        title={state.goal}
+      >
+        GOAL: {state.goal}
       </div>
 
-      {/* Bottom: Safety Settings */}
-      <div className={`${glassCard} p-3`}>
-        <div className="flex items-center gap-1.5 text-construct-accent-primary mb-2">
-          <Shield size={12} />
-          <span className="text-[10px] font-semibold uppercase tracking-wider">
-            Safety Settings
+      {/* ── PROGRESS BAR + STATS ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "24px",
+          padding: "6px 12px",
+          fontSize: "10px",
+          color: C.t3,
+          fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
+          flexWrap: "wrap",
+        }}
+      >
+        <span>
+          PROGRESS:{" "}
+          <ASCIIProgressBar percent={state.progress} />
+        </span>
+        <span>
+          TASKS:{" "}
+          <span style={{ color: C.t2 }}>
+            {state.tasksCompleted}/{state.totalTasks}
           </span>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2">
-          {safety.map((setting) => (
-            <SafetyCheckbox
-              key={setting.id}
-              setting={setting}
-              onToggle={toggleSafety}
-            />
-          ))}
-        </div>
-
-        {/* Limits */}
-        <div className="grid grid-cols-3 gap-3 mt-3 pt-3 border-t border-construct-border/30">
-          <div>
-            <div className="text-[10px] text-construct-text-muted mb-1">CPU Limit</div>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-1.5 bg-construct-border/40 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-construct-accent-primary rounded-full"
-                  style={{ width: `${cpuLimit}%` }}
-                />
-              </div>
-              <span className="text-[10px] text-construct-text-muted w-8">{cpuLimit}%</span>
-            </div>
-          </div>
-          <div>
-            <div className="text-[10px] text-construct-text-muted mb-1">Memory Limit</div>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-1.5 bg-construct-border/40 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-construct-semantic-success rounded-full"
-                  style={{ width: `${(memLimit / 4096) * 100}%` }}
-                />
-              </div>
-              <span className="text-[10px] text-construct-text-muted w-10">{memLimit} MB</span>
-            </div>
-          </div>
-          <div>
-            <div className="text-[10px] text-construct-text-muted mb-1">Checkpoint Interval</div>
-            <div className="flex items-center gap-1 text-[10px] text-construct-text-primary">
-              <GitBranch size={10} className="text-construct-accent-primary" />
-              Every 5 minutes
-            </div>
-          </div>
-        </div>
+        </span>
+        <span>
+          ETA:{" "}
+          <span style={{ color: C.t2 }}>{state.eta}</span>
+        </span>
       </div>
 
-      {/* CSS animation */}
+      {/* ── TASK TABLE HEADER ── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "24px 36px 1fr 48px 60px",
+          gap: "8px",
+          padding: "4px 12px",
+          fontSize: "10px",
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: C.t4,
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
+        }}
+      >
+        <span>#</span>
+        <span>STATUS</span>
+        <span>TASK</span>
+        <span>TIME</span>
+        <span>AGENT</span>
+      </div>
+
+      {/* ── TASK TABLE BODY ── */}
+      <div
+        style={{
+          maxHeight: "160px",
+          overflow: "auto",
+          scrollbarWidth: "thin",
+          scrollbarColor: `${C.s3} transparent`,
+          borderBottom: "1px solid rgba(255,255,255,0.04)",
+        }}
+      >
+        {state.tasks.map((task) => (
+          <div
+            key={task.id}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "24px 36px 1fr 48px 60px",
+              gap: "8px",
+              padding: "3px 12px",
+              fontSize: "11px",
+              fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+              color: C.t2,
+              borderBottom: "1px solid rgba(255,255,255,0.02)",
+              alignItems: "center",
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.backgroundColor = C.s1;
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+            }}
+          >
+            <span style={{ color: C.t3, fontSize: "10px" }}>{task.number}</span>
+            <StatusBadge status={task.status} />
+            <span
+              style={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {task.description}
+            </span>
+            <span style={{ color: C.t3, fontSize: "10px" }}>{task.time}</span>
+            <span style={{ color: task.agent === "--" ? C.t4 : C.t2, fontSize: "10px" }}>
+              {task.agent}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* ── CONTROLS ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          padding: "6px 12px",
+          borderBottom: showLog ? "1px solid rgba(255,255,255,0.04)" : "none",
+        }}
+      >
+        <ControlButton label="PAUSE" />
+        <ControlButton label="STOP" />
+        <ControlButton label="FORCE-CHECKPOINT" />
+        <ControlButton label="VIEW-LOG" onClick={() => setShowLog(!showLog)} />
+        <AutoToggle enabled={state.autoMode} onToggle={toggleAuto} />
+      </div>
+
+      {/* ── TERMINAL OUTPUT (collapsible) ── */}
+      {showLog && (
+        <div style={{ height: "140px", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+          <TerminalOutput
+            logs={state.logs}
+            onCommand={handleCommand}
+            showInput
+          />
+        </div>
+      )}
+
+      {/* ── RESOURCES ── */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "20px",
+          padding: "6px 12px",
+          fontSize: "10px",
+          color: C.t3,
+          fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+          marginTop: "auto",
+        }}
+      >
+        <span>RESOURCE:</span>
+        <span>
+          CPU:{" "}
+          <span style={{ color: C.t2 }}>{state.resources.cpu}%</span>
+        </span>
+        <span>
+          MEM:{" "}
+          <span style={{ color: C.t2 }}>
+            {state.resources.memUsed}MB/{state.resources.memTotal}GB
+          </span>
+        </span>
+        <span>
+          DISK:{" "}
+          <span style={{ color: C.t2 }}>{state.resources.diskSpeed}</span>
+        </span>
+      </div>
+
+      {/* scrollbar styles */}
       <style>{`
-        @keyframes pulse-glow {
-          0%, 100% { box-shadow: 0 0 10px rgba(137, 180, 250, 0.2); }
-          50% { box-shadow: 0 0 25px rgba(137, 180, 250, 0.4), 0 0 50px rgba(137, 180, 250, 0.1); }
-        }
-        .animate-pulse-glow {
-          animation: pulse-glow 2s ease-in-out infinite;
-        }
-        .scrollbar-thin::-webkit-scrollbar {
-          width: 4px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-          background: #22222f;
-          border-radius: 2px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-          background: #3a3a4f;
-        }
+        div::-webkit-scrollbar { width: 4px; height: 4px; }
+        div::-webkit-scrollbar-track { background: transparent; }
+        div::-webkit-scrollbar-thumb { background: ${C.s3}; border-radius: 2px; }
+        div::-webkit-scrollbar-thumb:hover { background: #3a3a4f; }
       `}</style>
     </div>
   );

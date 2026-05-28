@@ -1,6 +1,5 @@
 import { useEffect } from "react";
-import { motion } from "framer-motion";
-import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from "lucide-react";
+import { CheckCircle, AlertCircle, Info, AlertTriangle } from "lucide-react";
 
 export type ToastType = "success" | "error" | "info" | "warning";
 
@@ -30,27 +29,23 @@ export function ToastNotification({
 
   const typeConfig = {
     success: {
-      icon: <CheckCircle size={16} />,
-      bg: "rgba(166,227,161,0.1)",
-      border: "rgba(166,227,161,0.25)",
+      icon: <CheckCircle size={12} />,
+      border: "#1e3a2f",
       iconColor: "#10b981",
     },
     error: {
-      icon: <AlertCircle size={16} />,
-      bg: "rgba(243,139,168,0.1)",
-      border: "rgba(243,139,168,0.25)",
+      icon: <AlertCircle size={12} />,
+      border: "#3a1e1e",
       iconColor: "#ef4444",
     },
     info: {
-      icon: <Info size={16} />,
-      bg: "rgba(137,180,250,0.1)",
-      border: "rgba(137,180,250,0.25)",
+      icon: <Info size={12} />,
+      border: "#222236",
       iconColor: "#6366f1",
     },
     warning: {
-      icon: <AlertTriangle size={16} />,
-      bg: "rgba(249,226,175,0.1)",
-      border: "rgba(249,226,175,0.25)",
+      icon: <AlertTriangle size={12} />,
+      border: "#3a3018",
       iconColor: "#f59e0b",
     },
   };
@@ -58,44 +53,38 @@ export function ToastNotification({
   const config = typeConfig[type];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 60, scale: 0.95 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 60, scale: 0.95 }}
-      transition={{ type: "spring", stiffness: 400, damping: 28 }}
-      className="relative flex items-start gap-3 min-w-[280px] max-w-[380px] px-4 py-3 rounded-xl border backdrop-blur-xl"
+    <div
+      className="fixed top-4 right-4 z-50 flex items-start gap-2 px-3 py-2 font-mono"
       style={{
-        backgroundColor: config.bg,
-        borderColor: config.border,
+        backgroundColor: "#1a1a24",
+        border: `1px solid ${config.border}`,
+        borderRadius: 0,
+        minWidth: 240,
+        maxWidth: 340,
       }}
     >
       <div className="mt-0.5 shrink-0" style={{ color: config.iconColor }}>
         {config.icon}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-sm font-medium text-construct-text-primary">{title}</div>
+        <div className="text-[11px] font-semibold" style={{ color: "#e2e2e2" }}>
+          {title}
+        </div>
         {message && (
-          <div className="text-xs text-construct-text-muted mt-0.5">{message}</div>
+          <div className="text-[10px] mt-0.5" style={{ color: "#888" }}>
+            {message}
+          </div>
         )}
       </div>
       {onDismiss && (
         <button
           onClick={onDismiss}
-          className="shrink-0 mt-0.5 text-construct-text-muted hover:text-construct-text-primary transition-colors"
+          className="shrink-0 text-[#555] hover:text-[#e2e2e2] transition-colors duration-100 cursor-pointer"
+          style={{ fontSize: 12, lineHeight: 1 }}
         >
-          <X size={14} />
+          ×
         </button>
       )}
-      {/* Progress bar */}
-      {duration > 0 && (
-        <motion.div
-          className="absolute bottom-0 left-0 h-0.5 rounded-full"
-          style={{ backgroundColor: config.iconColor }}
-          initial={{ width: "100%" }}
-          animate={{ width: "0%" }}
-          transition={{ duration: duration / 1000, ease: "linear" }}
-        />
-      )}
-    </motion.div>
+    </div>
   );
 }

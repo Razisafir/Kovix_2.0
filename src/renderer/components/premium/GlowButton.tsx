@@ -1,5 +1,4 @@
 import { ReactNode } from "react";
-import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 
 interface GlowButtonProps {
@@ -23,42 +22,49 @@ export function GlowButton({
   className = "",
   type = "button",
 }: GlowButtonProps) {
-  const base =
-    "relative inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:ring-construct-accent-primary/50 overflow-hidden";
-
   const sizeClasses = {
-    sm: "h-7 px-3 text-xs rounded-lg",
-    md: "h-9 px-4 text-sm rounded-xl",
-    lg: "h-11 px-6 text-base rounded-xl",
+    sm: "px-2 py-[6px] text-[9px]",
+    md: "px-3 py-[6px] text-[10px]",
+    lg: "px-4 py-2 text-[11px]",
   };
 
   const variantClasses = {
     primary:
-      "bg-gradient-to-r from-construct-accent-primary to-construct-accent-secondary text-white shadow-[0_0_20px_rgba(99,102,241,0.3)] hover:shadow-[0_0_30px_rgba(99,102,241,0.5)] hover:brightness-110 active:scale-[0.98]",
+      "bg-[#6366f1] text-white border-[#6366f1] hover:bg-[#5558e0]",
     secondary:
-      "bg-[rgba(255,255,255,0.06)] text-construct-text-primary border border-[rgba(255,255,255,0.1)] hover:bg-[rgba(255,255,255,0.1)] hover:border-[rgba(255,255,255,0.18)] active:scale-[0.98]",
+      "bg-[#1a1a24] text-[#e2e2e2] border-[#22222e] hover:bg-[#22222e] hover:border-[#6366f1]",
     danger:
-      "bg-gradient-to-r from-construct-semantic-error to-[#f87171] text-white shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:shadow-[0_0_30px_rgba(239,68,68,0.5)] hover:brightness-110 active:scale-[0.98]",
+      "bg-[#1a1a24] text-[#ef4444] border-[#22222e] hover:bg-[#22222e] hover:border-[#ef4444]",
     ghost:
-      "bg-transparent text-construct-text-muted hover:text-construct-text-primary hover:bg-[rgba(255,255,255,0.04)] active:scale-[0.98]",
+      "bg-transparent text-[#666] border-transparent hover:text-[#e2e2e2] hover:border-[#22222e]",
   };
 
   const isDisabled = disabled || loading;
 
   return (
-    <motion.button
+    <button
       type={type}
       onClick={onClick}
       disabled={isDisabled}
-      whileTap={!isDisabled ? { scale: 0.97 } : undefined}
-      className={`${base} ${sizeClasses[size]} ${variantClasses[variant]} ${
-        isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-      } ${className}`}
+      className={`
+        inline-flex items-center justify-center gap-1.5
+        font-mono font-medium
+        border
+        transition-colors duration-100
+        ${sizeClasses[size]}
+        ${variantClasses[variant]}
+        ${isDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
+        ${className}
+      `}
+      style={{ borderRadius: 2 }}
     >
       {loading && (
-        <Loader2 size={size === "sm" ? 12 : size === "md" ? 14 : 16} className="animate-spin" />
+        <Loader2
+          size={size === "sm" ? 10 : size === "md" ? 11 : 12}
+          className="animate-spin"
+        />
       )}
-      <span className={loading ? "opacity-80" : ""}>{children}</span>
-    </motion.button>
+      {children}
+    </button>
   );
 }

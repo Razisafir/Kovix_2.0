@@ -1,120 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Construct — Agent Panel</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script>tailwind.config={theme:{extend:{colors:{c:{bg0:'#0a0a0f',bg1:'#12121a',bg2:'#1a1a25',bg3:'#22222f',accent:'#6366f1',accentH:'#818cf8',accent2:'#8b5cf6',text:'#f1f5f9',text2:'#94a3b8',muted:'#64748b',ok:'#10b981',warn:'#f59e0b',err:'#ef4444',info:'#60a5fa',bdr:'rgba(255,255,255,0.06)'}},fontFamily:{sans:['Inter','system-ui'],mono:['JetBrains Mono','monospace']}}}}</script>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',system-ui,sans-serif;background:#0a0a0f;color:#f1f5f9;min-height:100vh;padding:20px}
-.glass{background:rgba(18,18,26,0.85);backdrop-filter:blur(24px) saturate(180%);border:1px solid rgba(255,255,255,0.06);border-radius:16px}
-.glow-btn{background:linear-gradient(135deg,#6366f1,#8b5cf6);box-shadow:0 0 20px rgba(99,102,241,0.3)}.glow-btn:hover{box-shadow:0 0 30px rgba(99,102,241,0.5)}
-@keyframes pulseGlow{0%,100%{box-shadow:0 0 5px rgba(99,102,241,0.2)}50%{box-shadow:0 0 20px rgba(99,102,241,0.4)}}
-.pulse-glow{animation:pulseGlow 2s ease-in-out infinite}
-@keyframes typeBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-4px)}}
-.t1{animation:typeBounce 1.4s ease-in-out infinite}.t2{animation:typeBounce 1.4s ease-in-out .2s infinite}.t3{animation:typeBounce 1.4s ease-in-out .4s infinite}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Construct — Agent Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.4; background: #0c0c10; color: #e8e8ec; padding: 24px; }
+    .panel { max-width: 1200px; margin: 0 auto; }
+    .border-t { border-top: 1px solid rgba(255,255,255,0.04); }
+    .header { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b73; padding: 6px 0; }
+    .goal { font-size: 12px; font-weight: 600; padding: 8px 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .status-bar { font-size: 10px; font-variant-numeric: tabular-nums; color: #4a4a52; padding: 4px 0; }
+    .status-bar .working { color: #6366f1; }
+    .btn { display: inline-block; padding: 2px 6px; background: #1a1a24; border-radius: 2px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; color: #94949c; margin-right: 4px; }
+    .btn:hover { background: #22222e; color: #e8e8ec; }
+    .btn-auto { margin-left: auto; color: #10b981; }
+    .log { font-size: 11px; line-height: 1.8; font-variant-numeric: tabular-nums; }
+    .log .ts { color: #4a4a52; }
+    .log .inf { color: #60a5fa; }
+    .log .ok { color: #10b981; }
+    .log .wrn { color: #f59e0b; }
+    .log .err { color: #ef4444; }
+    .log .wrk { color: #6366f1; }
+    .thinking { background: #1a1a24; padding: 8px 12px; margin: 8px 0; font-size: 11px; color: #6b6b73; }
+    .thinking .line { padding: 2px 0; }
+    .thinking .line::before { content: "> "; color: #6366f1; }
+    .attached { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+    .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: #1a1a24; border-radius: 2px; font-size: 10px; color: #94949c; }
+    .chip .x { cursor: pointer; color: #4a4a52; }
+    .chip .x:hover { color: #ef4444; }
+    .input-line { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 12px; }
+    .input-line .prompt { color: #6366f1; }
+    .input-line input { flex: 1; background: transparent; border: none; outline: none; color: #e8e8ec; font-family: 'JetBrains Mono', monospace; font-size: 12px; caret-shape: block; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #22222e; }
+  </style>
 </head>
 <body>
-<div class="max-w-5xl mx-auto space-y-4">
-
-<!-- Header -->
-<div class="flex items-center justify-between">
-  <div class="flex items-center gap-3">
-    <div class="w-10 h-10 rounded-xl bg-c-accent/20 flex items-center justify-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-    <div><h1 class="text-lg font-semibold text-c-text">Agent Panel</h1><p class="text-xs text-c-muted">Autonomous AI coding agent</p></div>
-  </div>
-  <div class="flex items-center gap-2">
-    <span class="px-2 py-1 rounded-md text-[10px] font-medium bg-c-ok/15 text-c-ok border border-c-ok/25">Running</span>
-    <div class="w-2 h-2 rounded-full bg-c-ok pulse-glow"></div>
-  </div>
-</div>
-
-<!-- Goal Card -->
-<div class="glass p-4">
-  <div class="flex items-start gap-3">
-    <svg width="18" height="18" class="text-c-accent mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-    <div class="flex-1">
-      <p class="text-sm text-c-text font-medium">Create a React login form with validation</p>
-      <div class="flex items-center gap-3 mt-2 text-[10px] text-c-muted">
-        <span>Session: #a7f2e1</span><span>Started: 2m ago</span><span>Tasks: 3/7</span>
-      </div>
+  <div class="panel">
+    <div class="header">AGENT</div>
+    <div class="border-t"></div>
+    <div class="goal">GOAL: build saas dashboard with auth, billing, analytics</div>
+    <div class="border-t"></div>
+    <div class="status-bar">
+      STATUS: <span class="working">working</span> &nbsp;&nbsp; PROGRESS: 34% &nbsp;&nbsp; TASKS: 4/12 &nbsp;&nbsp; TIME: 02:14:00
     </div>
-    <div class="flex items-center gap-1">
-      <button class="w-7 h-7 rounded-lg hover:bg-white/10 flex items-center justify-center text-c-warn" title="Pause"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg></button>
-      <button class="w-7 h-7 rounded-lg hover:bg-white/10 flex items-center justify-center text-c-err" title="Stop"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg></button>
+    <div class="border-t"></div>
+    <div style="padding: 6px 0; display: flex;">
+      <span class="btn">Pause</span>
+      <span class="btn">Stop</span>
+      <span class="btn">Checkpoint</span>
+      <span class="btn">Log</span>
+      <span class="btn btn-auto">Auto: ON</span>
+    </div>
+    <div class="border-t"></div>
+    <div class="log" style="padding: 8px 0;">
+      <div><span class="ts">14:32:05</span> <span class="inf">[INF]</span> starting task: build dashboard layout component</div>
+      <div><span class="ts">14:32:08</span> <span class="inf">[INF]</span> reading patterns from memory ctx:react-hooks</div>
+      <div><span class="ts">14:32:12</span> <span class="ok">[OK]</span> found 3 relevant patterns</div>
+      <div><span class="ts">14:32:15</span> <span class="inf">[INF]</span> creating DashboardLayout.tsx</div>
+      <div><span class="ts">14:32:18</span> <span class="inf">[INF]</span> writing component with sidebar + main content grid</div>
+      <div><span class="ts">14:32:22</span> <span class="ok">[OK]</span> file written: src/components/DashboardLayout.tsx (2.4KB)</div>
+      <div><span class="ts">14:32:25</span> <span class="inf">[INF]</span> task complete: build dashboard layout component</div>
+      <div><span class="ts">14:32:25</span> <span class="inf">[INF]</span> starting task: implement authentication flow</div>
+      <div><span class="ts">14:32:28</span> <span class="inf">[INF]</span> reading patterns from memory ctx:auth-flow</div>
+      <div><span class="ts">14:32:32</span> <span class="wrk">[WRK]</span> analyzing JWT vs session-based approach...</div>
+    </div>
+    <div class="border-t"></div>
+    <div class="header" style="margin-top: 4px;">THINKING</div>
+    <div class="thinking">
+      <div class="line">analyzing authentication requirements</div>
+      <div class="line">considering JWT vs session-based approach</div>
+      <div class="line">selected: JWT with 15min expiry (matches memory pattern)</div>
+      <div class="line">reading previous auth implementation from episodic memory</div>
+    </div>
+    <div class="border-t"></div>
+    <div class="header" style="margin-top: 4px;">ATTACHED</div>
+    <div class="attached">
+      <div class="chip">src/components/LoginForm.tsx <span class="x">&times;</span></div>
+      <div class="chip">src/types/auth.ts <span class="x">&times;</span></div>
+    </div>
+    <div class="border-t"></div>
+    <div class="input-line">
+      <span class="prompt">&gt;</span>
+      <input type="text" value="@LoginForm add validation using email regex" autofocus>
     </div>
   </div>
-</div>
-
-<!-- Task List -->
-<div class="glass p-4">
-  <h3 class="text-[10px] font-semibold text-c-muted uppercase tracking-wider mb-3">Task Progress</h3>
-  <div class="space-y-2">
-    <div class="flex items-center gap-3"><svg width="14" height="14" class="text-c-ok shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="text-xs text-c-text2 line-through">Analyze project structure</span></div>
-    <div class="flex items-center gap-3"><svg width="14" height="14" class="text-c-ok shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="text-xs text-c-text2 line-through">Create LoginForm.tsx component</span></div>
-    <div class="flex items-center gap-3"><svg width="14" height="14" class="text-c-accent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span class="text-xs text-c-text font-medium">Add form validation (email, password)</span></div>
-    <div class="flex items-center gap-3"><svg width="14" height="14" class="text-c-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg><span class="text-xs text-c-muted">Style with Tailwind CSS</span></div>
-    <div class="flex items-center gap-3"><svg width="14" height="14" class="text-c-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg><span class="text-xs text-c-muted">Write unit tests</span></div>
-  </div>
-</div>
-
-<!-- Streaming Output -->
-<div class="glass p-4">
-  <h3 class="text-[10px] font-semibold text-c-muted uppercase tracking-wider mb-3">Live Output</h3>
-  <div class="font-mono text-xs space-y-2">
-    <div class="flex gap-2"><svg width="12" height="12" class="text-c-accent mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg><p class="text-c-text2">Analyzing requirements for login form...</p></div>
-    <div class="flex gap-2"><svg width="12" height="12" class="text-c-accent mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg><p class="text-c-text2">Considering validation approach: react-hook-form vs native</p></div>
-    <div class="flex gap-2"><svg width="12" height="12" class="text-c-warn mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><div><p class="text-c-text2">write_file(LoginForm.tsx)</p><pre class="mt-1 p-2 rounded-lg bg-c-bg0/50 text-c-text2 text-[10px] leading-relaxed overflow-x-auto border border-c-bdr">import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-
-export function LoginForm() {
-  const { register, handleSubmit, formState: { errors } } = useForm();
-  const onSubmit = (data) => console.log(data);
-
-  return (
-    &lt;form onSubmit={handleSubmit(onSubmit)}&gt;
-      &lt;input {...register("email", { required: true })} /&gt;
-      {errors.email && &lt;span&gt;Required&lt;/span&gt;}
-      &lt;button type="submit"&gt;Login&lt;/button&gt;
-    &lt;/form&gt;
-  );
-}</pre></div></div>
-    <div class="flex gap-2"><svg width="12" height="12" class="text-c-ok mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><p class="text-c-ok">File written: src/components/LoginForm.tsx (1.2KB)</p></div>
-    <div class="flex items-center gap-1.5 text-c-muted"><div class="w-1.5 h-1.5 rounded-full bg-c-accent t1"></div><div class="w-1.5 h-1.5 rounded-full bg-c-accent t2"></div><div class="w-1.5 h-1.5 rounded-full bg-c-accent t3"></div><span class="text-[10px]">Working on validation rules...</span></div>
-  </div>
-</div>
-
-<!-- Thinking Mode -->
-<div class="glass p-4">
-  <div class="flex items-center gap-2 mb-3">
-    <button class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-c-accent/20 text-c-accent border border-c-accent/30">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-      Deep Think ON
-      <svg width="12" height="12" class="animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-    </button>
-  </div>
-  <div class="pl-3 space-y-1.5 border-l-2 border-c-accent/30">
-    <div class="flex items-center gap-2 text-[11px] text-c-text2"><svg width="10" height="10" class="text-c-accent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>Analyzing requirements...</div>
-    <div class="flex items-center gap-2 text-[11px] text-c-text2"><svg width="10" height="10" class="text-c-accent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>Considering approaches: react-hook-form vs Formik vs native</div>
-    <div class="flex items-center gap-2 text-[11px] text-c-text2"><svg width="10" height="10" class="text-c-accent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>Selected: react-hook-form (lighter, better TypeScript)</div>
-  </div>
-</div>
-
-<!-- File References -->
-<div class="glass p-4">
-  <h3 class="text-[10px] font-semibold text-c-muted uppercase tracking-wider mb-2">Attached Files</h3>
-  <div class="flex flex-wrap gap-2 mb-3">
-    <span class="flex items-center gap-1 px-2 py-0.5 bg-c-accent/15 text-c-accent rounded-md text-[10px]"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>src/components/LoginForm.tsx<svg width="10" height="10" class="ml-1 cursor-pointer hover:text-c-err" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-    <span class="flex items-center gap-1 px-2 py-0.5 bg-c-accent/15 text-c-accent rounded-md text-[10px]"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>src/types/auth.ts<svg width="10" height="10" class="ml-1 cursor-pointer hover:text-c-err" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
-  </div>
-  <div class="flex items-center gap-2 px-3 py-2 bg-c-bg2 rounded-xl border border-c-bdr">
-    <span class="text-c-muted text-xs">@</span>
-    <span class="text-xs text-c-text">Add form validation using @LoginForm.tsx patterns</span>
-  </div>
-</div>
-
-</div>
 </body>
 </html>

@@ -1,122 +1,151 @@
 import { lazy, Suspense } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import Sidebar from "./components/Sidebar";
 import StatusBar from "./components/StatusBar";
 import useAppStore from "./stores/useAppStore";
-import OnboardingModal from "./components/OnboardingModal";
-import ToastContainer from "./components/ToastContainer";
-import { AnimatedBackground } from "./components/premium/AnimatedBackground";
-import { SkeletonLine } from "./components/Skeleton";
 
 const Editor = lazy(() => import("./components/Editor"));
 const Panel = lazy(() => import("./components/Panel"));
 
+const COLORS = {
+  base: "#0c0c10",
+  surface1: "#12121a",
+  border: "rgba(255,255,255,0.04)",
+  textSecondary: "#94949c",
+  accent: "#6366f1",
+};
+
 function App() {
   const sidebarVisible = useAppStore((s) => s.sidebarVisible);
   const panelVisible = useAppStore((s) => s.panelVisible);
-  const onboardingComplete = useAppStore((s) => s.onboardingComplete);
-  const location = useLocation();
 
   return (
-    <div className="flex flex-col w-full h-full mesh-gradient-bg">
-      {/* Animated background overlay */}
-      <AnimatedBackground />
-
-      {/* Toast container - fixed bottom-right */}
-      <ToastContainer />
-
-      {/* Onboarding modal - first run only */}
-      {!onboardingComplete && <OnboardingModal />}
-
-      {/* Toolbar */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-        className="flex items-center h-9 px-3 glass-panel border-b border-construct-border/50 shrink-0 z-10"
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: COLORS.base,
+        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+        overflow: "hidden",
+      }}
+    >
+      {/* Title Bar */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          height: 28,
+          padding: "0 12px",
+          backgroundColor: COLORS.surface1,
+          borderBottom: `1px solid ${COLORS.border}`,
+          flexShrink: 0,
+          userSelect: "none",
+        }}
       >
-        <span className="text-xs font-semibold tracking-widest text-construct-accent-primary uppercase select-none">
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: "0.08em",
+            color: COLORS.textSecondary,
+            textTransform: "uppercase" as const,
+          }}
+        >
           Construct
         </span>
-        <div className="flex-1" />
-        <span className="text-[10px] text-construct-text-muted select-none">v0.1.0</span>
-      </motion.div>
+        <div style={{ flex: 1 }} />
+        <span style={{ fontSize: 10, color: "#6b6b73" }}>v0.1.0-alpha</span>
+      </div>
 
       {/* Main Layout */}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Sidebar with animation */}
-        <AnimatePresence initial={false}>
-          {sidebarVisible && (
-            <motion.aside
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 240, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="shrink-0 glass-panel border-r border-construct-border/50 overflow-hidden"
-            >
-              <Sidebar />
-            </motion.aside>
-          )}
-        </AnimatePresence>
+      <div
+        style={{
+          display: "flex",
+          flex: 1,
+          minHeight: 0,
+          overflow: "hidden",
+        }}
+      >
+        {/* Sidebar */}
+        {sidebarVisible && (
+          <aside
+            style={{
+              width: 280,
+              flexShrink: 0,
+              display: "flex",
+              borderRight: `1px solid ${COLORS.border}`,
+              overflow: "hidden",
+            }}
+          >
+            <Sidebar />
+          </aside>
+        )}
 
         {/* Center - Editor + Panel */}
-        <main className="flex flex-col flex-1 min-w-0">
-          <div className="flex-1 min-h-0">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location.pathname}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.2 }}
-                className="w-full h-full"
-              >
-                <Suspense fallback={<EditorSkeleton />}>
-                  <Routes location={location}>
-                    <Route path="/" element={<Editor />} />
-                    <Route path="/editor" element={<Editor />} />
-                  </Routes>
-                </Suspense>
-              </motion.div>
-            </AnimatePresence>
+        <main
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            minWidth: 0,
+          }}
+        >
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <Suspense
+              fallback={
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    padding: 16,
+                    fontSize: 11,
+                    color: "#6b6b73",
+                  }}
+                >
+                  loading...
+                </div>
+              }
+            >
+              <Editor />
+            </Suspense>
           </div>
 
-          {/* Bottom Panel with animation */}
-          <AnimatePresence initial={false}>
-            {panelVisible && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 192, opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="shrink-0 glass-panel border-t border-construct-border/50 overflow-hidden"
+          {/* Bottom Panel */}
+          {panelVisible && (
+            <div
+              style={{
+                height: 240,
+                flexShrink: 0,
+                borderTop: `1px solid ${COLORS.border}`,
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <Suspense
+                fallback={
+                  <div
+                    style={{
+                      padding: 8,
+                      fontSize: 10,
+                      color: "#6b6b73",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                    }}
+                  >
+                    loading panel...
+                  </div>
+                }
               >
                 <Panel />
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </Suspense>
+            </div>
+          )}
         </main>
       </div>
 
       <StatusBar />
-    </div>
-  );
-}
-
-function EditorSkeleton() {
-  return (
-    <div className="w-full h-full p-4 space-y-3">
-      <SkeletonLine width="75%" height="16px" />
-      <SkeletonLine width="50%" height="16px" />
-      <SkeletonLine width="83%" height="16px" />
-      <SkeletonLine width="66%" height="16px" />
-      <SkeletonLine width="80%" height="16px" />
-      <div className="pt-4 space-y-2">
-        <SkeletonLine width="90%" height="12px" />
-        <SkeletonLine width="70%" height="12px" />
-        <SkeletonLine width="85%" height="12px" />
-      </div>
     </div>
   );
 }

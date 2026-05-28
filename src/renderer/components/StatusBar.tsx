@@ -1,12 +1,24 @@
 import {
-  Layout,
   PanelBottom,
   PanelLeft,
   GitBranch,
-  CircleDot,
 } from "lucide-react";
 import useAppStore from "@/stores/useAppStore";
-import { ContextBar } from "./ContextBar";
+
+const COLORS = {
+  surface1: "#12121a",
+  surface2: "#1a1a24",
+  accent: "#6366f1",
+  textPrimary: "#e8e8ec",
+  textSecondary: "#94949c",
+  muted: "#6b6b73",
+  dim: "#4a4a52",
+  border: "rgba(255,255,255,0.04)",
+  idle: "#4a4a52",
+  working: "#6366f1",
+  error: "#ef4444",
+  success: "#22c55e",
+};
 
 function StatusBar() {
   const sidebarVisible = useAppStore((s) => s.sidebarVisible);
@@ -14,63 +26,127 @@ function StatusBar() {
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
   const togglePanel = useAppStore((s) => s.togglePanel);
   const cursorPosition = useAppStore((s) => s.cursorPosition);
-  const contextPercent = useAppStore((s) => s.contextPercent ?? 0);
+
+  // Status: idle | working | error - color coded
+  const agentStatus = "idle"; // idle | working | error
+  const statusColor =
+    agentStatus === "idle"
+      ? COLORS.idle
+      : agentStatus === "working"
+      ? COLORS.working
+      : COLORS.error;
+
+  const memUsage = "34%";
+  const ctxUsage = "12k/200k";
+  const branch = "main";
 
   return (
-    <footer className="flex items-center justify-between h-6 px-2 bg-construct-accent-primary text-construct-bg-primary-tertiary shrink-0 select-none">
+    <footer
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        height: 22,
+        padding: "0 8px",
+        backgroundColor: COLORS.surface1,
+        borderTop: `1px solid ${COLORS.border}`,
+        flexShrink: 0,
+        userSelect: "none",
+        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+        fontSize: 10,
+      }}
+    >
       {/* Left */}
-      <div className="flex items-center gap-0.5">
+      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
         <button
           onClick={toggleSidebar}
           title="Toggle Sidebar"
-          className={`flex items-center justify-center w-5 h-5 rounded transition-colors ${
-            sidebarVisible
-              ? "bg-white/20"
-              : "hover:bg-white/10"
-          }`}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 18,
+            height: 18,
+            borderRadius: 2,
+            border: "none",
+            cursor: "pointer",
+            backgroundColor: sidebarVisible ? COLORS.surface2 : "transparent",
+            color: sidebarVisible ? COLORS.textSecondary : COLORS.dim,
+          }}
         >
-          <PanelLeft size={12} />
+          <PanelLeft size={11} />
         </button>
         <button
           onClick={togglePanel}
           title="Toggle Panel"
-          className={`flex items-center justify-center w-5 h-5 rounded transition-colors ${
-            panelVisible
-              ? "bg-white/20"
-              : "hover:bg-white/10"
-          }`}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 18,
+            height: 18,
+            borderRadius: 2,
+            border: "none",
+            cursor: "pointer",
+            backgroundColor: panelVisible ? COLORS.surface2 : "transparent",
+            color: panelVisible ? COLORS.textSecondary : COLORS.dim,
+          }}
         >
-          <PanelBottom size={12} />
+          <PanelBottom size={11} />
         </button>
-        <button
-          title="Layout"
-          className="flex items-center justify-center w-5 h-5 rounded hover:bg-white/10 transition-colors"
+        <span style={{ color: COLORS.dim, margin: "0 4px" }}>|</span>
+        <span style={{ color: COLORS.muted, letterSpacing: "0.02em" }}>
+          construct v0.1.0-alpha
+        </span>
+        <span style={{ color: COLORS.dim, margin: "0 4px" }}>|</span>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            color: COLORS.muted,
+          }}
         >
-          <Layout size={12} />
-        </button>
-        <span className="mx-1.5 text-[10px] opacity-50">|</span>
-        <div className="flex items-center gap-1 text-[11px]">
-          <GitBranch size={11} />
-          <span>main</span>
+          <GitBranch size={10} style={{ flexShrink: 0 }} />
+          <span>{branch}</span>
         </div>
       </div>
 
       {/* Center */}
-      <div className="flex items-center gap-3 text-[11px]">
-        <span className="flex items-center gap-1">
-          <CircleDot size={10} className="text-construct-semantic-success" />
-          Ready
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          position: "absolute",
+          left: "50%",
+          transform: "translateX(-50%)",
+        }}
+      >
+        <span style={{ color: statusColor, letterSpacing: "0.02em" }}>
+          agent:{agentStatus}
         </span>
-        <ContextBar percent={contextPercent} />
+        <span style={{ color: COLORS.muted, letterSpacing: "0.02em" }}>
+          mem:{memUsage}
+        </span>
+        <span style={{ color: COLORS.muted, letterSpacing: "0.02em" }}>
+          ctx:{ctxUsage}
+        </span>
       </div>
 
       {/* Right */}
-      <div className="flex items-center gap-3 text-[11px]">
-        <span>
-          Ln {cursorPosition.line}, Col {cursorPosition.column}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+        }}
+      >
+        <span style={{ color: COLORS.muted, letterSpacing: "0.02em" }}>
+          ln {cursorPosition?.line ?? 1}, col {cursorPosition?.column ?? 1}
         </span>
-        <span>UTF-8</span>
-        <span>TypeScript</span>
+        <span style={{ color: COLORS.dim }}>utf-8</span>
+        <span style={{ color: COLORS.dim }}>typescript</span>
       </div>
     </footer>
   );

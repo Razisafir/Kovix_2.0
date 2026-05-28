@@ -3,191 +3,286 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Construct AI Agent — Demo</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Construct</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            c: {
-              bg0: '#0a0a0f', bg1: '#12121a', bg2: '#1a1a25', bg3: '#22222f',
-              accent: '#6366f1', accent2: '#8b5cf6', accentH: '#818cf8',
-              text: '#f1f5f9', text2: '#94a3b8', muted: '#64748b',
-              ok: '#10b981', warn: '#f59e0b', err: '#ef4444', info: '#60a5fa',
-              bdr: 'rgba(255,255,255,0.06)',
-            }
-          },
-          fontFamily: { sans: ['Inter','system-ui','sans-serif'], mono: ['JetBrains Mono','monospace'] }
-        }
-      }
-    }
-  </script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', system-ui, sans-serif; background: #0a0a0f; color: #f1f5f9; overflow: hidden; }
-    .glass { background: rgba(18,18,26,0.85); backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255,255,255,0.06); }
-    .glass-card { background: rgba(17,17,27,0.7); backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
-    .glow-btn { background: linear-gradient(135deg, #6366f1, #8b5cf6); box-shadow: 0 0 20px rgba(99,102,241,0.3); }
-    .glow-btn:hover { box-shadow: 0 0 30px rgba(99,102,241,0.5); transform: scale(1.02); }
-    .mesh-bg { background: linear-gradient(-45deg, #0a0a0f, #12121a, #1a1a25, #0a0a0f); background-size: 400% 400%; animation: mesh 15s ease infinite; }
-    @keyframes mesh { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
-    @keyframes pulseGlow { 0%,100% { box-shadow: 0 0 5px rgba(99,102,241,0.2); } 50% { box-shadow: 0 0 20px rgba(99,102,241,0.4); } }
-    @keyframes typingBounce { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
-    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-    .pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
-    .typing-dot { animation: typingBounce 1.4s ease-in-out infinite; }
-    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-    .shimmer { background: linear-gradient(90deg, transparent, rgba(99,102,241,0.08), transparent); background-size: 200% 100%; animation: shimmer 2s infinite; }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    body { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.4; background: #0c0c10; color: #e8e8ec; overflow: hidden; width: 100vw; height: 100vh; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #22222f; border-radius: 3px; }
-    .tab-active { border-top: 2px solid #6366f1; background: rgba(99,102,241,0.1); color: #f1f5f9; }
-    .skill-card:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(99,102,241,0.15); }
+    ::-webkit-scrollbar-thumb { background: #22222e; }
+    .border-b { border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .border-r { border-right: 1px solid rgba(255,255,255,0.04); }
+    .border-t { border-top: 1px solid rgba(255,255,255,0.04); }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .flex-1 { flex: 1; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .justify-center { justify-content: center; }
+    .gap-1 { gap: 4px; }
+    .gap-2 { gap: 8px; }
+    .p-1 { padding: 4px; }
+    .p-2 { padding: 6px 8px; }
+    .p-3 { padding: 12px; }
+    .px-2 { padding-left: 8px; padding-right: 8px; }
+    .px-3 { padding-left: 12px; padding-right: 12px; }
+    .py-1 { padding-top: 4px; padding-bottom: 4px; }
+    .text-dim { color: #4a4a52; }
+    .text-muted { color: #6b6b73; }
+    .text-sec { color: #94949c; }
+    .text-accent { color: #6366f1; }
+    .text-ok { color: #10b981; }
+    .bg-s1 { background: #12121a; }
+    .bg-s2 { background: #1a1a24; }
+    .bg-base { background: #0c0c10; }
+    .hover:hover { background: #1a1a24; cursor: pointer; }
+    .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .uppercase { text-transform: uppercase; letter-spacing: 0.08em; }
+    .text-10 { font-size: 10px; }
+    .text-11 { font-size: 11px; }
+    .text-13 { font-size: 13px; }
+    .fw-600 { font-weight: 600; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .tab-nums { font-variant-numeric: tabular-nums; }
+
+    /* Title bar */
+    .titlebar { height: 28px; background: #0c0c10; border-bottom: 1px solid rgba(255,255,255,0.04); padding: 0 12px; }
+    .titlebar .logo { font-size: 11px; font-weight: 700; letter-spacing: 0.02em; }
+    .titlebar .status { font-size: 10px; color: #4a4a52; }
+
+    /* Sidebar rail */
+    .rail { width: 32px; background: #0c0c10; border-right: 1px solid rgba(255,255,255,0.04); }
+    .rail-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: #4a4a52; font-size: 14px; cursor: pointer; }
+    .rail-icon:hover { color: #e8e8ec; background: #1a1a24; }
+    .rail-icon.active { color: #6366f1; border-left: 2px solid #6366f1; }
+    .rail-badge { font-size: 9px; background: #1a1a24; padding: 1px 3px; border-radius: 2px; color: #94949c; position: absolute; bottom: 2px; right: 2px; }
+
+    /* File tree */
+    .sidebar { width: 248px; background: #0c0c10; border-right: 1px solid rgba(255,255,255,0.04); overflow: auto; }
+    .tree-header { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b73; padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .tree-header .actions { font-size: 11px; }
+    .tree-item { padding: 2px 12px 2px 24px; font-size: 11px; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .tree-item:hover { background: #1a1a24; }
+    .tree-item.active { background: #1a1a24; border-left: 2px solid #6366f1; }
+    .tree-item .badge { font-size: 9px; margin-left: auto; padding: 1px 3px; border-radius: 2px; }
+    .badge-m { background: rgba(245,158,11,0.15); color: #f59e0b; }
+    .badge-a { background: rgba(99,102,241,0.15); color: #6366f1; }
+    .tree-ctx { margin: 8px 12px; padding: 6px 8px; background: #1a1a24; border-radius: 2px; }
+    .tree-ctx .tag { display: inline-block; font-size: 10px; padding: 2px 6px; background: #22222e; border-radius: 2px; margin: 2px; color: #94949c; }
+    .tree-mem { font-size: 10px; color: #4a4a52; padding: 8px 12px; font-variant-numeric: tabular-nums; }
+
+    /* Editor */
+    .editor-tabs { height: 28px; background: #0c0c10; display: flex; align-items: flex-end; overflow: hidden; }
+    .tab { padding: 6px 12px; font-size: 11px; color: #6b6b73; border-top: 2px solid transparent; cursor: pointer; }
+    .tab:hover { color: #94949c; background: #12121a; }
+    .tab.active { color: #e8e8ec; background: #1a1a24; border-top-color: #6366f1; }
+    .editor-body { flex: 1; background: #0c0c10; padding: 12px; font-size: 12px; line-height: 1.6; overflow: auto; }
+    .editor-body .ln { display: inline-block; width: 32px; text-align: right; color: #4a4a52; font-size: 10px; margin-right: 12px; user-select: none; }
+    .editor-body .kw { color: #c084fc; }
+    .editor-body .str { color: #10b981; }
+    .editor-body .fn { color: #60a5fa; }
+    .editor-body .cmt { color: #4a4a52; font-style: italic; }
+    .editor-body .agent-cmt { color: #6b6b73; font-style: italic; }
+    .editor-body .type { color: #f59e0b; }
+
+    /* Bottom panel tabs */
+    .panel-tabs { height: 28px; background: #12121a; display: flex; align-items: center; padding: 0 8px; gap: 2px; border-top: 1px solid rgba(255,255,255,0.04); }
+    .ptab { padding: 4px 10px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: #4a4a52; cursor: pointer; border-top: 2px solid transparent; }
+    .ptab:hover { color: #6b6b73; background: #1a1a24; }
+    .ptab.active { color: #e8e8ec; background: #1a1a24; border-top-color: #6366f1; }
+
+    /* Status bar */
+    .statusbar { height: 22px; background: #12121a; border-top: 1px solid rgba(255,255,255,0.04); padding: 0 12px; font-size: 10px; color: #4a4a52; font-variant-numeric: tabular-nums; }
   </style>
 </head>
-<body class="mesh-bg h-screen w-screen overflow-hidden">
-
-<!-- TOOLBAR -->
-<div class="flex items-center h-9 px-4 glass border-b border-c-bdr z-50">
-  <span class="text-xs font-semibold tracking-widest text-c-accent uppercase">Construct</span>
-  <div class="flex-1"></div>
-  <div class="flex items-center gap-4 text-[10px] text-c-muted">
-    <div class="flex items-center gap-1">
-      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-      <span>Context: 42%</span>
-      <div class="w-12 h-1 bg-white/10 rounded-full overflow-hidden"><div class="h-full bg-c-ok rounded-full" style="width:42%"></div></div>
+<body class="flex flex-col">
+  <!-- Title Bar -->
+  <div class="titlebar flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="text-dim" style="font-size:14px;">&#9776;</span>
+      <span class="logo uppercase">CONSTRUCT</span>
     </div>
-    <span>v0.1.0</span>
+    <div class="status flex gap-2 tab-nums">
+      <span>agent:idle</span>
+      <span>mem:34%</span>
+      <span>ctx:12k/200k</span>
+    </div>
+    <div class="text-dim" style="font-size:10px;">v0.1.0-alpha</div>
   </div>
-</div>
 
-<!-- MAIN LAYOUT -->
-<div class="flex h-[calc(100vh-36px-24px)]">
+  <!-- Main Content -->
+  <div class="flex flex-1" style="min-height:0;">
+    <!-- Rail -->
+    <div class="rail flex-col" style="position:relative;">
+      <div class="rail-icon active" style="position:relative;">&#128193;<span class="rail-badge">14</span></div>
+      <div class="rail-icon" style="position:relative;">&#946;<span class="rail-badge">3</span></div>
+      <div class="rail-icon" style="position:relative;">&#9889;<span class="rail-badge">1</span></div>
+      <div class="rail-icon" style="position:relative;">&#129504;<span class="rail-badge">47</span></div>
+      <div class="rail-icon" style="position:relative;">&#128295;<span class="rail-badge">12</span></div>
+      <div class="rail-icon" style="position:relative;">&#128268;<span class="rail-badge">5</span></div>
+      <div style="margin-top:auto;" class="rail-icon">&#9881;</div>
+    </div>
 
-  <!-- SIDEBAR -->
-  <aside class="w-14 glass border-r border-c-bdr flex flex-col items-center py-2 shrink-0">
-    <div class="w-8 h-8 rounded-lg bg-c-accent/20 flex items-center justify-center mb-2"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
-    <div class="w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center mb-1 cursor-pointer" title="Files"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></div>
-    <div class="w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center mb-1 cursor-pointer" title="Search"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></div>
-    <div class="w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center mb-1 cursor-pointer" title="Git"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg></div>
-    <div class="w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center mb-1 cursor-pointer" title="Extensions"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5a2.5 2.5 0 0 0-5 0V5H4a2 2 0 0 0-2 2v3.8h1.5c1.49 0 2.7 1.21 2.7 2.7 0 1.49-1.21 2.7-2.7 2.7H2V20a2 2 0 0 0 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17a2 2 0 0 0 2-2v-4h1.5a2.5 2.5 0 0 0 0-5z"/></svg></div>
-    <div class="flex-1"></div>
-    <div class="w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center cursor-pointer" title="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
-  </aside>
+    <!-- Sidebar -->
+    <div class="sidebar flex-col">
+      <div class="tree-header flex justify-between items-center">
+        <span>PROJECT: my-saas</span>
+        <span class="actions text-dim">[+]</span>
+      </div>
+      <div class="tree-item">
+        <span class="text-muted">&#9654;</span>
+        <span>src/</span>
+      </div>
+      <div class="tree-item" style="padding-left:36px;">
+        <span class="text-muted">&#9654;</span>
+        <span>components/</span>
+      </div>
+      <div class="tree-item active" style="padding-left:48px;">
+        <span class="text-muted">&#128196;</span>
+        <span>Button.tsx</span>
+        <span class="badge badge-m">M</span>
+        <span class="badge badge-a">A</span>
+      </div>
+      <div class="tree-item" style="padding-left:48px;">
+        <span class="text-muted">&#128196;</span>
+        <span>Card.tsx</span>
+        <span class="badge badge-m">M</span>
+      </div>
+      <div class="tree-item" style="padding-left:48px;">
+        <span class="text-muted">&#128196;</span>
+        <span>Modal.tsx</span>
+      </div>
+      <div class="tree-item" style="padding-left:36px;">
+        <span class="text-muted">&#9654;</span>
+        <span>hooks/</span>
+      </div>
+      <div class="tree-item" style="padding-left:48px;">
+        <span class="text-muted">&#128196;</span>
+        <span>useAuth.ts</span>
+      </div>
+      <div class="tree-item" style="padding-left:36px;">
+        <span class="text-muted">&#9654;</span>
+        <span>stores/</span>
+      </div>
+      <div class="tree-item" style="padding-left:48px;">
+        <span class="text-muted">&#128196;</span>
+        <span>appStore.ts</span>
+      </div>
+      <div class="tree-item" style="padding-left:36px;">
+        <span class="text-muted">&#128196;</span>
+        <span>App.tsx</span>
+        <span class="badge badge-m">M</span>
+        <span class="badge badge-a">A</span>
+      </div>
+      <div class="border-t" style="margin-top:8px;"></div>
+      <div class="tree-header">ACTIVE CONTEXT</div>
+      <div class="tree-ctx">
+        <span class="tag">react-hooks</span>
+        <span class="tag">typescript</span>
+        <span class="tag">api-design</span>
+        <span class="tag">auth-flow</span>
+      </div>
+      <div class="border-t" style="margin-top:8px;"></div>
+      <div class="tree-mem tab-nums">
+        MEMORY: 1,247 contexts &nbsp;&nbsp; SEM: 892 &nbsp;&nbsp; EPI: 156
+      </div>
+    </div>
 
-  <!-- FILE TREE -->
-  <div class="w-52 glass border-r border-c-bdr overflow-y-auto hidden lg:block">
-    <div class="h-8 flex items-center px-3 text-[10px] font-semibold text-c-muted uppercase tracking-wider">Explorer</div>
-    <div class="px-2">
-      <div class="flex items-center h-6 px-1 text-xs text-c-text hover:bg-white/5 rounded cursor-pointer"><svg width="12" height="12" class="mr-1 text-c-accent shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg><span class="truncate">construct-ai-agent</span></div>
-      <div class="pl-4">
-        <div class="flex items-center h-6 px-1 text-[11px] text-c-text2 hover:bg-white/5 rounded cursor-pointer"><svg width="10" height="10" class="mr-1.5 text-c-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg><span class="truncate">src/</span></div>
-        <div class="pl-3">
-          <div class="flex items-center h-6 px-1 text-[11px] text-c-text2 hover:bg-white/5 rounded cursor-pointer"><svg width="10" height="10" class="mr-1.5 text-c-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg><span class="truncate">renderer/</span></div>
-          <div class="pl-3">
-            <div class="flex items-center h-6 px-1 text-[11px] text-c-text2 hover:bg-white/5 rounded cursor-pointer"><svg width="10" height="10" class="mr-1.5 text-c-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg><span class="truncate">components/</span></div>
-            <div class="pl-3">
-              <div class="flex items-center h-5 px-1 text-[10px] text-c-text2 hover:bg-white/5 rounded cursor-pointer"><span class="text-c-muted mr-1.5">📄</span>App.tsx</div>
-              <div class="flex items-center h-5 px-1 text-[10px] text-c-text2 hover:bg-white/5 rounded cursor-pointer"><span class="text-c-muted mr-1.5">📄</span>AgentPanel.tsx</div>
-              <div class="flex items-center h-5 px-1 text-[10px] text-c-text2 hover:bg-white/5 rounded cursor-pointer"><span class="text-c-muted mr-1.5">📄</span>MemoryPanel.tsx</div>
-              <div class="flex items-center h-5 px-1 text-[10px] text-c-text2 hover:bg-white/5 rounded cursor-pointer"><span class="text-c-muted mr-1.5">📄</span>SkillMarketplace.tsx</div>
-            </div>
+    <!-- Editor Area -->
+    <div class="flex flex-col flex-1" style="min-width:0;">
+      <div class="editor-tabs">
+        <div class="tab active">App.tsx</div>
+        <div class="tab">Button.tsx</div>
+        <div class="tab">useAuth.ts</div>
+      </div>
+      <div class="editor-body">
+        <div><span class="ln">1</span><span class="cmt">// agent: implementing auth based on ctx:react-hooks</span></div>
+        <div><span class="ln">2</span><span class="cmt">// mem: user prefers JWT with 15min expiry</span></div>
+        <div><span class="ln">3</span></div>
+        <div><span class="ln">4</span><span class="kw">import</span> React, { <span class="fn">useState</span> } <span class="kw">from</span> <span class="str">'react'</span>;</div>
+        <div><span class="ln">5</span><span class="kw">import</span> { <span class="fn">useAuth</span> } <span class="kw">from</span> <span class="str">'./hooks/useAuth'</span>;</div>
+        <div><span class="ln">6</span></div>
+        <div><span class="ln">7</span><span class="cmt">// agent-suggest: add protected route wrapper</span></div>
+        <div><span class="ln">8</span><span class="kw">export const</span> <span class="type">App</span>: React.<span class="type">FC</span> = () => {</div>
+        <div><span class="ln">9</span>&nbsp;&nbsp;<span class="kw">const</span> { user, isLoading } = <span class="fn">useAuth</span>();</div>
+        <div><span class="ln">10</span>&nbsp;&nbsp;<span class="kw">const</span> [theme, setTheme] = <span class="fn">useState</span>(<span class="str">'dark'</span>);</div>
+        <div><span class="ln">11</span></div>
+        <div><span class="ln">12</span>&nbsp;&nbsp;<span class="kw">if</span> (isLoading) <span class="kw">return</span> &lt;<span class="type">LoadingScreen</span> /&gt;;</div>
+        <div><span class="ln">13</span></div>
+        <div><span class="ln">14</span>&nbsp;&nbsp;<span class="kw">return</span> (</div>
+        <div><span class="ln">15</span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="type">ThemeProvider</span> theme={theme}&gt;</div>
+        <div><span class="ln">16</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="type">Router</span>&gt;</div>
+        <div><span class="ln">17</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="type">Routes</span>&gt;</div>
+        <div><span class="ln">18</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span class="type">Route</span> path=<span class="str">"/"</span> element={&lt;<span class="type">Home</span> /&gt;} /&gt;</div>
+        <div><span class="ln">19</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/<span class="type">Routes</span>&gt;</div>
+        <div><span class="ln">20</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/<span class="type">Router</span>&gt;</div>
+        <div><span class="ln">21</span>&nbsp;&nbsp;&nbsp;&nbsp;&lt;/<span class="type">ThemeProvider</span>&gt;</div>
+        <div><span class="ln">22</span>&nbsp;&nbsp;);</div>
+        <div><span class="ln">23</span>};</div>
+      </div>
+
+      <!-- Bottom Panel -->
+      <div style="height: 200px; display: flex; flex-direction: column;">
+        <div class="panel-tabs">
+          <div class="ptab">Terminal</div>
+          <div class="ptab">Chat</div>
+          <div class="ptab active">Agent</div>
+          <div class="ptab">Memory</div>
+          <div class="ptab">Skills</div>
+          <div class="ptab">MCP</div>
+          <div class="ptab">Screen</div>
+          <div class="ptab">Agents</div>
+          <div class="ptab">Auto</div>
+        </div>
+        <div class="flex-1 bg-base p-3" style="overflow: auto; font-size: 11px;">
+          <div class="flex justify-between items-center" style="margin-bottom: 8px;">
+            <span class="text-13 fw-600 truncate" style="max-width: 60%;">GOAL: build saas dashboard with auth, billing, analytics</span>
+            <span class="text-10 text-muted tab-nums">TIME: 02:14:00</span>
+          </div>
+          <div class="text-10 text-muted tab-nums" style="margin-bottom: 8px;">
+            STATUS: <span class="text-accent">working</span> &nbsp;&nbsp; PROGRESS: 34% &nbsp;&nbsp; TASKS: 4/12
+          </div>
+          <div style="border-top: 1px solid rgba(255,255,255,0.04); margin: 4px 0;"></div>
+          <div class="flex gap-2" style="margin-bottom: 8px;">
+            <span style="padding: 2px 6px; background: #1a1a24; border-radius: 2px; font-size: 10px; cursor: pointer;" class="uppercase hover">Pause</span>
+            <span style="padding: 2px 6px; background: #1a1a24; border-radius: 2px; font-size: 10px; cursor: pointer;" class="uppercase hover">Stop</span>
+            <span style="padding: 2px 6px; background: #1a1a24; border-radius: 2px; font-size: 10px; cursor: pointer;" class="uppercase hover">Checkpoint</span>
+            <span style="padding: 2px 6px; background: #1a1a24; border-radius: 2px; font-size: 10px; cursor: pointer;" class="uppercase hover">Log</span>
+            <span style="margin-left: auto; padding: 2px 6px; background: #1a1a24; border-radius: 2px; font-size: 10px; cursor: pointer;" class="uppercase text-ok hover">Auto: ON</span>
+          </div>
+          <div style="border-top: 1px solid rgba(255,255,255,0.04); margin: 4px 0;"></div>
+          <div class="tab-nums" style="line-height: 1.8;">
+            <div><span class="text-dim">14:32:05</span> <span style="color:#60a5fa;">[INF]</span> starting task: build dashboard layout component</div>
+            <div><span class="text-dim">14:32:08</span> <span style="color:#60a5fa;">[INF]</span> reading patterns from memory ctx:react-hooks</div>
+            <div><span class="text-dim">14:32:12</span> <span class="text-ok">[OK]</span> found 3 relevant patterns</div>
+            <div><span class="text-dim">14:32:15</span> <span style="color:#60a5fa;">[INF]</span> creating DashboardLayout.tsx</div>
+            <div><span class="text-dim">14:32:18</span> <span style="color:#60a5fa;">[INF]</span> writing component with sidebar + main content grid</div>
+            <div><span class="text-dim">14:32:18</span> <span class="text-accent">[WRK]</span> ...</div>
           </div>
         </div>
-        <div class="flex items-center h-6 px-1 text-[11px] text-c-text2 hover:bg-white/5 rounded cursor-pointer"><svg width="10" height="10" class="mr-1.5 text-c-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg><span class="truncate">main/</span></div>
-        <div class="flex items-center h-6 px-1 text-[11px] text-c-text2 hover:bg-white/5 rounded cursor-pointer"><svg width="10" height="10" class="mr-1.5 text-c-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg><span class="truncate">shared/</span></div>
-        <div class="flex items-center h-6 px-1 text-[11px] text-c-text2 hover:bg-white/5 rounded cursor-pointer"><svg width="10" height="10" class="mr-1.5 text-c-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg><span class="truncate">agent-backend/</span></div>
-        <div class="flex items-center h-5 px-1 text-[10px] text-c-text2 hover:bg-white/5 rounded cursor-pointer"><span class="text-c-muted mr-1.5">📄</span>package.json</div>
-        <div class="flex items-center h-5 px-1 text-[10px] text-c-text2 hover:bg-white/5 rounded cursor-pointer"><span class="text-c-muted mr-1.5">📄</span>tailwind.config.js</div>
-        <div class="flex items-center h-5 px-1 text-[10px] text-c-text2 hover:bg-white/5 rounded cursor-pointer"><span class="text-c-muted mr-1.5">📄</span>README.md</div>
       </div>
     </div>
   </div>
 
-  <!-- CENTER: EDITOR + PANEL -->
-  <div class="flex flex-col flex-1 min-w-0">
-
-    <!-- EDITOR -->
-    <div class="flex-1 min-h-0 flex flex-col">
-      <!-- Tab bar -->
-      <div class="flex items-center h-9 glass border-b border-c-bdr">
-        <div class="flex items-center h-full px-3 bg-c-bg2/50 border-r border-c-bdr gap-2"><span class="text-xs text-c-text">App.tsx</span><span class="text-c-muted hover:text-c-text cursor-pointer text-xs">&times;</span></div>
-        <div class="flex items-center h-full px-3 border-r border-c-bdr text-c-muted hover:bg-white/5 cursor-pointer gap-2"><span class="text-xs">main.tsx</span></div>
-        <div class="flex items-center h-full px-3 border-r border-c-bdr text-c-muted hover:bg-white/5 cursor-pointer gap-2"><span class="text-xs">AgentPanel.tsx</span></div>
-      </div>
-
-      <!-- Code content -->
-      <div class="flex-1 overflow-auto p-4 font-mono text-[13px] leading-6" style="background: #0a0a0f;">
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">1</span><span class="text-c-warn">import</span> <span class="text-c-text">{ useState }</span> <span class="text-c-warn">from</span> <span class="text-c-ok">"react"</span>;</div>
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">2</span><span class="text-c-warn">import</span> <span class="text-c-text">{ Bot, Target, Zap }</span> <span class="text-c-warn">from</span> <span class="text-c-ok">"lucide-react"</span>;</div>
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">3</span></div>
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">4</span><span class="text-c-info">function</span> <span class="text-c-accentH">AgentPanel</span>() {</div>
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">5</span>  <span class="text-c-warn">const</span> [goal, setGoal] = <span class="text-c-accentH">useState</span>(<span class="text-c-ok">""</span>);</div>
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">6</span>  <span class="text-c-warn">const</span> [status, setStatus] = <span class="text-c-accentH">useState</span>(<span class="text-c-ok">"idle"</span>);</div>
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">7</span></div>
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">8</span>  <span class="text-c-warn">return</span> (</div>
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">9</span>    <span class="text-c-info">&lt;div</span> <span class="text-c-text">className</span>=<span class="text-c-ok">"agent-panel"</span><span class="text-c-info">&gt;</span></div>
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">10</span>      <span class="text-c-text">{</span><span class="text-c-muted">/* Agent panel with streaming output */</span><span class="text-c-text">}</span></div>
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">11</span>    <span class="text-c-info">&lt;/div&gt;</span></div>
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">12</span>  );</div>
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">13</span>}</div>
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">14</span></div>
-        <div class="flex"><span class="text-c-muted w-8 text-right mr-4 select-none">15</span><span class="text-c-warn">export default</span> AgentPanel;</div>
-      </div>
+  <!-- Status Bar -->
+  <div class="statusbar flex items-center justify-between">
+    <div class="flex gap-2">
+      <span>CONSTRUCT</span>
+      <span>v0.1.0-alpha</span>
+      <span>main</span>
     </div>
-
-    <!-- BOTTOM PANEL: AGENT TAB -->
-    <div class="h-52 glass border-t border-c-bdr flex flex-col">
-      <!-- Panel tab bar -->
-      <div class="flex items-center h-8 border-b border-c-bdr">
-        <div class="flex items-center gap-1.5 h-full px-3 border-r border-c-bdr text-xs tab-active"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span>Terminal</span></div>
-        <div class="flex items-center gap-1.5 h-full px-3 border-r border-c-bdr text-xs text-c-muted hover:bg-white/5 cursor-pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><span>Chat</span></div>
-        <div class="flex items-center gap-1.5 h-full px-3 border-r border-c-bdr text-xs text-c-muted hover:bg-white/5 cursor-pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Agent</span></div>
-        <div class="flex items-center gap-1.5 h-full px-3 border-r border-c-bdr text-xs text-c-muted hover:bg-white/5 cursor-pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6v6l4 2"/></svg><span>Memory</span></div>
-        <div class="flex items-center gap-1.5 h-full px-3 border-r border-c-bdr text-xs text-c-muted hover:bg-white/5 cursor-pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg><span>Skills</span></div>
-        <div class="flex items-center gap-1.5 h-full px-3 border-r border-c-bdr text-xs text-c-muted hover:bg-white/5 cursor-pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry"2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/></svg><span>MCP</span></div>
-        <div class="flex items-center gap-1.5 h-full px-3 border-r border-c-bdr text-xs text-c-muted hover:bg-white/5 cursor-pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><span>Screen</span></div>
-        <div class="flex items-center gap-1.5 h-full px-3 border-r border-c-bdr text-xs text-c-muted hover:bg-white/5 cursor-pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Agents</span></div>
-        <div class="flex items-center gap-1.5 h-full px-3 border-r border-c-bdr text-xs text-c-muted hover:bg-white/5 cursor-pointer"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span>Auto</span></div>
-      </div>
-
-      <!-- Panel content: Terminal -->
-      <div class="flex-1 overflow-auto p-3 font-mono text-xs space-y-1">
-        <div class="flex items-center gap-2"><span class="text-c-muted">$</span><span class="text-c-text">construct --version</span></div>
-        <div class="text-c-ok">0.1.0-alpha</div>
-        <div class="flex items-center gap-2 mt-2"><span class="text-c-muted">$</span><span class="text-c-text">npm run tauri:dev</span></div>
-        <div class="text-c-accentH">VITE v6.0 ready in 342 ms</div>
-        <div class="text-c-accentH">➜ Local: http://localhost:5173/</div>
-        <div class="flex items-center gap-2 mt-2"><span class="text-c-muted">$</span><span class="text-c-text">cargo tauri dev</span></div>
-        <div class="text-c-text">Running ConstructApp...</div>
-        <div class="text-c-info">Agent: Idle | Memory: 42% | Context: 128K/200K</div>
-        <div class="text-c-muted animate-pulse">_</div>
-      </div>
+    <div class="flex gap-2">
+      <span>agent:idle</span>
+      <span>mem:34%</span>
+      <span>ctx:12k/200k</span>
+    </div>
+    <div class="flex gap-2">
+      <span>ln 23, col 2</span>
+      <span>utf-8</span>
+      <span>typescript</span>
     </div>
   </div>
-</div>
-
-<!-- STATUS BAR -->
-<div class="flex items-center justify-between h-6 px-2 bg-c-accent text-c-bg0 shrink-0 select-none">
-  <div class="flex items-center gap-0.5">
-    <div class="flex items-center justify-center w-5 h-5 rounded bg-white/20"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div>
-    <div class="flex items-center justify-center w-5 h-5 rounded bg-white/20"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
-    <span class="mx-1.5 text-[10px] opacity-50">|</span>
-    <div class="flex items-center gap-1 text-[11px]"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg><span>main</span></div>
-  </div>
-  <div class="flex items-center gap-1 text-[11px]"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg><span>Ready</span></div>
-  <div class="flex items-center gap-3 text-[11px]">
-    <span>Ln 15, Col 1</span>
-    <span>UTF-8</span>
-    <span>TypeScript</span>
-    <span>Context: 42%</span>
-  </div>
-</div>
-
 </body>
 </html>
