@@ -25,7 +25,8 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' https:; img-src 'self' data: https:; script-src 'self' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' https:;"
+      "csp": "default-src 'self'; connect-src 'self' https:; img-src 'self' data: https:; script-src 'self' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' https:;",
+      "capabilities": ["default"]
     }
   },
   "bundle": {

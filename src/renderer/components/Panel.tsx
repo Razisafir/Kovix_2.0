@@ -5,7 +5,9 @@ import {
   ListChecks,
   X,
   ChevronUp,
+  Brain,
 } from "lucide-react";
+import MemoryPanel from "./MemoryPanel";
 
 interface Tab {
   id: string;
@@ -17,6 +19,7 @@ const tabs: Tab[] = [
   { id: "terminal", icon: <Terminal size={14} />, label: "Terminal" },
   { id: "problems", icon: <ListChecks size={14} />, label: "Problems" },
   { id: "chat", icon: <MessageSquare size={14} />, label: "Chat" },
+  { id: "memory", icon: <Brain size={14} />, label: "Memory" },
 ];
 
 function Panel() {
@@ -113,6 +116,8 @@ function Panel() {
             </div>
           </div>
         )}
+
+        {activeTab === "memory" && <MemoryPanel />}
       </div>
     </div>
   );

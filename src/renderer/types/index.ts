@@ -32,5 +32,8 @@ export interface AppSettings {
   tabSize: number;
 }
 
-export type PanelTab = "terminal" | "problems" | "chat";
+export type PanelTab = "terminal" | "problems" | "chat" | "memory";
 export type SidebarTab = "files" | "search" | "git" | "extensions";
+
+// Re-export memory types
+export * from "./memory";

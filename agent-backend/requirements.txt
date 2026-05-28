@@ -1,0 +1,18 @@
+# Construct AI Agent — Python Backend Dependencies
+# =================================================
+
+# Vector database (persistent SQLite-backed storage)
+chromadb>=0.5.0
+
+# Sentence embeddings (local, no API key needed)
+sentence-transformers>=3.0.0
+
+# Web framework
+fastapi>=0.115.0
+uvicorn>=0.32.0
+
+# Data validation
+pydantic>=2.9.0
+
+# Configuration
+python-dotenv>=1.0.0

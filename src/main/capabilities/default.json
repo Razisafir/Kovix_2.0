@@ -1,0 +1,13 @@
+{
+  "identifier": "default",
+  "description": "Default permissions for the Construct application",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "fs:default",
+    "fs:allow-app-read",
+    "fs:allow-app-write",
+    "dialog:default",
+    "shell:default"
+  ]
+}
