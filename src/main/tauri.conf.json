@@ -28,20 +28,13 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' https://api.github.com https://*.openai.com https://*.anthropic.com https://*.googleapis.com; img-src 'self' data: https:; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;",
-      "capabilities": ["default"]
+      "csp": "default-src 'self'; connect-src 'self' https://api.github.com https://*.openai.com https://*.anthropic.com https://*.googleapis.com; img-src 'self' data: https:; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
     }
   },
   "bundle": {
     "active": true,
     "targets": ["dmg", "nsis", "appimage", "deb", "rpm"],
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ],
+    "icon": [],
     "category": "DeveloperTool",
     "shortDescription": "AI coding agent with persistent memory",
     "longDescription": "Construct is a desktop AI coding agent that understands your codebase, remembers every interaction, and autonomously plans, codes, tests, and commits.",
