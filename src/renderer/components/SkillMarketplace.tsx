@@ -32,7 +32,7 @@ const TEXT_MUTED = "#94949c";
 const TEXT_DIM = "#6b6b73";
 const TEXT_FAINT = "#4a4a52";
 const BORDER = "rgba(255,255,255,0.04)";
-const GREEN = "#22c55e";
+
 const ff = '"Geist Mono", "JetBrains Mono", monospace';
 
 const categories = ["ALL", "CODING", "DESIGN", "RESEARCH", "DEVOPS", "SECURITY", "TESTING"];

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import type { ReactNode } from "react";
 import {
   Monitor,
@@ -126,7 +126,7 @@ export default function ScreenControl() {
   const [actions, setActions] = useState<ScreenAction[]>(demoActions);
   const [expandedAction, setExpandedAction] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"recorder" | "screenshots" | "audit">("recorder");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // file input ref reserved for future file upload functionality
 
   const formatTime = (ts: number) => {
     const d = new Date(ts);

@@ -50,7 +50,7 @@ class ErrorBoundary extends Component<Props, State> {
 
   override render() {
     if (this.state.hasError) {
-      const isDev = import.meta.env.DEV;
+      const isDev = (import.meta as unknown as { env: { DEV: boolean } }).env?.DEV === true;
 
       return (
         <div

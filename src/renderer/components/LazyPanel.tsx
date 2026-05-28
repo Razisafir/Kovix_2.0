@@ -3,12 +3,15 @@ import { lazy, Suspense } from "react";
 // ---------------------------------------------------------------------------
 // Lazy-loaded panel components — each gets its own chunk for code-splitting.
 // ---------------------------------------------------------------------------
-const TerminalPanel = lazy(() => import("./TerminalPanel"));
-const ProblemsPanel = lazy(() => import("./ProblemsPanel"));
-const ChatPanel = lazy(() => import("./ChatPanel"));
+const TerminalPanel = lazy(() => import("./TerminalOutput").then(m => ({ default: m.TerminalOutput as unknown as React.ComponentType })));
+const ChatPanel = lazy(() => import("./AgentPanel"));
 const AgentPanel = lazy(() => import("./AgentPanel"));
 const MemoryPanel = lazy(() => import("./MemoryPanel"));
 const AutonomousPanel = lazy(() => import("./AutonomousPanel"));
+const SkillsPanel = lazy(() => import("./SkillMarketplace"));
+const MCPPanel = lazy(() => import("./MCPConnector"));
+const MultiAgentPanel = lazy(() => import("./MultiAgentPanel"));
+const ScreenPanel = lazy(() => import("./ScreenControl"));
 
 // ---------------------------------------------------------------------------
 // Props
@@ -33,10 +36,13 @@ export function LazyPanel({ activeTab }: LazyPanelProps) {
   return (
     <Suspense fallback={<PanelSkeleton />}>
       {activeTab === "terminal" && <TerminalPanel />}
-      {activeTab === "problems" && <ProblemsPanel />}
       {activeTab === "chat" && <ChatPanel />}
       {activeTab === "agent" && <AgentPanel />}
       {activeTab === "memory" && <MemoryPanel />}
+      {activeTab === "skills" && <SkillsPanel />}
+      {activeTab === "mcp" && <MCPPanel />}
+      {activeTab === "agents" && <MultiAgentPanel />}
+      {activeTab === "screen" && <ScreenPanel />}
       {activeTab === "autonomous" && <AutonomousPanel />}
     </Suspense>
   );
@@ -48,10 +54,10 @@ export function LazyPanel({ activeTab }: LazyPanelProps) {
 
 function PanelSkeleton() {
   return (
-    <div className="w-full h-full p-4 space-y-2">
-      <div className="h-3 w-1/3 skeleton" />
-      <div className="h-3 w-2/3 skeleton" />
-      <div className="h-3 w-1/2 skeleton" />
+    <div style={{ width: "100%", height: "100%", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+      <div style={{ height: "12px", width: "33%", background: "#1a1a24" }} />
+      <div style={{ height: "12px", width: "66%", background: "#1a1a24" }} />
+      <div style={{ height: "12px", width: "50%", background: "#1a1a24" }} />
     </div>
   );
 }

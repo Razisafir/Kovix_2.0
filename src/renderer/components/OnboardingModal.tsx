@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 const BASE = "#0c0c10";
 const S1 = "#12121a";
 const S2 = "#1a1a24";
-const S3 = "#22222e";
+
 const ACCENT = "#6366f1";
 const TEXT = "#e8e8ec";
 const TEXT_MUTED = "#94949c";

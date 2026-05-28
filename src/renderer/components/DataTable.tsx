@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 
 export interface Column<T> {
   key: string;
@@ -21,7 +21,7 @@ const S2 = "#1a1a24";
 const S3 = "#22222e";
 const ACCENT = "#6366f1";
 const TEXT = "#e8e8ec";
-const TEXT_MUTED = "#94949c";
+
 const TEXT_DIM = "#6b6b73";
 const BORDER = "rgba(255,255,255,0.04)";
 
