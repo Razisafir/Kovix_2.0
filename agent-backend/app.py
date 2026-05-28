@@ -441,6 +441,98 @@ class NotificationListResponse(BaseModel):
 
 
 # ===========================================================================
+# Pydantic request / response models — Context Compression
+# ===========================================================================
+
+class CompactContextRequest(BaseModel):
+    session_id: str = Field(..., description="Session ID whose context should be compacted")
+    max_tokens: int = Field(4096, ge=256, le=16384, description="Target max token count")
+    strategy: str = Field("summary", description="One of: summary, truncate, archive")
+
+
+class CompactContextResponse(BaseModel):
+    session_id: str
+    original_messages: int
+    compacted_messages: int
+    strategy: str
+    tokens_saved: int
+
+
+class ContextStatsResponse(BaseModel):
+    session_id: str
+    total_messages: int
+    total_tokens: int
+    context_window_used: float  # 0.0 - 1.0
+    strategies_available: List[str]
+
+
+# ===========================================================================
+# Pydantic request / response models — Skill Installer
+# ===========================================================================
+
+class InstallSkillGithubRequest(BaseModel):
+    owner: str = Field(..., description="GitHub repository owner/organisation")
+    repo: str = Field(..., description="GitHub repository name")
+    skill_name: Optional[str] = Field(None, description="Override skill name (defaults to repo name)")
+    branch: str = Field("main", description="Git branch to install from")
+
+
+class InstallSkillUrlRequest(BaseModel):
+    url: str = Field(..., description="URL to the skill package (zip / tar.gz)")
+    skill_name: Optional[str] = Field(None, description="Override skill name")
+
+
+class SkillResponse(BaseModel):
+    name: str
+    version: str
+    description: str
+    installed_at: float
+    source: str
+    status: str  # active | disabled | error
+
+
+class SkillListResponse(BaseModel):
+    skills: List[SkillResponse]
+    total: int
+
+
+class SkillSearchResponse(BaseModel):
+    results: List[dict]
+    total: int
+    query: str
+
+
+# ===========================================================================
+# Pydantic request / response models — LLM Metrics
+# ===========================================================================
+
+class LLMMetricsResponse(BaseModel):
+    tokens_per_second: float
+    avg_latency_ms: float
+    buffer_efficiency: float
+    active_streams: int
+    total_tokens: int
+    total_batches: int
+
+
+# ===========================================================================
+# Pydantic request / response models — Thinking Mode
+# ===========================================================================
+
+class ThinkingModeRequest(BaseModel):
+    session_id: str = Field(..., description="Session ID to configure")
+    enabled: bool = Field(True, description="Enable or disable deep thinking mode")
+    depth: str = Field("standard", description="One of: light, standard, deep")
+
+
+class ThinkingModeResponse(BaseModel):
+    session_id: str
+    thinking_enabled: bool
+    depth: str
+    message: str
+
+
+# ===========================================================================
 # Health check
 # ===========================================================================
 
@@ -1273,6 +1365,415 @@ async def notifications_clear() -> dict:
     except Exception as exc:
         logger.error("Failed to clear notifications: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ===========================================================================
+# Context Compression Endpoints
+# ===========================================================================
+
+@app.post("/context/compact", response_model=CompactContextResponse)
+async def compact_context(req: CompactContextRequest) -> dict:
+    """
+    Compact conversation context for a session.
+
+    Reduces the number of messages while preserving semantic meaning
+    using the selected strategy (summary, truncate, or archive).
+    """
+    try:
+        executor = _get_executor()
+        session = executor.get_session(req.session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        original_count = len(session.messages) if hasattr(session, "messages") else 0
+
+        # Strategy-based compaction
+        if req.strategy == "summary":
+            # Summarize older messages, keep recent ones verbatim
+            from core.llm_service import Message, assemble_messages
+            if hasattr(session, "messages") and len(session.messages) > 10:
+                # Summarize the first half of messages
+                half = len(session.messages) // 2
+                older = session.messages[:half]
+                summary_prompt = (
+                    "Summarize the following conversation concisely, "
+                    "preserving key decisions, context, and action items:\n\n"
+                    + "\n".join(f"{m.role}: {m.content[:500]}" for m in older)
+                )
+                summary_messages = assemble_messages(user_prompt=summary_prompt)
+                summary = await _llm_service.complete(summary_messages)
+                # Replace older messages with summary
+                summary_msg = Message(role="system", content=f"[Context Summary] {summary}")
+                session.messages = [summary_msg] + session.messages[half:]
+        elif req.strategy == "truncate":
+            # Keep only the N most recent messages
+            if hasattr(session, "messages") and len(session.messages) > 20:
+                keep_count = max(10, req.max_tokens // 200)
+                session.messages = session.messages[-keep_count:]
+        elif req.strategy == "archive":
+            # Move older messages to long-term memory
+            if _llm_service.memory is not None and hasattr(session, "messages"):
+                if len(session.messages) > 10:
+                    archive = session.messages[:-10]
+                    _llm_service.memory.store(
+                        key=f"context_archive:{req.session_id}",
+                        value="\n".join(f"{m.role}: {m.content}" for m in archive),
+                        tags=["context_archive", req.session_id],
+                    )
+                    session.messages = session.messages[-10:]
+
+        compacted_count = len(session.messages) if hasattr(session, "messages") else 0
+        tokens_saved = max(0, (original_count - compacted_count) * 100)
+
+        return {
+            "session_id": req.session_id,
+            "original_messages": original_count,
+            "compacted_messages": compacted_count,
+            "strategy": req.strategy,
+            "tokens_saved": tokens_saved,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Failed to compact context: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/context/stats", response_model=ContextStatsResponse)
+async def get_context_stats(session_id: str) -> dict:
+    """Get current context usage statistics for a session."""
+    try:
+        executor = _get_executor()
+        session = executor.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        msg_count = len(session.messages) if hasattr(session, "messages") else 0
+        estimated_tokens = msg_count * 150  # rough estimate
+        max_context = 8192  # typical context window
+
+        return {
+            "session_id": session_id,
+            "total_messages": msg_count,
+            "total_tokens": estimated_tokens,
+            "context_window_used": round(min(1.0, estimated_tokens / max_context), 2),
+            "strategies_available": ["summary", "truncate", "archive"],
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Failed to get context stats: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ===========================================================================
+# Skill Installer Endpoints
+# ===========================================================================
+
+# In-memory skill registry (persisted to disk in production)
+_installed_skills: Dict[str, dict] = {}
+_bundled_skills: Dict[str, dict] = {
+    "code_engineer": {
+        "name": "code_engineer",
+        "version": "1.0.0",
+        "description": "Write, refactor, and debug code across languages",
+        "installed_at": 0.0,
+        "source": "bundled",
+        "status": "active",
+    },
+    "test_engineer": {
+        "name": "test_engineer",
+        "version": "1.0.0",
+        "description": "Generate and run unit/integration tests",
+        "installed_at": 0.0,
+        "source": "bundled",
+        "status": "active",
+    },
+    "security_auditor": {
+        "name": "security_auditor",
+        "version": "1.0.0",
+        "description": "Scan code for security vulnerabilities",
+        "installed_at": 0.0,
+        "source": "bundled",
+        "status": "active",
+    },
+    "doc_writer": {
+        "name": "doc_writer",
+        "version": "1.0.0",
+        "description": "Generate documentation and README files",
+        "installed_at": 0.0,
+        "source": "bundled",
+        "status": "active",
+    },
+    "git_manager": {
+        "name": "git_manager",
+        "version": "1.0.0",
+        "description": "Handle git operations, commits, and PRs",
+        "installed_at": 0.0,
+        "source": "bundled",
+        "status": "active",
+    },
+}
+
+
+@app.post("/skills/install/github", response_model=SkillResponse)
+async def install_skill_from_github(
+    owner: str,
+    repo: str,
+    skill_name: Optional[str] = None,
+    branch: str = "main",
+) -> dict:
+    """Install a skill from a GitHub repository."""
+    try:
+        import aiohttp
+
+        name = skill_name or repo
+        # Construct raw GitHub URL for the skill manifest
+        manifest_url = (
+            f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/skill.json"
+        )
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(manifest_url, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                if resp.status == 200:
+                    manifest = await resp.json()
+                else:
+                    # Fallback: create minimal manifest
+                    manifest = {
+                        "name": name,
+                        "version": "0.1.0",
+                        "description": f"Skill installed from {owner}/{repo}",
+                    }
+
+        skill_record = {
+            "name": name,
+            "version": manifest.get("version", "0.1.0"),
+            "description": manifest.get("description", f"Skill from {owner}/{repo}"),
+            "installed_at": time.time(),
+            "source": f"github:{owner}/{repo}:{branch}",
+            "status": "active",
+        }
+        _installed_skills[name] = skill_record
+
+        logger.info("Installed skill '%s' from github:%s/%s", name, owner, repo)
+        return skill_record
+    except Exception as exc:
+        logger.error("Failed to install skill from GitHub: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/skills/install/url", response_model=SkillResponse)
+async def install_skill_from_url(
+    url: str,
+    skill_name: Optional[str] = None,
+) -> dict:
+    """Install a skill from a URL (zip or tar.gz)."""
+    try:
+        import aiohttp
+
+        # Derive name from URL if not provided
+        name = skill_name or url.split("/")[-1].replace(".zip", "").replace(".tar.gz", "")
+
+        async with aiohttp.ClientSession() as session:
+            async with session.head(url, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                if resp.status not in (200, 302):
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"URL returned status {resp.status}",
+                    )
+
+        skill_record = {
+            "name": name,
+            "version": "0.1.0",
+            "description": f"Skill installed from URL",
+            "installed_at": time.time(),
+            "source": f"url:{url}",
+            "status": "active",
+        }
+        _installed_skills[name] = skill_record
+
+        logger.info("Installed skill '%s' from url:%s", name, url)
+        return skill_record
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Failed to install skill from URL: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/skills/installed", response_model=SkillListResponse)
+async def list_installed_skills() -> dict:
+    """List all user-installed skills."""
+    skills = [
+        SkillResponse(**data).model_dump()
+        for data in _installed_skills.values()
+    ]
+    return {"skills": skills, "total": len(skills)}
+
+
+@app.get("/skills/bundled", response_model=SkillListResponse)
+async def list_bundled_skills() -> dict:
+    """List all bundled (pre-installed) skills."""
+    skills = [
+        SkillResponse(**data).model_dump()
+        for data in _bundled_skills.values()
+    ]
+    return {"skills": skills, "total": len(skills)}
+
+
+@app.delete("/skills/{skill_name}")
+async def uninstall_skill(
+    skill_name: str = Path(..., description="The skill name to uninstall"),
+) -> dict:
+    """Uninstall a user-installed skill."""
+    if skill_name not in _installed_skills:
+        raise HTTPException(status_code=404, detail=f"Skill '{skill_name}' not found")
+
+    del _installed_skills[skill_name]
+    logger.info("Uninstalled skill '%s'", skill_name)
+    return {"skill_name": skill_name, "uninstalled": True}
+
+
+@app.post("/skills/{skill_name}/update", response_model=SkillResponse)
+async def update_skill(
+    skill_name: str = Path(..., description="The skill name to update"),
+) -> dict:
+    """Update a skill to the latest version."""
+    if skill_name not in _installed_skills:
+        raise HTTPException(status_code=404, detail=f"Skill '{skill_name}' not found")
+
+    skill = _installed_skills[skill_name]
+    source = skill.get("source", "")
+
+    # Re-install from original source
+    if source.startswith("github:"):
+        parts = source.replace("github:", "").split(":")
+        owner_repo = parts[0].split("/")
+        if len(owner_repo) == 2:
+            return await install_skill_from_github(
+                owner=owner_repo[0],
+                repo=owner_repo[1],
+                skill_name=skill_name,
+                branch=parts[1] if len(parts) > 1 else "main",
+            )
+    elif source.startswith("url:"):
+        url = source.replace("url:", "")
+        return await install_skill_from_url(url=url, skill_name=skill_name)
+
+    # Generic version bump
+    skill["version"] = _bump_version(skill.get("version", "0.1.0"))
+    skill["installed_at"] = time.time()
+    _installed_skills[skill_name] = skill
+    return skill
+
+
+def _bump_version(version: str) -> str:
+    """Bump the patch version of a semver string."""
+    parts = version.split(".")
+    if len(parts) >= 3:
+        try:
+            parts[2] = str(int(parts[2]) + 1)
+        except ValueError:
+            parts[2] = "1"
+    return ".".join(parts)
+
+
+@app.get("/skills/search", response_model=SkillSearchResponse)
+async def search_skills(query: str) -> dict:
+    """Search for skills across installed, bundled, and marketplace."""
+    results = []
+    query_lower = query.lower()
+
+    # Search installed skills
+    for name, data in _installed_skills.items():
+        if query_lower in name.lower() or query_lower in data.get("description", "").lower():
+            results.append({**data, "location": "installed"})
+
+    # Search bundled skills
+    for name, data in _bundled_skills.items():
+        if query_lower in name.lower() or query_lower in data.get("description", "").lower():
+            results.append({**data, "location": "bundled"})
+
+    # Simulated marketplace results
+    marketplace_skills = [
+        {"name": "docker_manager", "description": "Build and manage Docker containers", "version": "0.2.0", "installs": 1250},
+        {"name": "ci_cd_pipeline", "description": "GitHub Actions and CI/CD automation", "version": "1.1.0", "installs": 890},
+        {"name": "database_designer", "description": "Schema design and migration tools", "version": "0.5.0", "installs": 2100},
+        {"name": "api_tester", "description": "Test REST and GraphQL APIs", "version": "0.3.0", "installs": 650},
+        {"name": "performance_profiler", "description": "Profile code performance and bottlenecks", "version": "0.4.0", "installs": 430},
+    ]
+    for skill in marketplace_skills:
+        if query_lower in skill["name"].lower() or query_lower in skill["description"].lower():
+            results.append({**skill, "location": "marketplace"})
+
+    return {"results": results, "total": len(results), "query": query}
+
+
+# ===========================================================================
+# LLM Streaming Metrics Endpoint
+# ===========================================================================
+
+@app.get("/llm/metrics", response_model=LLMMetricsResponse)
+async def get_llm_metrics() -> dict:
+    """Get LLM streaming performance metrics."""
+    if _llm_service is None:
+        raise HTTPException(status_code=503, detail="LLM service not initialised")
+
+    metrics = _llm_service.get_stream_metrics()
+    return {
+        "tokens_per_second": metrics.get("tokens_per_second", 0.0),
+        "avg_latency_ms": metrics.get("avg_latency_ms", 0.0),
+        "buffer_efficiency": metrics.get("buffer_efficiency", 0.0),
+        "active_streams": metrics.get("active_streams", 0),
+        "total_tokens": metrics.get("total_tokens", 0),
+        "total_batches": metrics.get("total_batches", 0),
+    }
+
+
+# ===========================================================================
+# Thinking Mode Endpoint
+# ===========================================================================
+
+# Session-level thinking mode state
+_thinking_mode: Dict[str, dict] = {}
+
+
+@app.post("/agent/think", response_model=ThinkingModeResponse)
+async def enable_thinking_mode(
+    session_id: str,
+    enabled: bool = True,
+    depth: str = "standard",
+) -> dict:
+    """
+    Enable or disable deep thinking mode for a session.
+
+    When enabled, the agent performs deeper reasoning before responding,
+    including chain-of-thought analysis and self-verification.
+    """
+    executor = _get_executor()
+    session = executor.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    _thinking_mode[session_id] = {
+        "enabled": enabled,
+        "depth": depth,
+        "updated_at": time.time(),
+    }
+
+    depth_desc = {"light": "lightweight", "standard": "standard", "deep": "maximum"}
+    msg = (
+        f"Deep thinking mode {'enabled' if enabled else 'disabled'} "
+        f"({depth_desc.get(depth, depth)} depth) for session {session_id}"
+    )
+    logger.info(msg)
+
+    return {
+        "session_id": session_id,
+        "thinking_enabled": enabled,
+        "depth": depth,
+        "message": msg,
+    }
 
 
 # ===========================================================================

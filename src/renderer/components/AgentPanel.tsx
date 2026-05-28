@@ -20,6 +20,7 @@ import {
   Terminal,
   CheckCheck,
 } from "lucide-react";
+import { ThinkingMode } from "./ThinkingMode";
 import type {
   AgentSession,
   AgentTask,
@@ -243,6 +244,8 @@ function AgentPanel() {
   const [events, setEvents] = useState<AgentOutputEvent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isAutonomous, setIsAutonomous] = useState(true);
+  const [deepThinkEnabled, setDeepThinkEnabled] = useState(false);
+  const [thinkingSteps, setThinkingSteps] = useState<string[]>([]);
   const outputRef = useRef<HTMLDivElement>(null);
   const unlistenRef = useRef<(() => void) | null>(null);
 
@@ -389,6 +392,27 @@ function AgentPanel() {
             <Sparkles size={10} />
             {isAutonomous ? "Autonomous Mode" : "Manual Approval"}
           </button>
+        </div>
+
+        {/* Deep Think mode toggle */}
+        <div className="mt-3">
+          <ThinkingMode
+            enabled={deepThinkEnabled}
+            onToggle={(enabled) => {
+              setDeepThinkEnabled(enabled);
+              if (enabled) {
+                setThinkingSteps([
+                  "Analyzing problem structure...",
+                  "Breaking down into sub-tasks...",
+                  "Evaluating approaches...",
+                  "Formulating execution plan...",
+                ]);
+              } else {
+                setThinkingSteps([]);
+              }
+            }}
+            thinkingSteps={thinkingSteps}
+          />
         </div>
       </div>
     );

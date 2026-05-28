@@ -1,15 +1,20 @@
 """
-LLM Service — Unified interface for multiple LLM providers.
+LLM Service -- Unified interface for multiple LLM providers.
 
 Supports: OpenAI (GPT-4o), Anthropic (Claude), Google (Gemini), Ollama (local)
 
 Features:
 - Smart routing: local for simple tasks, cloud for complex reasoning
 - Streaming: yield tokens as they're generated
+- Token buffering: emit batches every N ms for smoother UI
+- Connection pooling: shared aiohttp.ClientSession with tuned limits
 - Context assembly: build prompt from memory + current task + codebase context
 - Fallback: if a cloud provider fails, automatically falls back to Ollama
 - Token logging: all calls are logged with timing and (where available) token counts
+- Stream metrics: track tokens/s, latency, buffering efficiency
 """
+
+from __future__ import annotations
 
 import os
 import time
@@ -79,6 +84,56 @@ class LLMCallLog:
     success: bool = True
     error: Optional[str] = None
     timestamp: float = field(default_factory=time.time)
+
+
+# ---------------------------------------------------------------------------
+# Stream metrics
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class StreamMetrics:
+    """Real-time metrics for streaming performance."""
+
+    total_tokens: int = 0
+    total_batches: int = 0
+    total_raw_chunks: int = 0
+    total_latency_ms: float = 0.0
+    active_streams: int = 0
+    stream_start_time: Optional[float] = None
+
+    @property
+    def tokens_per_second(self) -> float:
+        """Calculate average tokens per second."""
+        elapsed = (time.monotonic() - self.stream_start_time) if self.stream_start_time else 0
+        if elapsed > 0 and self.total_tokens > 0:
+            return round(self.total_tokens / elapsed, 1)
+        return 0.0
+
+    @property
+    def avg_latency_ms(self) -> float:
+        """Average latency per batch in milliseconds."""
+        if self.total_batches > 0:
+            return round(self.total_latency_ms / self.total_batches, 1)
+        return 0.0
+
+    @property
+    def buffer_efficiency(self) -> float:
+        """Ratio of batches to raw chunks (higher = more efficient buffering)."""
+        if self.total_raw_chunks > 0:
+            return round(self.total_batches / self.total_raw_chunks, 2)
+        return 0.0
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Serialize metrics to a dictionary."""
+        return {
+            "tokens_per_second": self.tokens_per_second,
+            "avg_latency_ms": self.avg_latency_ms,
+            "buffer_efficiency": self.buffer_efficiency,
+            "active_streams": self.active_streams,
+            "total_tokens": self.total_tokens,
+            "total_batches": self.total_batches,
+        }
 
 
 # ---------------------------------------------------------------------------
@@ -174,12 +229,20 @@ def assemble_messages(
 class LLMService:
     """Unified LLM interface with multi-provider support."""
 
+    # Connection pool limits
+    TCP_CONNECTOR_LIMIT: int = 30
+    TCP_CONNECTOR_LIMIT_PER_HOST: int = 10
+    TCP_CONNECTOR_TTL: int = 300  # 5 min keep-alive
+    CLIENT_TIMEOUT_TOTAL: int = 120
+
     def __init__(self) -> None:
         self.configs: Dict[LLMProvider, LLMConfig] = {}
         self._init_configs()
         self._clients: Dict[LLMProvider, Any] = {}
         self._call_history: List[LLMCallLog] = []
         self._session: Optional[aiohttp.ClientSession] = None
+        # Stream metrics
+        self._stream_metrics = StreamMetrics()
 
     # -- Configuration ------------------------------------------------------
 
@@ -230,7 +293,7 @@ class LLMService:
                 self.configs[LLMProvider.GOOGLE].model,
             )
 
-        # Ollama (local — always configured as fallback)
+        # Ollama (local -- always configured as fallback)
         ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
         ollama_model = os.getenv("OLLAMA_MODEL", "qwen2.5-coder:14b")
         self.configs[LLMProvider.OLLAMA] = LLMConfig(
@@ -269,10 +332,23 @@ class LLMService:
         return self._clients[LLMProvider.ANTHROPIC]
 
     def _get_aiohttp_session(self) -> aiohttp.ClientSession:
-        """Lazy-load and cache the shared aiohttp session."""
+        """Lazy-load and cache the shared aiohttp session with connection pooling."""
         if self._session is None or self._session.closed:
+            connector = aiohttp.TCPConnector(
+                limit=self.TCP_CONNECTOR_LIMIT,
+                limit_per_host=self.TCP_CONNECTOR_LIMIT_PER_HOST,
+                ttl_dns_cache=self.TCP_CONNECTOR_TTL,
+                use_dns_cache=True,
+            )
+            timeout = aiohttp.ClientTimeout(total=self.CLIENT_TIMEOUT_TOTAL)
             self._session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=120)
+                connector=connector,
+                timeout=timeout,
+            )
+            logger.debug(
+                "aiohttp session created: limit=%s, limit_per_host=%s",
+                self.TCP_CONNECTOR_LIMIT,
+                self.TCP_CONNECTOR_LIMIT_PER_HOST,
             )
         return self._session
 
@@ -329,7 +405,7 @@ class LLMService:
         if is_reasoning_task and LLMProvider.ANTHROPIC in self.configs:
             return LLMProvider.ANTHROPIC
 
-        # Default priority: Anthropic > OpenAI > Ollama
+        # Default priority: Anthropic > OpenAI > Google > Ollama
         if LLMProvider.ANTHROPIC in self.configs:
             return LLMProvider.ANTHROPIC
         if LLMProvider.OPENAI in self.configs:
@@ -355,6 +431,60 @@ class LLMService:
             if "gemini" in model.lower() and LLMProvider.GOOGLE in self.configs:
                 return LLMProvider.GOOGLE
             return LLMProvider.OLLAMA
+
+    # -- Token buffering ----------------------------------------------------
+
+    async def _buffered_stream(
+        self,
+        raw_stream: AsyncIterator[str],
+        buffer_ms: int = 50,
+    ) -> AsyncIterator[str]:
+        """
+        Buffer tokens and emit batches for smoother UI rendering.
+
+        Collects individual tokens into a list and yields the concatenated
+        batch once *buffer_ms* milliseconds have elapsed since the last
+        emit. A final flush ensures no trailing tokens are lost.
+
+        Parameters
+        ----------
+        raw_stream:
+            The upstream async iterator that yields individual tokens.
+        buffer_ms:
+            Milliseconds to wait between emits (default: 50 ms).
+
+        Yields
+        ------
+        str
+            Concatenated token batch.
+        """
+        buffer: List[str] = []
+        last_emit = time.monotonic()
+        token_count = 0
+
+        async for token in raw_stream:
+            buffer.append(token)
+            token_count += 1
+            self._stream_metrics.total_raw_chunks += 1
+
+            now = time.monotonic()
+            elapsed_ms = (now - last_emit) * 1000
+
+            if elapsed_ms >= buffer_ms:
+                batch = "".join(buffer)
+                self._stream_metrics.total_batches += 1
+                self._stream_metrics.total_tokens += token_count
+                self._stream_metrics.total_latency_ms += elapsed_ms
+                yield batch
+                buffer = []
+                token_count = 0
+                last_emit = now
+
+        # Flush remaining tokens
+        if buffer:
+            self._stream_metrics.total_batches += 1
+            self._stream_metrics.total_tokens += token_count
+            yield "".join(buffer)
 
     # -- Non-streaming completion -------------------------------------------
 
@@ -439,9 +569,13 @@ class LLMService:
         max_tokens: Optional[int] = None,
     ) -> AsyncIterator[str]:
         """
-        Streaming completion. Yields text chunks as they're generated.
+        Streaming completion with token buffering.
 
-        Falls back to Ollama if the primary provider fails.
+        All providers use streaming -- no non-streaming fallbacks.
+        Tokens are buffered and emitted in batches every 50 ms for
+        smoother UI rendering and higher throughput.
+
+        Falls back to Ollama streaming if the primary provider fails.
 
         Parameters
         ----------
@@ -459,29 +593,37 @@ class LLMService:
         Yields
         ------
         str
-            Partial text chunks from the LLM.
+            Batched text chunks from the LLM.
         """
         prompt_text = messages[-1].content if messages else ""
         provider = self._resolve_provider(model, prompt_text)
 
+        self._stream_metrics.active_streams += 1
+        if self._stream_metrics.stream_start_time is None:
+            self._stream_metrics.stream_start_time = time.monotonic()
+
         try:
-            async for chunk in self._stream_with_provider(
+            raw_stream = self._stream_with_provider(
                 provider, messages, tool_schemas, temperature, max_tokens
-            ):
-                yield chunk
+            )
+            async for batch in self._buffered_stream(raw_stream, buffer_ms=50):
+                yield batch
         except Exception as exc:
             logger.warning(
-                "Primary provider %s streaming failed: %s. Falling back to Ollama.",
+                "Primary provider %s streaming failed: %s. Falling back to Ollama (streaming).",
                 provider.value,
                 exc,
             )
             if provider != LLMProvider.OLLAMA:
-                async for chunk in self._stream_with_provider(
+                raw_stream = self._stream_with_provider(
                     LLMProvider.OLLAMA, messages, tool_schemas, temperature, max_tokens
-                ):
-                    yield chunk
+                )
+                async for batch in self._buffered_stream(raw_stream, buffer_ms=50):
+                    yield batch
             else:
                 yield f"\n[Error: {exc}]"
+        finally:
+            self._stream_metrics.active_streams = max(0, self._stream_metrics.active_streams - 1)
 
     async def _stream_with_provider(
         self,
@@ -589,12 +731,10 @@ class LLMService:
             kwargs["tool_choice"] = "auto"
 
         stream = await client.chat.completions.create(**kwargs)
-        full_content = ""
 
         async for chunk in stream:
             delta = chunk.choices[0].delta
             if delta.content:
-                full_content += delta.content
                 yield delta.content
 
         duration_ms = int((time.time() - start) * 1000)
@@ -1055,7 +1195,7 @@ class LLMService:
         """Record an LLM call to the history log."""
         self._call_history.append(log)
         logger.info(
-            "LLM call: %s/%s — %dms (prompt=%d, completion=%d)",
+            "LLM call: %s/%s -- %dms (prompt=%d, completion=%d)",
             log.provider,
             log.model,
             log.duration_ms,
@@ -1095,6 +1235,16 @@ class LLMService:
             "avg_duration_ms": round(avg_duration, 1),
             "by_provider": by_provider,
         }
+
+    # -- Stream metrics -----------------------------------------------------
+
+    def get_stream_metrics(self) -> Dict[str, Any]:
+        """Return real-time streaming performance metrics."""
+        return self._stream_metrics.to_dict()
+
+    def reset_stream_metrics(self) -> None:
+        """Reset stream metrics counters."""
+        self._stream_metrics = StreamMetrics()
 
     # -- Cleanup ------------------------------------------------------------
 

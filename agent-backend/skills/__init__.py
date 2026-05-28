@@ -1,18 +1,9 @@
-"""Skills package — document-to-skill conversion system."""
+"""
+Skills package for the Construct AI agent.
 
-from .skill_parser import SkillParser, Skill, ParsedDocument, SkillCategory, SkillStep
-from .skill_manager import SkillManager
-from .skill_executor import SkillExecutor, ExecutionResult, StepResult, RecoveryStrategy
+Provides skill loading, installation, and management capabilities.
+"""
 
-__all__ = [
-    "SkillParser",
-    "Skill",
-    "ParsedDocument",
-    "SkillCategory",
-    "SkillStep",
-    "SkillManager",
-    "SkillExecutor",
-    "ExecutionResult",
-    "StepResult",
-    "RecoveryStrategy",
-]
+from skills.installer import SkillInstaller, Skill, InstallSource
+
+__all__ = ["SkillInstaller", "Skill", "InstallSource"]

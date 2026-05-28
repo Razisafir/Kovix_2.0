@@ -6,6 +6,7 @@ import {
   CircleDot,
 } from "lucide-react";
 import useAppStore from "@/stores/useAppStore";
+import { ContextBar } from "./ContextBar";
 
 function StatusBar() {
   const sidebarVisible = useAppStore((s) => s.sidebarVisible);
@@ -13,6 +14,7 @@ function StatusBar() {
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
   const togglePanel = useAppStore((s) => s.togglePanel);
   const cursorPosition = useAppStore((s) => s.cursorPosition);
+  const contextPercent = useAppStore((s) => s.contextPercent ?? 0);
 
   return (
     <footer className="flex items-center justify-between h-6 px-2 bg-construct-accent-primary text-construct-bg-primary-tertiary shrink-0 select-none">
@@ -59,6 +61,7 @@ function StatusBar() {
           <CircleDot size={10} className="text-construct-semantic-success" />
           Ready
         </span>
+        <ContextBar percent={contextPercent} />
       </div>
 
       {/* Right */}
