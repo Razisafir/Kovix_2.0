@@ -16,3 +16,26 @@ pydantic>=2.9.0
 
 # Configuration
 python-dotenv>=1.0.0
+
+# ---------------------------------------------------------------------------
+# LLM Providers
+# ---------------------------------------------------------------------------
+
+# OpenAI (GPT-4o, GPT-4o-mini)
+openai>=1.55.0
+
+# Anthropic (Claude 3.5 Sonnet, Claude 3 Opus)
+anthropic>=0.40.0
+
+# Google (Gemini 1.5 Pro)
+google-generativeai>=0.8.0
+
+# Async HTTP for Ollama + Google REST API
+aiohttp>=3.11.0
+
+# ---------------------------------------------------------------------------
+# Code Analysis
+# ---------------------------------------------------------------------------
+
+# AST -> source code conversion for Python refactoring
+astor>=0.8.1

@@ -28,6 +28,9 @@ chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.11", features = ["v4", "serde"] }
 dirs = "5.0"
 
+# -- agent layer --
+parking_lot = "0.12"
+
 [features]
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]

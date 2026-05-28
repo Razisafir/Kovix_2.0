@@ -1,6 +1,7 @@
 pub mod commands;
 pub mod db;
 
+use commands::agent::AgentState;
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -13,6 +14,9 @@ pub fn run() {
             // Initialise the SQLite database and register it as shared state.
             let state = db::init_db(app).expect("failed to initialise database");
             app.manage(state);
+
+            // Initialise the agent session store and register it as shared state.
+            app.manage(AgentState::new());
 
             #[cfg(debug_assertions)]
             {
@@ -35,6 +39,13 @@ pub fn run() {
             commands::memory::get_project_state,
             commands::memory::update_project_state,
             commands::memory::recall_context,
+            // -- agent commands --
+            commands::agent::start_agent,
+            commands::agent::get_agent_status,
+            commands::agent::pause_agent,
+            commands::agent::resume_agent,
+            commands::agent::stop_agent,
+            commands::agent::get_agent_output,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -4,6 +4,7 @@ import type {
   ContextItem,
   MemoryTab,
 } from "../types/memory";
+import type { AgentOutputEvent } from "../types/agent";
 
 interface CursorPosition {
   line: number;
@@ -41,6 +42,17 @@ interface AppState {
   setMemorySearchQuery: (q: string) => void;
   memorySearchResults: ContextItem[];
   setMemorySearchResults: (results: ContextItem[]) => void;
+
+  // Agent
+  agentGoal: string;
+  setAgentGoal: (goal: string) => void;
+  agentSessionId: string | null;
+  setAgentSessionId: (id: string | null) => void;
+  agentStatus: "idle" | "running" | "paused" | "completed" | "failed" | "waiting";
+  setAgentStatus: (status: "idle" | "running" | "paused" | "completed" | "failed" | "waiting") => void;
+  agentEvents: AgentOutputEvent[];
+  setAgentEvents: (events: AgentOutputEvent[]) => void;
+  addAgentEvent: (event: AgentOutputEvent) => void;
 }
 
 const useAppStore = create<AppState>((set) => ({
@@ -77,6 +89,18 @@ const useAppStore = create<AppState>((set) => ({
   setMemorySearchQuery: (q) => set({ memorySearchQuery: q }),
   memorySearchResults: [],
   setMemorySearchResults: (results) => set({ memorySearchResults: results }),
+
+  // Agent
+  agentGoal: "",
+  setAgentGoal: (goal) => set({ agentGoal: goal }),
+  agentSessionId: null,
+  setAgentSessionId: (id) => set({ agentSessionId: id }),
+  agentStatus: "idle",
+  setAgentStatus: (status) => set({ agentStatus: status }),
+  agentEvents: [],
+  setAgentEvents: (events) => set({ agentEvents: events }),
+  addAgentEvent: (event) =>
+    set((state) => ({ agentEvents: [...state.agentEvents, event] })),
 }));
 
 export default useAppStore;

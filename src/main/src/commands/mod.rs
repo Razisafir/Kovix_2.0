@@ -2,5 +2,7 @@
 //!
 //! All commands are grouped by domain:
 //! - `memory` — persistent storage (conversations, code events, preferences, project state)
+//! - `agent`  — AI agent control (start, pause, resume, stop, status, streaming output)
 
+pub mod agent;
 pub mod memory;
