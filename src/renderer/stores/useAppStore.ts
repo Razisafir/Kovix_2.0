@@ -10,6 +10,7 @@ import type {
   LogEntry,
   QueuedGoal,
 } from "../types/autonomous";
+import type { Toast } from "../types";
 
 interface CursorPosition {
   line: number;
@@ -71,7 +72,22 @@ interface AppState {
   autonomousLogs: LogEntry[];
   setAutonomousLogs: (l: LogEntry[]) => void;
   addAutonomousLog: (l: LogEntry) => void;
+
+  // Onboarding
+  onboardingComplete: boolean;
+  setOnboardingComplete: (v: boolean) => void;
+
+  // Toast notifications
+  toasts: Toast[];
+  addToast: (toast: Omit<Toast, "id">) => void;
+  removeToast: (id: string) => void;
+
+  // Theme
+  theme: "dark" | "light" | "system";
+  setTheme: (t: "dark" | "light" | "system") => void;
 }
+
+let toastIdCounter = 0;
 
 const useAppStore = create<AppState>((set) => ({
   // UI
@@ -135,6 +151,29 @@ const useAppStore = create<AppState>((set) => ({
     set((state) => ({
       autonomousLogs: [...state.autonomousLogs, l],
     })),
+
+  // Onboarding
+  onboardingComplete: false,
+  setOnboardingComplete: (v) => set({ onboardingComplete: v }),
+
+  // Toast notifications
+  toasts: [],
+  addToast: (toast) =>
+    set((state) => {
+      const id = `toast-${++toastIdCounter}-${Date.now()}`;
+      const newToast: Toast = { ...toast, id };
+      // Keep max 5 toasts, remove oldest if exceeding
+      const toasts = [...state.toasts, newToast].slice(-5);
+      return { toasts };
+    }),
+  removeToast: (id) =>
+    set((state) => ({
+      toasts: state.toasts.filter((t) => t.id !== id),
+    })),
+
+  // Theme
+  theme: "dark",
+  setTheme: (t) => set({ theme: t }),
 }));
 
 export default useAppStore;

@@ -5,11 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "build:mac": "tauri build --target universal-apple-darwin",
+    "build:win": "tauri build --target x86_64-pc-windows-msvc",
+    "build:linux": "tauri build --target x86_64-unknown-linux-gnu",
+    "build:all": "npm run build:mac && npm run build:win && npm run build:linux",
+    "prebuild": "tsc --noEmit",
+    "lint": "tsc --noEmit && echo 'Type check passed'",
+    "icons:generate": "cd src/main && cargo tauri icon ../../icons/icon.png"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.6.0",
@@ -17,6 +24,7 @@
     "@tauri-apps/plugin-dialog": "^2.0.0",
     "@tauri-apps/plugin-fs": "^2.0.0",
     "@tauri-apps/plugin-shell": "^2.0.0",
+    "framer-motion": "^11.0.0",
     "lucide-react": "^0.460.0",
     "monaco-editor": "^0.52.0",
     "react": "^18.3.1",

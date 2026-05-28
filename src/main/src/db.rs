@@ -161,6 +161,18 @@ pub fn init_db(app: &mut tauri::App) -> Result<AppState, Box<dyn std::error::Err
 
     conn.execute_batch(INIT_SQL)?;
 
+    // Enable WAL mode for better concurrency and performance
+    conn.execute_batch(
+        "PRAGMA journal_mode = WAL;
+         PRAGMA synchronous = NORMAL;
+         PRAGMA cache_size = -64000;     -- 64 MB cache
+         PRAGMA temp_store = MEMORY;
+         PRAGMA mmap_size = 30000000000; -- 30 GB memory map
+         PRAGMA page_size = 4096;
+         PRAGMA auto_vacuum = INCREMENTAL;
+        "
+    )?;
+
     Ok(AppState {
         db: Mutex::new(SendConnection(conn)),
     })
@@ -425,4 +437,32 @@ pub fn recall_context(db: &Connection, search_text: &str, limit: usize) -> Resul
     items.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
     items.truncate(limit);
     Ok(items)
+}
+
+// ---------------------------------------------------------------------------
+// Maintenance
+// ---------------------------------------------------------------------------
+
+/// Run periodic database maintenance (VACUUM + WAL checkpoint).
+///
+/// Call this on a background thread every few hours or on app idle.
+/// Returns the number of freed pages, or `0` if no work was needed.
+pub fn vacuum_db(db: &Connection) -> Result<usize> {
+    // Checkpoint WAL before vacuuming so the main DB file is up-to-date.
+    db.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);")?;
+
+    // Incremental vacuum frees pages on the freelist.
+    db.execute("PRAGMA incremental_vacuum;")?;
+
+    // Full VACUUM rebuilds the database file (expensive — best done
+    // during idle time or on app exit).
+    // db.execute_batch("VACUUM;")?;
+
+    let freed: usize = db.query_row(
+        "PRAGMA freelist_count",
+        [],
+        |row| row.get(0),
+    )?;
+
+    Ok(freed)
 }

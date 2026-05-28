@@ -15,6 +15,11 @@ from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Tuple
 from dataclasses import dataclass, asdict
 
+# Import the shared LRU cache
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from core.cache import LRUCache
+
 import chromadb
 from chromadb.config import Settings
 from chromadb.api import ClientAPI
@@ -39,6 +44,7 @@ CODE_COLLECTION: str = "code_embeddings"
 # ---------------------------------------------------------------------------
 _chroma_client: Optional[ClientAPI] = None
 _embedding_model: Optional[SentenceTransformer] = None
+_query_cache: LRUCache = LRUCache(max_size=200, default_ttl=300)  # 5-min TTL
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -410,6 +416,8 @@ def query_similar(
     """
     Semantic search across all collections (or a single source).
 
+    Results are cached for 5 minutes to avoid redundant embedding work.
+
     Parameters
     ----------
     query_text:
@@ -426,6 +434,12 @@ def query_similar(
     """
     if not query_text or not query_text.strip():
         raise ValueError("Query text cannot be empty")
+
+    cache_key = (query_text, source_filter, n_results)
+    cached = _query_cache.get(*cache_key)
+    if cached is not None:
+        logger.debug("query_similar cache hit for '%s...'", query_text[:40])
+        return cached  # type: ignore[return-value]
 
     query_embedding = _embed_text(query_text)
     results: List[SearchResult] = []
@@ -452,8 +466,9 @@ def query_similar(
         results.sort(key=lambda r: r.relevance_score, reverse=True)
         results = results[:n_results]
 
+    _query_cache.set(results, *cache_key)
     logger.debug(
-        "query_similar('%s...', filter=%s) → %d results",
+        "query_similar('%s...', filter=%s) → %d results (cached)",
         query_text[:40],
         source_filter,
         len(results),
@@ -609,6 +624,8 @@ def hybrid_search(
     3. Fuse the two ranking signals with a weighted reciprocal-rank score.
     4. Return the top *n_results*.
 
+    Results are cached for 5 minutes to avoid redundant embedding work.
+
     Parameters
     ----------
     query_text:
@@ -627,6 +644,12 @@ def hybrid_search(
     """
     if not query_text or not query_text.strip():
         raise ValueError("Query text cannot be empty")
+
+    cache_key = (query_text, tuple(sorted(frozenset(d.items()) for d in sqlite_results)), n_results)
+    cached = _query_cache.get(*cache_key)
+    if cached is not None:
+        logger.debug("hybrid_search cache hit for '%s...'", query_text[:40])
+        return cached  # type: ignore[return-value]
 
     # 1. Vector results
     vector_results = query_similar(query_text, n_results=n_results * 3)
@@ -684,8 +707,9 @@ def hybrid_search(
                 )
             )
 
+    _query_cache.set(final, query_text, tuple(sorted(frozenset(d.items()) for d in sqlite_results)), n_results)
     logger.debug(
-        "hybrid_search('%s...', %d sqlite rows) → %d results",
+        "hybrid_search('%s...', %d sqlite rows) → %d results (cached)",
         query_text[:40],
         len(sqlite_results),
         len(final),

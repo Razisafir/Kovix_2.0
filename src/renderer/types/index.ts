@@ -35,6 +35,17 @@ export interface AppSettings {
 export type PanelTab = "autonomous" | "terminal" | "problems" | "chat" | "agent" | "memory";
 export type SidebarTab = "files" | "search" | "git" | "extensions";
 
+// Toast notification system
+export type ToastType = "success" | "error" | "info" | "warning";
+
+export interface Toast {
+  id: string;
+  type: ToastType;
+  title: string;
+  message?: string;
+  duration?: number;
+}
+
 // Re-export memory types
 export * from "./memory";
 

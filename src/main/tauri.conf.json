@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "productName": "Construct",
   "version": "0.1.0",
-  "identifier": "com.construct.app",
+  "identifier": "com.construct.ai",
   "build": {
     "frontendDist": "../../dist",
     "devUrl": "http://localhost:5173",
@@ -14,6 +14,7 @@
     "windows": [
       {
         "title": "Construct",
+        "label": "main",
         "width": 1400,
         "height": 900,
         "minWidth": 900,
@@ -21,24 +22,53 @@
         "center": true,
         "resizable": true,
         "fullscreen": false,
-        "decorations": true
+        "decorations": true,
+        "transparent": false,
+        "visible": true
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' https:; img-src 'self' data: https:; script-src 'self' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' https:;",
+      "csp": "default-src 'self'; connect-src 'self' https://api.github.com https://*.openai.com https://*.anthropic.com https://*.googleapis.com; img-src 'self' data: https:; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;",
       "capabilities": ["default"]
     }
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["dmg", "nsis", "appimage", "deb", "rpm"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "AI coding agent with persistent memory",
+    "longDescription": "Construct is a desktop AI coding agent that understands your codebase, remembers every interaction, and autonomously plans, codes, tests, and commits.",
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.15",
+      "license": "../../LICENSE",
+      "signingIdentity": null,
+      "entitlements": null
+    },
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    },
+    "linux": {
+      "deb": {
+        "depends": ["libgtk-3-0", "libwebkit2gtk-4.0-37"]
+      }
+    }
   },
-  "plugins": {}
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": ["https://api.construct.ai/releases/{{target}}/{{arch}}/{{current_version}}"],
+      "dialog": true,
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDFFQzU1QzY3OEI0RTJBNjAKUldTU0ZBN1VWa1VLbTJGQStRU2tNWWhGU0d4TlgyRmtsN1hFS3J1UEFuQmV2Rm5KM2x6dmJpbUEK"
+    }
+  }
 }
