@@ -1,4 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import { TerminalOutput } from "./TerminalOutput";
 import type { LogEntry } from "./TerminalOutput";
 
@@ -58,46 +60,6 @@ const statusColor: Record<TaskStatus, string> = {
   WRK: C.wrn,
   ERR: C.err,
   PND: C.t4,
-};
-
-/* ─────────────────────── demo data ─────────────────────── */
-
-const DEMO_STATE: AutonomousState = {
-  goal: "build saas dashboard with auth, billing, analytics",
-  progress: 34,
-  tasksCompleted: 4,
-  totalTasks: 12,
-  eta: "04:00:00",
-  autoMode: true,
-  tasks: [
-    { id: "1", number: 1, status: "OK", description: "set up project structure", time: "00:15", agent: "code" },
-    { id: "2", number: 2, status: "OK", description: "initialize database schema", time: "00:22", agent: "code" },
-    { id: "3", number: 3, status: "WRK", description: "build dashboard layout component", time: "00:32", agent: "ui" },
-    { id: "4", number: 4, status: "PND", description: "add analytics charts", time: "--", agent: "--" },
-    { id: "5", number: 5, status: "PND", description: "implement billing page", time: "--", agent: "--" },
-    { id: "6", number: 6, status: "PND", description: "set up stripe integration", time: "--", agent: "--" },
-    { id: "7", number: 7, status: "PND", description: "add subscription management", time: "--", agent: "--" },
-    { id: "8", number: 8, status: "PND", description: "implement auth guards", time: "--", agent: "--" },
-    { id: "9", number: 9, status: "PND", description: "add audit logging", time: "--", agent: "--" },
-    { id: "10", number: 10, status: "PND", description: "write integration tests", time: "--", agent: "--" },
-    { id: "11", number: 11, status: "PND", description: "deploy to staging", time: "--", agent: "--" },
-    { id: "12", number: 12, status: "PND", description: "run e2e verification", time: "--", agent: "--" },
-  ],
-  resources: {
-    cpu: 23,
-    memUsed: 456,
-    memTotal: 2048,
-    diskSpeed: "12MB/s",
-  },
-  logs: [
-    { timestamp: "12:00:05", level: "INF", message: "autonomous mode initialized", source: "orchestrator" },
-    { timestamp: "12:00:08", level: "INF", message: "goal: build saas dashboard with auth, billing, analytics", source: "planner" },
-    { timestamp: "12:00:12", level: "INF", message: "task plan: 12 tasks, ETA 04:00:00", source: "planner" },
-    { timestamp: "12:00:15", level: "OK", message: "task 1/12: set up project structure -- completed (00:15)", source: "code" },
-    { timestamp: "12:00:32", level: "OK", message: "task 2/12: initialize database schema -- completed (00:22)", source: "code" },
-    { timestamp: "12:01:05", level: "WRK", message: "task 3/12: build dashboard layout component", source: "ui" },
-    { timestamp: "12:01:12", level: "INF", message: "checkpoint saved (auto)", source: "checkpoint" },
-  ],
 };
 
 /* ─────────────────────── sub-components ─────────────────────── */
@@ -210,8 +172,109 @@ function ASCIIProgressBar({ percent }: { percent: number }) {
 /* ─────────────────────── main component ─────────────────────── */
 
 function AutonomousPanel() {
-  const [state, setState] = useState<AutonomousState>(DEMO_STATE);
+  const [state, setState] = useState<AutonomousState>({
+    goal: "",
+    progress: 0,
+    tasksCompleted: 0,
+    totalTasks: 0,
+    eta: "--:--:--",
+    autoMode: false,
+    tasks: [],
+    resources: { cpu: 0, memUsed: 0, memTotal: 0, diskSpeed: "0MB/s" },
+    logs: [],
+  });
   const [showLog, setShowLog] = useState(false);
+
+  /* ── sync with Rust backend ── */
+  useEffect(() => {
+    let cancelled = false;
+    const unlisteners: UnlistenFn[] = [];
+
+    const fetchStatus = async () => {
+      try {
+        const status = await invoke<{
+          current_goal?: string;
+          progress_percent: number;
+          tasks_completed: number;
+          queue_size: number;
+          enabled: boolean;
+          resource_cpu: number;
+          resource_memory: number;
+        }>("get_autonomous_status");
+
+        if (cancelled) return;
+
+        setState((prev) => ({
+          ...prev,
+          goal: status.current_goal ?? "",
+          progress: Math.round(status.progress_percent),
+          tasksCompleted: status.tasks_completed,
+          totalTasks: status.queue_size,
+          autoMode: status.enabled,
+          resources: {
+            cpu: Math.round(status.resource_cpu),
+            memUsed: Math.round(status.resource_memory),
+            memTotal: 2048,
+            diskSpeed: "0MB/s",
+          },
+        }));
+      } catch {
+        // Backend may not have autonomous manager initialized yet
+      }
+    };
+
+    const fetchLogs = async () => {
+      try {
+        const logs = await invoke<
+          { timestamp: number; level: string; message: string; source: string }[]
+        >("get_agent_log", { lines: 100 });
+
+        if (cancelled) return;
+
+        const mapped: LogEntry[] = logs.map((l) => ({
+          timestamp: new Date(l.timestamp * 1000).toTimeString().slice(0, 8),
+          level: l.level === "error" ? "ERR" : l.level === "warn" ? "WRK" : l.level === "ok" ? "OK" : "INF",
+          message: l.message,
+          source: l.source,
+        }));
+
+        setState((prev) => ({ ...prev, logs: mapped }));
+      } catch {
+        // Backend may not have logs yet
+      }
+    };
+
+    const setupListeners = async () => {
+      const events = [
+        "autonomous:started",
+        "autonomous:paused",
+        "autonomous:resumed",
+        "autonomous:checkpoint",
+        "autonomous:completed",
+        "autonomous:error",
+      ];
+
+      for (const eventName of events) {
+        const unlisten = await listen(eventName, () => {
+          if (cancelled) return;
+          void fetchStatus();
+          void fetchLogs();
+        });
+        unlisteners.push(unlisten);
+      }
+
+      // Initial fetch
+      await fetchStatus();
+      await fetchLogs();
+    };
+
+    void setupListeners();
+
+    return () => {
+      cancelled = true;
+      unlisteners.forEach((u) => u());
+    };
+  }, []);
 
   const toggleAuto = useCallback(() => {
     setState((prev) => ({ ...prev, autoMode: !prev.autoMode }));

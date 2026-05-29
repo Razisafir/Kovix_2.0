@@ -191,180 +191,162 @@ pub fn start_agent(
         sessions.insert(session_id.clone(), session);
     }
 
-    // Spawn background task that calls the Python agent backend.
-    let sessions = state.sessions.clone();
+    // Spawn async tokio task for HTTP communication with Python backend
     let sid = session_id.clone();
     let app = app_handle.clone();
     let path = project_path.unwrap_or_else(|| ".".to_string());
     let goal_clone = goal.clone();
 
-    std::thread::spawn(move || {
-        // Emit initial event.
-        let initial_event = AgentOutputEvent {
-            session_id: sid.clone(),
-            event_type: "thought".to_string(),
-            content: format!(
-                "Starting agent session for goal: {} (project: {})",
-                goal_clone, path
-            ),
-            timestamp: Utc::now().timestamp(),
-        };
+    tauri::async_runtime::spawn(async move {
+        // 1. Start the agent session on the Python backend
+        let client = reqwest::Client::new();
+        let start_payload = serde_json::json!({
+            "session_id": sid,
+            "goal": goal_clone,
+            "project_path": path,
+            "mode": "interactive",
+        });
 
+        match client
+            .post("http://127.0.0.1:8000/api/agent/start")
+            .json(&start_payload)
+            .send()
+            .await
         {
-            let mut sessions = sessions.lock();
-            if let Some(session) = sessions.get_mut(&sid) {
-                session.output_log.push(initial_event.clone());
+            Ok(resp) => {
+                if !resp.status().is_success() {
+                    let err_text = resp.text().await.unwrap_or_else(|_| "Unknown error".into());
+                    emit_output(&app, &sid, "error", &format!("Backend failed to start agent: {}", err_text));
+                    return;
+                }
+            }
+            Err(e) => {
+                emit_output(&app, &sid, "error", &format!("Cannot connect to Python backend at :8000: {}. Is the backend running?", e));
+                return;
             }
         }
 
-        let _ = app.emit(&format!("agent:{}", sid), initial_event);
+        // 2. Poll for events from the Python backend
+        let mut last_event_id: i64 = 0;
+        let mut consecutive_errors = 0u32;
+        const MAX_CONSECUTIVE_ERRORS: u32 = 10;
+        const POLL_INTERVAL_MS: u64 = 500;
 
-        // TODO: Call Python backend API to actually run the agent.
-        // For now, emit a demo event sequence so the UI works immediately.
-        std::thread::sleep(std::time::Duration::from_secs(1));
-
-        let demo_events: Vec<(&str, &str)> = vec![
-            ("thought", "Analyzing project structure..."),
-            ("tool_call", "list_directory({\"dir_path\": \".\"})"),
-            ("tool_result", "Found: src/, package.json, README.md"),
-            (
-                "thought",
-                "Project is a React + TypeScript app. Planning component creation.",
-            ),
-            ("task_start", "Create Counter component file"),
-            (
-                "tool_call",
-                "write_file({\"file_path\": \"src/components/Counter.tsx\", ...})",
-            ),
-            ("tool_result", "File written successfully (245 bytes)"),
-            ("task_complete", "Create Counter component file"),
-            ("task_start", "Add Counter to App.tsx"),
-            (
-                "tool_call",
-                "read_file({\"file_path\": \"src/App.tsx\"})",
-            ),
-            ("tool_result", "Read 12 lines from src/App.tsx"),
-            (
-                "code",
-                "import { Counter } from './components/Counter';\n// ...",
-            ),
-            ("task_complete", "Add Counter to App.tsx"),
-            ("task_start", "Run tests to verify"),
-            (
-                "tool_call",
-                "run_test({\"test_command\": \"npm test\"})",
-            ),
-            ("tool_result", "Tests passed: 3/3"),
-            ("task_complete", "Run tests to verify"),
-            (
-                "complete",
-                "All tasks completed! Counter component created and verified.",
-            ),
-        ];
-
-        for (event_type, content) in demo_events {
-            // Respect pause — if the session is paused, spin-wait.
-            loop {
-                let is_paused = {
-                    let sessions = sessions.lock();
-                    if let Some(session) = sessions.get(&sid) {
-                        matches!(session.status, AgentStatus::Paused)
+        loop {
+            // Check if session was stopped/paused
+            let should_stop = {
+                let sessions_guard = app.state::<AgentState>().sessions.lock();
+                if let Some(session) = sessions_guard.get(&sid) {
+                    if matches!(session.status, AgentStatus::Failed) {
+                        // Send stop signal to backend
+                        true
                     } else {
                         false
                     }
-                };
-
-                if !is_paused {
-                    break;
+                } else {
+                    true // Session removed
                 }
-                std::thread::sleep(std::time::Duration::from_millis(200));
+            };
+
+            if should_stop {
+                let _ = client
+                    .post(&format!("http://127.0.0.1:8000/api/agent/{}/stop", sid))
+                    .send()
+                    .await;
+                break;
             }
 
-            // Check if the session was stopped (marked Failed).
-            let was_stopped = {
-                let sessions = sessions.lock();
+            // Poll events from backend
+            match client
+                .get(&format!(
+                    "http://127.0.0.1:8000/api/agent/{}/events?after={}",
+                    sid, last_event_id
+                ))
+                .timeout(std::time::Duration::from_secs(5))
+                .send()
+                .await
+            {
+                Ok(resp) => {
+                    consecutive_errors = 0;
+                    if resp.status().is_success() {
+                        if let Ok(events) = resp.json::<Vec<AgentOutputEvent>>().await {
+                            for event in events {
+                                last_event_id = event.timestamp;
+                                
+                                // Update session state
+                                {
+                                    let state_ref = app.state::<AgentState>();
+                                    let mut sessions = state_ref.sessions.lock();
+                                    if let Some(session) = sessions.get_mut(&sid) {
+                                        session.output_log.push(event.clone());
+                                        session.updated_at = Utc::now().timestamp();
+                                        
+                                        // Update task tracking
+                                        match event.event_type.as_str() {
+                                            "task_start" => {
+                                                let task = AgentTask {
+                                                    id: format!("task-{}", session.tasks.len()),
+                                                    description: event.content.clone(),
+                                                    status: TaskStatus::InProgress,
+                                                    result: None,
+                                                    error: None,
+                                                };
+                                                session.tasks.push(task);
+                                                session.current_task_index = session.tasks.len().saturating_sub(1);
+                                            }
+                                            "task_complete" => {
+                                                if let Some(task) = session.tasks.last_mut() {
+                                                    task.status = TaskStatus::Completed;
+                                                    task.result = Some(event.content.clone());
+                                                }
+                                            }
+                                            "task_failed" => {
+                                                if let Some(task) = session.tasks.last_mut() {
+                                                    task.status = TaskStatus::Failed;
+                                                    task.error = Some(event.content.clone());
+                                                }
+                                            }
+                                            "error" => {
+                                                session.status = AgentStatus::Failed;
+                                            }
+                                            "complete" => {
+                                                session.status = AgentStatus::Completed;
+                                            }
+                                            _ => {}
+                                        }
+                                    }
+                                }
+                                
+                                let _ = app.emit(&format!("agent:{}", sid), event);
+                            }
+                        }
+                    }
+                }
+                Err(_) => {
+                    consecutive_errors += 1;
+                    if consecutive_errors >= MAX_CONSECUTIVE_ERRORS {
+                        emit_output(&app, &sid, "error", "Lost connection to Python backend. Too many consecutive errors.");
+                        break;
+                    }
+                }
+            }
+
+            // Check if session completed
+            let is_done = {
+                let state_ref = app.state::<AgentState>();
+                let sessions = state_ref.sessions.lock();
                 if let Some(session) = sessions.get(&sid) {
-                    matches!(session.status, AgentStatus::Failed)
+                    matches!(session.status, AgentStatus::Completed | AgentStatus::Failed)
                 } else {
                     true
                 }
             };
 
-            if was_stopped {
-                let abort_event = AgentOutputEvent {
-                    session_id: sid.clone(),
-                    event_type: "error".to_string(),
-                    content: "Session was stopped by the user.".to_string(),
-                    timestamp: Utc::now().timestamp(),
-                };
-
-                {
-                    let mut sessions = sessions.lock();
-                    if let Some(session) = sessions.get_mut(&sid) {
-                        session.output_log.push(abort_event.clone());
-                    }
-                }
-
-                let _ = app.emit(&format!("agent:{}", sid), abort_event);
-                return;
+            if is_done {
+                break;
             }
 
-            std::thread::sleep(std::time::Duration::from_millis(800));
-
-            let event = AgentOutputEvent {
-                session_id: sid.clone(),
-                event_type: event_type.to_string(),
-                content: content.to_string(),
-                timestamp: Utc::now().timestamp(),
-            };
-
-            {
-                let mut sessions = sessions.lock();
-                if let Some(session) = sessions.get_mut(&sid) {
-                    session.output_log.push(event.clone());
-                    session.updated_at = Utc::now().timestamp();
-
-                    // Update task tracking based on event type.
-                    match event_type {
-                        "task_start" => {
-                            let task = AgentTask {
-                                id: format!("task-{}", session.tasks.len()),
-                                description: content.to_string(),
-                                status: TaskStatus::InProgress,
-                                result: None,
-                                error: None,
-                            };
-                            session.tasks.push(task);
-                            session.current_task_index = session.tasks.len().saturating_sub(1);
-                        }
-                        "task_complete" => {
-                            if let Some(task) = session.tasks.last_mut() {
-                                task.status = TaskStatus::Completed;
-                                task.result = Some(content.to_string());
-                            }
-                        }
-                        "task_failed" => {
-                            if let Some(task) = session.tasks.last_mut() {
-                                task.status = TaskStatus::Failed;
-                                task.error = Some(content.to_string());
-                            }
-                        }
-                        "error" => {
-                            session.status = AgentStatus::Failed;
-                        }
-                        _ => {}
-                    }
-                }
-            }
-
-            let _ = app.emit(&format!("agent:{}", sid), event);
-        }
-
-        // Mark session as completed.
-        let mut sessions = sessions.lock();
-        if let Some(session) = sessions.get_mut(&sid) {
-            session.status = AgentStatus::Completed;
-            session.updated_at = Utc::now().timestamp();
+            tokio::time::sleep(tokio::time::Duration::from_millis(POLL_INTERVAL_MS)).await;
         }
     });
 

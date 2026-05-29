@@ -1,5 +1,6 @@
 pub mod commands;
 pub mod db;
+pub mod state;
 pub mod tray;
 
 use commands::agent::AgentState;

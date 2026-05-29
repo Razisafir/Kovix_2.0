@@ -41,7 +41,7 @@ export function ImagePasteHandler({
         if (item.type.startsWith("image/")) {
           const file = item.getAsFile();
           if (file) {
-            const id = `img-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            const id = `img-${crypto.randomUUID()}`;
             newImages.push({
               id,
               file,
@@ -69,7 +69,7 @@ export function ImagePasteHandler({
         f.type.startsWith("image/")
       );
       const newImages = files.map((file) => ({
-        id: `img-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        id: `img-${crypto.randomUUID()}`,
         file,
         preview: URL.createObjectURL(file),
       }));

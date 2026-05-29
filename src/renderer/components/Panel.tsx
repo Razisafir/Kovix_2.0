@@ -51,77 +51,47 @@ function Panel() {
 
   const renderTerminal = () => (
     <div
-      style={{
-        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-        fontSize: 11,
-        lineHeight: "18px",
-        padding: 8,
-      }}
+      className="font-['Geist_Mono','JetBrains_Mono',monospace] text-[11px] leading-[18px] p-2"
     >
       <div style={{ color: COLORS.muted }}>$ construct --version</div>
       <div style={{ color: COLORS.textPrimary }}>0.1.0-alpha</div>
-      <div style={{ color: COLORS.muted, marginTop: 4 }}>$ npm run dev</div>
+      <div className="mt-1" style={{ color: COLORS.muted }}>$ npm run dev</div>
       <div style={{ color: COLORS.success }}>vite v6.0 ready in 342ms</div>
       <div style={{ color: COLORS.accent }}>
         local: http://localhost:5173/
       </div>
-      <div style={{ color: COLORS.muted, marginTop: 4 }}>
+      <div className="mt-1" style={{ color: COLORS.muted }}>
         $ cargo tauri dev
       </div>
       <div style={{ color: COLORS.textPrimary }}>Running ConstructApp...</div>
-      <div style={{ color: COLORS.accent, marginTop: 4 }}>_</div>
+      <div className="mt-1" style={{ color: COLORS.accent }}>_</div>
     </div>
   );
 
   const renderChat = () => (
-    <div style={{ padding: 8 }}>
+    <div className="p-2">
       <div
-        style={{
-          fontSize: 11,
-          color: COLORS.muted,
-          marginBottom: 8,
-        }}
+        className="text-[11px] mb-2"
+        style={{ color: COLORS.muted }}
       >
         AI assistant panel. Type to send messages.
       </div>
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-        }}
+        className="flex items-center gap-1.5"
       >
         <input
           type="text"
           placeholder="Ask anything..."
+          className="flex-1 h-[26px] px-2 rounded-[2px] text-[11px] font-['Geist_Mono','JetBrains_Mono',monospace] outline-none"
           style={{
-            flex: 1,
-            height: 26,
-            padding: "0 8px",
             backgroundColor: COLORS.base,
             border: `1px solid ${COLORS.border}`,
-            borderRadius: 2,
-            fontSize: 11,
-            fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
             color: COLORS.textPrimary,
-            outline: "none",
           }}
         />
         <button
-          style={{
-            height: 26,
-            padding: "0 12px",
-            backgroundColor: COLORS.accent,
-            border: "none",
-            borderRadius: 2,
-            fontSize: 10,
-            fontWeight: 600,
-            fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-            color: "#fff",
-            cursor: "pointer",
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
-          }}
+          className="h-[26px] px-3 rounded-[2px] text-[10px] font-semibold font-['Geist_Mono','JetBrains_Mono',monospace] text-white uppercase tracking-[0.06em] cursor-pointer border-0"
+          style={{ backgroundColor: COLORS.accent }}
         >
           Send
         </button>
@@ -130,35 +100,24 @@ function Panel() {
   );
 
   const renderAgent = () => (
-    <div style={{ padding: 8 }}>
+    <div className="p-2">
       <div
-        style={{
-          fontSize: 10,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          color: COLORS.muted,
-          marginBottom: 8,
-          fontWeight: 600,
-        }}
+        className="text-[10px] uppercase tracking-[0.08em] mb-2 font-semibold"
+        style={{ color: COLORS.muted }}
       >
         Agent Status
       </div>
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          marginBottom: 6,
-        }}
+        className="flex items-center gap-2 mb-1.5"
       >
-        <span style={{ fontSize: 10, color: COLORS.dim, width: 60 }}>State</span>
-        <span style={{ fontSize: 11, color: COLORS.textSecondary }}>
+        <span className="text-[10px] w-[60px]" style={{ color: COLORS.dim }}>State</span>
+        <span className="text-[11px]" style={{ color: COLORS.textSecondary }}>
           idle
         </span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ fontSize: 10, color: COLORS.dim, width: 60 }}>Model</span>
-        <span style={{ fontSize: 11, color: COLORS.textSecondary }}>
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] w-[60px]" style={{ color: COLORS.dim }}>Model</span>
+        <span className="text-[11px]" style={{ color: COLORS.textSecondary }}>
           claude-sonnet-4-20250514
         </span>
       </div>
@@ -166,26 +125,16 @@ function Panel() {
   );
 
   const renderMemory = () => (
-    <div style={{ padding: 8 }}>
+    <div className="p-2">
       <div
-        style={{
-          fontSize: 10,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          color: COLORS.muted,
-          marginBottom: 8,
-          fontWeight: 600,
-        }}
+        className="text-[10px] uppercase tracking-[0.08em] mb-2 font-semibold"
+        style={{ color: COLORS.muted }}
       >
         Memory Usage
       </div>
       <div
-        style={{
-          fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-          fontSize: 11,
-          color: COLORS.textSecondary,
-          lineHeight: "18px",
-        }}
+        className="font-['Geist_Mono','JetBrains_Mono',monospace] text-[11px] leading-[18px]"
+        style={{ color: COLORS.textSecondary }}
       >
         <div>Contexts: 1,247</div>
         <div>Vectors: 8,932</div>
@@ -196,13 +145,10 @@ function Panel() {
   );
 
   const renderPlaceholder = (label: string) => (
-    <div style={{ padding: 8 }}>
+    <div className="p-2">
       <div
-        style={{
-          fontSize: 11,
-          color: COLORS.muted,
-          fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-        }}
+        className="text-[11px] font-['Geist_Mono','JetBrains_Mono',monospace]"
+        style={{ color: COLORS.muted }}
       >
         {label} panel content.
       </div>
@@ -236,55 +182,32 @@ function Panel() {
 
   return (
     <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        height: "100%",
-        backgroundColor: COLORS.surface1,
-      }}
+      className="flex flex-col w-full h-full"
+      style={{ backgroundColor: COLORS.surface1 }}
     >
       {/* Tab Bar */}
       <div
+        className="flex items-center justify-between h-7 shrink-0"
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          height: 28,
           backgroundColor: COLORS.base,
           borderBottom: `1px solid ${COLORS.border}`,
-          flexShrink: 0,
         }}
       >
-        <div style={{ display: "flex", overflow: "hidden", flex: 1 }}>
+        <div className="flex overflow-hidden flex-1">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
+                className="flex items-center h-full px-[10px] gap-[5px] border-0 cursor-pointer shrink-0 whitespace-nowrap font-['Geist_Mono','JetBrains_Mono',monospace] text-[10px] uppercase tracking-[0.08em] font-semibold transition-colors duration-[50ms]"
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  height: "100%",
-                  padding: "0 10px",
-                  gap: 5,
-                  border: "none",
                   borderRight: `1px solid ${COLORS.border}`,
                   borderBottom: isActive
                     ? `2px solid ${COLORS.accent}`
                     : `2px solid transparent`,
                   backgroundColor: isActive ? COLORS.surface2 : "transparent",
                   color: isActive ? COLORS.textPrimary : COLORS.muted,
-                  cursor: "pointer",
-                  flexShrink: 0,
-                  whiteSpace: "nowrap",
-                  fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-                  fontSize: 10,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  fontWeight: 600,
-                  transition: "background-color 50ms",
                 }}
               >
                 {tab.icon}
@@ -293,36 +216,16 @@ function Panel() {
             );
           })}
         </div>
-        <div style={{ display: "flex", alignItems: "center", paddingRight: 4, flexShrink: 0 }}>
+        <div className="flex items-center pr-1 shrink-0">
           <button
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 22,
-              height: 22,
-              borderRadius: 2,
-              border: "none",
-              cursor: "pointer",
-              backgroundColor: "transparent",
-              color: COLORS.muted,
-            }}
+            className="flex items-center justify-center w-[22px] h-[22px] rounded-[2px] border-0 cursor-pointer bg-transparent"
+            style={{ color: COLORS.muted }}
           >
             <ChevronUp size={12} />
           </button>
           <button
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 22,
-              height: 22,
-              borderRadius: 2,
-              border: "none",
-              cursor: "pointer",
-              backgroundColor: "transparent",
-              color: COLORS.muted,
-            }}
+            className="flex items-center justify-center w-[22px] h-[22px] rounded-[2px] border-0 cursor-pointer bg-transparent"
+            style={{ color: COLORS.muted }}
           >
             <X size={12} />
           </button>
@@ -331,11 +234,8 @@ function Panel() {
 
       {/* Content Area */}
       <div
-        style={{
-          flex: 1,
-          overflow: "auto",
-          backgroundColor: COLORS.surface1,
-        }}
+        className="flex-1 overflow-auto"
+        style={{ backgroundColor: COLORS.surface1 }}
       >
         {renderContent()}
       </div>

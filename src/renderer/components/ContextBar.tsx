@@ -23,37 +23,22 @@ export function ContextBar({ percent, onClick }: ContextBarProps) {
   return (
     <button
       onClick={onClick}
+      className="flex items-center gap-1 bg-transparent border-none cursor-pointer"
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "4px",
-        background: "none",
-        border: "none",
-        cursor: "pointer",
         fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
       }}
       title="Context window usage"
     >
       <Brain size={10} color={C.t3} />
-      <span style={{ fontSize: "10px", color: C.t3, fontVariantNumeric: "tabular-nums" }}>
+      <span className="text-[10px] text-[#6b6b73] tabular-nums">
         {Math.round(percent)}%
       </span>
-      <div
-        style={{
-          width: "32px",
-          height: "4px",
-          background: C.s3,
-          borderRadius: "0px",
-          overflow: "hidden",
-        }}
-      >
+      <div className="w-8 h-1 overflow-hidden rounded-none" style={{ background: C.s3 }}>
         <div
+          className="h-full transition-[width] duration-100 ease-in-out rounded-none"
           style={{
-            height: "100%",
             background: barColor,
             width: `${percent}%`,
-            transition: "width 100ms ease",
-            borderRadius: "0px",
           }}
         />
       </div>

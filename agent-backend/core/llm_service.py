@@ -38,6 +38,27 @@ import aiohttp
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
+# Circuit breaker integration
+# ---------------------------------------------------------------------------
+
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from resilience.circuit_breaker import CircuitBreaker, CircuitBreakerError
+
+# Per-provider circuit breakers
+_circuit_breakers = {
+    "openai": CircuitBreaker(name="openai", failure_threshold=5, recovery_timeout=60),
+    "anthropic": CircuitBreaker(name="anthropic", failure_threshold=5, recovery_timeout=60),
+    "google": CircuitBreaker(name="google", failure_threshold=5, recovery_timeout=60),
+    "ollama": CircuitBreaker(name="ollama", failure_threshold=10, recovery_timeout=30),
+}
+
+# Provider fallback order: try OpenAI → Anthropic → Google → Ollama
+_PROVIDER_FALLBACK_ORDER = ["openai", "anthropic", "google", "ollama"]
+
+# ---------------------------------------------------------------------------
 # Provider / model configuration
 # ---------------------------------------------------------------------------
 
@@ -305,6 +326,187 @@ class LLMService:
         )
         logger.info("Ollama configured: host=%s, model=%s", ollama_host, ollama_model)
 
+    # -- Circuit breaker helpers --------------------------------------------
+
+    def _get_provider_call_fn(self, provider: str):
+        """Return the appropriate call function for a provider name.
+
+        Parameters
+        ----------
+        provider:
+            Provider name string (e.g. "openai", "anthropic", "google", "ollama").
+
+        Returns
+        -------
+        Callable
+            The provider's ``_complete`` method bound to *self*.
+        """
+        fn_map = {
+            "openai": self._openai_complete,
+            "anthropic": self._anthropic_complete,
+            "google": self._google_complete,
+            "ollama": self._ollama_complete,
+        }
+        return fn_map.get(provider)
+
+    def _get_provider_stream_fn(self, provider: str):
+        """Return the appropriate stream function for a provider name.
+
+        Parameters
+        ----------
+        provider:
+            Provider name string (e.g. "openai", "anthropic", "google", "ollama").
+
+        Returns
+        -------
+        Callable
+            The provider's ``_stream`` method bound to *self*.
+        """
+        fn_map = {
+            "openai": self._openai_stream,
+            "anthropic": self._anthropic_stream,
+            "google": self._google_stream,
+            "ollama": self._ollama_stream,
+        }
+        return fn_map.get(provider)
+
+    async def _call_with_circuit_breaker(
+        self,
+        provider: str,
+        call_fn,
+        *args,
+        **kwargs,
+    ):
+        """Call an LLM provider with circuit breaker protection.
+
+        If the primary provider's circuit is OPEN, automatically tries
+        fallback providers in the configured order.
+
+        Parameters
+        ----------
+        provider:
+            Primary provider name.
+        call_fn:
+            Async callable that performs the actual provider request.
+        *args, **kwargs:
+            Forwarded to *call_fn*.
+
+        Returns
+        -------
+        Any
+            The result from the primary or fallback provider.
+
+        Raises
+        ------
+        Exception
+            If all providers fail (all circuits are OPEN).
+        """
+        breaker = _circuit_breakers.get(provider)
+        if not breaker:
+            return await call_fn(*args, **kwargs)
+
+        try:
+            return await breaker.call_async(call_fn, *args, **kwargs)
+        except CircuitBreakerError:
+            # Circuit is OPEN — try fallback providers
+            for fallback_provider in _PROVIDER_FALLBACK_ORDER:
+                if fallback_provider == provider:
+                    continue
+                fallback_breaker = _circuit_breakers.get(fallback_provider)
+                if not fallback_breaker:
+                    continue
+                try:
+                    fallback_fn = self._get_provider_call_fn(fallback_provider)
+                    if fallback_fn is None:
+                        continue
+                    result = await fallback_breaker.call_async(
+                        fallback_fn, *args, **kwargs
+                    )
+                    logger.info(
+                        "Circuit breaker fallback: %s -> %s succeeded",
+                        provider,
+                        fallback_provider,
+                    )
+                    return result
+                except (CircuitBreakerError, Exception):
+                    continue
+
+            # All providers failed
+            raise Exception(
+                f"All LLM providers unavailable. Circuit breaker open for {provider}"
+            )
+
+    async def _stream_with_circuit_breaker(
+        self,
+        provider: str,
+        stream_fn,
+        *args,
+        **kwargs,
+    ):
+        """Stream from an LLM provider with circuit breaker protection.
+
+        If the primary provider's circuit is OPEN, automatically tries
+        fallback providers in the configured order.
+
+        Parameters
+        ----------
+        provider:
+            Primary provider name.
+        stream_fn:
+            Async generator callable that performs the actual provider request.
+        *args, **kwargs:
+            Forwarded to *stream_fn*.
+
+        Yields
+        ------
+        str
+            Text chunks from the primary or fallback provider.
+
+        Raises
+        ------
+        Exception
+            If all providers fail (all circuits are OPEN).
+        """
+        breaker = _circuit_breakers.get(provider)
+        if not breaker:
+            async for chunk in stream_fn(*args, **kwargs):
+                yield chunk
+            return
+
+        try:
+            async for chunk in breaker.call_async(stream_fn, *args, **kwargs):
+                yield chunk
+            return
+        except CircuitBreakerError:
+            # Circuit is OPEN — try fallback providers
+            for fallback_provider in _PROVIDER_FALLBACK_ORDER:
+                if fallback_provider == provider:
+                    continue
+                fallback_breaker = _circuit_breakers.get(fallback_provider)
+                if not fallback_breaker:
+                    continue
+                try:
+                    fallback_fn = self._get_provider_stream_fn(fallback_provider)
+                    if fallback_fn is None:
+                        continue
+                    async for chunk in fallback_breaker.call_async(
+                        fallback_fn, *args, **kwargs
+                    ):
+                        yield chunk
+                    logger.info(
+                        "Circuit breaker fallback (streaming): %s -> %s succeeded",
+                        provider,
+                        fallback_provider,
+                    )
+                    return
+                except (CircuitBreakerError, Exception):
+                    continue
+
+            # All providers failed
+            raise Exception(
+                f"All LLM providers unavailable. Circuit breaker open for {provider}"
+            )
+
     # -- Client management --------------------------------------------------
 
     def _get_openai_client(self):
@@ -546,17 +748,14 @@ class LLMService:
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
     ) -> str:
-        """Dispatch to the appropriate provider implementation."""
-        if provider == LLMProvider.OPENAI:
-            return await self._openai_complete(messages, tool_schemas, temperature, max_tokens)
-        elif provider == LLMProvider.ANTHROPIC:
-            return await self._anthropic_complete(messages, tool_schemas, temperature, max_tokens)
-        elif provider == LLMProvider.GOOGLE:
-            return await self._google_complete(messages, tool_schemas, temperature, max_tokens)
-        elif provider == LLMProvider.OLLAMA:
-            return await self._ollama_complete(messages, tool_schemas, temperature, max_tokens)
-        else:
+        """Dispatch to the appropriate provider implementation with circuit breaker."""
+        provider_name = provider.value
+        call_fn = self._get_provider_call_fn(provider_name)
+        if call_fn is None:
             raise ValueError(f"Unknown provider: {provider}")
+        return await self._call_with_circuit_breaker(
+            provider_name, call_fn, messages, tool_schemas, temperature, max_tokens
+        )
 
     # -- Streaming completion -----------------------------------------------
 
@@ -633,21 +832,15 @@ class LLMService:
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
     ) -> AsyncIterator[str]:
-        """Dispatch streaming to the appropriate provider."""
-        if provider == LLMProvider.OPENAI:
-            async for chunk in self._openai_stream(messages, tool_schemas, temperature, max_tokens):
-                yield chunk
-        elif provider == LLMProvider.ANTHROPIC:
-            async for chunk in self._anthropic_stream(messages, tool_schemas, temperature, max_tokens):
-                yield chunk
-        elif provider == LLMProvider.GOOGLE:
-            async for chunk in self._google_stream(messages, tool_schemas, temperature, max_tokens):
-                yield chunk
-        elif provider == LLMProvider.OLLAMA:
-            async for chunk in self._ollama_stream(messages, tool_schemas, temperature, max_tokens):
-                yield chunk
-        else:
+        """Dispatch streaming to the appropriate provider with circuit breaker."""
+        provider_name = provider.value
+        stream_fn = self._get_provider_stream_fn(provider_name)
+        if stream_fn is None:
             raise ValueError(f"Unknown provider: {provider}")
+        async for chunk in self._stream_with_circuit_breaker(
+            provider_name, stream_fn, messages, tool_schemas, temperature, max_tokens
+        ):
+            yield chunk
 
     # -- Provider implementations: OpenAI -----------------------------------
 

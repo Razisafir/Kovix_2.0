@@ -1,4 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
 import { TerminalOutput } from "./TerminalOutput";
 import type { LogEntry } from "./TerminalOutput";
 import AgentModeSelector, { type AgentMode } from "./AgentModeSelector";
@@ -42,116 +44,6 @@ const C = {
   inf: "#6366f1",
 };
 
-/* ─────────────────────── demo data ─────────────────────── */
-
-const DEMO_STATE: AgentState = {
-  goal: "build saas dashboard with auth, billing, analytics",
-  status: "working",
-  progress: 34,
-  tasksCompleted: 4,
-  totalTasks: 12,
-  elapsedTime: "02:14:00",
-  autoMode: true,
-  thinking: [
-    "analyzing authentication requirements",
-    "considering JWT vs session-based approach",
-    "selected: JWT with 15min expiry (matches memory pattern)",
-  ],
-  attachedFiles: [
-    { path: "src/components/LoginForm.tsx", id: "1" },
-    { path: "src/types/auth.ts", id: "2" },
-  ],
-  logs: [
-    { timestamp: "14:32:05", level: "INF", message: "task plan generated: 12 tasks", source: "planner" },
-    { timestamp: "14:32:08", level: "OK", message: "initialized project structure", source: "init" },
-    { timestamp: "14:32:12", level: "WRK", message: "building LoginForm component", source: "ui-agent" },
-    { timestamp: "14:33:01", level: "OK", message: "LoginForm.tsx written to disk", source: "fs" },
-    { timestamp: "14:33:15", level: "WRN", message: "no validation schema found, inferring from types", source: "codegen" },
-    { timestamp: "14:34:22", level: "OK", message: "auth types defined", source: "types" },
-    { timestamp: "14:35:00", level: "WRK", message: "implementing JWT middleware", source: "code-agent" },
-    { timestamp: "14:36:10", level: "INF", message: "checkpoint saved (auto)", source: "checkpoint" },
-  ],
-};
-
-/** Demo pending changes for InlineDiff */
-const DEMO_PENDING_CHANGES: PendingChange[] = [
-  {
-    id: "change-1",
-    filePath: "src/components/LoginForm.tsx",
-    description: "Add form validation with zod schema",
-    accepted: null,
-    hunks: [
-      {
-        oldStart: 1,
-        oldLines: 3,
-        newStart: 1,
-        newLines: 8,
-        lines: [
-          { type: "context", content: "import { useState } from 'react';", lineNumber: 1 },
-          { type: "remove", content: "// TODO: add validation", lineNumber: 2 },
-          { type: "add", content: "import { z } from 'zod';", lineNumber: 2 },
-          { type: "add", content: "", lineNumber: 3 },
-          { type: "add", content: "const loginSchema = z.object({", lineNumber: 4 },
-          { type: "add", content: "  email: z.string().email(),", lineNumber: 5 },
-          { type: "add", content: "  password: z.string().min(8),", lineNumber: 6 },
-          { type: "add", content: "});", lineNumber: 7 },
-        ],
-      },
-    ],
-  },
-  {
-    id: "change-2",
-    filePath: "src/types/auth.ts",
-    description: "Define User and Session types",
-    accepted: null,
-    hunks: [
-      {
-        oldStart: 1,
-        oldLines: 1,
-        newStart: 1,
-        newLines: 12,
-        lines: [
-          { type: "remove", content: "// auth types placeholder", lineNumber: 1 },
-          { type: "add", content: "export interface User {", lineNumber: 1 },
-          { type: "add", content: "  id: string;", lineNumber: 2 },
-          { type: "add", content: "  email: string;", lineNumber: 3 },
-          { type: "add", content: "  name: string;", lineNumber: 4 },
-          { type: "add", content: "  role: 'admin' | 'user';", lineNumber: 5 },
-          { type: "add", content: "}", lineNumber: 6 },
-          { type: "add", content: "", lineNumber: 7 },
-          { type: "add", content: "export interface Session {", lineNumber: 8 },
-          { type: "add", content: "  userId: string;", lineNumber: 9 },
-          { type: "add", content: "  token: string;", lineNumber: 10 },
-          { type: "add", content: "  expiresAt: number;", lineNumber: 11 },
-          { type: "add", content: "}", lineNumber: 12 },
-        ],
-      },
-    ],
-  },
-  {
-    id: "change-3",
-    filePath: "src/middleware/jwt.ts",
-    description: "Implement JWT verification middleware",
-    accepted: null,
-    hunks: [
-      {
-        oldStart: 1,
-        oldLines: 0,
-        newStart: 1,
-        newLines: 6,
-        lines: [
-          { type: "add", content: "import jwt from 'jsonwebtoken';", lineNumber: 1 },
-          { type: "add", content: "import { Request, Response, NextFunction } from 'express';", lineNumber: 2 },
-          { type: "add", content: "", lineNumber: 3 },
-          { type: "add", content: "export function verifyToken(req: Request, res: Response, next: NextFunction) {", lineNumber: 4 },
-          { type: "add", content: "  const token = req.headers.authorization?.split(' ')[1];", lineNumber: 5 },
-          { type: "add", content: "  if (!token) return res.status(401).json({ error: 'Unauthorized' });", lineNumber: 6 },
-        ],
-      },
-    ],
-  },
-];
-
 /* ─────────────────────── sub-components ─────────────────────── */
 
 function StatusBar({ state }: { state: AgentState }) {
@@ -159,21 +51,12 @@ function StatusBar({ state }: { state: AgentState }) {
     state.status === "working" ? C.wrn : state.status === "error" ? C.err : C.ok;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "24px",
-        padding: "6px 12px",
-        borderBottom: "1px solid rgba(255,255,255,0.04)",
-        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-        fontSize: "10px",
-        color: C.t3,
-      }}
+    <div className="flex items-center gap-6 px-3 py-1.5 border-b border-white/[0.04] text-[10px] text-[#6b6b73] tracking-normal"
+      style={{ fontFamily: '"Geist Mono", "JetBrains Mono", monospace' }}
     >
       <span>
         STATUS:{" "}
-        <span style={{ color: statusColor, textTransform: "uppercase" }}>
+        <span style={{ color: statusColor }} className="uppercase">
           {state.status}
         </span>
       </span>
@@ -198,29 +81,24 @@ function StatusBar({ state }: { state: AgentState }) {
 function ControlButton({
   label,
   onClick,
+  disabled = false,
 }: {
   label: string;
   onClick?: () => void;
+  disabled?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
+      className="text-[10px] font-semibold uppercase tracking-[0.08em] cursor-pointer px-2 py-[3px] rounded-[2px] border border-white/[0.04] transition-colors duration-100 disabled:opacity-40 disabled:cursor-not-allowed"
       style={{
-        fontSize: "10px",
-        fontWeight: 600,
-        textTransform: "uppercase",
-        letterSpacing: "0.08em",
+        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
         backgroundColor: C.s2,
         color: C.t2,
-        border: "1px solid rgba(255,255,255,0.04)",
-        borderRadius: "2px",
-        padding: "3px 8px",
-        cursor: "pointer",
-        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-        transition: "background-color 0.1s",
       }}
       onMouseEnter={(e) => {
-        (e.target as HTMLElement).style.backgroundColor = C.s3;
+        if (!disabled) (e.target as HTMLElement).style.backgroundColor = C.s3;
       }}
       onMouseLeave={(e) => {
         (e.target as HTMLElement).style.backgroundColor = C.s2;
@@ -241,19 +119,12 @@ function AutoToggle({
   return (
     <button
       onClick={onToggle}
+      className="text-[10px] font-semibold uppercase tracking-[0.08em] cursor-pointer px-2 py-[3px] rounded-[2px] border ml-auto"
       style={{
-        fontSize: "10px",
-        fontWeight: 600,
-        textTransform: "uppercase",
-        letterSpacing: "0.08em",
+        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
         backgroundColor: enabled ? C.s2 : C.base,
         color: enabled ? C.ok : C.t4,
-        border: `1px solid ${enabled ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.04)"}`,
-        borderRadius: "2px",
-        padding: "3px 8px",
-        cursor: "pointer",
-        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-        marginLeft: "auto",
+        borderColor: enabled ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.04)",
       }}
     >
       AUTO:{enabled ? "ON" : "OFF"}
@@ -270,28 +141,17 @@ function FileChip({
 }) {
   return (
     <span
+      className="inline-flex items-center gap-1 text-[10px] text-[#6b6b73] rounded-[2px] border border-white/[0.04] px-1.5 py-0.5"
       style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "4px",
-        fontSize: "10px",
         fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-        color: C.t3,
         backgroundColor: C.s2,
-        border: "1px solid rgba(255,255,255,0.04)",
-        borderRadius: "2px",
-        padding: "2px 6px",
       }}
     >
       {file.path}
       <span
         onClick={() => onRemove(file.id)}
-        style={{
-          cursor: "pointer",
-          color: C.t4,
-          fontSize: "10px",
-          lineHeight: 1,
-        }}
+        className="cursor-pointer text-[10px] leading-none"
+        style={{ color: C.t4 }}
         onMouseEnter={(e) => {
           (e.target as HTMLElement).style.color = C.err;
         }}
@@ -299,7 +159,7 @@ function FileChip({
           (e.target as HTMLElement).style.color = C.t4;
         }}
       >
-        [×]
+        [x]
       </span>
     </span>
   );
@@ -308,18 +168,161 @@ function FileChip({
 /* ─────────────────────── main component ─────────────────────── */
 
 function AgentPanel() {
-  const [state, setState] = useState<AgentState>(DEMO_STATE);
+  const [state, setState] = useState<AgentState>({
+    goal: "",
+    status: "idle",
+    progress: 0,
+    tasksCompleted: 0,
+    totalTasks: 0,
+    elapsedTime: "00:00:00",
+    autoMode: false,
+    thinking: [],
+    attachedFiles: [],
+    logs: [],
+  });
+  const [pendingChanges, setPendingChanges] = useState<PendingChange[]>([]);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const unlistenRef = useRef<UnlistenFn | null>(null);
   const [thinkingOpen, setThinkingOpen] = useState(true);
   const [fileInput, setFileInput] = useState("");
-
-  // ── new: agent mode state ──
   const [agentMode, setAgentMode] = useState<AgentMode>("code");
-
-  // ── new: pending changes state ──
-  const [pendingChanges, setPendingChanges] = useState<PendingChange[]>(DEMO_PENDING_CHANGES);
-
-  // ── new: view mode (terminal vs diff) ──
   const [viewMode, setViewMode] = useState<"terminal" | "diff">("terminal");
+
+  // Listen for agent events from Rust backend
+  useEffect(() => {
+    if (!sessionId) return;
+
+    let cancelled = false;
+
+    const setupListener = async () => {
+      const unlisten = await listen<{
+        session_id: string;
+        type: string;
+        content: string;
+        timestamp: number;
+      }>(`agent:${sessionId}`, (event) => {
+        if (cancelled) return;
+
+        const { type, content, timestamp } = event.payload;
+        const now = new Date(timestamp * 1000);
+        const timeStr = now.toTimeString().slice(0, 8);
+
+        setState((prev) => {
+          const newLogs: LogEntry[] = [
+            ...prev.logs,
+            {
+              timestamp: timeStr,
+              level: type === "error" ? "ERR" : type === "complete" ? "OK" : "INF",
+              message: content,
+              source: type,
+            },
+          ];
+
+          // Keep only last 500 log entries
+          if (newLogs.length > 500) newLogs.splice(0, newLogs.length - 500);
+
+          let newStatus = prev.status;
+          let newProgress = prev.progress;
+          let newTasksCompleted = prev.tasksCompleted;
+          const newThinking = [...prev.thinking];
+
+          switch (type) {
+            case "thought":
+              newThinking.push(content);
+              if (newThinking.length > 20) newThinking.shift();
+              break;
+            case "task_start":
+              newStatus = "working";
+              break;
+            case "task_complete":
+              newTasksCompleted = prev.tasksCompleted + 1;
+              newProgress = Math.min(100, prev.progress + 8);
+              break;
+            case "complete":
+              newStatus = "idle";
+              newProgress = 100;
+              break;
+            case "error":
+              newStatus = "error";
+              break;
+          }
+
+          return {
+            ...prev,
+            status: newStatus,
+            progress: newProgress,
+            tasksCompleted: newTasksCompleted,
+            totalTasks: type === "task_start" ? prev.totalTasks + 1 : prev.totalTasks,
+            thinking: newThinking,
+            logs: newLogs,
+          };
+        });
+      });
+
+      if (!cancelled) {
+        unlistenRef.current = unlisten;
+      } else {
+        unlisten();
+      }
+    };
+
+    setupListener();
+
+    return () => {
+      cancelled = true;
+      if (unlistenRef.current) {
+        unlistenRef.current();
+        unlistenRef.current = null;
+      }
+    };
+  }, [sessionId]);
+
+  const startAgent = useCallback(async () => {
+    if (!state.goal.trim()) return;
+
+    setState((prev) => ({ ...prev, status: "working", progress: 0, tasksCompleted: 0, totalTasks: 0, logs: [] }));
+
+    try {
+      const sid = await invoke<string>("start_agent", {
+        goal: state.goal,
+        projectPath: ".",
+      });
+      setSessionId(sid);
+    } catch (err) {
+      setState((prev) => ({
+        ...prev,
+        status: "error",
+        logs: [
+          ...prev.logs,
+          {
+            timestamp: new Date().toTimeString().slice(0, 8),
+            level: "ERR",
+            message: `Failed to start agent: ${err}`,
+            source: "system",
+          },
+        ],
+      }));
+    }
+  }, [state.goal]);
+
+  const pauseAgent = useCallback(async () => {
+    if (!sessionId) return;
+    await invoke("pause_agent", { sessionId });
+    setState((prev) => ({ ...prev, status: "paused" }));
+  }, [sessionId]);
+
+  const resumeAgent = useCallback(async () => {
+    if (!sessionId) return;
+    await invoke("resume_agent", { sessionId });
+    setState((prev) => ({ ...prev, status: "working" }));
+  }, [sessionId]);
+
+  const stopAgent = useCallback(async () => {
+    if (!sessionId) return;
+    await invoke("stop_agent", { sessionId });
+    setState((prev) => ({ ...prev, status: "stopped" }));
+    setSessionId(null);
+  }, [sessionId]);
 
   const handleCommand = useCallback((cmd: string) => {
     setState((prev) => ({
@@ -351,7 +354,7 @@ function AgentPanel() {
           ...prev,
           attachedFiles: [
             ...prev.attachedFiles,
-            { path, id: Math.random().toString(36).slice(2, 8) },
+            { path, id: crypto.randomUUID() },
           ],
         }));
         setFileInput("");
@@ -364,7 +367,7 @@ function AgentPanel() {
     setState((prev) => ({ ...prev, autoMode: !prev.autoMode }));
   }, []);
 
-  // ── new: diff action handlers ──
+  // ── diff action handlers ──
   const handleAcceptChange = useCallback((id: string) => {
     setPendingChanges((prev) =>
       prev.map((c) => (c.id === id ? { ...c, accepted: true } : c))
@@ -437,76 +440,70 @@ function AgentPanel() {
   // Count of still-pending changes
   const pendingCount = pendingChanges.filter((c) => c.accepted === null).length;
 
+  // Determine pause/resume label based on current status
+  const pauseLabel = state.status === "paused" ? "RESUME" : "PAUSE";
+  const handlePauseResume = state.status === "paused" ? resumeAgent : pauseAgent;
+
   return (
     <div
+      className="flex flex-col h-full overflow-hidden border border-white/[0.04]"
       style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
         backgroundColor: C.base,
-        border: "1px solid rgba(255,255,255,0.04)",
         fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-        overflow: "hidden",
       }}
     >
       {/* ── GOAL + MODE SELECTOR ── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "8px 12px",
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
-        }}
-      >
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.04]">
         {/* Agent Mode Selector */}
         <AgentModeSelector mode={agentMode} onChange={setAgentMode} />
 
-        {/* Goal text */}
-        <div
-          style={{
-            flex: 1,
-            fontSize: "11px",
-            fontWeight: 600,
-            color: C.t1,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            minWidth: 0,
-          }}
-          title={state.goal}
-        >
-          GOAL: {state.goal}
-        </div>
+        {/* Goal input (editable when idle/stopped/error) */}
+        {state.status === "idle" || state.status === "stopped" || state.status === "error" ? (
+          <div className="flex-1 flex items-center gap-2 min-w-0">
+            <span className="text-[11px] font-semibold text-[#e8e8ec] whitespace-nowrap">GOAL:</span>
+            <input
+              type="text"
+              value={state.goal}
+              onChange={(e) => setState((prev) => ({ ...prev, goal: e.target.value }))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") startAgent();
+              }}
+              placeholder="Enter goal and press Enter..."
+              className="flex-1 min-w-0 bg-transparent border-none border-b border-[#4a4a52] text-[11px] text-[#e8e8ec] outline-none px-0 py-0.5"
+              style={{
+                fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+                caretColor: C.accent,
+              }}
+              spellCheck={false}
+              autoComplete="off"
+            />
+            <ControlButton label="START" onClick={startAgent} />
+          </div>
+        ) : (
+          <div
+            className="flex-1 text-[11px] font-semibold text-[#e8e8ec] truncate min-w-0"
+            title={state.goal}
+          >
+            GOAL: {state.goal}
+          </div>
+        )}
 
         {/* Pending changes badge */}
         {pendingCount > 0 && (
           <button
             onClick={() => setViewMode(viewMode === "diff" ? "terminal" : "diff")}
+            className="flex items-center gap-1 h-5 px-2 rounded-[2px] text-[9px] font-semibold tracking-[0.06em] cursor-pointer flex-shrink-0"
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              height: 20,
-              padding: "0 8px",
+              fontFamily: 'inherit',
               backgroundColor: viewMode === "diff" ? `${C.accent}22` : C.s2,
               border: `1px solid ${viewMode === "diff" ? C.accent : "rgba(255,255,255,0.04)"}`,
               color: viewMode === "diff" ? C.accent : C.t3,
-              fontFamily: "inherit",
-              fontSize: 9,
-              fontWeight: 600,
-              letterSpacing: "0.06em",
-              cursor: "pointer",
-              flexShrink: 0,
             }}
           >
             <span
+              className="inline-block w-1.5 h-1.5 rounded-full"
               style={{
-                width: 6,
-                height: 6,
-                borderRadius: "50%",
                 backgroundColor: viewMode === "diff" ? C.accent : C.wrn,
-                display: "inline-block",
               }}
             />
             {pendingCount} pending
@@ -518,17 +515,17 @@ function AgentPanel() {
       <StatusBar state={state} />
 
       {/* ── CONTROLS ── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          padding: "6px 12px",
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
-        }}
-      >
-        <ControlButton label="PAUSE" />
-        <ControlButton label="STOP" />
+      <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-white/[0.04]">
+        <ControlButton
+          label={pauseLabel}
+          onClick={handlePauseResume}
+          disabled={state.status !== "working" && state.status !== "paused"}
+        />
+        <ControlButton
+          label="STOP"
+          onClick={stopAgent}
+          disabled={state.status !== "working" && state.status !== "paused"}
+        />
         <ControlButton label="CHECKPOINT" />
         <ControlButton label="LOG" />
         {/* Toggle between terminal and diff view */}
@@ -542,7 +539,7 @@ function AgentPanel() {
       </div>
 
       {/* ── MAIN CONTENT: Terminal or InlineDiff ── */}
-      <div style={{ flex: 1, minHeight: 0 }}>
+      <div className="flex-1 min-h-0">
         {viewMode === "diff" && pendingCount > 0 ? (
           <InlineDiff
             changes={pendingChanges}
@@ -561,31 +558,15 @@ function AgentPanel() {
       </div>
 
       {/* ── THINKING ── */}
-      <div
-        style={{
-          borderTop: "1px solid rgba(255,255,255,0.04)",
-        }}
-      >
+      <div className="border-t border-white/[0.04]">
         {/* thinking header */}
         <button
           onClick={() => setThinkingOpen(!thinkingOpen)}
+          className="flex items-center gap-1.5 w-full px-3 py-1 text-left text-[10px] font-semibold uppercase tracking-[0.08em] text-[#6b6b73] cursor-pointer border-none"
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            width: "100%",
-            padding: "4px 12px",
-            backgroundColor: C.s1,
-            border: "none",
-            borderBottom: thinkingOpen ? "1px solid rgba(255,255,255,0.04)" : "none",
-            cursor: "pointer",
             fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-            fontSize: "10px",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            color: C.t3,
-            textAlign: "left",
+            backgroundColor: C.s1,
+            borderBottom: thinkingOpen ? "1px solid rgba(255,255,255,0.04)" : "none",
           }}
         >
           <span style={{ color: C.t4 }}>{thinkingOpen ? "▼" : "▶"}</span>
@@ -594,11 +575,9 @@ function AgentPanel() {
 
         {thinkingOpen && (
           <div
+            className="px-3 py-1.5 max-h-[100px] overflow-auto"
             style={{
               backgroundColor: C.s2,
-              padding: "6px 12px",
-              maxHeight: "100px",
-              overflow: "auto",
               scrollbarWidth: "thin",
               scrollbarColor: `${C.s3} transparent`,
             }}
@@ -606,14 +585,13 @@ function AgentPanel() {
             {state.thinking.map((line, i) => (
               <div
                 key={i}
+                className="text-[10px] leading-4"
                 style={{
-                  fontSize: "10px",
                   color: C.t3,
                   fontFamily: 'inherit',
-                  lineHeight: "16px",
                 }}
               >
-                <span style={{ color: C.accent, marginRight: "6px" }}>&gt;</span>
+                <span className="mr-1.5" style={{ color: C.accent }}>&gt;</span>
                 {line}
               </div>
             ))}
@@ -622,25 +600,10 @@ function AgentPanel() {
       </div>
 
       {/* ── ATTACHED FILES ── */}
-      <div
-        style={{
-          borderTop: "1px solid rgba(255,255,255,0.04)",
-          padding: "6px 12px",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          flexWrap: "wrap",
-        }}
-      >
+      <div className="flex items-center gap-2 flex-wrap px-3 py-1.5 border-t border-white/[0.04]">
         <span
-          style={{
-            fontSize: "10px",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            color: C.t3,
-            fontFamily: 'inherit',
-          }}
+          className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#6b6b73]"
+          style={{ fontFamily: 'inherit' }}
         >
           ATTACHED:
         </span>
@@ -653,16 +616,10 @@ function AgentPanel() {
           onChange={(e) => setFileInput(e.target.value)}
           onKeyDown={handleFileInputKeyDown}
           placeholder="@filename"
+          className="bg-transparent border-0 border-b border-[#4a4a52] outline-none text-xs text-[#e8e8ec] px-0 py-0.5"
           style={{
-            background: "transparent",
-            border: "none",
-            borderBottom: `1px solid ${C.t4}`,
-            outline: "none",
-            fontSize: "12px",
-            color: C.t1,
             fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
             width: "140px",
-            padding: "2px 0",
             caretColor: C.accent,
           }}
           spellCheck={false}

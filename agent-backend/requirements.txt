@@ -1,77 +1,41 @@
 # Construct AI Agent — Python Backend Dependencies
 # =================================================
 
-# Vector database (persistent SQLite-backed storage)
-chromadb>=0.5.0
+# Vector database
+chromadb==0.5.23
 
-# Sentence embeddings (local, no API key needed)
-sentence-transformers>=3.0.0
+# Sentence embeddings
+sentence-transformers==3.3.1
 
 # Web framework
-fastapi>=0.115.0
-uvicorn>=0.32.0
+fastapi==0.115.6
+uvicorn==0.32.1
 
 # Data validation
-pydantic>=2.9.0
+pydantic==2.10.4
 
 # Configuration
-python-dotenv>=1.0.0
+python-dotenv==1.0.1
 
-# ---------------------------------------------------------------------------
 # LLM Providers
-# ---------------------------------------------------------------------------
+openai==1.57.0
+anthropic==0.42.0
+google-generativeai==0.8.3
 
-# OpenAI (GPT-4o, GPT-4o-mini)
-openai>=1.55.0
+# Async HTTP
+aiohttp==3.11.11
 
-# Anthropic (Claude 3.5 Sonnet, Claude 3 Opus)
-anthropic>=0.40.0
-
-# Google (Gemini 1.5 Pro)
-google-generativeai>=0.8.0
-
-# Async HTTP for Ollama + Google REST API + Tauri notifications
-aiohttp>=3.11.0
-
-# ---------------------------------------------------------------------------
 # Code Analysis
-# ---------------------------------------------------------------------------
+astor==0.8.1
 
-# AST -> source code conversion for Python refactoring
-astor>=0.8.1
-
-# ---------------------------------------------------------------------------
-# Autonomous Agent (Background Worker + Checkpoint + Safety)
-# ---------------------------------------------------------------------------
-
-# System resource monitoring (CPU, memory, disk)
-psutil>=6.0.0
+# System monitoring
+psutil==6.1.1
 
 # Task scheduling
-schedule>=1.2.0
+schedule==1.2.2
 
-# ---------------------------------------------------------------------------
 # Document Conversion
-# ---------------------------------------------------------------------------
+markitdown[all]==0.1.1
 
-# Microsoft MarkItDown — convert 20+ document formats to Markdown
-markitdown[all]>=0.1.0
-
-# ---------------------------------------------------------------------------
 # Browser automation
-# ---------------------------------------------------------------------------
-
-playwright>=1.40.0
-
-# ---------------------------------------------------------------------------
-# Code search (ripgrep is system-level, not pip)
-# ---------------------------------------------------------------------------
-
-# ripgrep — install via apt: sudo apt-get install ripgrep
-
-# ---------------------------------------------------------------------------
-# Database drivers (uncomment as needed)
-# ---------------------------------------------------------------------------
-
-# psycopg2-binary  # uncomment for PostgreSQL support
-# pymysql          # uncomment for MySQL support
+playwright==1.49.1
