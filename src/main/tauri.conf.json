@@ -56,7 +56,8 @@
         "installMode": "both"
       }
     },
-    "macos": {
+    "macOS": {
+      "frameworks": [],
       "minimumSystemVersion": "10.13"
     }
   }
