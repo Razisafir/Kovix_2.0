@@ -1,10 +1,12 @@
 pub mod commands;
 pub mod db;
+pub mod sidecar;
 pub mod state;
 pub mod tray;
 
 use commands::agent::AgentState;
 use commands::autonomous::AutonomousManager;
+use sidecar::{spawn_backend, wait_for_backend};
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -14,17 +16,47 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
-            // Initialise the SQLite database and register it as shared state.
+            // ── 1. Spawn Python backend sidecar ─────────────────────────────
+            let port = match spawn_backend(app) {
+                Ok(p) => {
+                    log::info!("Backend sidecar spawned on port {}", p);
+                    p
+                }
+                Err(e) => {
+                    log::error!("Failed to spawn backend sidecar: {}. Agent functionality will not work.", e);
+                    // Use default port so the app still opens (agent just won't work)
+                    8000
+                }
+            };
+
+            // ── 2. Wait for backend health check ────────────────────────────
+            if port != 8000 {
+                let app_handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    match wait_for_backend(port, 30).await {
+                        Ok(()) => {
+                            log::info!("Backend ready on port {}", port);
+                            let _ = app_handle.emit("backend:ready", port);
+                        }
+                        Err(e) => {
+                            log::error!("Backend health check failed: {}", e);
+                            let _ = app_handle.emit("backend:error", e);
+                        }
+                    }
+                });
+            }
+
+            // ── 3. Initialise SQLite database ───────────────────────────────
             let state = db::init_db(app).expect("failed to initialise database");
             app.manage(state);
 
-            // Initialise the agent session store and register it as shared state.
+            // ── 4. Agent state ──────────────────────────────────────────────
             app.manage(AgentState::new());
 
-            // Initialise the autonomous-mode manager and register it as shared state.
+            // ── 5. Autonomous mode ──────────────────────────────────────────
             app.manage(AutonomousManager::new());
 
-            // Set up the system tray icon + context menu.
+            // ── 6. System tray ──────────────────────────────────────────────
             let app_handle = app.handle();
             tray::setup_tray(&app_handle).expect("failed to set up system tray");
 

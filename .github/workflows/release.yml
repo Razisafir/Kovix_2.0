@@ -19,12 +19,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - uses: dtolnay/rust-action@stable
+
+      - name: Install Python deps + PyInstaller
+        shell: bash
+        run: |
+          cd agent-backend
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build Python sidecar (Windows)
+        shell: bash
+        run: |
+          cd agent-backend
+          pyinstaller --onefile --name agent-backend-x86_64-pc-windows-msvc app.py
+          mkdir -p ../src/main/bin
+          cp dist/agent-backend-x86_64-pc-windows-msvc.exe ../src/main/bin/
 
       - run: cargo install tauri-cli --locked
       - run: npm ci
@@ -48,6 +66,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -56,6 +78,24 @@ jobs:
       - uses: dtolnay/rust-action@stable
         with:
           targets: x86_64-apple-darwin,aarch64-apple-darwin
+
+      - name: Install Python deps + PyInstaller
+        run: |
+          cd agent-backend
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build Python sidecar (macOS x86_64)
+        run: |
+          cd agent-backend
+          pyinstaller --onefile --name agent-backend-x86_64-apple-darwin app.py
+          mkdir -p ../src/main/bin
+          cp dist/agent-backend-x86_64-apple-darwin ../src/main/bin/
+
+      - name: Build Python sidecar (macOS aarch64)
+        run: |
+          cd agent-backend
+          pyinstaller --onefile --name agent-backend-aarch64-apple-darwin app.py
+          cp dist/agent-backend-aarch64-apple-darwin ../src/main/bin/
 
       - run: cargo install tauri-cli --locked
       - run: npm ci
@@ -77,6 +117,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -94,6 +138,18 @@ jobs:
             librsvg2-dev \
             patchelf \
             pkg-config
+
+      - name: Install Python deps + PyInstaller
+        run: |
+          cd agent-backend
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build Python sidecar (Linux)
+        run: |
+          cd agent-backend
+          pyinstaller --onefile --name agent-backend-x86_64-unknown-linux-gnu app.py
+          mkdir -p ../src/main/bin
+          cp dist/agent-backend-x86_64-unknown-linux-gnu ../src/main/bin/
 
       - run: cargo install tauri-cli --locked
       - run: npm ci
@@ -146,19 +202,4 @@ jobs:
           1. Download the installer for your platform
           2. Install and launch Construct
           3. Set your project path and goal
-          4. Choose your LLM provider (local Ollama or cloud API)
-          5. Start coding with your AI agent
-
-          ## What's New
-          See [CHANGELOG.md](../CHANGELOG.md) for full details.
-          EOF
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          body_path: RELEASE_NOTES.md
-          files: artifacts/*
-          draft: true
-          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          4. Choose your LLM provider (l

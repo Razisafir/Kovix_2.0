@@ -69,6 +69,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -81,6 +85,19 @@ jobs:
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli --locked
+
+      - name: Install Python deps + PyInstaller
+        run: |
+          cd agent-backend
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build Python sidecar (Windows)
+        shell: bash
+        run: |
+          cd agent-backend
+          pyinstaller --onefile --name agent-backend-x86_64-pc-windows-msvc app.py
+          mkdir -p ../src/main/bin
+          cp dist/agent-backend-x86_64-pc-windows-msvc.exe ../src/main/bin/
 
       - run: npm ci
 
@@ -111,6 +128,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -123,6 +144,24 @@ jobs:
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli --locked
+
+      - name: Install Python deps + PyInstaller
+        run: |
+          cd agent-backend
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build Python sidecar (macOS x86_64)
+        run: |
+          cd agent-backend
+          pyinstaller --onefile --name agent-backend-x86_64-apple-darwin app.py
+          mkdir -p ../src/main/bin
+          cp dist/agent-backend-x86_64-apple-darwin ../src/main/bin/
+
+      - name: Build Python sidecar (macOS aarch64)
+        run: |
+          cd agent-backend
+          pyinstaller --onefile --name agent-backend-aarch64-apple-darwin app.py
+          cp dist/agent-backend-aarch64-apple-darwin ../src/main/bin/
 
       - run: npm ci
 
@@ -146,6 +185,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
@@ -162,6 +205,18 @@ jobs:
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli --locked
+
+      - name: Install Python deps + PyInstaller
+        run: |
+          cd agent-backend
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build Python sidecar (Linux)
+        run: |
+          cd agent-backend
+          pyinstaller --onefile --name agent-backend-x86_64-unknown-linux-gnu app.py
+          mkdir -p ../src/main/bin
+          cp dist/agent-backend-x86_64-unknown-linux-gnu ../src/main/bin/
 
       - run: npm ci
 

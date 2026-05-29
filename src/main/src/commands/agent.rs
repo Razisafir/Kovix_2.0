@@ -28,6 +28,21 @@ use tauri::{AppHandle, Emitter, State};
 use uuid::Uuid;
 
 // ---------------------------------------------------------------------------
+// Backend URL helper — reads the sidecar port from managed state
+// ---------------------------------------------------------------------------
+
+fn backend_url(app: &AppHandle) -> String {
+    // Try to get the port from sidecar-managed state
+    if let Some(backend) = app.try_state::<std::sync::Arc<parking_lot::Mutex<crate::sidecar::BackendState>>>() {
+        let state = backend.lock();
+        state.url()
+    } else {
+        // Fallback: try default port 8000
+        "http://127.0.0.1:8000".to_string()
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Data types
 // ---------------------------------------------------------------------------
 
@@ -214,7 +229,7 @@ pub fn start_agent(
         });
 
         match client
-            .post("http://127.0.0.1:8000/api/agent/start")
+            .post(&format!("{}/api/agent/start", backend_url(&app)))
             .json(&start_payload)
             .send()
             .await
@@ -256,7 +271,7 @@ pub fn start_agent(
 
             if should_stop {
                 let _ = client
-                    .post(&format!("http://127.0.0.1:8000/api/agent/{}/stop", sid))
+                    .post(&format!("{}/api/agent/{}/stop", backend_url(&app), sid))
                     .send()
                     .await;
                 break;
@@ -265,8 +280,8 @@ pub fn start_agent(
             // Poll events from backend
             match client
                 .get(&format!(
-                    "http://127.0.0.1:8000/api/agent/{}/events?after={}",
-                    sid, last_event_id
+                    "{}/api/agent/{}/events?after={}",
+                    backend_url(&app), sid, last_event_id
                 ))
                 .timeout(std::time::Duration::from_secs(5))
                 .send()

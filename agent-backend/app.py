@@ -28,6 +28,7 @@ Run with:
 from __future__ import annotations
 
 import os
+import sys
 import time
 import asyncio
 import logging
@@ -38,6 +39,34 @@ from fastapi import FastAPI, HTTPException, Path, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+
+# ---------------------------------------------------------------------------
+# Sidecar configuration (set by Rust parent process)
+# ---------------------------------------------------------------------------
+
+PORT = int(os.getenv("CONSTRUCT_PORT", "8000"))
+DATA_DIR = os.getenv("CONSTRUCT_DATA_DIR", os.path.join(os.path.dirname(__file__), "..", "data"))
+LOG_LEVEL = os.getenv("CONSTRUCT_LOG_LEVEL", "info")
+
+# Ensure data directory exists
+os.makedirs(DATA_DIR, exist_ok=True)
+
+# Override ChromaDB persistence path
+os.environ["CHROMA_PERSIST_DIRECTORY"] = os.path.join(DATA_DIR, "chroma")
+
+# Override any hardcoded paths
+CHROMA_PERSIST_PATH = os.path.join(DATA_DIR, "chroma")
+CHECKPOINT_PATH = os.path.join(DATA_DIR, "checkpoints")
+os.makedirs(CHECKPOINT_PATH, exist_ok=True)
+
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL.upper()),
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler(os.path.join(DATA_DIR, "backend.log")),
+    ],
+)
 
 # ---------------------------------------------------------------------------
 # Rate limiting
@@ -94,19 +123,15 @@ from memory import (
 )
 
 # ---------------------------------------------------------------------------
-# Logging
+# Logging (already configured in sidecar config section above)
 # ---------------------------------------------------------------------------
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
-)
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
 MEMORY_API_HOST = os.environ.get("MEMORY_API_HOST", "127.0.0.1")
-MEMORY_API_PORT = int(os.environ.get("MEMORY_API_PORT", "8000"))
+MEMORY_API_PORT = PORT  # Set by CONSTRUCT_PORT env var in sidecar config above
 
 # ---------------------------------------------------------------------------
 # Global service references (initialised in lifespan)
@@ -2060,17 +2085,19 @@ async def enable_thinking_mode(
     }
 
 
-# ===========================================================================
-# Dev entry-point
-# ===========================================================================
+# ---------------------------------------------------------------------------
+# Entry point (used by sidecar / direct execution)
+# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     import uvicorn
-
+    print(f"🚀 Construct Agent Backend starting on port {PORT}")
+    print(f"📁 Data directory: {DATA_DIR}")
+    print(f"📝 Log level: {LOG_LEVEL}")
     uvicorn.run(
         "app:app",
-        host=MEMORY_API_HOST,
-        port=MEMORY_API_PORT,
-        reload=True,
-        log_level="info",
+        host="127.0.0.1",
+        port=PORT,
+        reload=False,
+        log_level=LOG_LEVEL,
     )
