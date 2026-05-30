@@ -55,21 +55,20 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: List bundle output
+      - name: Stage and upload artifacts
         shell: bash
-        run: find src/main/target/release/bundle -type f 2>/dev/null | head -20
+        run: |
+          mkdir -p /tmp/artifacts
+          find src/main/target/release/bundle -type f \
+            \( -name '*.msi' -o -name '*.exe' \) \
+            -exec cp {} /tmp/artifacts/ \;
+          ls -la /tmp/artifacts/
 
-      - name: Upload .msi artifact
+      - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-msi
-          path: src/main/target/release/bundle/msi/*.msi
-
-      - name: Upload .exe (nsis) artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-exe
-          path: src/main/target/release/bundle/nsis/*.exe
+          name: windows-artifacts
+          path: /tmp/artifacts/
 
   # -- macOS (Apple Silicon / arm64 only) --------------------------------
   release-macos:
@@ -120,14 +119,19 @@ jobs:
         with:
           args: '--target aarch64-apple-darwin'
 
-      - name: List bundle output
-        run: find src/main/target/aarch64-apple-darwin/release/bundle -type f 2>/dev/null | head -20
+      - name: Stage and upload artifacts
+        run: |
+          mkdir -p /tmp/artifacts
+          find src/main/target/aarch64-apple-darwin/release/bundle -type f \
+            \( -name '*.dmg' -o -name '*.app' -o -name '*.tar.gz' \) \
+            -exec cp {} /tmp/artifacts/ \;
+          ls -la /tmp/artifacts/
 
-      - name: Upload macOS artifact
+      - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-dmg
-          path: src/main/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+          name: macos-artifacts
+          path: /tmp/artifacts/
 
   # -- Linux -------------------------------------------------------------
   release-linux:
@@ -180,20 +184,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: List bundle output
-        run: find src/main/target/release/bundle -type f 2>/dev/null | head -20
+      - name: Stage and upload artifacts
+        run: |
+          mkdir -p /tmp/artifacts
+          find src/main/target/release/bundle -type f \
+            \( -name '*.deb' -o -name '*.AppImage' \) \
+            -exec cp {} /tmp/artifacts/ \;
+          ls -la /tmp/artifacts/
 
-      - name: Upload .deb artifact
+      - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-deb
-          path: src/main/target/release/bundle/deb/*.deb
-
-      - name: Upload .AppImage artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: linux-appimage
-          path: src/main/target/release/bundle/appimage/*.AppImage
+          name: linux-artifacts
+          path: /tmp/artifacts/
 
   # -- Create Draft Release ------------------------------------------------
   create-release:
@@ -215,11 +218,11 @@ jobs:
           draft: true
           prerelease: true
           files: |
-            artifacts/windows-msi/*.msi
-            artifacts/windows-exe/*.exe
-            artifacts/macos-dmg/*.dmg
-            artifacts/linux-deb/*.deb
-            artifacts/linux-appimage/*.AppImage
+            artifacts/windows-artifacts/*.msi
+            artifacts/windows-artifacts/*.exe
+            artifacts/macos-artifacts/*.dmg
+            artifacts/linux-artifacts/*.deb
+            artifacts/linux-artifacts/*.AppImage
           body: |
             Construct AI Agent desktop app release.
             See the assets below for downloadable installers.
