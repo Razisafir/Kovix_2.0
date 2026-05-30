@@ -18,6 +18,8 @@ Wire the real executor to the frontend — everything the user sees must be genu
 - [x] E2E test: real goal → LLM plans → tools run → file written → diff in UI — commit `13d3eff`
 - [x] E2E test: memory recall across sessions — commit `6f6afae`
 
+**Phase 1: 12/12 complete ✅**
+
 ## 02 Ship a credible Beta
 Close the stubs, fix the broken claims, make the UX honest
 
@@ -32,31 +34,60 @@ Close the stubs, fix the broken claims, make the UX honest
 - [ ] E2E test: autonomous worker POST `/autonomous/start` runs end to end
 - [ ] Test checkpoint save/restore: kill mid-task, restart, resume
 
+**Phase 2: 8/10 complete**
+
 ## 03 Build the differentiators
 Features that make Construct worth $20/month vs just running Cursor
 
 - [x] Replace MultiAgentPanel demo data with real `/orchestrate/team` API — commit `8818189`
-- [ ] Build team composition UI: interactive role picker → POST `/orchestrate/team`
+- [x] Build team composition UI: interactive role picker → POST `/orchestrate/team` — commit `db238b7`
 - [x] Display live agent-to-agent messages in panel — commit `8818189`
 - [ ] E2E test: 3-agent team completes a real feature together
 - [x] Skill install copies files from GitHub — `installer.py` has `install_from_github()`
-- [ ] Load installed skills into ToolRegistry at startup
+- [x] Load installed skills into ToolRegistry at startup — commit `db238b7`
 - [ ] Replace hardcoded marketplace entries with real registry (frontend calls backend API)
 - [x] MCP client: real JSON-RPC connection + tool discovery — `mcp_client.py`
-- [ ] Bridge MCP tools into ToolRegistry so agent can invoke them
+- [x] Bridge MCP tools into ToolRegistry so agent can invoke them — commit `db238b7`
+
+**Phase 3: 6/9 complete**
 
 ## 04 Polish and scale
 Details that justify keeping a paid subscription
 
 - [ ] Expand safety rules to 44+ with clear count
-- [ ] Git sandboxing: auto-create feature branch in executor session
-- [ ] Rate-limit destructive tool calls per session
+- [x] Git sandboxing: auto-create feature branch in executor session — commit `db238b7`
+- [x] Rate-limit destructive tool calls per session — commit `db238b7`
 - [x] Project-level memory: ChromaDB PersistentClient (but not scoped per-project)
-- [ ] Wire MemoryPanel.tsx to real `/memory/query` endpoint
+- [x] Wire MemoryPanel.tsx to real `/memory/query` endpoint — commit `db238b7`
 - [x] Screen control: `action_recorder.py` implemented (900 lines)
 - [ ] Crash reporting (Sentry or equivalent)
 - [ ] Auto-update flow via Tauri updater plugin
 - [ ] Load test: 10 simultaneous sessions, verify resource limits
 
+**Phase 4: 4/9 complete**
+
 ---
-_Last updated: 2026-05-31_
+
+## Summary
+
+| Phase | Done | Total | Status |
+|-------|------|-------|--------|
+| 01 Make the product real | 12 | 12 | ✅ Complete |
+| 02 Ship a credible Beta | 8 | 10 | 🟡 80% |
+| 03 Build the differentiators | 6 | 9 | 🟡 67% |
+| 04 Polish and scale | 4 | 9 | 🟡 44% |
+| **Total** | **30** | **40** | **75%** |
+
+## Remaining items
+
+1. E2E test: autonomous worker end to end
+2. Test checkpoint save/restore
+3. E2E test: 3-agent team
+4. Replace hardcoded marketplace with real API
+5. Expand safety rules to 44+
+6. Crash reporting (Sentry)
+7. Auto-update flow
+8. Load test: 10 simultaneous sessions
+
+---
+_Last updated: 2026-05-31 — commit `db238b7`_
