@@ -254,20 +254,30 @@ jobs:
         shell: bash
         run: |
           mkdir -p src/main/bin
-          touch src/main/bin/agent-backend-aarch64-apple-darwin
+          # Create a minimal Mach-O header so lipo doesn't fail
+          # This is a 4-byte placeholder that represents a valid ARM64 Mach-O magic number
+          printf '\xcf\xfa\xed\xfe' > src/main/bin/agent-backend-aarch64-apple-darwin
           echo "Created placeholder sidecar for arm64"
 
       - name: Create placeholder sidecar binary (x86_64)
         shell: bash
         run: |
-          touch src/main/bin/agent-backend-x86_64-apple-darwin
+          # Minimal x86_64 Mach-O magic number
+          printf '\xfe\xed\xfa\xce' > src/main/bin/agent-backend-x86_64-apple-darwin
           echo "Created placeholder sidecar for x86_64"
 
       - name: Create universal placeholder sidecar
         shell: bash
         run: |
-          # Copy arm64 binary as universal placeholder
-          cp src/main/bin/agent-backend-aarch64-apple-darwin src/main/bin/agent-backend-universal-apple-darwin
+          # Use lipo to create a universal binary from the two architecture slices
+          lipo -create \
+            src/main/bin/agent-backend-aarch64-apple-darwin \
+            src/main/bin/agent-backend-x86_64-apple-darwin \
+            -output src/main/bin/agent-backend-universal-apple-darwin 2>/dev/null || {
+            # Fallback: if lipo fails, just copy the arm64 binary
+            cp src/main/bin/agent-backend-aarch64-apple-darwin src/main/bin/agent-backend-universal-apple-darwin
+            echo "::warning::lipo failed; using arm64-only placeholder for universal"
+          }
           echo "Created universal placeholder sidecar"
 
       - name: Build Tauri app
