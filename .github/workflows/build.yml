@@ -76,15 +76,22 @@ jobs:
             patchelf \
             pkg-config
 
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build frontend (vite)
+        run: npm run build
+
       - name: Create placeholder sidecar binary
         run: |
           mkdir -p src/main/bin
           touch src/main/bin/agent-backend-x86_64-unknown-linux-gnu
-
-      - name: Create placeholder frontend dist
-        run: |
-          mkdir -p dist
-          echo '<!DOCTYPE html><html><body></body></html>' > dist/index.html
 
       - name: Cargo check
         working-directory: src/main
@@ -92,11 +99,7 @@ jobs:
 
       - name: Run Rust tests
         working-directory: src/main
-        # NOTE: cargo test --lib currently fails because Tauri's runtime
-        # (gtk, webkit) is not available in the test harness on CI.
-        # cargo check already validates compilation; real tests will be
-        # added alongside the agent module.
-        run: cargo test --lib || echo "::warning::cargo test --lib not yet available — tracked in TODO"
+        run: cargo test --lib
         continue-on-error: true
 
       - name: Run Clippy lints
