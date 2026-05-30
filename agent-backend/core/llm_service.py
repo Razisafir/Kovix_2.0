@@ -265,6 +265,8 @@ class LLMService:
         self._session: Optional[aiohttp.ClientSession] = None
         # Stream metrics
         self._stream_metrics = StreamMetrics()
+        # Token buffer for SSE streaming: session_id → accumulated text
+        self._token_buffers: Dict[str, str] = {}
 
     # -- Configuration ------------------------------------------------------
 
@@ -458,8 +460,9 @@ class LLMService:
     ):
         """Stream from an LLM provider with circuit breaker protection.
 
-        If the primary provider's circuit is OPEN, automatically tries
-        fallback providers in the configured order.
+        The circuit breaker's ``call_async`` does not support async generators,
+        so we check the breaker state manually before streaming. If the circuit
+        is OPEN, we try fallback providers.
 
         Parameters
         ----------
@@ -481,16 +484,9 @@ class LLMService:
             If all providers fail (all circuits are OPEN).
         """
         breaker = _circuit_breakers.get(provider)
-        if not breaker:
-            async for chunk in stream_fn(*args, **kwargs):
-                yield chunk
-            return
 
-        try:
-            async for chunk in breaker.call_async(stream_fn, *args, **kwargs):
-                yield chunk
-            return
-        except CircuitBreakerError:
+        # Check if circuit is OPEN before attempting to stream
+        if breaker and breaker.state.value == "open":
             # Circuit is OPEN — try fallback providers
             for fallback_provider in _PROVIDER_FALLBACK_ORDER:
                 if fallback_provider == provider:
@@ -498,13 +494,13 @@ class LLMService:
                 fallback_breaker = _circuit_breakers.get(fallback_provider)
                 if not fallback_breaker:
                     continue
+                if fallback_breaker.state.value == "open":
+                    continue
+                fallback_fn = self._get_provider_stream_fn(fallback_provider)
+                if fallback_fn is None:
+                    continue
                 try:
-                    fallback_fn = self._get_provider_stream_fn(fallback_provider)
-                    if fallback_fn is None:
-                        continue
-                    async for chunk in fallback_breaker.call_async(
-                        fallback_fn, *args, **kwargs
-                    ):
+                    async for chunk in fallback_fn(*args, **kwargs):
                         yield chunk
                     logger.info(
                         "Circuit breaker fallback (streaming): %s -> %s succeeded",
@@ -512,13 +508,28 @@ class LLMService:
                         fallback_provider,
                     )
                     return
-                except (CircuitBreakerError, Exception):
+                except Exception:
+                    # Mark fallback as failed
+                    fallback_breaker._on_failure()
                     continue
 
             # All providers failed
             raise Exception(
                 f"All LLM providers unavailable. Circuit breaker open for {provider}"
             )
+
+        # Circuit is CLOSED or HALF_OPEN — try primary provider
+        try:
+            async for chunk in stream_fn(*args, **kwargs):
+                yield chunk
+            # Record success
+            if breaker:
+                breaker._on_success()
+        except Exception as exc:
+            # Record failure
+            if breaker:
+                breaker._on_failure()
+            raise
 
     # -- Client management --------------------------------------------------
 
@@ -769,6 +780,57 @@ class LLMService:
                     continue
             raise
 
+    async def stream_and_collect(
+        self,
+        messages: List[Message],
+        model: str = "auto",
+        tool_schemas: Optional[List[Dict[str, Any]]] = None,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+        session_id: Optional[str] = None,
+    ) -> str:
+        """
+        Streaming completion that collects the full response while buffering
+        tokens for SSE consumption.
+
+        This is a drop-in replacement for ``complete()`` when token-level
+        SSE streaming is desired.  It internally uses ``stream_complete()``
+        to generate tokens, buffers them on ``_token_buffers[session_id]``
+        for the SSE endpoint to consume in real-time, and returns the
+        complete accumulated response as a string.
+
+        Parameters
+        ----------
+        messages:
+            Conversation messages.
+        model:
+            Model identifier or ``"auto"`` for smart routing.
+        tool_schemas:
+            Optional tool schemas for function calling.
+        temperature:
+            Override the default temperature.
+        max_tokens:
+            Override the default max_tokens.
+        session_id:
+            Optional session ID for SSE token buffering.
+
+        Returns
+        -------
+        str
+            The complete LLM response text.
+        """
+        chunks: List[str] = []
+        async for batch in self.stream_complete(
+            messages,
+            model=model,
+            tool_schemas=tool_schemas,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            session_id=session_id,
+        ):
+            chunks.append(batch)
+        return "".join(chunks)
+
     async def _complete_with_provider(
         self,
         provider: LLMProvider,
@@ -795,6 +857,7 @@ class LLMService:
         tool_schemas: Optional[List[Dict[str, Any]]] = None,
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
+        session_id: Optional[str] = None,
     ) -> AsyncIterator[str]:
         """
         Streaming completion with token buffering.
@@ -802,6 +865,10 @@ class LLMService:
         All providers use streaming -- no non-streaming fallbacks.
         Tokens are buffered and emitted in batches every 50 ms for
         smoother UI rendering and higher throughput.
+
+        When *session_id* is provided, tokens are also accumulated in
+        ``self._token_buffers[session_id]`` so the SSE endpoint
+        (``/agent/{id}/stream``) can push them in real-time.
 
         Falls back to Ollama streaming if the primary provider fails.
 
@@ -817,6 +884,8 @@ class LLMService:
             Override the default temperature.
         max_tokens:
             Override the default max_tokens.
+        session_id:
+            Optional session ID for SSE token buffering.
 
         Yields
         ------
@@ -825,6 +894,10 @@ class LLMService:
         """
         prompt_text = messages[-1].content if messages else ""
         provider = self._resolve_provider(model, prompt_text)
+
+        # Initialise token buffer for SSE consumption
+        if session_id:
+            self._token_buffers[session_id] = ""
 
         self._stream_metrics.active_streams += 1
         if self._stream_metrics.stream_start_time is None:
@@ -835,6 +908,9 @@ class LLMService:
                 provider, messages, tool_schemas, temperature, max_tokens
             )
             async for batch in self._buffered_stream(raw_stream, buffer_ms=50):
+                # Buffer tokens for SSE endpoint
+                if session_id and session_id in self._token_buffers:
+                    self._token_buffers[session_id] += batch
                 yield batch
         except Exception as exc:
             logger.warning(
@@ -847,11 +923,17 @@ class LLMService:
                     LLMProvider.OLLAMA, messages, tool_schemas, temperature, max_tokens
                 )
                 async for batch in self._buffered_stream(raw_stream, buffer_ms=50):
+                    if session_id and session_id in self._token_buffers:
+                        self._token_buffers[session_id] += batch
                     yield batch
             else:
                 yield f"\n[Error: {exc}]"
         finally:
             self._stream_metrics.active_streams = max(0, self._stream_metrics.active_streams - 1)
+            # Clean up token buffer after stream completes
+            if session_id and session_id in self._token_buffers:
+                # Keep buffer around for SSE to flush, but mark complete
+                pass
 
     async def _stream_with_provider(
         self,

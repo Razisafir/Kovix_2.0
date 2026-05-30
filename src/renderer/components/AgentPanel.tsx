@@ -28,6 +28,8 @@ interface AgentState {
   thinking: string[];
   attachedFiles: AttachedFile[];
   logs: LogEntry[];
+  streamingText: string;
+  isStreaming: boolean;
 }
 
 /* ─────────────────────── colors ─────────────────────── */
@@ -183,6 +185,8 @@ function AgentPanel() {
     thinking: [],
     attachedFiles: [],
     logs: [],
+    streamingText: "",
+    isStreaming: false,
   });
   const [pendingChanges, setPendingChanges] = useState<PendingChange[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -252,24 +256,66 @@ function AgentPanel() {
           let newTasksCompleted = prev.tasksCompleted;
           const newThinking = [...prev.thinking];
 
+          let newStreamingText = prev.streamingText;
+          let newIsStreaming = prev.isStreaming;
+
           switch (type) {
             case "thought":
               newThinking.push(content);
               if (newThinking.length > 20) newThinking.shift();
+              // Clear streaming buffer when a thought completes
+              newStreamingText = "";
+              newIsStreaming = false;
+              break;
+            case "token":
+              // Token-level streaming — accumulate for real-time display
+              newStreamingText = prev.streamingText + content;
+              newIsStreaming = true;
+              // Don't add token events to log — they're displayed separately
+              return {
+                ...prev,
+                streamingText: newStreamingText,
+                isStreaming: newIsStreaming,
+                status: prev.status === "idle" ? "working" : prev.status,
+              };
+            case "tool_call":
+              newStreamingText = "";
+              newIsStreaming = false;
               break;
             case "task_start":
               newStatus = "working";
+              newStreamingText = "";
+              newIsStreaming = false;
               break;
             case "task_complete":
               newTasksCompleted = prev.tasksCompleted + 1;
               newProgress = Math.min(100, prev.progress + 8);
+              newStreamingText = "";
+              newIsStreaming = false;
               break;
             case "complete":
               newStatus = "idle";
               newProgress = 100;
+              newStreamingText = "";
+              newIsStreaming = false;
               break;
             case "error":
               newStatus = "error";
+              newStreamingText = "";
+              newIsStreaming = false;
+              break;
+            case "done":
+              // SSE stream closed
+              newStreamingText = "";
+              newIsStreaming = false;
+              if (prev.status === "working") newStatus = "idle";
+              break;
+            case "stream_error":
+              newStreamingText = "";
+              newIsStreaming = false;
+              break;
+            case "stream_timeout":
+              newIsStreaming = false;
               break;
           }
 
@@ -281,6 +327,8 @@ function AgentPanel() {
             totalTasks: type === "task_start" ? prev.totalTasks + 1 : prev.totalTasks,
             thinking: newThinking,
             logs: newLogs,
+            streamingText: newStreamingText,
+            isStreaming: newIsStreaming,
           };
         });
 
@@ -359,7 +407,7 @@ function AgentPanel() {
   const startAgent = useCallback(async () => {
     if (!state.goal.trim()) return;
 
-    setState((prev) => ({ ...prev, status: "working", progress: 0, tasksCompleted: 0, totalTasks: 0, logs: [] }));
+    setState((prev) => ({ ...prev, status: "working", progress: 0, tasksCompleted: 0, totalTasks: 0, logs: [], streamingText: "", isStreaming: false }));
 
     try {
       const sid = await invoke<string>("start_agent", {
@@ -370,10 +418,17 @@ function AgentPanel() {
       setSessionId(sid);
       // Create a diff session to track file changes from this agent run
       useDiffStore.getState().createSession(sid, []);
+
+      // Start SSE streaming for real-time token-level updates
+      invoke("stream_agent_events", { sessionId: sid }).catch((err) => {
+        console.warn("SSE stream failed (falling back to polling):", err);
+      });
     } catch (err) {
       setState((prev) => ({
         ...prev,
         status: "error",
+        streamingText: "",
+        isStreaming: false,
         logs: [
           ...prev.logs,
           {
@@ -625,6 +680,45 @@ function AgentPanel() {
       {/* ── STATUS BAR ── */}
       <StatusBar state={state} />
 
+      {/* ── STREAMING INDICATOR ── */}
+      {state.isStreaming && (
+        <div
+          className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.04]"
+          style={{
+            backgroundColor: "rgba(139, 92, 246, 0.08)",
+          }}
+        >
+          <div
+            className="w-2 h-2 rounded-full"
+            style={{
+              backgroundColor: "#8b5cf6",
+              animation: "pulse 1.5s infinite",
+            }}
+          />
+          <span
+            className="text-[10px] font-semibold uppercase tracking-[0.08em]"
+            style={{
+              fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+              color: "#a78bfa",
+            }}
+          >
+            Agent is thinking...
+          </span>
+          {state.streamingText && (
+            <span
+              className="flex-1 text-[10px] leading-4 truncate"
+              style={{
+                fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+                color: "#a78bfa",
+                opacity: 0.8,
+              }}
+            >
+              {state.streamingText.slice(-200)}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* ── CONTROLS ── */}
       <div className="flex items-center gap-1.5 px-3 py-1.5 border-b border-white/[0.04]">
         <ControlButton
@@ -744,6 +838,10 @@ function AgentPanel() {
         div::-webkit-scrollbar-track { background: transparent; }
         div::-webkit-scrollbar-thumb { background: ${C.s3}; border-radius: 2px; }
         div::-webkit-scrollbar-thumb:hover { background: #3a3a4f; }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.3); }
+        }
       `}</style>
     </div>
   );

@@ -378,6 +378,9 @@ class AgentExecutor:
             self.memory = MemoryClient(enabled=True)
         self.sessions: Dict[str, AgentSession] = {}
 
+        # Active session ID for SSE token buffering
+        self._active_session_id: Optional[str] = None
+
         # Mode configuration
         self.mode_config = get_mode_config(mode)
         self.mode = self.mode_config.name
@@ -632,7 +635,9 @@ class AgentExecutor:
 
         try:
             messages = assemble_messages(prompt)
-            response = await self.llm.complete(messages)
+            response = await self.llm.stream_and_collect(
+                messages, session_id=self._active_session_id
+            )
 
             # Parse JSON response
             # Handle potential markdown code fences
@@ -712,8 +717,10 @@ class AgentExecutor:
                     prompt,
                     tool_schemas=self.tools.get_tool_schemas(),
                 )
-                response = await self.llm.complete(
-                    messages, tool_schemas=self.tools.get_tool_schemas()
+                response = await self.llm.stream_and_collect(
+                    messages,
+                    tool_schemas=self.tools.get_tool_schemas(),
+                    session_id=self._active_session_id,
                 )
             except Exception as exc:
                 logger.exception("LLM call failed during act phase")
@@ -935,7 +942,9 @@ class AgentExecutor:
                 project_path=session.project_path,
             )
             messages = assemble_messages(prompt)
-            response = await self.llm.complete(messages)
+            response = await self.llm.stream_and_collect(
+                messages, session_id=self._active_session_id
+            )
 
             # Parse verification decision
             cleaned = response.strip()
@@ -981,6 +990,8 @@ class AgentExecutor:
     async def _run(self, session: AgentSession) -> None:
         """Main execution loop for a session."""
         session.status = AgentStatus.RUNNING
+        # Set active session ID for SSE token buffering
+        self._active_session_id = session.id
 
         try:
             # Phase 1: Observe
@@ -1137,6 +1148,9 @@ class AgentExecutor:
                 content=f"Session failed with error: {str(exc)[:300]}",
                 phase="error",
             )
+        finally:
+            # Clear active session ID so SSE knows streaming is done
+            self._active_session_id = None
 
     async def _wait_for_resume(self, session: AgentSession) -> None:
         """Wait for a paused session to be resumed."""

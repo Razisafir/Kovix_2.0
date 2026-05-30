@@ -22,6 +22,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use chrono::Utc;
+use futures::StreamExt;
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -529,4 +530,111 @@ pub fn get_agent_output(
     } else {
         Err("Session not found".to_string())
     }
+}
+
+/// Connect to the Python backend SSE stream and emit real-time events.
+///
+/// This replaces the old polling approach with a single long-lived SSE
+/// connection that pushes both output_log events AND token-level LLM
+/// streaming data to the frontend in real-time.
+///
+/// # Event types emitted
+///
+/// All events are emitted on the `agent:{session_id}` channel:
+/// - **thought/tool_call/complete/error** — from the session output_log
+/// - **token** — real-time LLM token batches (cursor-killer UX)
+/// - **done** — session reached terminal state, stream is closing
+/// - **stream_error** — SSE connection lost
+///
+/// # Example (frontend)
+/// ```ts
+/// // After starting a session, begin SSE streaming
+/// await invoke('stream_agent_events', {
+///   sessionId: 'abc12345',
+///   port: 8000
+/// });
+///
+/// // Listen for token-level streaming
+/// listen('agent:abc12345', (event) => {
+///   if (event.payload.type === 'token') {
+///     appendStreamingText(event.payload.content);
+///   }
+/// });
+/// ```
+#[tauri::command]
+pub async fn stream_agent_events(
+    app: AppHandle,
+    session_id: String,
+) -> Result<(), String> {
+    let url = format!("{}/agent/{}/stream", backend_url(&app), session_id);
+
+    log::info!("Connecting to SSE stream: {}", url);
+
+    let client = reqwest::Client::new();
+    let response = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("Failed to connect to SSE: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("SSE endpoint returned status: {}", response.status()));
+    }
+
+    let mut stream = response.bytes_stream();
+    let mut buffer = String::new();
+
+    while let Some(chunk) = stream.next().await {
+        match chunk {
+            Ok(bytes) => {
+                buffer.push_str(&String::from_utf8_lossy(&bytes));
+
+                // Process complete SSE lines (separated by \n\n)
+                while let Some(pos) = buffer.find("\n\n") {
+                    let line = buffer[..pos].to_string();
+                    buffer = buffer[pos + 2..].to_string();
+
+                    // Parse "data: {json}" format
+                    if let Some(json_str) = line.strip_prefix("data: ") {
+                        if let Ok(event) = serde_json::from_str::<serde_json::Value>(json_str) {
+                            // Emit the full event on the session channel
+                            let channel = format!("agent:{}", session_id);
+                            let _ = app.emit(&channel, &event);
+
+                            // Also emit typed events for specific handlers
+                            if let Some(event_type) = event.get("type").and_then(|v| v.as_str()) {
+                                let typed_channel = format!("agent:{}", event_type);
+                                let _ = app.emit(&typed_channel, &event);
+
+                                // Update session state for terminal events
+                                if event_type == "done" || event_type == "complete" {
+                                    log::info!(
+                                        "SSE stream closing for session {}: done status",
+                                        session_id
+                                    );
+                                    return Ok(());
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                log::error!("SSE stream error for session {}: {}", session_id, e);
+                let channel = format!("agent:{}", session_id);
+                let _ = app.emit(
+                    &channel,
+                    serde_json::json!({
+                        "type": "stream_error",
+                        "content": format!("Connection lost: {}", e),
+                        "session_id": session_id,
+                    }),
+                );
+                return Err(format!("SSE connection lost: {}", e));
+            }
+        }
+    }
+
+    log::info!("SSE stream closed for session {}", session_id);
+    Ok(())
 }

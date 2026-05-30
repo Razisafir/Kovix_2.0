@@ -90,6 +90,7 @@ pub fn run() {
             commands::agent::resume_agent,
             commands::agent::stop_agent,
             commands::agent::get_agent_output,
+            commands::agent::stream_agent_events,
             // -- autonomous commands --
             commands::autonomous::enable_autonomous_mode,
             commands::autonomous::disable_autonomous_mode,

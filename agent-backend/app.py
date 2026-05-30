@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import os
 import sys
+import json
 import time
 import asyncio
 import logging
@@ -37,7 +38,7 @@ from typing import Dict, List, Optional, Any
 
 from fastapi import FastAPI, HTTPException, Path, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 # ---------------------------------------------------------------------------
@@ -957,6 +958,119 @@ async def agent_output(
     }
 
 
+@app.get("/agent/{session_id}/stream")
+async def stream_session(
+    session_id: str = Path(..., description="The session ID"),
+):
+    """
+    SSE stream of agent events AND token-level LLM output.
+
+    This endpoint keeps the HTTP connection open and pushes events in
+    real-time as the agent executes.  Two event types are streamed:
+
+    1. **output_log events** — thoughts, tool calls, task transitions, etc.
+       These are the same events available via ``/agent/{id}/output`` but
+       pushed instantly instead of requiring polling.
+
+    2. **token events** — individual token batches from the LLM as they
+       are generated, enabling "Cursor-killer" real-time text streaming.
+
+    The stream terminates with a ``done`` event when the session reaches
+    a terminal state (completed / failed / waiting).
+    """
+    executor = _get_executor()
+    session = executor.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    async def event_stream():
+        last_event_index = 0
+        last_token_len = 0
+        idle_ticks = 0
+        MAX_IDLE_TICKS = 200  # 200 * 50ms = 10s idle → close stream
+
+        while True:
+            # 1. Stream new output_log events
+            current_log = session.output_log
+            new_events = current_log[last_event_index:]
+            for event in new_events:
+                yield f"data: {json.dumps(event)}\n\n"
+                last_event_index += 1
+                idle_ticks = 0
+
+            # 2. Stream token-level content from LLM service token buffer
+            token_buffer = None
+            if _llm_service is not None:
+                token_buffer = _llm_service._token_buffers.get(session_id)
+            if token_buffer is not None and len(token_buffer) > last_token_len:
+                new_tokens = token_buffer[last_token_len:]
+                if new_tokens:
+                    yield f"data: {json.dumps({
+                        'type': 'token',
+                        'content': new_tokens,
+                        'timestamp': time.time(),
+                    })}\n\n"
+                    last_token_len = len(token_buffer)
+                    idle_ticks = 0
+                else:
+                    idle_ticks += 1
+            else:
+                idle_ticks += 1
+
+            # 3. Check if session is in a terminal state
+            if session.status.value in ("completed", "failed", "waiting"):
+                # Flush any remaining output_log events
+                current_log = session.output_log
+                final_events = current_log[last_event_index:]
+                for event in final_events:
+                    yield f"data: {json.dumps(event)}\n\n"
+
+                # Flush remaining tokens
+                token_buffer = None
+                if _llm_service is not None:
+                    token_buffer = _llm_service._token_buffers.get(session_id)
+                if token_buffer is not None and len(token_buffer) > last_token_len:
+                    new_tokens = token_buffer[last_token_len:]
+                    if new_tokens:
+                        yield f"data: {json.dumps({
+                            'type': 'token',
+                            'content': new_tokens,
+                            'timestamp': time.time(),
+                        })}\n\n"
+
+                yield f"data: {json.dumps({
+                    'type': 'done',
+                    'status': session.status.value,
+                    'timestamp': time.time(),
+                })}\n\n"
+
+                # Clean up token buffer
+                if _llm_service is not None:
+                    _llm_service._token_buffers.pop(session_id, None)
+                break
+
+            # 4. Close stream if idle too long (session might be stuck)
+            if idle_ticks >= MAX_IDLE_TICKS:
+                yield f"data: {json.dumps({
+                    'type': 'stream_timeout',
+                    'message': 'Stream idle timeout (10s)',
+                    'timestamp': time.time(),
+                })}\n\n"
+                break
+
+            await asyncio.sleep(0.05)  # 50ms = 20 updates/sec
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 @app.get("/agent/modes")
 async def agent_list_modes() -> dict:
     """List all available agent modes with descriptions, icons, and colors.
@@ -1084,6 +1198,54 @@ async def llm_stats() -> dict:
     if _llm_service is None:
         raise HTTPException(status_code=503, detail="LLM service not initialised")
     return _llm_service.get_stats()
+
+
+@app.get("/llm/stream")
+async def llm_stream(prompt: str = "Hello"):
+    """
+    Direct SSE streaming from the LLM.
+
+    Useful for testing the SSE pipe end-to-end without starting
+    a full agent session.  Tokens are streamed in real-time as
+    the LLM generates them.
+    """
+    if _llm_service is None:
+        raise HTTPException(status_code=503, detail="LLM service not initialised")
+
+    from core.llm_service import Message, assemble_messages
+
+    messages = assemble_messages(prompt)
+
+    async def token_stream():
+        try:
+            async for batch in _llm_service.stream_complete(messages):
+                yield f"data: {json.dumps({
+                    'type': 'token',
+                    'content': batch,
+                    'timestamp': time.time(),
+                })}\n\n"
+            yield f"data: {json.dumps({
+                'type': 'done',
+                'status': 'completed',
+                'timestamp': time.time(),
+            })}\n\n"
+        except Exception as exc:
+            logger.error("LLM stream failed: %s", exc)
+            yield f"data: {json.dumps({
+                'type': 'error',
+                'content': str(exc),
+                'timestamp': time.time(),
+            })}\n\n"
+
+    return StreamingResponse(
+        token_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 # ===========================================================================
