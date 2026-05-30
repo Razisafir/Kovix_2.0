@@ -26,7 +26,7 @@ Construct is a desktop AI coding agent powered by a persistent memory system and
 - **React 18 + TypeScript + Tailwind CSS** — Modern frontend
 - **SQLite + ChromaDB** — Dual-layer persistent memory
 - **Multi-Provider LLM** — OpenAI, Anthropic, Google, Ollama
-- **21 Built-in Tools** — File, shell, git, and code analysis
+- **39 Built-in Tools** — File, shell, git, code analysis, browser, database, document conversion, and binary analysis
 
 ## Project Structure
 
@@ -156,12 +156,17 @@ Construct features a dual-layer persistent memory system:
 | Google | Gemini 1.5 Pro | Long context |
 | Ollama | qwen2.5-coder:14b | Local, fast, private |
 
-### Tool System (21 Tools)
+### Tool System (39 Tools)
 
 **File:** read_file, write_file, list_directory, search_files
 **Shell:** execute_command, run_test, install_dependency
 **Git:** git_status, git_diff, git_commit, git_branch, git_log, git_checkout
 **Code:** parse_ast, find_references, refactor_rename, extract_function
+**Document:** convert_document, batch_convert_documents, extract_document_structure
+**Binary:** analyze_binary, decompile_function, find_vulnerabilities, compare_binaries
+**Browser:** browser_navigate, browser_screenshot, browser_extract_text, browser_click
+**Code Search:** code_search, code_find_definition, code_find_usages, code_file_structure
+**Database:** db_connect_sqlite, db_connect_postgres, db_connect_mysql, db_query, db_list_tables, db_get_schema, db_disconnect
 
 ### Execution Loop
 
@@ -196,6 +201,22 @@ Key settings:
 - `DB_PATH` — SQLite database location
 - `CHROMA_PATH` — ChromaDB storage directory
 - `REQUIRE_APPROVAL` — Safety level for destructive operations
+
+## Security
+
+- 41 regex patterns covering destructive operations, architecture changes, and auth/payment code
+- Path traversal protection at tool level
+- Configurable protected paths
+- AgentShield scans all generated code before execution
+- Safety modes require human approval for destructive operations
+
+## Roadmap (Not Yet Available)
+
+- MCP server connections
+- Screen control / GUI automation
+- Auto-updates
+- Plugin marketplace
+- Multi-project workspaces
 
 ## Custom Theme
 

@@ -154,7 +154,7 @@ const DEMO_STATE: AgentState = {
 | Low | 13 | 10 fixed, 3 accepted |
 
 ### Positive Security Controls
-1. **AgentShield**: 44 security rules scanning generated code for vulnerability patterns
+1. **AgentShield**: 41 regex patterns covering destructive operations, architecture changes, and auth/payment code
 2. **Path traversal prevention**: `realpath()` + `commonpath()` validation in file_tools.py
 3. **Shell injection prevention**: `subprocess_exec()` with `shlex.split()`, 50+ blocked commands
 4. **Rate limiting**: 60 req/min per IP with in-memory sliding window

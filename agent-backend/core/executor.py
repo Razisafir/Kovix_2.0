@@ -245,10 +245,20 @@ class AgentSession:
     tasks: List[AgentTask] = field(default_factory=list)
     current_task_index: int = 0
     output_log: List[Dict[str, Any]] = field(default_factory=list)
+    messages: List[Dict[str, str]] = field(default_factory=list)  # For context compression
+    thinking_mode: Dict[str, Any] = field(default_factory=lambda: {"enabled": False, "depth": "standard"})
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
     project_path: str = "."
     mode: str = "code"
+
+    def add_message(self, role: str, content: str) -> None:
+        """Add a message to the session history for context compression."""
+        self.messages.append({
+            "role": role,
+            "content": content,
+            "timestamp": str(time.time()),
+        })
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to a plain dictionary."""
@@ -571,9 +581,68 @@ class AgentExecutor:
 
         return context
 
+    # -- Thinking-mode-aware LLM helper -------------------------------------
+
+    async def _call_llm(
+        self,
+        messages: List[Message],
+        session: Optional[AgentSession] = None,
+        tool_schemas: Optional[List[Dict[str, Any]]] = None,
+    ) -> str:
+        """
+        Call the LLM with thinking-mode-aware system prompt injection.
+
+        When thinking mode is enabled for the session, prepend a
+        chain-of-thought or conciseness instruction to the messages
+        depending on the configured depth.
+
+        Parameters
+        ----------
+        messages:
+            The assembled message list.
+        session:
+            The active session (used to read thinking_mode config).
+        tool_schemas:
+            Optional tool schemas for function calling.
+
+        Returns
+        -------
+        str
+            The LLM response text.
+        """
+        # Check thinking mode
+        if session is not None and session.thinking_mode.get("enabled", False):
+            depth = session.thinking_mode.get("depth", "standard")
+            if depth == "deep":
+                # Inject chain-of-thought prompt
+                cot_system = Message(
+                    role="system",
+                    content=(
+                        "Think step by step. Before each action, explain your "
+                        "reasoning in detail. Consider alternatives, edge cases, "
+                        "and potential failures. Verify your own logic before "
+                        "proceeding."
+                    ),
+                )
+                messages = [cot_system] + messages
+            elif depth == "light":
+                # Inject conciseness prompt
+                quick_system = Message(
+                    role="system",
+                    content="Be concise. Provide short, direct responses. Skip explanations unless asked.",
+                )
+                messages = [quick_system] + messages
+            # "standard" = no additional prompt
+
+        return await self.llm.stream_and_collect(
+            messages,
+            tool_schemas=tool_schemas,
+            session_id=self._active_session_id,
+        )
+
     # -- Phase 2: Plan ------------------------------------------------------
 
-    async def plan(self, goal: str, context: Dict[str, Any]) -> List[AgentTask]:
+    async def plan(self, goal: str, context: Dict[str, Any], session: Optional[AgentSession] = None) -> List[AgentTask]:
         """
         Decompose a goal into actionable tasks using the LLM.
 
@@ -635,8 +704,8 @@ class AgentExecutor:
 
         try:
             messages = assemble_messages(prompt)
-            response = await self.llm.stream_and_collect(
-                messages, session_id=self._active_session_id
+            response = await self._call_llm(
+                messages, session=session
             )
 
             # Parse JSON response
@@ -717,10 +786,10 @@ class AgentExecutor:
                     prompt,
                     tool_schemas=self.tools.get_tool_schemas(),
                 )
-                response = await self.llm.stream_and_collect(
+                response = await self._call_llm(
                     messages,
+                    session=session,
                     tool_schemas=self.tools.get_tool_schemas(),
-                    session_id=self._active_session_id,
                 )
             except Exception as exc:
                 logger.exception("LLM call failed during act phase")
@@ -942,8 +1011,8 @@ class AgentExecutor:
                 project_path=session.project_path,
             )
             messages = assemble_messages(prompt)
-            response = await self.llm.stream_and_collect(
-                messages, session_id=self._active_session_id
+            response = await self._call_llm(
+                messages, session=session
             )
 
             # Parse verification decision
@@ -1000,7 +1069,7 @@ class AgentExecutor:
 
             # Phase 2: Plan
             self._emit(session, "thought", f"Planning tasks for: {session.goal}")
-            tasks = await self.plan(session.goal, context)
+            tasks = await self.plan(session.goal, context, session=session)
             session.tasks = tasks
             self._emit(
                 session,
@@ -1019,6 +1088,11 @@ class AgentExecutor:
                 mode=session.mode,
             )
 
+            # Record planning in session messages (for context compression)
+            session.add_message("user", session.goal)
+            session.add_message("assistant", f"Planned {len(tasks)} tasks: "
+                              + "; ".join(t.description for t in tasks))
+
             # Phase 3: Execute each task
             for i, task in enumerate(session.tasks):
                 # Check for pause
@@ -1033,6 +1107,10 @@ class AgentExecutor:
 
                 result = await self.act(session, task)
                 task.result = str(result.get("output", ""))[:5000]
+
+                # Record task execution in session messages (for context compression)
+                session.add_message("assistant",
+                    f"Executed task '{task.description}': {task.result[:300]}")
 
                 # Store acting phase in memory
                 self.memory.store_conversation(

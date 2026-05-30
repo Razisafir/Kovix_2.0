@@ -245,6 +245,9 @@ def get_embedding_model() -> Optional[Any]:
         logger.info("Loading embedding model: %s", EMBEDDING_MODEL)
         _embedding_model = SentenceTransformer(EMBEDDING_MODEL)
         logger.info("Embedding model loaded successfully")
+        # Hint to GC to reclaim any temporary allocations from model loading
+        import gc
+        gc.collect()
         return _embedding_model
     except Exception as exc:
         logger.warning("Failed to load embedding model: %s", exc)

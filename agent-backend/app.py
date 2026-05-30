@@ -160,15 +160,15 @@ _notification_service: Optional[Any] = None
 async def lifespan(app: FastAPI):
     logger.info("Construct Agent API starting up …")
 
-    # Warm up embedding model (gracefully skip if offline)
-    from memory import get_embedding_model
-    model = get_embedding_model()
-    if model is not None:
-        logger.info("Embedding model warmed up.")
-    else:
-        logger.info("Embedding model unavailable — running in offline mode. "
-                    "Semantic search will use keyword fallback. "
-                    "Set CONSTRUCT_OFFLINE=1 to suppress this message.")
+    # NOTE: Embedding model is now lazy-loaded on first use to prevent
+    # OOM crashes when ChromaDB + Ollama + sentence-transformers all
+    # compete for memory at startup.  The model will be loaded
+    # automatically when the first semantic search or store is performed.
+    # Set CONSTRUCT_OFFLINE=1 to disable embeddings entirely.
+    logger.info(
+        "Embedding model: lazy-loaded (will load on first use). "
+        "Set CONSTRUCT_OFFLINE=1 to disable."
+    )
 
     # Initialise agent services
     global _llm_service, _tool_registry, _agent_executor, _session_store
@@ -602,10 +602,34 @@ async def health() -> dict:
     if _background_worker is not None:
         worker_status = _background_worker.get_status()
 
+    # Determine if at least one LLM provider is actually reachable
+    llm_ready = False
+    if _llm_service is not None:
+        from core.llm_service import LLMProvider
+        # Check if Ollama (the default fallback) is reachable
+        ollama_config = _llm_service.configs.get(LLMProvider.OLLAMA)
+        if ollama_config:
+            try:
+                import aiohttp
+                async with aiohttp.ClientSession() as sess:
+                    async with sess.get(
+                        f"{ollama_config.base_url}/api/tags",
+                        timeout=aiohttp.ClientTimeout(total=2),
+                    ) as resp:
+                        llm_ready = resp.status == 200
+            except Exception:
+                # Ollama not reachable — check if any cloud provider is configured
+                cloud_providers = [
+                    p for p in _llm_service.configs
+                    if p.value in ("openai", "anthropic", "google")
+                ]
+                llm_ready = len(cloud_providers) > 0
+
     return {
         "status": "ok",
         "service": "construct-agent-api",
         "version": "0.3.0",
+        "llm_ready": llm_ready,
         "llm_providers": providers,
         "memory": _agent_executor.memory.get_stats() if _agent_executor else {"enabled": False},
         "autonomous": {
@@ -1621,44 +1645,61 @@ async def compact_context(req: CompactContextRequest) -> dict:
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
 
-        original_count = len(session.messages) if hasattr(session, "messages") else 0
+        # session.messages is a List[Dict[str, str]] (each has "role", "content", "timestamp")
+        original_count = len(session.messages)
+
+        if original_count == 0:
+            return {
+                "session_id": req.session_id,
+                "original_messages": 0,
+                "compacted_messages": 0,
+                "strategy": req.strategy,
+                "tokens_saved": 0,
+            }
 
         # Strategy-based compaction
-        if req.strategy == "summary":
+        if req.strategy == "summary" and original_count > 10:
             # Summarize older messages, keep recent ones verbatim
             from core.llm_service import Message, assemble_messages
-            if hasattr(session, "messages") and len(session.messages) > 10:
-                # Summarize the first half of messages
-                half = len(session.messages) // 2
-                older = session.messages[:half]
-                summary_prompt = (
-                    "Summarize the following conversation concisely, "
-                    "preserving key decisions, context, and action items:\n\n"
-                    + "\n".join(f"{m.role}: {m.content[:500]}" for m in older)
-                )
-                summary_messages = assemble_messages(user_prompt=summary_prompt)
-                summary = await _llm_service.complete(summary_messages)
-                # Replace older messages with summary
-                summary_msg = Message(role="system", content=f"[Context Summary] {summary}")
-                session.messages = [summary_msg] + session.messages[half:]
-        elif req.strategy == "truncate":
-            # Keep only the N most recent messages
-            if hasattr(session, "messages") and len(session.messages) > 20:
-                keep_count = max(10, req.max_tokens // 200)
-                session.messages = session.messages[-keep_count:]
-        elif req.strategy == "archive":
-            # Move older messages to long-term memory
-            if _llm_service.memory is not None and hasattr(session, "messages"):
-                if len(session.messages) > 10:
-                    archive = session.messages[:-10]
-                    _llm_service.memory.store(
-                        key=f"context_archive:{req.session_id}",
-                        value="\n".join(f"{m.role}: {m.content}" for m in archive),
-                        tags=["context_archive", req.session_id],
-                    )
-                    session.messages = session.messages[-10:]
+            half = original_count // 2
+            older = session.messages[:half]
+            summary_prompt = (
+                "Summarize the following conversation concisely, "
+                "preserving key decisions, context, and action items:\n\n"
+                + "\n".join(f"{m.get('role', '?')}: {m.get('content', '')[:500]}" for m in older)
+            )
+            summary_messages = assemble_messages(user_prompt=summary_prompt)
+            summary = await _llm_service.complete(summary_messages)
+            # Replace older messages with a single summary dict
+            summary_dict = {
+                "role": "system",
+                "content": f"[Context Summary] {summary}",
+                "timestamp": str(time.time()),
+            }
+            session.messages = [summary_dict] + session.messages[half:]
 
-        compacted_count = len(session.messages) if hasattr(session, "messages") else 0
+        elif req.strategy == "truncate" and original_count > 20:
+            # Keep only the N most recent messages
+            keep_count = max(10, req.max_tokens // 200)
+            session.messages = session.messages[-keep_count:]
+
+        elif req.strategy == "archive" and original_count > 10:
+            # Move older messages to long-term memory
+            archive = session.messages[:-10]
+            archive_text = "\n".join(
+                f"{m.get('role', '?')}: {m.get('content', '')}" for m in archive
+            )
+            # Store in memory using the memory client
+            if _agent_executor is not None and _agent_executor.memory is not None:
+                _agent_executor.memory.store_conversation(
+                    session_id=req.session_id,
+                    role="system",
+                    content=f"[Context Archive] {archive_text[:2000]}",
+                    phase="archive",
+                )
+            session.messages = session.messages[-10:]
+
+        compacted_count = len(session.messages)
         tokens_saved = max(0, (original_count - compacted_count) * 100)
 
         return {
@@ -1684,7 +1725,7 @@ async def get_context_stats(session_id: str) -> dict:
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
 
-        msg_count = len(session.messages) if hasattr(session, "messages") else 0
+        msg_count = len(session.messages)
         estimated_tokens = msg_count * 150  # rough estimate
         max_context = 8192  # typical context window
 
@@ -1985,17 +2026,25 @@ async def enable_thinking_mode(
 
     When enabled, the agent performs deeper reasoning before responding,
     including chain-of-thought analysis and self-verification.
+    The depth parameter controls the intensity:
+    - "light": concise, direct responses
+    - "standard": normal reasoning
+    - "deep": detailed chain-of-thought with self-verification
     """
     executor = _get_executor()
     session = executor.get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    _thinking_mode[session_id] = {
+    # Store on session for executor to read
+    session.thinking_mode = {
         "enabled": enabled,
         "depth": depth,
         "updated_at": time.time(),
     }
+
+    # Also store in global dict for backward compatibility
+    _thinking_mode[session_id] = session.thinking_mode.copy()
 
     depth_desc = {"light": "lightweight", "standard": "standard", "deep": "maximum"}
     msg = (

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const C = {
   base: "#0a0a10", s1: "#12121a", s2: "#1a1a24", s3: "#22222e",
@@ -6,6 +6,9 @@ const C = {
 };
 
 const ff = '"Geist Mono", "JetBrains Mono", monospace';
+
+// Backend port — matches CONSTRUCT_PORT default
+const BACKEND_PORT = 8000;
 
 interface OnboardingWizardProps {
   onComplete: () => void;
@@ -43,6 +46,7 @@ const quickTips = [
 
 export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizardProps) {
   const [step, setStep] = useState<Step>(1);
+  const [llmConnected, setLlmConnected] = useState<boolean | null>(null); // null = checking
   const [state, setState] = useState<OnboardingState>({
     projectPath: "",
     openaiKey: "",
@@ -53,6 +57,23 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
     fontSize: "medium",
     agentMode: "code",
   });
+
+  // Detect LLM connection on mount
+  useEffect(() => {
+    const checkLlm = async () => {
+      try {
+        const res = await fetch(`http://127.0.0.1:${BACKEND_PORT}/health`);
+        const data = await res.json();
+        setLlmConnected(data.llm_ready === true);
+      } catch {
+        setLlmConnected(false);
+      }
+    };
+    checkLlm();
+    // Re-check every 30 seconds in case the user starts Ollama
+    const interval = setInterval(checkLlm, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const update = <K extends keyof OnboardingState>(key: K, val: OnboardingState[K]) =>
     setState((p) => ({ ...p, [key]: val }));
@@ -108,6 +129,55 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
     color: active ? "#fff" : C.t2, borderColor: active ? C.accent : C.s3,
   });
 
+  // ─── LLM Status Banner ────────────────────────────────────────────
+
+  const renderLlmStatusBanner = () => {
+    if (llmConnected === null) {
+      // Still checking
+      return (
+        <div style={{
+          background: `${C.s2}`, border: `1px solid ${C.s3}`,
+          borderRadius: 4, padding: "10px 14px", marginBottom: 16,
+        }}>
+          <p style={{ fontSize: 10, color: C.t3, fontFamily: ff, margin: 0 }}>
+            Checking LLM connection...
+          </p>
+        </div>
+      );
+    }
+
+    if (!llmConnected) {
+      return (
+        <div style={{
+          background: "rgba(234, 179, 8, 0.08)", border: "1px solid rgba(234, 179, 8, 0.25)",
+          borderRadius: 4, padding: "10px 14px", marginBottom: 16,
+        }}>
+          <p style={{ fontSize: 10, fontWeight: 600, color: "#eab308", fontFamily: ff, margin: "0 0 4px 0" }}>
+            Demo Mode
+          </p>
+          <p style={{ fontSize: 10, color: C.t3, fontFamily: ff, margin: 0, lineHeight: 1.5 }}>
+            No LLM connected. Go to Settings to connect OpenAI, Anthropic, Ollama, or another
+            provider to enable real agent execution. You can still explore the interface.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div style={{
+        background: "rgba(34, 197, 94, 0.08)", border: "1px solid rgba(34, 197, 94, 0.25)",
+        borderRadius: 4, padding: "10px 14px", marginBottom: 16,
+      }}>
+        <p style={{ fontSize: 10, fontWeight: 600, color: "#22c55e", fontFamily: ff, margin: "0 0 4px 0" }}>
+          Ready
+        </p>
+        <p style={{ fontSize: 10, color: C.t3, fontFamily: ff, margin: 0, lineHeight: 1.5 }}>
+          Agent is connected and ready. Type a goal to start.
+        </p>
+      </div>
+    );
+  };
+
   // ─── Step Renderers ────────────────────────────────────────────────
 
   const renderWelcome = () => (
@@ -118,11 +188,13 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
       <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.4 }}>
         The AI that never forgets and never stops
       </div>
+      {renderLlmStatusBanner()}
     </div>
   );
 
   const renderProject = () => (
     <div>
+      {renderLlmStatusBanner()}
       <div style={lbl}>Project Path</div>
       <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
         <input
@@ -163,6 +235,7 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
 
   const renderAIConfig = () => (
     <div>
+      {renderLlmStatusBanner()}
       <div style={{ marginBottom: 16 }}>
         <div style={lbl}>OpenAI API Key</div>
         <input
@@ -215,7 +288,20 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
       </div>
 
       <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <button style={btnS} onClick={() => console.log("test connection")}>
+        <button
+          style={btnS}
+          onClick={async () => {
+            try {
+              const res = await fetch(`http://127.0.0.1:${BACKEND_PORT}/health`);
+              const data = await res.json();
+              setLlmConnected(data.llm_ready === true);
+              alert(data.llm_ready ? "LLM connected!" : "No LLM detected. Start Ollama or configure an API key.");
+            } catch {
+              setLlmConnected(false);
+              alert("Backend not reachable. Start the Python server first.");
+            }
+          }}
+        >
           Test Connection
         </button>
         <button style={btnF} onClick={next}>
@@ -227,6 +313,7 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
 
   const renderPreferences = () => (
     <div>
+      {renderLlmStatusBanner()}
       <div style={{ marginBottom: 20 }}>
         <div style={lbl}>Theme</div>
         <div style={{ display: "flex", gap: 8 }}>
@@ -264,8 +351,11 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
 
   const renderReady = () => (
     <div>
+      {renderLlmStatusBanner()}
       <div style={{ fontSize: 12, color: C.t2, marginBottom: 24, lineHeight: 1.5 }}>
-        Construct is configured and ready to work
+        {llmConnected
+          ? "Construct is configured and ready to work"
+          : "Construct is in Demo Mode — connect an LLM in Settings to enable the agent"}
       </div>
       <div style={lbl}>Quick Tips</div>
       <div style={{ marginBottom: 24 }}>
@@ -331,7 +421,7 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
             )}
             {step === 5 && (
               <button style={btnP} onClick={onComplete}>
-                Launch Construct
+                {llmConnected ? "Launch Construct" : "Continue in Demo Mode"}
               </button>
             )}
           </div>
@@ -357,7 +447,7 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
 
       {/* Footer */}
       <div style={{ marginTop: 16, fontSize: 10, color: C.t3, letterSpacing: "0.06em", fontFamily: ff }}>
-        Construct v1.0.0
+        Construct v0.1.0-beta
       </div>
     </div>
   );
