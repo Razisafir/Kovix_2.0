@@ -152,24 +152,30 @@ Tasks (JSON only, no markdown):
 """
 
 ACTING_PROMPT_TEMPLATE = """\
-You are executing a coding task. Use the available tools to complete it.
+You are an autonomous coding agent. Execute the task using the EXACT tool names listed below.
 
 Current Task: {task_description}
 
-Available tools: {tool_names}
+AVAILABLE TOOLS (use EXACTLY these names):
+{tool_names}
 
-To use a tool, respond with a JSON object containing:
-- "tool": the tool name to use
-- "arguments": a dict of arguments for that tool
-- "reasoning": brief explanation of why you're using this tool
+TOOL USAGE — respond with ONE JSON object per turn:
+{{"tool": "<exact_tool_name>", "arguments": {{"<param>": "<value>"}}, "reasoning": "<why>"}}
 
-After completing all necessary tool calls, respond with:
-{{"done": true, "summary": "Brief summary of what was accomplished"}}
+CRITICAL RULES:
+1. To CREATE a file → use tool "write_file" with arguments {{"file_path": "<name>", "content": "<file content>"}}
+2. To READ a file → use tool "read_file" with arguments {{"file_path": "<name>"}}
+3. To LIST directory → use tool "list_directory" with arguments {{"dir_path": "<path>"}}
+4. Only use ONE tool per response. Wait for the result before deciding the next step.
+5. When the task is fully complete, respond with: {{"done": true, "summary": "what was accomplished"}}
+
+EXAMPLE — creating hello.py:
+{{"tool": "write_file", "arguments": {{"file_path": "hello.py", "content": "print('Hello')"}}, "reasoning": "Creating the requested file"}}
 
 Project path: {project_path}
 Previous results: {previous_results}
 
-Response (JSON only):
+Response (JSON only, no explanation, no markdown):
 """
 
 VERIFICATION_PROMPT_TEMPLATE = """\

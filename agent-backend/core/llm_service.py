@@ -83,7 +83,7 @@ class LLMConfig:
     base_url: Optional[str] = None  # used by Ollama
     temperature: float = 0.7
     max_tokens: int = 4096
-    timeout: int = 120
+    timeout: int = 300  # 5 min for CPU inference
 
 
 @dataclass
@@ -255,7 +255,7 @@ class LLMService:
     TCP_CONNECTOR_LIMIT: int = 30
     TCP_CONNECTOR_LIMIT_PER_HOST: int = 10
     TCP_CONNECTOR_TTL: int = 300  # 5 min keep-alive
-    CLIENT_TIMEOUT_TOTAL: int = 120
+    CLIENT_TIMEOUT_TOTAL: int = 300  # 5 min — CPU inference can be slow
 
     def __init__(self) -> None:
         self.configs: Dict[LLMProvider, LLMConfig] = {}
