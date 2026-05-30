@@ -391,6 +391,18 @@ class AgentExecutor:
         # Active session ID for SSE token buffering
         self._active_session_id: Optional[str] = None
 
+        # Per-session rate limiting for destructive tool calls
+        # Maps session_id -> {tool_name: call_count}
+        self._destructive_call_counts: Dict[str, Dict[str, int]] = {}
+        self._max_destructive_calls_per_session: int = int(
+            os.environ.get("CONSTRUCT_MAX_DESTRUCTIVE_CALLS", "10")
+        )
+        # Tools considered destructive (rate-limited)
+        self._destructive_tools: set = {
+            "write_file", "execute_command", "install_dependency",
+            "git_commit", "git_checkout", "git_reset", "git_branch",
+        }
+
         # Mode configuration
         self.mode_config = get_mode_config(mode)
         self.mode = self.mode_config.name
@@ -885,6 +897,25 @@ class AgentExecutor:
                     "tool_calls": accumulated_results,
                 }
 
+            # Check per-session rate limit for destructive tools
+            if not self._check_destructive_rate_limit(session, tool_name):
+                accumulated_results.append(
+                    {
+                        "tool": tool_name,
+                        "error": (
+                            f"Rate limit: tool '{tool_name}' has been called too many "
+                            f"times this session (max {self._max_destructive_calls_per_session}). "
+                            f"Approval required to continue."
+                        ),
+                    }
+                )
+                self._emit(
+                    session,
+                    "approval_required",
+                    f"Rate limit hit for '{tool_name}'. Human approval needed to continue.",
+                )
+                continue
+
             # Check if tool requires human approval in this mode
             if tool_name in self.mode_config.require_human_approval:
                 self._emit(
@@ -1063,6 +1094,9 @@ class AgentExecutor:
         self._active_session_id = session.id
 
         try:
+            # Phase 0: Git sandboxing — create a feature branch
+            await self._create_feature_branch(session)
+
             # Phase 1: Observe
             self._emit(session, "thought", "Observing current project state...")
             context = await self.observe(session)
@@ -1234,6 +1268,78 @@ class AgentExecutor:
         """Wait for a paused session to be resumed."""
         while session.status == AgentStatus.PAUSED:
             await asyncio.sleep(1)
+
+    # -- Git sandboxing -----------------------------------------------------
+
+    async def _create_feature_branch(self, session: AgentSession) -> None:
+        """
+        Create a feature branch for the session so the agent works in isolation.
+
+        The branch is named ``construct/<session-id>`` and is created from the
+        current HEAD.  If the project is not a git repo, this is silently skipped.
+        """
+        try:
+            # Check if we're in a git repo
+            git_result = self.tools.execute_tool(
+                "git_status", {"cwd": session.project_path}
+            )
+            if not isinstance(git_result, dict):
+                return
+
+            branch_name = f"construct/{session.id}"
+
+            # Create and checkout the feature branch
+            self.tools.execute_tool(
+                "git_checkout",
+                {"target": branch_name, "create": True, "cwd": session.project_path},
+            )
+            self._emit(
+                session,
+                "thought",
+                f"Created feature branch: {branch_name}",
+            )
+            logger.info(
+                "Session %s: created feature branch '%s'",
+                session.id, branch_name,
+            )
+        except Exception as exc:
+            # Non-critical: if git ops fail, continue on current branch
+            logger.warning(
+                "Session %s: could not create feature branch (%s). "
+                "Continuing on current branch.",
+                session.id, exc,
+            )
+
+    # -- Destructive tool rate limiting -------------------------------------
+
+    def _check_destructive_rate_limit(
+        self, session: AgentSession, tool_name: str
+    ) -> bool:
+        """
+        Check if a destructive tool call is within the per-session rate limit.
+
+        Returns True if the call is allowed, False if it should be blocked.
+        """
+        if tool_name not in self._destructive_tools:
+            return True
+
+        sid = session.id
+        if sid not in self._destructive_call_counts:
+            self._destructive_call_counts[sid] = {}
+
+        counts = self._destructive_call_counts[sid]
+        current = counts.get(tool_name, 0)
+
+        if current >= self._max_destructive_calls_per_session:
+            logger.warning(
+                "Session %s: rate limit hit for '%s' (%d/%d calls). "
+                "Requiring approval.",
+                sid, tool_name, current, self._max_destructive_calls_per_session,
+            )
+            return False
+
+        counts[tool_name] = current + 1
+        return True
 
     # -- Event emission -----------------------------------------------------
 

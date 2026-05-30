@@ -14,7 +14,11 @@ Usage::
 """
 
 import logging
+import os
+import importlib
+import importlib.util
 import inspect
+from pathlib import Path
 from typing import Dict, List, Any, Callable, Optional
 
 from tools.file_tools import read_file, write_file, list_directory, search_files
@@ -1433,6 +1437,12 @@ class ToolRegistry:
             s["function"]["name"]: s for s in TOOL_DEFINITIONS
         }
 
+        # Load installed skills
+        self._load_skills_from_directory()
+
+        # Bridge MCP tools if enabled
+        self._register_mcp_tools()
+
     # -- Schema access ------------------------------------------------------
 
     def get_tool_schemas(self) -> List[Dict[str, Any]]:
@@ -1443,8 +1453,9 @@ class ToolRegistry:
         -------
         list[dict]
             Tool definitions ready to pass to an LLM's ``tools`` parameter.
+            Includes both statically defined and dynamically discovered tools.
         """
-        return list(TOOL_DEFINITIONS)
+        return list(self._schemas.values())
 
     def get_tool_names(self) -> List[str]:
         """Return a list of all registered tool names."""
@@ -1559,6 +1570,284 @@ class ToolRegistry:
         self._tools.pop(name, None)
         self._schemas.pop(name, None)
         logger.info("Unregistered tool: %s", name)
+
+    # -- Schema generation for dynamic tools --------------------------------
+
+    def _make_tool_schema(
+        self,
+        name: str,
+        description: str,
+        parameters: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Create an OpenAI function-calling schema for a dynamically discovered tool.
+
+        Parameters
+        ----------
+        name:
+            The tool name used in LLM function calling.
+        description:
+            Human-readable description of what the tool does.
+        parameters:
+            A dictionary matching the OpenAI ``parameters`` format, i.e.
+            ``{"type": "object", "properties": {...}, "required": [...]}``.
+            If empty, a minimal schema with no required parameters is generated.
+
+        Returns
+        -------
+        dict
+            A complete tool definition in OpenAI function-calling format.
+        """
+        if not parameters:
+            parameters = {"type": "object", "properties": {}, "required": []}
+        return {
+            "type": "function",
+            "function": {
+                "name": name,
+                "description": description,
+                "parameters": parameters,
+            },
+        }
+
+    # -- Skill loading ------------------------------------------------------
+
+    def _load_skills_from_directory(self) -> None:
+        """Scan installed/bundled skill directories and register their tools.
+
+        Looks for skill manifests (``SKILL.md`` or ``skill.json``) under
+        ``resources/skills/installed/`` and ``resources/skills/bundled/``.
+        For each skill found, attempts to import a companion Python module
+        (``tool.py`` or ``main.py``) and register any tool functions it exposes.
+
+        The skill module may expose tools in two ways:
+
+        1. A ``register(registry)`` function that receives this :class:`ToolRegistry`
+           and calls :meth:`register_tool` for each tool it wants to add.
+        2. Functions decorated with a ``__tool_metadata__`` attribute (a dict
+           with ``name``, ``description``, and ``parameters`` keys).
+
+        Failures for individual skills are logged as warnings and do **not**
+        prevent other skills from loading.
+        """
+        skill_dirs: List[Path] = []
+        for base in ("resources/skills/installed", "resources/skills/bundled"):
+            p = Path(base)
+            if p.is_dir():
+                for child in sorted(p.iterdir()):
+                    if child.is_dir():
+                        skill_dirs.append(child)
+
+        if not skill_dirs:
+            logger.debug("No skill directories found — skipping skill loading")
+            return
+
+        loaded_count = 0
+        for skill_dir in skill_dirs:
+            try:
+                self._load_single_skill(skill_dir)
+                loaded_count += 1
+            except Exception as exc:
+                logger.warning(
+                    "Failed to load skill from %s: %s", skill_dir, exc
+                )
+
+        if loaded_count:
+            logger.info("Loaded %d skill(s) into tool registry", loaded_count)
+
+    def _load_single_skill(self, skill_dir: Path) -> None:
+        """Load and register tools from a single skill directory.
+
+        Parameters
+        ----------
+        skill_dir:
+            Path to the skill directory containing a manifest and optional
+            Python tool module.
+        """
+        # --- Locate manifest ---------------------------------------------------
+        manifest: Optional[Path] = None
+        for candidate in ("SKILL.md", "skill.json"):
+            candidate_path = skill_dir / candidate
+            if candidate_path.is_file():
+                manifest = candidate_path
+                break
+
+        if manifest is None:
+            logger.debug("No manifest found in %s — skipping", skill_dir)
+            return
+
+        skill_name = skill_dir.name
+        logger.info("Loading skill: %s (manifest: %s)", skill_name, manifest.name)
+
+        # --- Locate Python module ----------------------------------------------
+        module_path: Optional[Path] = None
+        for candidate in ("tool.py", "main.py"):
+            candidate_path = skill_dir / candidate
+            if candidate_path.is_file():
+                module_path = candidate_path
+                break
+
+        if module_path is None:
+            logger.debug(
+                "No Python module (tool.py/main.py) in %s — skill has no tools",
+                skill_dir,
+            )
+            return
+
+        # --- Dynamic import ----------------------------------------------------
+        module_name = f"skills.custom.{skill_name}"
+        spec = importlib.util.spec_from_file_location(module_name, module_path)
+        if spec is None or spec.loader is None:
+            logger.warning(
+                "Could not create import spec for %s — skipping", module_path
+            )
+            return
+
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+
+        # --- Register tools from module ----------------------------------------
+        # Strategy 1: module has a register(registry) function
+        if hasattr(module, "register") and callable(module.register):
+            module.register(self)
+            logger.debug(
+                "Skill %s registered tools via register() function", skill_name
+            )
+            return
+
+        # Strategy 2: functions with __tool_metadata__ decorator attribute
+        registered_from_module = 0
+        for attr_name in dir(module):
+            obj = getattr(module, attr_name, None)
+            if obj is None or not callable(obj):
+                continue
+            metadata = getattr(obj, "__tool_metadata__", None)
+            if not isinstance(metadata, dict):
+                continue
+
+            tool_name = metadata.get("name", attr_name)
+            tool_desc = metadata.get("description", inspect.getdoc(obj) or "")
+            tool_params = metadata.get("parameters", {})
+
+            schema = self._make_tool_schema(tool_name, tool_desc, tool_params)
+            self.register_tool(tool_name, obj, schema)
+            registered_from_module += 1
+
+        if registered_from_module:
+            logger.debug(
+                "Skill %s registered %d tool(s) via __tool_metadata__",
+                skill_name,
+                registered_from_module,
+            )
+        else:
+            logger.debug(
+                "Skill %s module loaded but no tools discovered", skill_name
+            )
+
+    # -- MCP tool bridge ----------------------------------------------------
+
+    def _register_mcp_tools(self) -> None:
+        """Bridge MCP server tools into the tool registry.
+
+        If the ``CONSTRUCT_MCP_ENABLED`` environment variable is set to ``1``,
+        this method imports the MCP client, discovers available tools from
+        connected MCP servers, and registers wrapper functions for each tool
+        in this registry.
+
+        Each MCP tool is exposed as a regular tool function that internally
+        delegates to the MCP client's ``call_tool`` method.  The wrapper
+        handles the async-to-sync bridging transparently.
+
+        Failures are logged as warnings and do **not** prevent the registry
+        from functioning.
+        """
+        if os.environ.get("CONSTRUCT_MCP_ENABLED") != "1":
+            logger.debug("MCP bridging disabled (CONSTRUCT_MCP_ENABLED != 1)")
+            return
+
+        try:
+            from mcp.mcp_client import MCPClient  # lazy import
+        except ImportError as exc:
+            logger.warning(
+                "MCP client module not available — skipping MCP tool bridge: %s",
+                exc,
+            )
+            return
+
+        try:
+            client = MCPClient()
+            mcp_tools = client.list_tools()
+        except Exception as exc:
+            logger.warning(
+                "Failed to list MCP tools — skipping MCP tool bridge: %s", exc
+            )
+            return
+
+        if not mcp_tools:
+            logger.info("MCP enabled but no tools available from connected servers")
+            return
+
+        # Track which servers contributed tools
+        server_names: set = set()
+        registered_count = 0
+
+        for mcp_tool in mcp_tools:
+            try:
+                tool_name = f"mcp_{mcp_tool.server}_{mcp_tool.name}"
+                server_names.add(mcp_tool.server)
+
+                # Build a closure that captures the MCP tool info
+                def _make_wrapper(
+                    server: str, name: str, mcp_client: MCPClient
+                ) -> Callable[..., Dict[str, Any]]:
+                    """Create a sync wrapper for an async MCP tool call."""
+
+                    def wrapper(**kwargs: Any) -> Dict[str, Any]:
+                        import asyncio
+                        import concurrent.futures
+
+                        async def _call() -> Dict[str, Any]:
+                            return await mcp_client.call_tool(server, name, kwargs)
+
+                        try:
+                            # Try running in an existing event loop
+                            loop = asyncio.get_running_loop()
+                            with concurrent.futures.ThreadPoolExecutor(
+                                max_workers=1
+                            ) as pool:
+                                future = pool.submit(asyncio.run, _call())
+                                return future.result()
+                        except RuntimeError:
+                            # No running loop
+                            return asyncio.run(_call())
+
+                    return wrapper
+
+                tool_func = _make_wrapper(mcp_tool.server, mcp_tool.name, client)
+
+                # Preserve original function name for inspect / logging
+                tool_func.__name__ = tool_name
+                tool_func.__qualname__ = tool_name
+
+                # Build schema from MCP tool metadata
+                description = mcp_tool.description or f"MCP tool: {mcp_tool.name} (server: {mcp_tool.server})"
+                parameters = mcp_tool.parameters if isinstance(mcp_tool.parameters, dict) else {}
+                schema = self._make_tool_schema(tool_name, description, parameters)
+
+                self.register_tool(tool_name, tool_func, schema)
+                registered_count += 1
+
+            except Exception as exc:
+                logger.warning(
+                    "Failed to register MCP tool %s/%s: %s",
+                    mcp_tool.server,
+                    mcp_tool.name,
+                    exc,
+                )
+
+        logger.info(
+            "MCP tool bridge: registered %d tool(s) from server(s): %s",
+            registered_count,
+            ", ".join(sorted(server_names)),
+        )
 
 
 # Convenience singleton

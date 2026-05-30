@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 
 /* ─────────────────────── types ─────────────────────── */
 
@@ -47,82 +47,74 @@ const typeColor: Record<MemoryType, string> = {
   REF: C.ref,
 };
 
-/* ─────────────────────── demo data ─────────────────────── */
+/* ─────────────────────── api helpers ─────────────────────── */
 
-const DEMO_ENTRIES: MemoryEntry[] = [
-  {
-    id: "1",
-    type: "EPI",
-    timestamp: "2026-05-28T14:32:00Z",
-    relativeTime: "2h ago",
-    source: "auth.ts",
-    content: "implemented JWT middleware with 15min expiry",
-    fullContent:
-      "Implemented JWT authentication middleware using jsonwebtoken library. Token expiry set to 15 minutes based on previous project preferences. RS256 algorithm selected for asymmetric signing. Refresh token rotation implemented with httpOnly cookie storage.",
-    confidence: 0.94,
-    relatedFiles: ["middleware.ts", "types.ts", "api.ts"],
-  },
-  {
-    id: "2",
-    type: "EPI",
-    timestamp: "2026-05-28T13:15:00Z",
-    relativeTime: "3h ago",
-    source: "cors.ts",
-    content: "fixed CORS configuration for staging deployment",
-    fullContent:
-      "Updated CORS configuration to allow staging domain origins. Added allowedHeaders for Authorization and Content-Type. Preflight cache duration set to 86400 seconds.",
-    confidence: 0.91,
-    relatedFiles: ["server.ts", "config.ts"],
-  },
-  {
-    id: "3",
-    type: "SEM",
-    timestamp: "2026-05-27T16:00:00Z",
-    relativeTime: "1d ago",
-    source: "--",
-    content: "react hooks patterns for data fetching",
-    fullContent:
-      "Extracted common pattern for data fetching with useSWR. Caching strategy uses stale-while-revalidate with 5min deduping interval. Error retry uses exponential backoff capped at 30 seconds.",
-    confidence: 0.87,
-    relatedFiles: ["useFetch.ts", "useCache.ts"],
-  },
-  {
-    id: "4",
-    type: "PRC",
-    timestamp: "2026-05-26T09:20:00Z",
-    relativeTime: "2d ago",
-    source: "--",
-    content: "prisma schema naming conventions: camelCase fields, PascalCase models",
-    fullContent:
-      "Established Prisma schema conventions: model names in PascalCase (e.g., UserProfile), field names in camelCase (e.g., createdAt), table names in snake_case via @@map directive. Enum values in SCREAMING_SNAKE_CASE.",
-    confidence: 0.82,
-    relatedFiles: ["schema.prisma"],
-  },
-  {
-    id: "5",
-    type: "REF",
-    timestamp: "2026-05-25T11:00:00Z",
-    relativeTime: "3d ago",
-    source: "README.md",
-    content: "project uses pnpm workspace with turbo repo",
-    fullContent:
-      "Monorepo structure using pnpm workspaces with Turborepo for task orchestration. Shared packages: @acme/ui, @acme/utils, @acme/config. Pipeline tasks: build, lint, test, typecheck.",
-    confidence: 0.96,
-    relatedFiles: ["turbo.json", "pnpm-workspace.yaml"],
-  },
-  {
-    id: "6",
-    type: "EPI",
-    timestamp: "2026-05-28T10:00:00Z",
-    relativeTime: "6h ago",
-    source: "billing.ts",
-    content: "integrated stripe webhook handler for subscription events",
-    fullContent:
-      "Stripe webhook endpoint handles checkout.session.completed, invoice.paid, invoice.payment_failed, customer.subscription.updated events. Idempotency enforced via event ID lookup in processed_events table. Signature verification uses stripe-node library with webhook secret from env.",
-    confidence: 0.89,
-    relatedFiles: ["stripe.ts", "webhook.ts", "schema.prisma"],
-  },
-];
+const API_BASE = "http://127.0.0.1:8000";
+
+function mapSourceType(source: string): MemoryType {
+  switch (source) {
+    case "conversation":
+      return "EPI";
+    case "code":
+      return "SEM";
+    case "preference":
+      return "PRC";
+    default:
+      return "REF";
+  }
+}
+
+interface ApiMemoryResult {
+  id: string;
+  text: string;
+  source: string;
+  relevance_score: number;
+  metadata?: Record<string, unknown>;
+}
+
+function mapApiResult(item: ApiMemoryResult): MemoryEntry {
+  const type = mapSourceType(item.source);
+  const metadata = item.metadata ?? {};
+  const now = new Date();
+  const ts = typeof metadata.timestamp === "string" ? metadata.timestamp : now.toISOString();
+
+  const relativeTime = (() => {
+    try {
+      const diff = now.getTime() - new Date(ts).getTime();
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 1) return "just now";
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      return `${days}d ago`;
+    } catch {
+      return "just now";
+    }
+  })();
+
+  const truncatedContent =
+    item.text.length > 80 ? item.text.slice(0, 80) + "..." : item.text;
+
+  const relatedFiles: string[] | undefined =
+    typeof metadata.file_path === "string" && metadata.file_path
+      ? [metadata.file_path]
+      : Array.isArray(metadata.related_files)
+        ? (metadata.related_files as string[])
+        : undefined;
+
+  return {
+    id: item.id,
+    type,
+    timestamp: ts,
+    relativeTime,
+    source: item.source || "--",
+    content: truncatedContent,
+    fullContent: item.text,
+    confidence: item.relevance_score,
+    relatedFiles,
+  };
+}
 
 /* ─────────────────────── sub-components ─────────────────────── */
 
@@ -322,10 +314,53 @@ function DetailPanel({ entry }: { entry: MemoryEntry }) {
 
 function MemoryPanel() {
   const [state, setState] = useState<MemoryState>({
-    entries: DEMO_ENTRIES,
+    entries: [],
     selectedId: null,
     query: "",
   });
+  const [loading, setLoading] = useState<boolean>(false);
+  const [totalMemories, setTotalMemories] = useState<number | null>(null);
+
+  /* fetch stats on mount */
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/memory/stats`);
+        if (res.ok) {
+          const data = await res.json();
+          setTotalMemories(
+            typeof data.total_memories === "number" ? data.total_memories : null
+          );
+        }
+      } catch {
+        /* backend unreachable — keep totalMemories as null */
+      }
+    })();
+  }, []);
+
+  /* load recent memories on mount */
+  useEffect(() => {
+    loadRecent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadRecent = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/memory/query?limit=20`);
+      if (res.ok) {
+        const data = await res.json();
+        const entries: MemoryEntry[] = (data.results ?? []).map(mapApiResult);
+        setState((prev) => ({ ...prev, entries }));
+      } else {
+        setState((prev) => ({ ...prev, entries: [] }));
+      }
+    } catch {
+      setState((prev) => ({ ...prev, entries: [] }));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   const handleSelect = useCallback((id: string) => {
     setState((prev) => ({
@@ -334,22 +369,29 @@ function MemoryPanel() {
     }));
   }, []);
 
-  const handleSearch = useCallback(() => {
+  const handleSearch = useCallback(async () => {
     if (!state.query.trim()) {
-      setState((prev) => ({ ...prev, entries: DEMO_ENTRIES }));
+      loadRecent();
       return;
     }
-    const q = state.query.toLowerCase();
-    setState((prev) => ({
-      ...prev,
-      entries: DEMO_ENTRIES.filter(
-        (e) =>
-          e.content.toLowerCase().includes(q) ||
-          e.source.toLowerCase().includes(q) ||
-          e.type.toLowerCase().includes(q)
-      ),
-    }));
-  }, [state.query]);
+    setLoading(true);
+    try {
+      const res = await fetch(
+        `${API_BASE}/memory/query?q=${encodeURIComponent(state.query)}&limit=20`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const entries: MemoryEntry[] = (data.results ?? []).map(mapApiResult);
+        setState((prev) => ({ ...prev, entries }));
+      } else {
+        setState((prev) => ({ ...prev, entries: [] }));
+      }
+    } catch {
+      setState((prev) => ({ ...prev, entries: [] }));
+    } finally {
+      setLoading(false);
+    }
+  }, [state.query, loadRecent]);
 
   const selectedEntry = state.entries.find((e) => e.id === state.selectedId);
 
@@ -375,9 +417,17 @@ function MemoryPanel() {
           letterSpacing: "0.08em",
           color: C.t3,
           borderBottom: "1px solid rgba(255,255,255,0.04)",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
         }}
       >
-        MEMORY
+        <span>MEMORY</span>
+        {totalMemories !== null && (
+          <span style={{ color: C.t4 }}>
+            {totalMemories} entries
+          </span>
+        )}
       </div>
 
       {/* ── SEARCH ── */}
@@ -417,79 +467,7 @@ function MemoryPanel() {
           scrollbarColor: `${C.s3} transparent`,
         }}
       >
-        {state.entries.map((entry) => {
-          const isSelected = state.selectedId === entry.id;
-          return (
-            <div key={entry.id}>
-              <div
-                onClick={() => handleSelect(entry.id)}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "44px 80px 100px 1fr",
-                  gap: "8px",
-                  padding: "4px 12px",
-                  fontSize: "11px",
-                  fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-                  color: C.t2,
-                  backgroundColor: isSelected ? C.s2 : "transparent",
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
-                  cursor: "pointer",
-                  alignItems: "center",
-                  transition: "background-color 0.05s",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isSelected) {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = C.s1;
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSelected) {
-                    (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-                  }
-                }}
-              >
-                <TypeBadge type={entry.type} />
-                <span
-                  style={{
-                    fontSize: "10px",
-                    color: C.t3,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {entry.relativeTime}
-                </span>
-                <span
-                  style={{
-                    fontSize: "10px",
-                    color: entry.source === "--" ? C.t4 : C.t2,
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {entry.source}
-                </span>
-                <span
-                  style={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    color: C.t2,
-                  }}
-                >
-                  {entry.content}
-                </span>
-              </div>
-
-              {/* detail panel */}
-              {isSelected && selectedEntry && (
-                <DetailPanel entry={selectedEntry} />
-              )}
-            </div>
-          );
-        })}
-
-        {state.entries.length === 0 && (
+        {loading && (
           <div
             style={{
               padding: "16px 12px",
@@ -498,7 +476,93 @@ function MemoryPanel() {
               textAlign: "center",
             }}
           >
-            -- no results --
+            loading...
+          </div>
+        )}
+
+        {!loading &&
+          state.entries.map((entry) => {
+            const isSelected = state.selectedId === entry.id;
+            return (
+              <div key={entry.id}>
+                <div
+                  onClick={() => handleSelect(entry.id)}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "44px 80px 100px 1fr",
+                    gap: "8px",
+                    padding: "4px 12px",
+                    fontSize: "11px",
+                    fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+                    color: C.t2,
+                    backgroundColor: isSelected ? C.s2 : "transparent",
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                    cursor: "pointer",
+                    alignItems: "center",
+                    transition: "background-color 0.05s",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = C.s1;
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
+                    }
+                  }}
+                >
+                  <TypeBadge type={entry.type} />
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      color: C.t3,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {entry.relativeTime}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      color: entry.source === "--" ? C.t4 : C.t2,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {entry.source}
+                  </span>
+                  <span
+                    style={{
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      color: C.t2,
+                    }}
+                  >
+                    {entry.content}
+                  </span>
+                </div>
+
+                {/* detail panel */}
+                {isSelected && selectedEntry && (
+                  <DetailPanel entry={selectedEntry} />
+                )}
+              </div>
+            );
+          })}
+
+        {!loading && state.entries.length === 0 && (
+          <div
+            style={{
+              padding: "16px 12px",
+              fontSize: "10px",
+              color: C.t4,
+              textAlign: "center",
+            }}
+          >
+            no memories yet
           </div>
         )}
       </div>

@@ -71,6 +71,17 @@ const typeColors: Record<string, string> = {
 
 const API_BASE = "http://127.0.0.1:8000";
 
+const AVAILABLE_ROLES = [
+  { id: "code_engineer", label: "Code Engineer", color: ACCENT },
+  { id: "test_engineer", label: "Test Engineer", color: "#a855f7" },
+  { id: "security_auditor", label: "Security Auditor", color: GREEN },
+  { id: "ui_designer", label: "UI Designer", color: AMBER },
+  { id: "devops_engineer", label: "DevOps Engineer", color: "#ec4899" },
+  { id: "researcher", label: "Researcher", color: CYAN },
+  { id: "project_manager", label: "Project Manager", color: "#f97316" },
+  { id: "legal_reviewer", label: "Legal Reviewer", color: "#64748b" },
+];
+
 export default function MultiAgentPanel() {
   const [teamId, setTeamId] = useState<string | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -80,6 +91,7 @@ export default function MultiAgentPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [teamStatus, setTeamStatus] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(["code_engineer", "test_engineer", "security_auditor"]);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Cleanup polling on unmount
@@ -129,9 +141,9 @@ export default function MultiAgentPanel() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           goal: goal.trim(),
-          roles: ["code_engineer", "test_engineer", "security_auditor"],
+          roles: selectedRoles,
           project_path: "~/construct-projects/default",
-          max_parallel: 3,
+          max_parallel: selectedRoles.length,
         }),
       });
 
@@ -325,6 +337,56 @@ export default function MultiAgentPanel() {
           </span>
         )}
       </div>
+
+      {/* Role Picker */}
+      {!teamId && (
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "4px",
+            padding: "4px 12px",
+            borderBottom: `1px solid ${BORDER}`,
+            background: S1,
+            flexShrink: 0,
+            alignItems: "center",
+          }}
+        >
+          {AVAILABLE_ROLES.map((role) => {
+            const isSelected = selectedRoles.includes(role.id);
+            return (
+              <button
+                key={role.id}
+                onClick={() => {
+                  if (isSelected && selectedRoles.length <= 1) return;
+                  setSelectedRoles((prev) =>
+                    isSelected
+                      ? prev.filter((r) => r !== role.id)
+                      : [...prev, role.id]
+                  );
+                }}
+                style={{
+                  fontSize: "9px",
+                  fontWeight: 600,
+                  letterSpacing: "0.06em",
+                  padding: "2px 8px",
+                  borderRadius: "2px",
+                  cursor: isSelected && selectedRoles.length <= 1 ? "default" : "pointer",
+                  textTransform: "uppercase",
+                  fontFamily: ff,
+                  background: isSelected ? role.color : S2,
+                  color: isSelected ? "#fff" : TEXT_DIM,
+                  border: isSelected ? "none" : `1px solid ${BORDER}`,
+                  opacity: isSelected ? 1 : 0.6,
+                  transition: "opacity 0.15s, background 0.15s",
+                }}
+              >
+                {role.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Error */}
       {error && (
