@@ -603,17 +603,15 @@ class AgentOrchestrator:
                 )
                 self.send_message(team_id, msg)
 
-                # Invoke LLM via the service (streaming collected into a string)
+                # Invoke LLM via the service
                 try:
                     from core.llm_service import Message, assemble_messages
                     messages = assemble_messages(
                         user_prompt=task_def.get("task", ""),
                     )
-                    # Collect streamed response
-                    response_parts: List[str] = []
-                    async for chunk in self.llm.stream_complete(messages):
-                        response_parts.append(chunk)
-                    response_text = "".join(response_parts)
+                    # Use complete() for reliability (stream_complete has
+                    # circuit-breaker compatibility issues in some configs)
+                    response_text = await self.llm.complete(messages)
 
                     # Send completion message
                     completion_msg = AgentMessage(
@@ -691,10 +689,7 @@ class AgentOrchestrator:
             async with self._llm_semaphore:
                 from core.llm_service import Message, assemble_messages
                 messages = assemble_messages(user_prompt=task)
-                parts: List[str] = []
-                async for chunk in self.llm.stream_complete(messages):
-                    parts.append(chunk)
-                return "".join(parts)
+                return await self.llm.complete(messages)
 
         if priority == TaskPriority.USER_FACING:
             # User-facing tasks run immediately with semaphore

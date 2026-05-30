@@ -141,6 +141,9 @@ _tool_registry = None
 _agent_executor = None
 _session_store = None
 
+# Multi-agent orchestrator
+_orchestrator: Optional[Any] = None
+
 # Autonomous mode services
 _background_worker: Optional[Any] = None
 _checkpoint_manager: Optional[Any] = None
@@ -1847,9 +1850,300 @@ async def enable_thinking_mode(
     }
 
 
-# ---------------------------------------------------------------------------
-# Entry point (used by sidecar / direct execution)
-# ---------------------------------------------------------------------------
+# ===========================================================================
+# Multi-Agent Orchestration Endpoints
+# ===========================================================================
+
+class OrchestrateTeamRequest(BaseModel):
+    goal: str = Field(..., description="High-level goal for the team to accomplish")
+    roles: List[str] = Field(
+        default=["code_engineer", "test_engineer", "security_auditor"],
+        description="List of role IDs to include in the team",
+    )
+    project_path: str = Field(
+        "~/construct-projects/default",
+        description="Path to the project directory",
+    )
+    max_parallel: int = Field(3, ge=1, le=10, description="Max parallel agent tasks")
+
+
+class OrchestrateMessageRequest(BaseModel):
+    from_agent: str = Field("user", description="Sender agent ID (use 'user' for human)")
+    to_agent: Optional[str] = Field(None, description="Recipient agent ID (None = broadcast)")
+    content: str = Field(..., description="Message content")
+
+
+class OrchestrateTeamResponse(BaseModel):
+    team_id: str
+    goal: str
+    agents: List[dict]
+    status: str
+    message: str
+
+
+def _get_orchestrator():
+    """Return the orchestrator, initialising lazily if needed."""
+    global _orchestrator
+    if _orchestrator is None:
+        if _llm_service is None or _tool_registry is None:
+            raise HTTPException(status_code=503, detail="Agent services not yet initialised")
+        from agents.orchestrator import AgentOrchestrator
+        _orchestrator = AgentOrchestrator(
+            llm_service=_llm_service,
+            tool_registry=_tool_registry,
+            memory_client=_memory_client if "_memory_client" in dir() else None,
+        )
+        logger.info("AgentOrchestrator initialised lazily")
+    return _orchestrator
+
+
+@app.post("/orchestrate/team", response_model=OrchestrateTeamResponse)
+async def orchestrate_team(req: OrchestrateTeamRequest) -> dict:
+    """
+    Spawn a multi-agent team for a goal.
+
+    Creates an ephemeral team with the specified roles, decomposes the goal
+    into per-agent tasks, and begins parallel execution in the background.
+    Use GET /orchestrate/team/{team_id}/status to poll progress.
+    """
+    orch = _get_orchestrator()
+    try:
+        # Create the team with requested roles
+        team = orch.create_team(
+            goal=req.goal,
+            required_roles=req.roles,
+        )
+
+        # Expand project path
+        project_path = os.path.abspath(os.path.expanduser(req.project_path))
+        os.makedirs(project_path, exist_ok=True)
+
+        # Build per-agent tasks from the goal
+        # Each agent gets a task tailored to its role
+        agent_tasks = []
+        for role in team.agents:
+            task_desc = (
+                f"Team goal: {req.goal}\n"
+                f"Your role: {role.name} ({role.id})\n"
+                f"Role description: {role.description}\n"
+                f"Project path: {project_path}\n"
+                f"Contribute your expertise as {role.name} to achieve the team goal. "
+                f"Focus on what your role specialises in."
+            )
+            agent_tasks.append({
+                "agent_id": role.id,
+                "task": task_desc,
+                "task_id": f"task-{role.id}",
+                "project_path": project_path,
+            })
+
+        # Build agent info for response
+        agent_info = [
+            {
+                "id": role.id,
+                "role": role.id,
+                "name": role.name,
+                "status": "idle",
+                "task": "",
+                "progress": 0,
+                "description": role.description,
+                "tools": role.tools,
+                "personality": role.personality,
+            }
+            for role in team.agents
+        ]
+
+        # Kick off parallel execution in the background
+        async def _run_team():
+            """Background task: run all agents in parallel."""
+            try:
+                team.status = "active"
+                # Update agent statuses to working
+                for ai in agent_info:
+                    ai["status"] = "working"
+                    ai["task"] = req.goal[:60]
+
+                results = await orch.execute_parallel(team.id, agent_tasks)
+
+                # Update agent info from results
+                for result in results:
+                    aid = result.get("agent_id", "")
+                    for ai in agent_info:
+                        if ai["id"] == aid:
+                            ai["status"] = "completed" if result.get("status") == "completed" else "failed"
+                            ai["progress"] = 100 if result.get("status") == "completed" else 0
+                            break
+
+                # Merge results
+                orch.merge_results(team.id)
+
+            except Exception as exc:
+                logger.exception("Team execution failed for %s", team.id)
+                team.status = "failed"
+                for ai in agent_info:
+                    if ai["status"] == "working":
+                        ai["status"] = "failed"
+
+        # Store task info on the team for status polling
+        team._agent_info = agent_info  # type: ignore[attr-defined]
+        team._project_path = project_path  # type: ignore[attr-defined]
+
+        # Start execution in background
+        asyncio.create_task(_run_team())
+
+        return {
+            "team_id": team.id,
+            "goal": req.goal,
+            "agents": agent_info,
+            "status": "running",
+            "message": f"Team started with {len(team.agents)} agents in {len(req.roles)} roles",
+        }
+
+    except Exception as exc:
+        logger.error("Failed to orchestrate team: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/orchestrate/team/{team_id}/status")
+async def orchestrate_team_status(
+    team_id: str = Path(..., description="The team ID"),
+) -> dict:
+    """
+    Get real-time status of a multi-agent team.
+
+    Returns each agent's status, progress, recent messages, and the
+    overall team state (forming / active / paused / completed / failed).
+    """
+    orch = _get_orchestrator()
+    if team_id not in orch.teams:
+        raise HTTPException(status_code=404, detail=f"Team '{team_id}' not found")
+
+    team = orch.teams[team_id]
+
+    # Get agent info (updated by background task)
+    agent_info = getattr(team, "_agent_info", [])
+
+    # Build per-agent message logs
+    agents_with_messages = []
+    for ai in agent_info:
+        # Get recent messages for this agent
+        agent_messages = []
+        for msg in team.messages[-50:]:  # last 50 messages
+            if msg.to_agent == ai["id"] or msg.from_agent == ai["id"] or msg.to_agent is None:
+                agent_messages.append({
+                    "msg_id": msg.msg_id,
+                    "from": msg.from_agent,
+                    "to": msg.to_agent or "all",
+                    "type": msg.msg_type.value,
+                    "content": msg.content[:300],
+                    "timestamp": msg.timestamp,
+                })
+
+        agents_with_messages.append({
+            **ai,
+            "messages": agent_messages[-10:],  # Last 10 per agent
+        })
+
+    # Flatten all messages for the message feed
+    all_messages = []
+    for msg in team.messages[-100:]:
+        all_messages.append({
+            "msg_id": msg.msg_id,
+            "from": msg.from_agent,
+            "to": msg.to_agent or "all",
+            "type": msg.msg_type.value,
+            "content": msg.content[:300],
+            "timestamp": msg.timestamp,
+        })
+
+    return {
+        "team_id": team.id,
+        "goal": team.goal,
+        "status": team.status,
+        "agents": agents_with_messages,
+        "messages": all_messages,
+        "message_count": len(team.messages),
+        "elapsed_seconds": time.time() - team.created_at,
+        "results": team.results if team.status in ("completed", "failed") else None,
+    }
+
+
+@app.post("/orchestrate/team/{team_id}/message")
+async def orchestrate_team_message(
+    team_id: str = Path(..., description="The team ID"),
+    req: OrchestrateMessageRequest = None,
+) -> dict:
+    """
+    Send a message to a specific agent or broadcast to the team.
+
+    Set to_agent to null/None to broadcast to all agents.
+    Use from_agent='user' for human-originated messages.
+    """
+    orch = _get_orchestrator()
+    if team_id not in orch.teams:
+        raise HTTPException(status_code=404, detail=f"Team '{team_id}' not found")
+
+    try:
+        if req.to_agent is None:
+            # Broadcast
+            msg = orch.broadcast(
+                team_id=team_id,
+                from_agent=req.from_agent,
+                content=req.content,
+            )
+        else:
+            # Directed message
+            from agents.orchestrator import AgentMessage, MessageType
+            msg = AgentMessage(
+                msg_type=MessageType.REQUEST,
+                from_agent=req.from_agent,
+                to_agent=req.to_agent,
+                content=req.content,
+            )
+            orch.send_message(team_id, msg)
+
+        return {
+            "sent": True,
+            "msg_id": msg.msg_id,
+            "from": req.from_agent,
+            "to": req.to_agent or "all",
+            "content": req.content[:200],
+        }
+
+    except Exception as exc:
+        logger.error("Failed to send team message: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/orchestrate/roles")
+async def orchestrate_list_roles() -> dict:
+    """List all available agent roles with descriptions and tools."""
+    try:
+        from agents.roles import ALL_ROLES, ROLE_MAP
+        return {
+            "roles": [
+                {
+                    "id": role.id,
+                    "name": role.name,
+                    "description": role.description,
+                    "tools": role.tools,
+                    "triggers": role.triggers,
+                    "personality": role.personality,
+                }
+                for role in ALL_ROLES
+            ],
+            "total": len(ALL_ROLES),
+        }
+    except Exception as exc:
+        logger.error("Failed to list roles: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.get("/orchestrate/status")
+async def orchestrate_status() -> dict:
+    """Get orchestrator status including active teams and queue info."""
+    orch = _get_orchestrator()
+    return orch.get_status()
 
 if __name__ == "__main__":
     import uvicorn
