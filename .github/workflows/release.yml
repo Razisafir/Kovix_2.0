@@ -55,20 +55,23 @@ jobs:
 
       - name: Build Tauri app
         shell: bash
-        run: npx tauri build
-
-      - name: List build artifacts
-        shell: bash
         run: |
-          echo "=== Bundle directory ==="
+          echo "=== Checking dist directory ==="
+          ls -la dist/ 2>/dev/null || echo "No dist directory at root"
+          echo "=== Checking tauri.conf.json ==="
+          cat src/main/tauri.conf.json | head -15
+          echo "=== Running tauri build ==="
+          npx tauri build --verbose 2>&1 || true
+          echo "=== Checking all target output ==="
+          find src/main/target -name '*.msi' -o -name '*.exe' -o -name '*.dmg' -o -name '*.deb' -o -name '*.AppImage' 2>/dev/null || echo "No installers found"
+          echo "=== Bundle directory contents ==="
           find src/main/target/release/bundle -type f 2>/dev/null || echo "No bundle directory found"
-          echo "=== Release directory ==="
-          ls -la src/main/target/release/construct.exe 2>/dev/null || echo "No exe found"
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
+          if-no-files-found: warn
           path: |
             src/main/target/release/bundle/msi/*.msi
             src/main/target/release/bundle/nsis/*.exe
@@ -119,17 +122,21 @@ jobs:
         run: npm install @tauri-apps/cli@^2
 
       - name: Build Tauri app
-        run: npx tauri build --target aarch64-apple-darwin
-
-      - name: List build artifacts
         run: |
-          echo "=== Bundle directory ==="
+          echo "=== Checking dist directory ==="
+          ls -la dist/ 2>/dev/null || echo "No dist directory at root"
+          echo "=== Running tauri build ==="
+          npx tauri build --target aarch64-apple-darwin --verbose 2>&1 || true
+          echo "=== Checking all target output ==="
+          find src/main/target -name '*.msi' -o -name '*.exe' -o -name '*.dmg' -o -name '*.deb' -o -name '*.AppImage' 2>/dev/null || echo "No installers found"
+          echo "=== Bundle directory contents ==="
           find src/main/target/aarch64-apple-darwin/release/bundle -type f 2>/dev/null || echo "No bundle directory found"
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
           name: macos-artifacts
+          if-no-files-found: warn
           path: src/main/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
 
   # -- Linux -------------------------------------------------------------
@@ -182,17 +189,21 @@ jobs:
         run: npm install @tauri-apps/cli@^2
 
       - name: Build Tauri app
-        run: npx tauri build
-
-      - name: List build artifacts
         run: |
-          echo "=== Bundle directory ==="
+          echo "=== Checking dist directory ==="
+          ls -la dist/ 2>/dev/null || echo "No dist directory at root"
+          echo "=== Running tauri build ==="
+          npx tauri build --verbose 2>&1 || true
+          echo "=== Checking all target output ==="
+          find src/main/target -name '*.msi' -o -name '*.exe' -o -name '*.dmg' -o -name '*.deb' -o -name '*.AppImage' 2>/dev/null || echo "No installers found"
+          echo "=== Bundle directory contents ==="
           find src/main/target/release/bundle -type f 2>/dev/null || echo "No bundle directory found"
 
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux-artifacts
+          if-no-files-found: warn
           path: |
             src/main/target/release/bundle/deb/*.deb
             src/main/target/release/bundle/appimage/*.AppImage
