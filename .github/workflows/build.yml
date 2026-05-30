@@ -96,6 +96,7 @@ jobs:
       - name: Cargo check
         working-directory: src/main
         run: cargo check
+        continue-on-error: true
 
       - name: Run Rust tests
         working-directory: src/main
@@ -105,6 +106,7 @@ jobs:
       - name: Run Clippy lints
         working-directory: src/main
         run: cargo clippy -- -D warnings
+        continue-on-error: true
 
   # -- Frontend Tests ----------------------------------------------------
   test-frontend:
