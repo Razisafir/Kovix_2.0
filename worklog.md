@@ -360,3 +360,31 @@ Stage Summary:
 - 0 critical failures, 2 partial, 1 skip
 - Key findings: MCP endpoints not registered in app.py, git_branch not in status response, README pattern count off by 1
 - VERIFICATION_REPORT.md committed and pushed
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix 3 Beta Blockers for Construct AI Agent
+
+Work Log:
+- BLOCKER 1: Updated pyinstaller_build.py with --hidden-import for agents.roles.*, core.*, tools.*, memory.*, skills.*, mcp.* modules
+- BLOCKER 1: Made _load_role() in orchestrator.py try 4 strategies: direct import, file load, ROLE_MAP, package attributes (robust for PyInstaller)
+- BLOCKER 2: Created agent-backend/agents/roles/architect.py and reviewer.py (10 roles total now)
+- BLOCKER 2: Updated agents/roles/__init__.py to export ARCHITECT, REVIEWER and include in ALL_ROLES/ROLE_MAP
+- BLOCKER 2: Verified all 10 roles load correctly via direct import and ROLE_MAP
+- BLOCKER 3: Replaced broken invoke('read_file') calls with readTextFile from @tauri-apps/plugin-fs
+- BLOCKER 3: Added applyAcceptedDiffs() that reconstructs file from accepted hunks and writes to disk via writeTextFile
+- BLOCKER 3: Added diff toolbar with green "Apply Accepted Changes" and red "Reject All" buttons
+- BLOCKER 3: Added fs:allow-read-text-file, fs:allow-write-text-file, fs:allow-exists, fs:allow-mkdir to capabilities
+- BLOCKER 3: TypeScript compiles cleanly with npx tsc --noEmit
+- Committed 2 commits:
+  1. fix(sidecar+multi-agent): add hidden imports for PyInstaller, 2 new roles, robust role loading
+  2. fix(diff): write accepted changes to disk via tauri-plugin-fs
+- Pushed to origin/main
+- Tagged v0.1.0-beta.2 and pushed tag
+
+Stage Summary:
+- All 3 beta blockers fixed and committed
+- v0.1.0-beta.2 tag pushed (will trigger CI release build)
+- BLOCKER 1: PyInstaller now includes all backend modules
+- BLOCKER 2: 10 roles available (code_engineer, test_engineer, security_auditor, devops_engineer, architect, reviewer, researcher, project_manager, legal_reviewer, ui_designer)
+- BLOCKER 3: Diff Accept → Apply → file changes on disk (using tauri-plugin-fs writeTextFile)
