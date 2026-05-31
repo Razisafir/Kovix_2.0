@@ -887,8 +887,12 @@ class AgentOrchestrator:
     def _load_role(self, role_name: str) -> AgentRole:
         """Load a predefined agent role from the roles directory.
 
-        Supports dynamic import of role modules. Falls back to a
-        built-in registry lookup for well-known roles.
+        Three strategies (in order):
+        1. Cached role (fast path)
+        2. Direct Python import of agents.roles.<name> (works in PyInstaller
+           bundles where .py files are compiled into the archive)
+        3. Dynamic import from roles/ directory on disk (dev mode)
+        4. Fallback via ROLE_MAP from the roles package
 
         Args:
             role_name: Role identifier (matches filename without .py)
@@ -900,7 +904,21 @@ class AgentOrchestrator:
         if role_name in self._role_cache:
             return self._role_cache[role_name]
 
-        # Attempt dynamic import from roles/ directory
+        # Strategy 1: Direct Python import (works in PyInstaller bundles)
+        try:
+            import importlib as _il
+            module = _il.import_module(f".roles.{role_name}", package="agents")
+            if hasattr(module, "ROLE"):
+                role: AgentRole = module.ROLE  # type: ignore[no-redef]
+                self._role_cache[role_name] = role
+                logger.debug("Loaded role '%s' via direct import", role_name)
+                return role
+        except ImportError:
+            pass  # Module not found, try next strategy
+        except Exception as exc:
+            logger.debug("Direct import failed for role '%s': %s", role_name, exc)
+
+        # Strategy 2: Dynamic import from roles/ directory on disk (dev mode)
         roles_dir = os.path.join(os.path.dirname(__file__), "roles")
         role_file = os.path.join(roles_dir, f"{role_name}.py")
 
@@ -911,23 +929,38 @@ class AgentOrchestrator:
             if spec and spec.loader:
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
-                role: AgentRole = module.ROLE
+                role: AgentRole = module.ROLE  # type: ignore[no-redef]
                 self._role_cache[role_name] = role
+                logger.debug("Loaded role '%s' from file: %s", role_name, role_file)
                 return role
 
-        # Fallback: attempt importing via the roles package
+        # Strategy 3: Fallback via ROLE_MAP from the roles package
+        try:
+            from .roles import ROLE_MAP
+
+            if role_name in ROLE_MAP:
+                role: AgentRole = ROLE_MAP[role_name]  # type: ignore[no-redef]
+                self._role_cache[role_name] = role
+                logger.debug("Loaded role '%s' from ROLE_MAP", role_name)
+                return role
+        except Exception:
+            logger.debug("ROLE_MAP fallback failed for role '%s'", role_name)
+
+        # Strategy 4: Last resort — try uppercase attribute on package
         try:
             from . import roles as roles_pkg
 
             if hasattr(roles_pkg, role_name.upper()):
                 role: AgentRole = getattr(roles_pkg, role_name.upper())  # type: ignore[no-redef]
                 self._role_cache[role_name] = role
+                logger.debug("Loaded role '%s' via package attribute", role_name)
                 return role
         except Exception:
-            logger.debug("Fallback import failed for role '%s'", role_name)
+            logger.debug("Package attribute fallback failed for role '%s'", role_name)
 
         raise FileNotFoundError(
-            f"Role '{role_name}' not found at {role_file} and not in built-in registry"
+            f"Role '{role_name}' not found. Tried: direct import, "
+            f"file load ({role_file}), ROLE_MAP, and package attributes"
         )
 
     def list_active_teams(self) -> List[str]:
