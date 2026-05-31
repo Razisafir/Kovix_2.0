@@ -10,6 +10,28 @@
 
 Construct is a desktop AI coding agent powered by a persistent memory system and multi-provider LLM integration. It understands your codebase, remembers every interaction, and autonomously plans, codes, tests, and commits.
 
+## Screenshots
+
+| Splash Screen | Main IDE View | Command Palette |
+|:---:|:---:|:---:|
+| ![Splash Screen](docs/screenshots/splash-screen.png) | ![Main IDE](docs/screenshots/main-ide-view.png) | ![Command Palette](docs/screenshots/command-palette.png) |
+
+| Agent Panel | Memory Panel | Chat Panel |
+|:---:|:---:|:---:|
+| ![Agent Panel](docs/screenshots/agent-panel.png) | ![Memory Panel](docs/screenshots/memory-panel.png) | ![Chat Panel](docs/screenshots/chat-panel.png) |
+
+| Skills Marketplace | MCP Connectors | Multi-Agent |
+|:---:|:---:|:---:|
+| ![Skills](docs/screenshots/skills-marketplace.png) | ![MCP](docs/screenshots/mcp-connectors.png) | ![Multi-Agent](docs/screenshots/multi-agent-panel.png) |
+
+| Autonomous Mode | Diff/Changes | Screen Control |
+|:---:|:---:|:---:|
+| ![Autonomous](docs/screenshots/autonomous-mode.png) | ![Changes](docs/screenshots/changes-diff-panel.png) | ![Screen](docs/screenshots/screen-control.png) |
+
+| Settings | Onboarding | Sidebar Collapsed |
+|:---:|:---:|:---:|
+| ![Settings](docs/screenshots/settings-panel.png) | ![Onboarding](docs/screenshots/onboarding-modal.png) | ![No Sidebar](docs/screenshots/sidebar-collapsed.png) |
+
 ## Capabilities
 
 - **Autonomous Agent** — Describe a goal, watch it plan, code, test, and commit
