@@ -18,11 +18,10 @@ export function ProgressRing({
   return (
     <span
       className="inline-flex items-center gap-2 font-mono text-[10px] whitespace-pre"
-      style={{ color: "#6366f1" }}
     >
-      <span style={{ color: "#6366f1" }}>{bar}</span>
+      <span className="text-accent-cyan">{bar}</span>
       {showPercent && (
-        <span style={{ color: "#e2e2e2", fontSize: 10 }}>
+        <span className="text-text-primary text-[10px]">
           {Math.round(clamped)}%
         </span>
       )}

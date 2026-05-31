@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 
 /* ─────────────────────── types ─────────────────────── */
 
@@ -18,31 +18,13 @@ export interface TerminalOutputProps {
 
 /* ─────────────────────── styles ─────────────────────── */
 
-const COLORS = {
-  base: "#0c0c10",
-  s1: "#12121a",
-  s2: "#1a1a24",
-  s3: "#22222e",
-  accent: "#6366f1",
-  t1: "#e8e8ec",
-  t2: "#94949c",
-  t3: "#6b6b73",
-  t4: "#4a4a52",
-  inf: "#6366f1",
-  ok: "#22c55e",
-  wrn: "#f59e0b",
-  err: "#ef4444",
-  wrk: "#6366f1",
-  dbg: "#4a4a52",
-};
-
 const levelColor: Record<LogEntry["level"], string> = {
-  INF: COLORS.inf,
-  OK: COLORS.ok,
-  WRN: COLORS.wrn,
-  ERR: COLORS.err,
-  WRK: COLORS.wrk,
-  DBG: COLORS.dbg,
+  INF: "var(--c-accent)",
+  OK: "var(--c-ok)",
+  WRN: "var(--c-gold)",
+  ERR: "var(--c-err)",
+  WRK: "var(--c-accent)",
+  DBG: "var(--c-text4)",
 };
 
 /* ─────────────────────── component ─────────────────────── */
@@ -57,7 +39,6 @@ export function TerminalOutput({
   const inputRef = useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState("");
 
-  /* auto-scroll to bottom on new logs */
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -80,36 +61,20 @@ export function TerminalOutput({
 
   return (
     <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        backgroundColor: COLORS.s1,
-        border: "1px solid rgba(255,255,255,0.04)",
-        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-      }}
+      className="flex flex-col h-full glass-panel font-mono"
     >
-      {/* log rows */}
       <div
         ref={scrollRef}
         onClick={focusInput}
+        className="flex-1 overflow-auto px-2 py-1.5"
         style={{
-          flex: 1,
-          overflow: "auto",
-          padding: "6px 8px",
           maxHeight,
           scrollbarWidth: "thin",
-          scrollbarColor: `${COLORS.s3} transparent`,
+          scrollbarColor: "var(--c-s3) transparent",
         }}
       >
         {logs.length === 0 && (
-          <div
-            style={{
-              fontSize: "10px",
-              color: COLORS.t4,
-              fontFamily: 'inherit',
-            }}
-          >
+          <div className="text-[10px] font-mono" style={{ color: "var(--c-text4)" }}>
             -- no output --
           </div>
         )}
@@ -117,98 +82,47 @@ export function TerminalOutput({
         {logs.map((log, i) => (
           <div
             key={i}
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "8px",
-              padding: "1px 0",
-              fontFamily: 'inherit',
-            }}
+            className="flex items-start gap-2 py-[1px] font-mono"
           >
-            {/* timestamp */}
             <span
-              style={{
-                fontSize: "10px",
-                color: COLORS.t4,
-                fontFamily: 'inherit',
-                whiteSpace: "nowrap",
-                minWidth: "56px",
-                userSelect: "none",
-              }}
+              className="text-[10px] whitespace-nowrap min-w-[56px] select-none font-mono"
+              style={{ color: "var(--c-text4)" }}
             >
               {log.timestamp}
             </span>
 
-            {/* level badge */}
             <span
-              style={{
-                fontSize: "9px",
-                fontWeight: 600,
-                color: levelColor[log.level],
-                backgroundColor: COLORS.s2,
-                borderRadius: "2px",
-                padding: "1px 4px",
-                whiteSpace: "nowrap",
-                minWidth: "28px",
-                textAlign: "center",
-                letterSpacing: "0.04em",
-                fontFamily: 'inherit',
-              }}
+              className="text-[9px] font-semibold whitespace-nowrap min-w-[28px] text-center tracking-wider font-mono rounded px-1 py-[1px]"
+              style={{ color: levelColor[log.level], backgroundColor: "var(--c-s2)" }}
             >
               {log.level}
             </span>
 
-            {/* source (optional) */}
             {log.source && (
               <span
-                style={{
-                  fontSize: "9px",
-                  color: COLORS.t4,
-                  fontFamily: 'inherit',
-                  whiteSpace: "nowrap",
-                  minWidth: "60px",
-                  textAlign: "right",
-                  userSelect: "none",
-                }}
+                className="text-[9px] whitespace-nowrap min-w-[60px] text-right select-none font-mono"
+                style={{ color: "var(--c-text4)" }}
               >
                 {log.source}
               </span>
             )}
 
-            {/* message */}
             <span
-              style={{
-                fontSize: "11px",
-                color: COLORS.t1,
-                fontFamily: 'inherit',
-                lineHeight: "16px",
-                wordBreak: "break-all",
-                flex: 1,
-              }}
+              className="text-[11px] flex-1 font-mono leading-4"
+              style={{ color: "var(--c-text)", wordBreak: "break-all" }}
             >
               {log.message}
             </span>
           </div>
         ))}
 
-        {/* input line */}
         {showInput && (
           <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              marginTop: "4px",
-              fontFamily: 'inherit',
-            }}
+            className="flex items-center gap-1.5 mt-1 font-mono"
           >
             <span
-              style={{
-                fontSize: "12px",
-                color: COLORS.accent,
-                fontFamily: 'inherit',
-                userSelect: "none",
-              }}
+              className="text-xs select-none font-mono"
+              style={{ color: "var(--c-accent)" }}
             >
               &gt;
             </span>
@@ -218,41 +132,11 @@ export function TerminalOutput({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleSubmit}
-              style={{
-                flex: 1,
-                background: "transparent",
-                border: "none",
-                outline: "none",
-                fontSize: "12px",
-                color: COLORS.t1,
-                fontFamily: 'inherit',
-                caretColor: COLORS.accent,
-                padding: 0,
-              }}
+              className="flex-1 bg-transparent border-none outline-none text-xs font-mono p-0"
+              style={{ color: "var(--c-text)", caretColor: "var(--c-accent)" }}
               spellCheck={false}
               autoComplete="off"
             />
-            {/* blinking cursor indicator (CSS handles blink) */}
-            <style>{`
-              .terminal-cursor {
-                animation: terminal-blink 1s step-end infinite;
-              }
-              @keyframes terminal-blink {
-                0%, 100% { opacity: 1; }
-                50% { opacity: 0; }
-              }
-            `}</style>
-            <span
-              className="terminal-cursor"
-              style={{
-                fontSize: "12px",
-                color: COLORS.accent,
-                fontFamily: 'inherit',
-                userSelect: "none",
-              }}
-            >
-              _
-            </span>
           </div>
         )}
       </div>

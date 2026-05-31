@@ -6,13 +6,6 @@ import {
 } from "react";
 import { FileCode, X } from "lucide-react";
 
-const C = {
-  base: "#0c0c10", s1: "#12121a", s2: "#1a1a24", s3: "#22222e",
-  accent: "#6366f1", t1: "#e8e8ec", t2: "#94949c", t3: "#6b6b73", t4: "#4a4a52",
-  ok: "#10b981", wrn: "#f59e0b", err: "#ef4444", inf: "#60a5fa"
-};
-const ff = '"Geist Mono", "JetBrains Mono", monospace';
-
 export interface FileChip {
   path: string;
   name: string;
@@ -44,27 +37,18 @@ export function FileReferenceInput({
   const checkTrigger = useCallback(() => {
     const beforeCursor = value.slice(0, cursorPos);
     const match = beforeCursor.match(/@([\w./-]*)$/);
-    if (match) {
-      setFilter(match[1].toLowerCase());
-      setShowAutocomplete(true);
-    } else {
-      setShowAutocomplete(false);
-    }
+    if (match) { setFilter(match[1].toLowerCase()); setShowAutocomplete(true); }
+    else { setShowAutocomplete(false); }
   }, [value, cursorPos]);
 
-  useEffect(() => {
-    checkTrigger();
-  }, [checkTrigger]);
+  useEffect(() => { checkTrigger(); }, [checkTrigger]);
 
-  const filtered = projectFiles
-    .filter((f) => f.toLowerCase().includes(filter))
-    .slice(0, 8);
+  const filtered = projectFiles.filter((f) => f.toLowerCase().includes(filter)).slice(0, 8);
 
   const attachFile = (path: string) => {
     const name = path.split("/").pop() || path;
     const newFiles = [...attachedFiles, { path, name }];
     onFileAttach(newFiles);
-    // Remove @filter from input
     const before = value.slice(0, cursorPos).replace(/@[\w./-]*$/, "");
     const after = value.slice(cursorPos);
     onChange(before + after);
@@ -77,47 +61,25 @@ export function FileReferenceInput({
   };
 
   return (
-    <div style={{ position: "relative", fontFamily: ff }}>
+    <div className="relative font-mono">
       {/* Attached file chips */}
       {attachedFiles.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 8 }}>
+        <div className="flex flex-wrap gap-[5px] mb-2">
           {attachedFiles.map((file) => (
             <span
               key={file.path}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 5,
-                padding: "2px 8px",
-                background: C.s2,
-                color: C.t2,
-                borderRadius: 2,
-                fontSize: 10,
-                letterSpacing: "0.04em",
-                fontFamily: ff,
-                border: `1px solid ${C.s3}`,
-              }}
+              className="flex items-center gap-[5px] px-2 py-[2px] rounded-sm text-[10px] tracking-wider font-mono"
+              style={{ background: "var(--c-s2)", color: "var(--c-text2)", border: "1px solid var(--c-s3)" }}
             >
-              <FileCode size={10} color={C.accent} />
+              <FileCode size={10} style={{ color: "var(--c-accent)" }} />
               {file.name}
               <button
                 onClick={() => removeFile(file.path)}
                 title="Remove file"
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  padding: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  color: C.t3,
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.color = C.err;
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.color = C.t3;
-                }}
+                className="bg-transparent border-none cursor-pointer p-0 flex items-center"
+                style={{ color: "var(--c-text3)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--c-err)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = "var(--c-text3)"; }}
               >
                 <X size={10} />
               </button>
@@ -127,105 +89,37 @@ export function FileReferenceInput({
       )}
 
       {/* Input with @ autocomplete */}
-      <div style={{ position: "relative" }}>
+      <div className="relative">
         <textarea
           ref={inputRef}
           value={value}
-          onChange={(e) => {
-            onChange(e.target.value);
-            setCursorPos(e.target.selectionStart);
-          }}
+          onChange={(e) => { onChange(e.target.value); setCursorPos(e.target.selectionStart); }}
           onSelect={(e) => setCursorPos(e.currentTarget.selectionStart)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              onSubmit();
-            }
-          }}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); onSubmit(); } }}
           placeholder="Type @ to reference a file..."
-          style={{
-            width: "100%",
-            height: 80,
-            padding: "8px 10px",
-            background: C.s1,
-            border: `1px solid ${C.s3}`,
-            borderRadius: 2,
-            fontSize: 11,
-            color: C.t1,
-            fontFamily: ff,
-            outline: "none",
-            resize: "none" as const,
-            boxSizing: "border-box",
-          }}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = C.accent;
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = C.s3;
-          }}
+          className="w-full p-2 text-[11px] font-mono outline-none resize-none box-border rounded-sm"
+          style={{ height: 80, background: "var(--c-s1)", border: "1px solid var(--c-s3)", color: "var(--c-text)" }}
+          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--c-accent)"; }}
+          onBlur={(e) => { e.currentTarget.style.borderColor = "var(--c-s3)"; }}
         />
 
         {/* Autocomplete dropdown */}
         {showAutocomplete && filtered.length > 0 && (
           <div
-            style={{
-              position: "absolute",
-              bottom: "100%",
-              left: 0,
-              marginBottom: 4,
-              width: 256,
-              maxHeight: 160,
-              overflowY: "auto",
-              background: C.s1,
-              border: `1px solid ${C.s3}`,
-              borderRadius: 2,
-              zIndex: 50,
-              fontFamily: ff,
-            }}
+            className="absolute left-0 w-[256px] max-h-[160px] overflow-y-auto z-50 font-mono rounded-sm"
+            style={{ bottom: "100%", marginBottom: 4, background: "var(--c-s1)", border: "1px solid var(--c-s3)" }}
           >
             {filtered.map((file) => (
               <button
                 key={file}
                 onClick={() => attachFile(file)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  width: "100%",
-                  padding: "6px 10px",
-                  fontSize: 11,
-                  color: C.t2,
-                  background: "transparent",
-                  border: "none",
-                  borderBottom: `1px solid ${C.s2}`,
-                  cursor: "pointer",
-                  textAlign: "left",
-                  fontFamily: ff,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = C.s2;
-                  e.currentTarget.style.color = C.t1;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = C.t2;
-                }}
+                className="flex items-center gap-2 w-full px-2.5 py-1.5 text-[11px] bg-transparent border-none cursor-pointer text-left font-mono whitespace-nowrap overflow-hidden text-ellipsis"
+                style={{ color: "var(--c-text2)", borderBottom: "1px solid var(--c-s2)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "var(--c-s2)"; e.currentTarget.style.color = "var(--c-text)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--c-text2)"; }}
               >
-                <FileCode
-                  size={12}
-                  color={C.accent}
-                  style={{ flexShrink: 0 }}
-                />
-                <span style={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}>
-                  {file}
-                </span>
+                <FileCode size={12} className="shrink-0" style={{ color: "var(--c-accent)" }} />
+                <span className="overflow-hidden text-ellipsis whitespace-nowrap">{file}</span>
               </button>
             ))}
           </div>

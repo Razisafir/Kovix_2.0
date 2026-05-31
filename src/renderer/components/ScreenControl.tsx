@@ -1,104 +1,32 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import {
-  Monitor,
-  Shield,
-  ShieldCheck,
-  Play,
-  Pause,
-  Square,
-  Repeat,
-  MousePointer,
-  Keyboard,
-  Type,
-  ScrollText,
-  Move,
-  Camera,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  ChevronDown,
-  ChevronRight,
-  Zap,
-  Eye,
-  Trash2,
+  Monitor, Shield, ShieldCheck, Play, Pause, Square, Repeat,
+  MousePointer, Keyboard, Type, ScrollText, Move, Camera, Clock,
+  CheckCircle, AlertTriangle, ChevronDown, ChevronRight, Zap, Eye, Trash2,
 } from "lucide-react";
 
-const C = {
-  base: "#0c0c10", s1: "#12121a", s2: "#1a1a24", s3: "#22222e",
-  accent: "#6366f1", t1: "#e8e8ec", t2: "#94949c", t3: "#6b6b73", t4: "#4a4a52",
-  ok: "#10b981", wrn: "#f59e0b", err: "#ef4444", inf: "#60a5fa"
-};
 const ff = '"Geist Mono", "JetBrains Mono", monospace';
 
-interface ScreenAction {
-  id: string;
-  actionType: string;
-  params: Record<string, unknown>;
-  timestamp: number;
-  approved: boolean;
-}
-
-interface Screenshot {
-  id: string;
-  timestamp: number;
-  label: string;
-}
+interface ScreenAction { id: string; actionType: string; params: Record<string, unknown>; timestamp: number; approved: boolean; }
+interface Screenshot { id: string; timestamp: number; label: string; }
 
 const actionTypeIcons: Record<string, ReactNode> = {
-  click: <MousePointer size={12} />,
-  type: <Type size={12} />,
-  key: <Keyboard size={12} />,
-  scroll: <ScrollText size={12} />,
-  drag: <Move size={12} />,
-  screenshot: <Camera size={12} />,
+  click: <MousePointer size={12} />, type: <Type size={12} />, key: <Keyboard size={12} />,
+  scroll: <ScrollText size={12} />, drag: <Move size={12} />, screenshot: <Camera size={12} />,
 };
 
 const actionTypeColors: Record<string, string> = {
-  click: C.accent,
-  type: C.ok,
-  key: "#cba6f7",
-  scroll: C.wrn,
-  drag: "#fab387",
-  screenshot: "#94e2d5",
+  click: "var(--c-accent)", type: "var(--c-running)", key: "#cba6f7",
+  scroll: "var(--c-gold)", drag: "#fab387", screenshot: "#94e2d5",
 };
 
 const demoActions: ScreenAction[] = [
-  {
-    id: "1",
-    actionType: "click",
-    params: { x: 482, y: 315, target: "submit-button" },
-    timestamp: Date.now() - 300000,
-    approved: true,
-  },
-  {
-    id: "2",
-    actionType: "type",
-    params: { text: "admin@example.com", target: "email-input" },
-    timestamp: Date.now() - 240000,
-    approved: true,
-  },
-  {
-    id: "3",
-    actionType: "key",
-    params: { key: "Enter" },
-    timestamp: Date.now() - 180000,
-    approved: true,
-  },
-  {
-    id: "4",
-    actionType: "scroll",
-    params: { direction: "down", amount: 300 },
-    timestamp: Date.now() - 120000,
-    approved: true,
-  },
-  {
-    id: "5",
-    actionType: "screenshot",
-    params: { fullPage: false },
-    timestamp: Date.now() - 60000,
-    approved: true,
-  },
+  { id: "1", actionType: "click", params: { x: 482, y: 315, target: "submit-button" }, timestamp: Date.now() - 300000, approved: true },
+  { id: "2", actionType: "type", params: { text: "admin@example.com", target: "email-input" }, timestamp: Date.now() - 240000, approved: true },
+  { id: "3", actionType: "key", params: { key: "Enter" }, timestamp: Date.now() - 180000, approved: true },
+  { id: "4", actionType: "scroll", params: { direction: "down", amount: 300 }, timestamp: Date.now() - 120000, approved: true },
+  { id: "5", actionType: "screenshot", params: { fullPage: false }, timestamp: Date.now() - 60000, approved: true },
 ];
 
 const demoScreenshots: Screenshot[] = [
@@ -126,485 +54,182 @@ export default function ScreenControl() {
   const [actions, setActions] = useState<ScreenAction[]>(demoActions);
   const [expandedAction, setExpandedAction] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"recorder" | "screenshots" | "audit">("recorder");
-  // file input ref reserved for future file upload functionality
 
-  const formatTime = (ts: number) => {
-    const d = new Date(ts);
-    return d.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  };
-
-  const toggleRecording = () => {
-    setIsRecording(!isRecording);
-    if (!isRecording) {
-      const newAction: ScreenAction = {
-        id: `action-${Date.now()}`,
-        actionType: "key",
-        params: { key: "Record started" },
-        timestamp: Date.now(),
-        approved: true,
-      };
-      setActions([...actions, newAction]);
-    }
-  };
-
-  const deleteAction = (id: string) => {
-    setActions(actions.filter((a) => a.id !== id));
-  };
-
-  // ── Shared Styles ──────────────────────────────────────────
-  const tabBtnBase: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: "4px",
-    padding: "4px 10px",
-    borderRadius: "2px",
-    fontSize: "10px",
-    fontWeight: 500,
-    fontFamily: ff,
-    border: "none",
-    cursor: "pointer",
-    transition: "background-color 0.15s, color 0.15s",
-  };
+  const formatTime = (ts: number) => { const d = new Date(ts); return d.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" }); };
+  const toggleRecording = () => { setIsRecording(!isRecording); if (!isRecording) { setActions([...actions, { id: `action-${Date.now()}`, actionType: "key", params: { key: "Record started" }, timestamp: Date.now(), approved: true }]); } };
+  const deleteAction = (id: string) => { setActions(actions.filter((a) => a.id !== id)); };
 
   const smallBtn = (bg: string, color: string): React.CSSProperties => ({
-    display: "flex",
-    alignItems: "center",
-    gap: "4px",
-    padding: "4px 10px",
-    borderRadius: "2px",
-    fontSize: "10px",
-    fontWeight: 500,
-    fontFamily: ff,
-    border: "none",
-    cursor: "pointer",
-    backgroundColor: bg,
-    color: color,
-    transition: "background-color 0.15s",
+    display: "flex", alignItems: "center", gap: "4px", padding: "4px 10px", borderRadius: "2px",
+    fontSize: "10px", fontWeight: 500, fontFamily: ff, border: "none", cursor: "pointer",
+    backgroundColor: bg, color: color, transition: "background-color 0.15s",
   });
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "auto", fontFamily: ff }}>
+    <div className="flex flex-col h-full overflow-auto font-mono">
       {/* Header */}
-      <div style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "12px 16px",
-        borderBottom: `1px solid ${C.s3}`,
-        backgroundColor: C.s1,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Monitor size={16} style={{ color: C.accent }} />
-          <span style={{ fontSize: "13px", fontWeight: 600, color: C.t1 }}>Screen Control</span>
-          <span style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "4px",
-            padding: "2px 8px",
-            borderRadius: "2px",
-            fontSize: "9px",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.05em",
-            backgroundColor: sandboxMode ? `${C.ok}20` : `${C.wrn}20`,
-            color: sandboxMode ? C.ok : C.wrn,
-          }}>
+      <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid var(--c-s3)", backgroundColor: "var(--c-s1)" }}>
+        <div className="flex items-center gap-2">
+          <Monitor size={16} style={{ color: "var(--c-accent)" }} />
+          <span className="text-[13px] font-semibold" style={{ color: "var(--c-text)" }}>Screen Control</span>
+          <span className="inline-flex items-center gap-1 px-2 py-[2px] rounded-sm text-[9px] font-semibold uppercase tracking-wider" style={{ backgroundColor: sandboxMode ? "var(--c-running-bg)" : "var(--c-gold-dim)", color: sandboxMode ? "var(--c-running)" : "var(--c-gold)" }}>
             {sandboxMode ? "Sandbox" : "Unsafe"}
           </span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          {sandboxMode ? (
-            <ShieldCheck size={14} style={{ color: C.ok }} />
-          ) : (
-            <Shield size={14} style={{ color: C.wrn }} />
-          )}
+        <div className="flex items-center gap-2">
+          {sandboxMode ? <ShieldCheck size={14} style={{ color: "var(--c-running)" }} /> : <Shield size={14} style={{ color: "var(--c-gold)" }} />}
         </div>
       </div>
 
       {/* Safety Settings */}
-      <div style={{ padding: "8px 16px", borderBottom: `1px solid ${C.s3}`, backgroundColor: C.s1 }}>
-        <div style={{ fontSize: "10px", fontWeight: 600, color: C.t3, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>
-          Safety Settings
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
-          {/* Sandbox Mode Toggle */}
-          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-            <button
-              onClick={() => setSandboxMode(!sandboxMode)}
-              style={{
-                position: "relative",
-                width: "32px",
-                height: "16px",
-                borderRadius: "8px",
-                border: "none",
-                cursor: "pointer",
-                backgroundColor: sandboxMode ? `${C.ok}40` : `${C.t3}20`,
-                transition: "background-color 0.15s",
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  top: "2px",
-                  width: "12px",
-                  height: "12px",
-                  borderRadius: "6px",
-                  backgroundColor: sandboxMode ? C.ok : C.t3,
-                  left: sandboxMode ? "16px" : "2px",
-                  transition: "left 0.15s, background-color 0.15s",
-                }}
-              />
+      <div className="px-4 py-2" style={{ borderBottom: "1px solid var(--c-s3)", backgroundColor: "var(--c-s1)" }}>
+        <div className="text-[10px] font-semibold uppercase tracking-wider mb-2" style={{ color: "var(--c-text3)" }}>Safety Settings</div>
+        <div className="flex items-center gap-4 flex-wrap">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <button onClick={() => setSandboxMode(!sandboxMode)} className="relative w-8 h-4 rounded-lg border-none cursor-pointer" style={{ backgroundColor: sandboxMode ? "rgba(34,197,94,0.25)" : "rgba(107,107,115,0.13)", transition: "background-color 0.15s" }}>
+              <div className="absolute top-[2px] w-3 h-3 rounded-full" style={{ backgroundColor: sandboxMode ? "var(--c-running)" : "var(--c-text3)", left: sandboxMode ? "16px" : "2px", transition: "left 0.15s, background-color 0.15s" }} />
             </button>
-            <span style={{ fontSize: "10px", color: C.t1 }}>Sandbox</span>
+            <span className="text-[10px]" style={{ color: "var(--c-text)" }}>Sandbox</span>
           </label>
-
-          {/* Consent Required Toggle */}
-          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-            <button
-              onClick={() => setConsentRequired(!consentRequired)}
-              style={{
-                position: "relative",
-                width: "32px",
-                height: "16px",
-                borderRadius: "8px",
-                border: "none",
-                cursor: "pointer",
-                backgroundColor: consentRequired ? `${C.accent}40` : `${C.t3}20`,
-                transition: "background-color 0.15s",
-              }}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  top: "2px",
-                  width: "12px",
-                  height: "12px",
-                  borderRadius: "6px",
-                  backgroundColor: consentRequired ? C.accent : C.t3,
-                  left: consentRequired ? "16px" : "2px",
-                  transition: "left 0.15s, background-color 0.15s",
-                }}
-              />
+          <label className="flex items-center gap-2 cursor-pointer">
+            <button onClick={() => setConsentRequired(!consentRequired)} className="relative w-8 h-4 rounded-lg border-none cursor-pointer" style={{ backgroundColor: consentRequired ? "var(--c-accent-dim)" : "rgba(107,107,115,0.13)", transition: "background-color 0.15s" }}>
+              <div className="absolute top-[2px] w-3 h-3 rounded-full" style={{ backgroundColor: consentRequired ? "var(--c-accent)" : "var(--c-text3)", left: consentRequired ? "16px" : "2px", transition: "left 0.15s, background-color 0.15s" }} />
             </button>
-            <span style={{ fontSize: "10px", color: C.t1 }}>Require consent</span>
+            <span className="text-[10px]" style={{ color: "var(--c-text)" }}>Require consent</span>
           </label>
-
-          {/* Rate Limit */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            <Zap size={10} style={{ color: C.t3 }} />
-            <span style={{ fontSize: "10px", color: C.t3 }}>Rate:</span>
-            <input
-              type="range"
-              min={1}
-              max={60}
-              value={rateLimit}
-              onChange={(e) => setRateLimit(Number(e.target.value))}
-              style={{ width: "64px", height: "4px", accentColor: C.accent }}
-            />
-            <span style={{ fontSize: "10px", color: C.accent, fontFamily: ff }}>{rateLimit}/min</span>
+          <div className="flex items-center gap-1.5">
+            <Zap size={10} style={{ color: "var(--c-text3)" }} />
+            <span className="text-[10px]" style={{ color: "var(--c-text3)" }}>Rate:</span>
+            <input type="range" min={1} max={60} value={rateLimit} onChange={(e) => setRateLimit(Number(e.target.value))} className="w-16 h-1" style={{ accentColor: "var(--c-accent)" }} />
+            <span className="text-[10px] font-mono" style={{ color: "var(--c-accent)" }}>{rateLimit}/min</span>
           </div>
         </div>
       </div>
 
       {/* Sub-tabs */}
-      <div style={{ display: "flex", alignItems: "center", gap: "4px", padding: "4px 16px", borderBottom: `1px solid ${C.s3}`, backgroundColor: C.s1 }}>
+      <div className="flex items-center gap-1 px-4 py-1" style={{ borderBottom: "1px solid var(--c-s3)", backgroundColor: "var(--c-s1)" }}>
         {[
           { id: "recorder" as const, label: "Recorder", icon: <MousePointer size={10} /> },
           { id: "screenshots" as const, label: "Screenshots", icon: <Camera size={10} /> },
           { id: "audit" as const, label: "Audit Log", icon: <Eye size={10} /> },
         ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              ...tabBtnBase,
-              backgroundColor: activeTab === tab.id ? `${C.accent}15` : "transparent",
-              color: activeTab === tab.id ? C.accent : C.t3,
-            }}
-          >
-            {tab.icon}
-            {tab.label}
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)} className="flex items-center gap-1 px-2.5 py-1 rounded-sm text-[10px] font-medium font-mono border-none cursor-pointer" style={{
+            backgroundColor: activeTab === tab.id ? "var(--c-accent-dim)" : "transparent",
+            color: activeTab === tab.id ? "var(--c-accent)" : "var(--c-text3)",
+            transition: "background-color 0.15s, color 0.15s",
+          }}>
+            {tab.icon}{tab.label}
           </button>
         ))}
       </div>
 
       {/* Tab Content */}
-      <div style={{ flex: 1, overflow: "auto", padding: "12px 16px", backgroundColor: C.base }}>
-        {/* Recorder Tab */}
+      <div className="flex-1 overflow-auto px-4 py-3" style={{ backgroundColor: "var(--c-base)" }}>
         {activeTab === "recorder" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-            {/* Playback Controls */}
-            <div style={{
-              padding: "12px",
-              border: `1px solid ${C.s3}`,
-              backgroundColor: C.s1,
-            }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  {/* Record Button */}
-                  <button
-                    onClick={toggleRecording}
-                    style={smallBtn(isRecording ? C.err : C.accent, C.t1)}
-                  >
-                    <div style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: isRecording ? "0px" : "4px",
-                      backgroundColor: C.t1,
-                    }} />
-                    {isRecording ? "Stop" : "Record"}
+          <div className="flex flex-col gap-3">
+            <div className="p-3 border" style={{ borderColor: "var(--c-s3)", backgroundColor: "var(--c-s1)" }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <button onClick={toggleRecording} style={smallBtn(isRecording ? "var(--c-err)" : "var(--c-accent)", "var(--c-text)")}>
+                    <div className="w-2 h-2" style={{ borderRadius: isRecording ? "0px" : "4px", backgroundColor: "var(--c-text)" }} />{isRecording ? "Stop" : "Record"}
                   </button>
-
-                  {/* Playback controls */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "4px", marginLeft: "8px" }}>
-                    <button
-                      onClick={() => setIsPlaying(!isPlaying)}
-                      disabled={actions.length === 0}
-                      style={{
-                        ...smallBtn(C.s3, C.t2),
-                        opacity: actions.length === 0 ? 0.4 : 1,
-                        cursor: actions.length === 0 ? "not-allowed" : "pointer",
-                      }}
-                    >
+                  <div className="flex items-center gap-1 ml-2">
+                    <button onClick={() => setIsPlaying(!isPlaying)} disabled={actions.length === 0} style={{ ...smallBtn("var(--c-s3)", "var(--c-text2)"), opacity: actions.length === 0 ? 0.4 : 1, cursor: actions.length === 0 ? "not-allowed" : "pointer" }}>
                       {isPlaying ? <Pause size={10} /> : <Play size={10} />}
                     </button>
-                    <button
-                      disabled={actions.length === 0}
-                      style={{
-                        ...smallBtn(C.s3, C.t2),
-                        opacity: actions.length === 0 ? 0.4 : 1,
-                        cursor: actions.length === 0 ? "not-allowed" : "pointer",
-                      }}
-                    >
+                    <button disabled={actions.length === 0} style={{ ...smallBtn("var(--c-s3)", "var(--c-text2)"), opacity: actions.length === 0 ? 0.4 : 1, cursor: actions.length === 0 ? "not-allowed" : "pointer" }}>
                       <Square size={10} />
                     </button>
-                    <button
-                      onClick={() => setLoopEnabled(!loopEnabled)}
-                      style={smallBtn(loopEnabled ? C.accent : C.s3, loopEnabled ? C.t1 : C.t2)}
-                    >
+                    <button onClick={() => setLoopEnabled(!loopEnabled)} style={smallBtn(loopEnabled ? "var(--c-accent)" : "var(--c-s3)", loopEnabled ? "var(--c-text)" : "var(--c-text2)")}>
                       <Repeat size={10} />
                     </button>
                   </div>
                 </div>
-
-                {/* Speed */}
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontSize: "10px", color: C.t3 }}>Speed:</span>
-                  <select
-                    value={playbackSpeed}
-                    onChange={(e) => setPlaybackSpeed(Number(e.target.value))}
-                    style={{
-                      height: "24px",
-                      padding: "0 6px",
-                      backgroundColor: C.s1,
-                      border: `1px solid ${C.s3}`,
-                      borderRadius: "2px",
-                      fontSize: "10px",
-                      color: C.t1,
-                      outline: "none",
-                      fontFamily: ff,
-                    }}
-                  >
-                    <option value={0.25}>0.25x</option>
-                    <option value={0.5}>0.5x</option>
-                    <option value={1}>1x</option>
-                    <option value={2}>2x</option>
-                    <option value={4}>4x</option>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px]" style={{ color: "var(--c-text3)" }}>Speed:</span>
+                  <select value={playbackSpeed} onChange={(e) => setPlaybackSpeed(Number(e.target.value))} className="h-6 px-1.5 font-mono text-[10px] outline-none rounded-sm" style={{ backgroundColor: "var(--c-s1)", border: "1px solid var(--c-s3)", color: "var(--c-text)" }}>
+                    <option value={0.25}>0.25x</option><option value={0.5}>0.5x</option><option value={1}>1x</option><option value={2}>2x</option><option value={4}>4x</option>
                   </select>
                 </div>
               </div>
-
-              {/* Progress */}
               {actions.length > 0 && (
-                <div style={{ marginTop: "8px" }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: "10px", marginBottom: "4px" }}>
-                    <span style={{ color: C.t3 }}>{actions.length} actions</span>
-                    <span style={{ color: C.accent }}>
-                      {isPlaying ? "Playing..." : isRecording ? "Recording..." : "Ready"}
-                    </span>
+                <div className="mt-2">
+                  <div className="flex items-center justify-between text-[10px] mb-1">
+                    <span style={{ color: "var(--c-text3)" }}>{actions.length} actions</span>
+                    <span style={{ color: "var(--c-accent)" }}>{isPlaying ? "Playing..." : isRecording ? "Recording..." : "Ready"}</span>
                   </div>
-                  <div style={{ height: "4px", backgroundColor: C.s2, overflow: "hidden" }}>
-                    <div
-                      style={{
-                        height: "100%",
-                        width: isRecording ? "60%" : isPlaying ? "100%" : "0%",
-                        background: `linear-gradient(90deg, ${C.accent}, ${C.ok})`,
-                        transition: "width 0.3s linear",
-                      }}
-                    />
+                  <div className="h-1 overflow-hidden" style={{ backgroundColor: "var(--c-s2)" }}>
+                    <div className="h-full" style={{ width: isRecording ? "60%" : isPlaying ? "100%" : "0%", background: `linear-gradient(90deg, var(--c-accent), var(--c-running))`, transition: "width 0.3s linear" }} />
                   </div>
                 </div>
               )}
             </div>
-
-            {/* Action List */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            <div className="flex flex-col gap-[2px]">
               {actions.map((action) => (
-                <div
-                  key={action.id}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    padding: "6px 8px",
-                    borderRadius: "2px",
-                    transition: "background-color 0.15s",
-                    cursor: "default",
-                  }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = C.s1; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; }}
-                >
-                  <div
-                    style={{
-                      width: "24px",
-                      height: "24px",
-                      borderRadius: "2px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                      backgroundColor: `${actionTypeColors[action.actionType]}20`,
-                      color: actionTypeColors[action.actionType],
-                    }}
-                  >
+                <div key={action.id} className="flex items-center gap-2 px-2 py-1.5 rounded-sm cursor-default"
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--c-s1)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; }}>
+                  <div className="w-6 h-6 rounded-sm flex items-center justify-center shrink-0" style={{ backgroundColor: `${actionTypeColors[action.actionType]}20`, color: actionTypeColors[action.actionType] }}>
                     {actionTypeIcons[action.actionType]}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ fontSize: "11px", fontWeight: 500, color: C.t1, textTransform: "capitalize" }}>
-                        {action.actionType}
-                      </span>
-                      <span style={{ fontSize: "9px", color: C.t3, fontFamily: ff }}>
-                        {formatTime(action.timestamp)}
-                      </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-medium capitalize" style={{ color: "var(--c-text)" }}>{action.actionType}</span>
+                      <span className="text-[9px] font-mono" style={{ color: "var(--c-text3)" }}>{formatTime(action.timestamp)}</span>
                     </div>
-                    <div style={{ fontSize: "10px", color: C.t3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {Object.entries(action.params)
-                        .map(([k, v]) => `${k}: ${String(v)}`)
-                        .join(", ")}
+                    <div className="text-[10px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: "var(--c-text3)" }}>
+                      {Object.entries(action.params).map(([k, v]) => `${k}: ${String(v)}`).join(", ")}
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-                    <button
-                      onClick={() => setExpandedAction(expandedAction === action.id ? null : action.id)}
-                      style={{
-                        padding: "4px",
-                        borderRadius: "2px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        color: C.t3,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
+                  <div className="flex items-center gap-[2px]">
+                    <button onClick={() => setExpandedAction(expandedAction === action.id ? null : action.id)} className="p-1 rounded-sm border-none bg-transparent cursor-pointer flex items-center justify-center" style={{ color: "var(--c-text3)" }}>
                       {expandedAction === action.id ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
                     </button>
-                    <button
-                      onClick={() => deleteAction(action.id)}
-                      style={{
-                        padding: "4px",
-                        borderRadius: "2px",
-                        border: "none",
-                        backgroundColor: "transparent",
-                        color: C.t3,
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = C.err; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = C.t3; }}
-                    >
+                    <button onClick={() => deleteAction(action.id)} className="p-1 rounded-sm border-none bg-transparent cursor-pointer flex items-center justify-center"
+                      style={{ color: "var(--c-text3)" }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--c-err)"; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = "var(--c-text3)"; }}>
                       <Trash2 size={10} />
                     </button>
                   </div>
-                  {action.approved ? (
-                    <CheckCircle size={12} style={{ color: C.ok, flexShrink: 0 }} />
-                  ) : (
-                    <AlertTriangle size={12} style={{ color: C.wrn, flexShrink: 0 }} />
-                  )}
+                  {action.approved ? <CheckCircle size={12} className="shrink-0" style={{ color: "var(--c-running)" }} /> : <AlertTriangle size={12} className="shrink-0" style={{ color: "var(--c-gold)" }} />}
                 </div>
               ))}
             </div>
-
             {actions.length === 0 && (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "32px 0", color: C.t3 }}>
-                <MousePointer size={24} style={{ marginBottom: "8px", opacity: 0.5 }} />
-                <p style={{ fontSize: "12px" }}>No recorded actions</p>
-                <p style={{ fontSize: "10px", marginTop: "4px" }}>Click Record to start capturing</p>
+              <div className="flex flex-col items-center justify-center py-8" style={{ color: "var(--c-text3)" }}>
+                <MousePointer size={24} className="mb-2 opacity-50" />
+                <p className="text-xs">No recorded actions</p>
+                <p className="text-[10px] mt-1">Click Record to start capturing</p>
               </div>
             )}
           </div>
         )}
-
-        {/* Screenshots Tab */}
         {activeTab === "screenshots" && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+          <div className="grid grid-cols-3 gap-2">
             {demoScreenshots.map((shot) => (
-              <div
-                key={shot.id}
-                style={{
-                  padding: "8px",
-                  border: `1px solid ${C.s3}`,
-                  backgroundColor: C.s1,
-                  cursor: "pointer",
-                  transition: "border-color 0.15s",
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = C.accent; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = C.s3; }}
-              >
-                <div style={{
-                  aspectRatio: "16 / 9",
-                  backgroundColor: C.s2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: "6px",
-                  border: `1px solid ${C.s3}`,
-                }}>
-                  <Camera size={20} style={{ color: C.t4 }} />
+              <div key={shot.id} className="p-2 border cursor-pointer" style={{ borderColor: "var(--c-s3)", backgroundColor: "var(--c-s1)", transition: "border-color 0.15s" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--c-accent)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "var(--c-s3)"; }}>
+                <div className="aspect-video flex items-center justify-center mb-1.5 border" style={{ backgroundColor: "var(--c-s2)", borderColor: "var(--c-s3)" }}>
+                  <Camera size={20} style={{ color: "var(--c-text4)" }} />
                 </div>
-                <div style={{ fontSize: "10px", fontWeight: 500, color: C.t1 }}>{shot.label}</div>
-                <div style={{ fontSize: "9px", color: C.t3, fontFamily: ff }}>{formatTime(shot.timestamp)}</div>
+                <div className="text-[10px] font-medium" style={{ color: "var(--c-text)" }}>{shot.label}</div>
+                <div className="text-[9px] font-mono" style={{ color: "var(--c-text3)" }}>{formatTime(shot.timestamp)}</div>
               </div>
             ))}
           </div>
         )}
-
-        {/* Audit Log Tab */}
         {activeTab === "audit" && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          <div className="flex flex-col gap-[2px]">
             {demoAuditLog.map((log) => (
-              <div
-                key={log.id}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "6px 8px",
-                  borderRadius: "2px",
-                  transition: "background-color 0.15s",
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = C.s1; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; }}
-              >
-                <div
-                  style={{
-                    width: "6px",
-                    height: "6px",
-                    borderRadius: "3px",
-                    flexShrink: 0,
-                    backgroundColor:
-                      log.level === "success" ? C.ok : log.level === "warning" ? C.wrn : C.accent,
-                  }}
-                />
-                <Clock size={10} style={{ color: C.t3, flexShrink: 0 }} />
-                <span style={{ fontSize: "9px", color: C.t3, fontFamily: ff, width: "64px", flexShrink: 0 }}>
-                  {formatTime(log.timestamp)}
-                </span>
-                <span style={{ fontSize: "11px", color: C.t1 }}>{log.action}</span>
+              <div key={log.id} className="flex items-center gap-2 px-2 py-1.5 rounded-sm"
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "var(--c-s1)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; }}>
+                <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: log.level === "success" ? "var(--c-running)" : log.level === "warning" ? "var(--c-gold)" : "var(--c-accent)" }} />
+                <Clock size={10} className="shrink-0" style={{ color: "var(--c-text3)" }} />
+                <span className="text-[9px] font-mono w-16 shrink-0" style={{ color: "var(--c-text3)" }}>{formatTime(log.timestamp)}</span>
+                <span className="text-[11px]" style={{ color: "var(--c-text)" }}>{log.action}</span>
               </div>
             ))}
           </div>

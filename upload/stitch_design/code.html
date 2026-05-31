@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Construct — memory-first AI agent</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "bg-onyx": "#0c0e11",
+                        "panel-bg": "#141619",
+                        "border-subtle": "#282a2d",
+                        "text-primary": "#e2e2e6",
+                        "text-secondary": "#849495",
+                        "accent-cyan": "#00f5ff",
+                        "accent-cyan-dim": "rgba(0, 245, 255, 0.15)",
+                        "diff-add": "#4ade80",
+                        "diff-add-bg": "rgba(74, 222, 128, 0.1)",
+                        "diff-remove": "#f87171",
+                        "diff-remove-bg": "rgba(248, 113, 113, 0.1)",
+                        "status-running": "#22c55e",
+                        "status-running-bg": "rgba(34, 197, 94, 0.15)"
+                    },
+                    fontFamily: {
+                        "sans": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0c0e11;
+            color: #e2e2e6;
+        }
+        
+        .glass-panel {
+            background: rgba(20, 22, 25, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid #282a2d;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #282a2d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3a494a;
+        }
+        
+        .glow-cyan {
+            box-shadow: 0 0 12px rgba(0, 245, 255, 0.2);
+            border: 1px solid rgba(0, 245, 255, 0.4);
+        }
+        
+        .mac-dots {
+            display: flex;
+            gap: 8px;
+            padding: 0 16px;
+        }
+        .mac-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .mac-dot.close { background-color: #ff5f56; }
+        .mac-dot.minimize { background-color: #ffbd2e; }
+        .mac-dot.maximize { background-color: #27c93f; }
+    </style>
+</head>
+<body class="font-sans h-screen w-screen overflow-hidden flex flex-col antialiased selection:bg-accent-cyan-dim">
+<!-- Top Window Bar -->
+<header class="h-10 flex-shrink-0 bg-panel-bg flex items-center justify-between border-b border-border-subtle relative z-50">
+<div class="mac-dots w-48">
+<div class="mac-dot close"></div>
+<div class="mac-dot minimize"></div>
+<div class="mac-dot maximize"></div>
+</div>
+<div class="flex-1 flex justify-center items-center text-sm font-medium text-text-secondary">
+            Construct — memory-first AI agent
+        </div>
+<div class="w-48 flex justify-end pr-4">
+<div class="text-xs font-mono text-accent-cyan bg-accent-cyan-dim px-2 py-1 rounded-md border border-accent-cyan/30">
+                Kimi K2.5 · local
+            </div>
+</div>
+</header>
+<!-- Main Content Area -->
+<div class="flex flex-1 overflow-hidden">
+<!-- Far Left Icon Rail -->
+<nav class="w-12 flex-shrink-0 bg-panel-bg border-r border-border-subtle flex flex-col items-center py-4 gap-6 z-40">
+<button class="w-8 h-8 flex items-center justify-center rounded-md bg-accent-cyan-dim text-accent-cyan border border-accent-cyan/30">
+<span class="material-symbols-outlined text-[20px]">folder</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:text-text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:text-text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">account_tree</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:text-text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">extension</span>
+</button>
+<div class="mt-auto flex flex-col gap-4">
+<button class="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:text-text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">account_circle</span>
+</button>
+<button class="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:text-text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+</div>
+</nav>
+<!-- Sidebar: Explorer & Memory -->
+<aside class="w-64 flex-shrink-0 bg-bg-onyx border-r border-border-subtle flex flex-col z-30">
+<!-- Explorer Header -->
+<div class="h-10 px-4 flex items-center justify-between text-xs font-bold tracking-wider text-text-secondary">
+<span>MY-API-PROJECT</span>
+<span class="material-symbols-outlined text-[16px] cursor-pointer">more_horiz</span>
+</div>
+<!-- File Tree -->
+<div class="flex-1 overflow-auto py-2 font-mono text-sm">
+<div class="flex flex-col gap-[2px]">
+<!-- src folder -->
+<div class="flex items-center gap-1 px-4 py-1 text-text-secondary hover:bg-white/5 cursor-pointer">
+<span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+<span>src/</span>
+</div>
+<div class="flex items-center gap-2 px-8 py-1 bg-white/5 text-e2e2e6 cursor-pointer border-l-2 border-accent-cyan">
+<span class="w-2 h-2 rounded-full bg-[#facc15]"></span>
+<span>main.py</span>
+</div>
+<div class="flex items-center gap-2 px-8 py-1 text-text-secondary hover:bg-white/5 cursor-pointer border-l-2 border-transparent">
+<span class="w-2 h-2 rounded-full bg-[#4ade80]"></span>
+<span>agent.py</span>
+</div>
+<div class="flex items-center gap-2 px-8 py-1 text-text-secondary hover:bg-white/5 cursor-pointer border-l-2 border-transparent">
+<span class="w-2 h-2 rounded-full bg-[#4ade80]"></span>
+<span>memory.py</span>
+</div>
+<div class="flex items-center gap-2 px-8 py-1 text-text-secondary/50 border-l-2 border-transparent">
+<span>··· tools/</span>
+</div>
+<!-- tests folder -->
+<div class="flex items-center gap-1 px-4 py-1 text-text-secondary hover:bg-white/5 cursor-pointer mt-2">
+<span class="material-symbols-outlined text-[16px]">arrow_drop_down</span>
+<span>tests/</span>
+</div>
+<div class="flex items-center gap-2 px-8 py-1 text-text-secondary/60 cursor-pointer border-l-2 border-transparent">
+<span>test_agent.py</span>
+</div>
+<div class="flex items-center gap-2 px-8 py-1 text-text-secondary/60 cursor-pointer border-l-2 border-transparent">
+<span>test_memory.py</span>
+</div>
+<!-- Root files -->
+<div class="flex items-center gap-2 px-4 py-1 text-text-secondary hover:bg-white/5 cursor-pointer mt-2 border-l-2 border-transparent">
+<span>requirements.txt</span>
+</div>
+<div class="flex items-center gap-2 px-4 py-1 text-text-secondary hover:bg-white/5 cursor-pointer border-l-2 border-transparent">
+<span>README.md</span>
+</div>
+</div>
+</div>
+<!-- Recent Memory -->
+<div class="h-64 border-t border-border-subtle flex flex-col">
+<div class="h-10 px-4 flex items-center gap-2 text-xs font-bold tracking-wider text-text-secondary">
+<span class="material-symbols-outlined text-[16px]">memory</span>
+<span>RECENT MEMORY</span>
+</div>
+<div class="flex-1 overflow-auto p-4 flex flex-col gap-4">
+<div class="flex gap-3">
+<div class="mt-1 w-2 h-2 rounded-full bg-[#4ade80] flex-shrink-0"></div>
+<div>
+<div class="text-sm text-text-primary">Uses FastAPI + async routes</div>
+<div class="text-xs text-text-secondary mt-1">2 days ago</div>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="mt-1 w-2 h-2 rounded-full bg-[#60a5fa] flex-shrink-0"></div>
+<div>
+<div class="text-sm text-text-primary">Prefers snake_case, ruff for linting</div>
+<div class="text-xs text-text-secondary mt-1">1 week ago</div>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="mt-1 w-2 h-2 rounded-full bg-[#facc15] flex-shrink-0"></div>
+<div>
+<div class="text-sm text-text-primary">Added ChromaDB for embeddings</div>
+<div class="text-xs text-text-secondary mt-1">2 weeks ago</div>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Center Editor -->
+<main class="flex-1 flex flex-col min-w-0 bg-bg-onyx border-r border-border-subtle z-20">
+<!-- Editor Tabs -->
+<div class="h-10 flex bg-panel-bg border-b border-border-subtle overflow-x-auto">
+<div class="flex items-center gap-2 px-4 min-w-[120px] bg-bg-onyx border-t-2 border-accent-cyan border-r border-border-subtle text-sm font-mono text-e2e2e6 cursor-pointer">
+<span class="w-2 h-2 rounded-full bg-[#facc15]"></span>
+                    main.py
+                </div>
+<div class="flex items-center gap-2 px-4 min-w-[120px] border-r border-border-subtle text-sm font-mono text-text-secondary hover:bg-white/5 cursor-pointer">
+                    agent.py
+                </div>
+</div>
+<!-- Code Editor Area -->
+<div class="flex-1 overflow-auto font-mono text-sm leading-relaxed relative flex">
+<!-- Line Numbers -->
+<div class="w-12 flex-shrink-0 bg-bg-onyx border-r border-border-subtle py-4 flex flex-col items-end pr-3 text-text-secondary/50 select-none">
+<div>1</div><div>2</div><div>3</div><div>4</div><div>5</div><div>6</div><div>7</div><div>8</div><div>9</div><div>10</div>
+<div>11</div><div>12</div><div>13</div><div>14</div><div>15</div><div>16</div><div>17</div><div>18</div><div>19</div><div>20</div>
+<div>21</div><div>22</div><div>23</div><div>24</div><div>25</div>
+</div>
+<!-- Code Content -->
+<div class="flex-1 py-4 overflow-x-auto whitespace-pre">
+<div class="px-4 text-text-secondary/70"># Construct — autonomous API agent</div>
+<div class="px-4 text-text-secondary/70"># memory: SQLite + ChromaDB</div>
+<div class="px-4 h-[22px]"></div>
+<div class="px-4"><span class="text-[#c678dd]">from</span> fastapi <span class="text-[#c678dd]">import</span> FastAPI, Request</div>
+<div class="px-4"><span class="text-[#c678dd]">from</span> contextlib <span class="text-[#c678dd]">import</span> asynccontextmanager</div>
+<div class="px-4"><span class="text-[#c678dd]">from</span> .memory <span class="text-[#c678dd]">import</span> MemoryStore</div>
+<div class="px-4"><span class="text-[#c678dd]">from</span> .agent <span class="text-[#c678dd]">import</span> Agent</div>
+<div class="px-4 h-[22px]"></div>
+<div class="px-4">memory = <span class="text-[#e5c07b]">MemoryStore</span>(db_path=<span class="text-[#98c379]">"memories.db"</span>)</div>
+<div class="px-4 h-[22px]"></div>
+<div class="px-4"><span class="text-[#61afef]">@asynccontextmanager</span></div>
+<div class="px-4"><span class="text-[#c678dd]">async def</span> <span class="text-[#61afef]">lifespan</span>(app: FastAPI):</div>
+<div class="px-4"> <span class="text-[#c678dd]">await</span> memory.init()</div>
+<div class="px-4"> <span class="text-[#c678dd]">yield</span></div>
+<div class="px-4 h-[22px]"></div>
+<!-- Added lines -->
+<div class="bg-diff-add-bg flex relative group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-diff-add"></div>
+<div class="px-4 text-diff-add select-none">+</div>
+<div class="text-text-secondary/70">    # agent writes proposed diffs here</div>
+</div>
+<div class="bg-diff-add-bg flex relative group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-diff-add"></div>
+<div class="px-4 text-diff-add select-none">+</div>
+<div class="text-e2e2e6">    app.state.pending_diff = []</div>
+</div>
+<!-- Removed line -->
+<div class="bg-diff-remove-bg flex relative group">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-diff-remove"></div>
+<div class="px-4 text-diff-remove select-none">-</div>
+<div class="text-text-secondary line-through">    app.include_router(legacy_router)</div>
+</div>
+<div class="px-4 h-[22px]"></div>
+<div class="px-4">app = <span class="text-[#e5c07b]">FastAPI</span>(lifespan=lifespan)</div>
+<div class="px-4 h-[22px]"></div>
+<div class="px-4"><span class="text-[#61afef]">@app</span>.websocket(<span class="text-[#98c379]">"/ws/agent"</span>)</div>
+<div class="px-4"><span class="text-[#c678dd]">async def</span> <span class="text-[#61afef]">agent_stream</span>(ws):</div>
+<div class="px-4"> <span class="text-[#c678dd]">await</span> ws.accept()</div>
+<div class="px-4">    ctx = <span class="text-[#c678dd]">await</span> memory.get_context()</div>
+</div>
+</div>
+<!-- Horizontal Scrollbar Area -->
+<div class="h-4 bg-bg-onyx flex items-center px-1 border-t border-border-subtle">
+<span class="material-symbols-outlined text-[14px] text-text-secondary cursor-pointer">arrow_left</span>
+<div class="h-2 flex-1 bg-white/10 rounded-full mx-1">
+<div class="w-1/3 h-full bg-white/30 rounded-full"></div>
+</div>
+<span class="material-symbols-outlined text-[14px] text-text-secondary cursor-pointer">arrow_right</span>
+</div>
+</main>
+<!-- Right Sidebar: Agent Timeline -->
+<aside class="w-[400px] flex-shrink-0 bg-panel-bg flex flex-col z-10 relative">
+<!-- Agent Header -->
+<div class="h-14 px-4 flex items-center justify-between border-b border-border-subtle">
+<div class="flex items-center gap-2 text-lg font-medium text-e2e2e6">
+<span class="material-symbols-outlined">smart_toy</span>
+                    Agent
+                </div>
+<div class="flex items-center gap-2 px-3 py-1 bg-status-running-bg border border-status-running/30 rounded-full text-status-running text-xs font-mono">
+<span class="w-2 h-2 rounded-full bg-status-running animate-pulse"></span>
+                    running
+                </div>
+</div>
+<!-- Memory Context Banner -->
+<div class="p-4 border-b border-border-subtle">
+<div class="bg-bg-onyx border border-[#4ade80]/30 rounded-md p-2 flex items-center gap-2 text-sm text-[#4ade80]">
+<span class="material-symbols-outlined text-[18px]">memory</span>
+                    Recalled 3 relevant memories
+                </div>
+<div class="mt-2 h-1 bg-white/10 rounded-full overflow-hidden flex">
+<div class="h-full bg-accent-cyan w-1/3"></div>
+<div class="h-full bg-[#4ade80] w-1/3"></div>
+<div class="h-full bg-transparent w-1/3"></div>
+</div>
+</div>
+<!-- Timeline -->
+<div class="flex-1 overflow-auto p-4 flex flex-col gap-6 relative">
+<!-- Vertical Line -->
+<div class="absolute left-[31px] top-4 bottom-4 w-[2px] bg-border-subtle z-0"></div>
+<!-- Item 1: Read Context -->
+<div class="flex gap-4 relative z-10">
+<div class="w-8 h-8 rounded-md bg-bg-onyx border border-border-subtle flex items-center justify-center flex-shrink-0 mt-1">
+<span class="material-symbols-outlined text-[16px] text-text-secondary">description</span>
+</div>
+<div>
+<div class="text-sm font-medium text-e2e2e6">Read memory context</div>
+<div class="text-xs text-text-secondary mt-1">FastAPI project · snake_case · ruff · async</div>
+</div>
+</div>
+<!-- Item 2: Scanned structure -->
+<div class="flex gap-4 relative z-10">
+<div class="w-8 h-8 rounded-md bg-bg-onyx border border-border-subtle flex items-center justify-center flex-shrink-0 mt-1">
+<span class="material-symbols-outlined text-[16px] text-text-secondary">folder_open</span>
+</div>
+<div>
+<div class="text-sm font-medium text-e2e2e6">Scanned project structure</div>
+<div class="text-xs text-text-secondary mt-1">8 files · 1,240 lines · 2 open issues</div>
+</div>
+</div>
+<!-- Item 3: Proposing diff -->
+<div class="flex gap-4 relative z-10">
+<div class="w-8 h-8 rounded-md bg-bg-onyx border border-accent-cyan/50 text-accent-cyan flex items-center justify-center flex-shrink-0 mt-1 shadow-[0_0_10px_rgba(0,245,255,0.2)]">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</div>
+<div class="flex-1">
+<div class="text-sm font-medium text-e2e2e6">Proposing diff — main.py</div>
+<div class="text-xs text-text-secondary mt-1">Add pending_diff buffer for plan/act mode</div>
+<!-- Diff Snippet -->
+<div class="mt-3 bg-bg-onyx rounded-md border border-border-subtle p-2 font-mono text-xs overflow-x-auto">
+<div class="text-diff-add whitespace-pre">+ app.state.pending_diff = []</div>
+<div class="text-diff-remove whitespace-pre">- app.include_router(legacy_router)</div>
+</div>
+</div>
+</div>
+<!-- Item 4: Run tests -->
+<div class="flex gap-4 relative z-10">
+<div class="w-8 h-8 rounded-md bg-bg-onyx border border-border-subtle flex items-center justify-center flex-shrink-0 mt-1 opacity-50">
+<span class="material-symbols-outlined text-[16px] text-text-secondary">play_arrow</span>
+</div>
+<div class="opacity-50">
+<div class="text-sm font-medium text-e2e2e6">Run tests after apply</div>
+<div class="text-xs text-text-secondary mt-1">pytest tests/ — awaiting approval</div>
+</div>
+</div>
+<!-- Item 5: Commit -->
+<div class="flex gap-4 relative z-10">
+<div class="w-8 h-8 rounded-md bg-bg-onyx border border-border-subtle flex items-center justify-center flex-shrink-0 mt-1 opacity-50">
+<span class="material-symbols-outlined text-[16px] text-text-secondary">commit</span>
+</div>
+<div class="flex-1 opacity-50">
+<div class="text-sm font-medium text-e2e2e6">Commit with message</div>
+<div class="mt-2 bg-bg-onyx rounded-md border border-border-subtle p-2 font-mono text-xs text-text-secondary">
+                            feat: add plan/act diff buffer to main.py
+                        </div>
+</div>
+</div>
+</div>
+<!-- Bottom Interaction Area -->
+<div class="p-4 border-t border-border-subtle bg-panel-bg flex flex-col gap-3">
+<!-- Action Buttons -->
+<div class="flex gap-3">
+<button class="flex-1 py-2 bg-status-running-bg border border-status-running/30 text-status-running rounded-md text-sm font-medium flex items-center justify-center gap-2 hover:bg-status-running/20 transition-colors">
+<span class="material-symbols-outlined text-[18px]">check</span>
+                        Apply diff
+                    </button>
+<button class="flex-1 py-2 bg-bg-onyx border border-border-subtle text-text-secondary hover:text-e2e2e6 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-colors">
+<span class="material-symbols-outlined text-[18px]">close</span>
+                        Skip
+                    </button>
+<button class="w-10 flex-shrink-0 py-2 bg-bg-onyx border border-border-subtle text-diff-remove rounded-md flex items-center justify-center hover:bg-diff-remove/10 transition-colors">
+<span class="material-symbols-outlined text-[18px]">stop</span>
+</button>
+</div>
+<!-- Input Box -->
+<div class="relative flex items-center bg-bg-onyx rounded-lg border border-border-subtle focus-within:border-accent-cyan/50 focus-within:shadow-[0_0_10px_rgba(0,245,255,0.1)] transition-all">
+<button class="pl-3 text-text-secondary hover:text-e2e2e6">
+<span class="material-symbols-outlined text-[20px]">attach_file</span>
+</button>
+<input class="flex-1 bg-transparent border-none focus:ring-0 text-sm text-e2e2e6 py-3 placeholder:text-text-secondary/50" placeholder="Describe next goal..." type="text"/>
+<button class="pr-3 pl-2 text-text-secondary hover:text-accent-cyan transition-colors">
+<div class="w-8 h-8 rounded-md border border-border-subtle flex items-center justify-center bg-panel-bg hover:border-accent-cyan/50">
+<span class="material-symbols-outlined text-[18px]">send</span>
+</div>
+</button>
+</div>
+</div>
+</aside>
+</div>
+<!-- Status Bar -->
+<footer class="h-8 flex-shrink-0 bg-bg-onyx border-t border-border-subtle flex items-center justify-between px-4 text-xs text-text-secondary font-mono relative z-50">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 text-status-running">
+<span class="w-2 h-2 rounded-full bg-status-running"></span>
+                memory active
+            </div>
+<div class="flex items-center gap-2 text-accent-cyan">
+<span class="w-2 h-2 rounded-full bg-accent-cyan"></span>
+                Kimi K2.5 · local
+            </div>
+<div class="text-text-secondary">
+                main.py · line 25
+            </div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px]">edit_note</span>
+                feat/plan-act-mode
+            </div>
+<div>
+                2 pending · 0 errors
+            </div>
+</div>
+</footer>
+</body></html>

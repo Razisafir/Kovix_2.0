@@ -30,23 +30,23 @@ export function ToastNotification({
   const typeConfig = {
     success: {
       icon: <CheckCircle size={12} />,
-      border: "#1e3a2f",
-      iconColor: "#10b981",
+      border: "#282a2d",
+      iconColor: "#4ade80",
     },
     error: {
       icon: <AlertCircle size={12} />,
-      border: "#3a1e1e",
-      iconColor: "#ef4444",
+      border: "#282a2d",
+      iconColor: "#f87171",
     },
     info: {
       icon: <Info size={12} />,
-      border: "#222236",
-      iconColor: "#6366f1",
+      border: "#282a2d",
+      iconColor: "#00f5ff",
     },
     warning: {
       icon: <AlertTriangle size={12} />,
-      border: "#3a3018",
-      iconColor: "#f59e0b",
+      border: "#282a2d",
+      iconColor: "#e9c349",
     },
   };
 
@@ -54,24 +54,22 @@ export function ToastNotification({
 
   return (
     <div
-      className="fixed top-4 right-4 z-50 flex items-start gap-2 px-3 py-2 font-mono"
+      className="fixed top-4 right-4 z-50 flex items-start gap-2 px-3 py-2 font-mono glass-panel"
       style={{
-        backgroundColor: "#1a1a24",
-        border: `1px solid ${config.border}`,
-        borderRadius: 0,
         minWidth: 240,
         maxWidth: 340,
+        borderRadius: 8,
       }}
     >
       <div className="mt-0.5 shrink-0" style={{ color: config.iconColor }}>
         {config.icon}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="text-[11px] font-semibold" style={{ color: "#e2e2e2" }}>
+        <div className="text-[11px] font-semibold" style={{ color: "#e2e2e6" }}>
           {title}
         </div>
         {message && (
-          <div className="text-[10px] mt-0.5" style={{ color: "#888" }}>
+          <div className="text-[10px] mt-0.5" style={{ color: "#849495" }}>
             {message}
           </div>
         )}
@@ -79,8 +77,8 @@ export function ToastNotification({
       {onDismiss && (
         <button
           onClick={onDismiss}
-          className="shrink-0 text-[#555] hover:text-[#e2e2e2] transition-colors duration-100 cursor-pointer"
-          style={{ fontSize: 12, lineHeight: 1 }}
+          className="shrink-0 hover:text-[#e2e2e6] transition-colors duration-100 cursor-pointer"
+          style={{ fontSize: 12, lineHeight: 1, color: "#3a494a" }}
         >
           ×
         </button>

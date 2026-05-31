@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from "react";
 
-const C = {
-  base: "#0a0a10", s1: "#12121a", s2: "#1a1a24", s3: "#22222e",
-  accent: "#6366f1", t1: "#e8e8ec", t2: "#94949c", t3: "#6b6b73", t4: "#4a4a52",
-};
-
-const ff = '"Geist Mono", "JetBrains Mono", monospace';
-
 // Backend port — matches CONSTRUCT_PORT default
 const BACKEND_PORT = 8000;
 
@@ -81,65 +74,13 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
   const next = () => step < 5 && setStep((s) => (s + 1) as Step);
   const back = () => step > 1 && setStep((s) => (s - 1) as Step);
 
-  // ─── Style Constants ───────────────────────────────────────────────
-
-  const panel: React.CSSProperties = {
-    width: 520, background: C.s1, border: `1px solid ${C.s3}`,
-    borderRadius: 0, padding: "40px 44px",
-  };
-
-  const stepHeader: React.CSSProperties = {
-    fontSize: 10, fontWeight: 500, letterSpacing: "0.08em",
-    textTransform: "uppercase" as const, color: C.accent, marginBottom: 24,
-  };
-
-  const lbl: React.CSSProperties = {
-    display: "block", fontSize: 10, fontWeight: 500,
-    letterSpacing: "0.08em", textTransform: "uppercase" as const,
-    color: C.t3, marginBottom: 6,
-  };
-
-  const inp: React.CSSProperties = {
-    width: "100%", background: C.base, border: `1px solid ${C.s3}`,
-    borderRadius: 0, padding: "9px 12px", fontSize: 11, fontFamily: ff,
-    color: C.t1, outline: "none", boxSizing: "border-box",
-  };
-
-  const btnP: React.CSSProperties = {
-    background: C.accent, color: "#fff", border: "none", borderRadius: 2,
-    padding: "9px 20px", fontSize: 10, fontWeight: 600, fontFamily: ff,
-    letterSpacing: "0.08em", textTransform: "uppercase" as const, cursor: "pointer",
-  };
-
-  const btnS: React.CSSProperties = {
-    background: C.s2, color: C.t2, border: `1px solid ${C.s3}`,
-    borderRadius: 2, padding: "9px 16px", fontSize: 10, fontWeight: 500,
-    fontFamily: ff, letterSpacing: "0.08em", textTransform: "uppercase" as const,
-    cursor: "pointer",
-  };
-
-  const btnF: React.CSSProperties = {
-    background: "transparent", color: C.t3, border: "none", fontSize: 10,
-    fontFamily: ff, letterSpacing: "0.06em", cursor: "pointer",
-    padding: "6px 0", textDecoration: "underline", textUnderlineOffset: 3,
-  };
-
-  const optBtn = (active: boolean): React.CSSProperties => ({
-    ...btnS, background: active ? C.accent : C.s2,
-    color: active ? "#fff" : C.t2, borderColor: active ? C.accent : C.s3,
-  });
-
   // ─── LLM Status Banner ────────────────────────────────────────────
 
   const renderLlmStatusBanner = () => {
     if (llmConnected === null) {
-      // Still checking
       return (
-        <div style={{
-          background: `${C.s2}`, border: `1px solid ${C.s3}`,
-          borderRadius: 4, padding: "10px 14px", marginBottom: 16,
-        }}>
-          <p style={{ fontSize: 10, color: C.t3, fontFamily: ff, margin: 0 }}>
+        <div className="border border-c-border rounded p-2.5 mb-4" style={{ background: "var(--c-s2)" }}>
+          <p className="text-[10px] font-mono m-0" style={{ color: "var(--c-text3)" }}>
             Checking LLM connection...
           </p>
         </div>
@@ -148,14 +89,11 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
 
     if (!llmConnected) {
       return (
-        <div style={{
-          background: "rgba(234, 179, 8, 0.08)", border: "1px solid rgba(234, 179, 8, 0.25)",
-          borderRadius: 4, padding: "10px 14px", marginBottom: 16,
-        }}>
-          <p style={{ fontSize: 10, fontWeight: 600, color: "#eab308", fontFamily: ff, margin: "0 0 4px 0" }}>
+        <div className="rounded p-2.5 mb-4" style={{ background: "var(--c-gold-dim)", border: "1px solid rgba(234, 179, 8, 0.25)" }}>
+          <p className="text-[10px] font-semibold font-mono m-0 mb-1" style={{ color: "var(--c-gold)" }}>
             Demo Mode
           </p>
-          <p style={{ fontSize: 10, color: C.t3, fontFamily: ff, margin: 0, lineHeight: 1.5 }}>
+          <p className="text-[10px] font-mono m-0 leading-relaxed" style={{ color: "var(--c-text3)" }}>
             No LLM connected. Go to Settings to connect OpenAI, Anthropic, Ollama, or another
             provider to enable real agent execution. You can still explore the interface.
           </p>
@@ -164,14 +102,11 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
     }
 
     return (
-      <div style={{
-        background: "rgba(34, 197, 94, 0.08)", border: "1px solid rgba(34, 197, 94, 0.25)",
-        borderRadius: 4, padding: "10px 14px", marginBottom: 16,
-      }}>
-        <p style={{ fontSize: 10, fontWeight: 600, color: "#22c55e", fontFamily: ff, margin: "0 0 4px 0" }}>
+      <div className="rounded p-2.5 mb-4" style={{ background: "var(--c-running-bg)", border: "1px solid rgba(34, 197, 94, 0.25)" }}>
+        <p className="text-[10px] font-semibold font-mono m-0 mb-1" style={{ color: "var(--c-running)" }}>
           Ready
         </p>
-        <p style={{ fontSize: 10, color: C.t3, fontFamily: ff, margin: 0, lineHeight: 1.5 }}>
+        <p className="text-[10px] font-mono m-0 leading-relaxed" style={{ color: "var(--c-text3)" }}>
           Agent is connected and ready. Type a goal to start.
         </p>
       </div>
@@ -181,11 +116,11 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
   // ─── Step Renderers ────────────────────────────────────────────────
 
   const renderWelcome = () => (
-    <div style={{ textAlign: "center", padding: "32px 0" }}>
-      <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.12em", color: C.t1, marginBottom: 10 }}>
+    <div className="text-center py-8">
+      <div className="text-sm font-bold tracking-widest" style={{ color: "var(--c-text)" }}>
         CONSTRUCT
       </div>
-      <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.4 }}>
+      <div className="text-[11px] leading-relaxed" style={{ color: "var(--c-text3)" }}>
         The AI that never forgets and never stops
       </div>
       {renderLlmStatusBanner()}
@@ -195,39 +130,35 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
   const renderProject = () => (
     <div>
       {renderLlmStatusBanner()}
-      <div style={lbl}>Project Path</div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+      <div className="text-[10px] font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--c-text3)" }}>Project Path</div>
+      <div className="flex gap-2 mb-5">
         <input
           type="text"
           value={state.projectPath}
           onChange={(e) => update("projectPath", e.target.value)}
           placeholder="/path/to/project"
-          style={{ ...inp, flex: 1 }}
+          className="flex-1 px-3 py-2.5 text-[11px] font-mono bg-c-base border border-c-border outline-none rounded-sm"
+          style={{ color: "var(--c-text)" }}
         />
-        <button style={btnS} onClick={() => console.log("browse")}>Browse</button>
+        <button className="px-4 py-2.5 text-[10px] font-medium uppercase tracking-wider font-mono border cursor-pointer rounded-sm" style={{ background: "var(--c-s2)", color: "var(--c-text2)", borderColor: "var(--c-s3)" }} onClick={() => console.log("browse")}>Browse</button>
       </div>
 
-      <div style={lbl}>Recent Folders</div>
-      <div style={{ marginBottom: 20 }}>
+      <div className="text-[10px] font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--c-text3)" }}>Recent Folders</div>
+      <div className="mb-5">
         {recentFolders.map(({ path, modified }) => (
           <button
             key={path}
             onClick={() => update("projectPath", path)}
-            style={{
-              display: "flex", width: "100%", alignItems: "center",
-              justifyContent: "space-between", textAlign: "left",
-              background: "transparent", border: "none",
-              borderBottom: `1px solid ${C.s2}`, padding: "8px 0",
-              fontSize: 11, fontFamily: ff, color: C.t2, cursor: "pointer",
-            }}
+            className="flex w-full items-center justify-between text-left bg-transparent border-none py-2 font-mono text-[11px] cursor-pointer"
+            style={{ color: "var(--c-text2)", borderBottom: "1px solid var(--c-s2)" }}
           >
             <span>{path}</span>
-            <span style={{ fontSize: 10, color: C.t3 }}>{modified}</span>
+            <span className="text-[10px]" style={{ color: "var(--c-text3)" }}>{modified}</span>
           </button>
         ))}
       </div>
 
-      <button style={btnF} onClick={() => update("projectPath", "~/new-project")}>
+      <button className="text-[10px] font-mono tracking-wider cursor-pointer underline underline-offset-1" style={{ background: "transparent", color: "var(--c-text3)", border: "none", padding: "6px 0" }} onClick={() => update("projectPath", "~/new-project")}>
         Create new folder
       </button>
     </div>
@@ -236,60 +167,61 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
   const renderAIConfig = () => (
     <div>
       {renderLlmStatusBanner()}
-      <div style={{ marginBottom: 16 }}>
-        <div style={lbl}>OpenAI API Key</div>
+      <div className="mb-4">
+        <div className="text-[10px] font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--c-text3)" }}>OpenAI API Key</div>
         <input
           type="password"
           value={state.openaiKey}
           onChange={(e) => update("openaiKey", e.target.value)}
           placeholder="sk-..."
-          style={inp}
+          className="w-full px-3 py-2.5 text-[11px] font-mono bg-c-base border border-c-border outline-none rounded-sm"
+          style={{ color: "var(--c-text)" }}
         />
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <div style={lbl}>Anthropic API Key</div>
+      <div className="mb-4">
+        <div className="text-[10px] font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--c-text3)" }}>Anthropic API Key</div>
         <input
           type="password"
           value={state.anthropicKey}
           onChange={(e) => update("anthropicKey", e.target.value)}
           placeholder="sk-ant-..."
-          style={inp}
+          className="w-full px-3 py-2.5 text-[11px] font-mono bg-c-base border border-c-border outline-none rounded-sm"
+          style={{ color: "var(--c-text)" }}
         />
       </div>
 
-      <div style={{ marginBottom: 16 }}>
-        <div style={lbl}>Google API Key</div>
+      <div className="mb-4">
+        <div className="text-[10px] font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--c-text3)" }}>Google API Key</div>
         <input
           type="password"
           value={state.googleKey}
           onChange={(e) => update("googleKey", e.target.value)}
           placeholder="AIza..."
-          style={inp}
+          className="w-full px-3 py-2.5 text-[11px] font-mono bg-c-base border border-c-border outline-none rounded-sm"
+          style={{ color: "var(--c-text)" }}
         />
       </div>
 
-      <div style={{ marginBottom: 20 }}>
-        <label style={{
-          display: "flex", alignItems: "center", gap: 8,
-          cursor: "pointer", fontSize: 11, fontFamily: ff, color: C.t2,
-        }}>
+      <div className="mb-5">
+        <label className="flex items-center gap-2 cursor-pointer text-[11px] font-mono" style={{ color: "var(--c-text2)" }}>
           <input
             type="checkbox"
             checked={state.useLocalAI}
             onChange={(e) => update("useLocalAI", e.target.checked)}
-            style={{ accentColor: C.accent }}
+            style={{ accentColor: "var(--c-accent)" }}
           />
           Use Local AI (Ollama)
         </label>
-        <div style={{ fontSize: 10, color: C.t3, marginLeft: 22, marginTop: 4 }}>
+        <div className="text-[10px] ml-[22px] mt-1" style={{ color: "var(--c-text3)" }}>
           Free, offline, no API keys needed
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+      <div className="flex gap-2.5 items-center">
         <button
-          style={btnS}
+          className="px-4 py-2.5 text-[10px] font-medium uppercase tracking-wider font-mono border cursor-pointer rounded-sm"
+          style={{ background: "var(--c-s2)", color: "var(--c-text2)", borderColor: "var(--c-s3)" }}
           onClick={async () => {
             try {
               const res = await fetch(`http://127.0.0.1:${BACKEND_PORT}/health`);
@@ -304,32 +236,38 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
         >
           Test Connection
         </button>
-        <button style={btnF} onClick={next}>
+        <button className="text-[10px] font-mono tracking-wider cursor-pointer underline underline-offset-1" style={{ background: "transparent", color: "var(--c-text3)", border: "none", padding: "6px 0" }} onClick={next}>
           Skip for now
         </button>
       </div>
     </div>
   );
 
+  const optBtn = (active: boolean): React.CSSProperties => ({
+    background: active ? "var(--c-accent)" : "var(--c-s2)",
+    color: active ? "var(--c-base)" : "var(--c-text2)",
+    borderColor: active ? "var(--c-accent)" : "var(--c-s3)",
+  });
+
   const renderPreferences = () => (
     <div>
       {renderLlmStatusBanner()}
-      <div style={{ marginBottom: 20 }}>
-        <div style={lbl}>Theme</div>
-        <div style={{ display: "flex", gap: 8 }}>
+      <div className="mb-5">
+        <div className="text-[10px] font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--c-text3)" }}>Theme</div>
+        <div className="flex gap-2">
           {(["dark", "light", "system"] as const).map((t) => (
-            <button key={t} onClick={() => update("theme", t)} style={optBtn(state.theme === t)}>
+            <button key={t} onClick={() => update("theme", t)} className="px-4 py-2.5 text-[10px] font-medium uppercase tracking-wider font-mono border-none rounded-sm cursor-pointer" style={optBtn(state.theme === t)}>
               {t}
             </button>
           ))}
         </div>
       </div>
 
-      <div style={{ marginBottom: 20 }}>
-        <div style={lbl}>Font Size</div>
-        <div style={{ display: "flex", gap: 8 }}>
+      <div className="mb-5">
+        <div className="text-[10px] font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--c-text3)" }}>Font Size</div>
+        <div className="flex gap-2">
           {(["small", "medium", "large"] as const).map((s) => (
-            <button key={s} onClick={() => update("fontSize", s)} style={optBtn(state.fontSize === s)}>
+            <button key={s} onClick={() => update("fontSize", s)} className="px-4 py-2.5 text-[10px] font-medium uppercase tracking-wider font-mono border-none rounded-sm cursor-pointer" style={optBtn(state.fontSize === s)}>
               {s}
             </button>
           ))}
@@ -337,10 +275,10 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
       </div>
 
       <div>
-        <div style={lbl}>Agent Mode</div>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div className="text-[10px] font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--c-text3)" }}>Agent Mode</div>
+        <div className="flex gap-2">
           {(["code", "architect", "debug", "review"] as const).map((m) => (
-            <button key={m} onClick={() => update("agentMode", m)} style={optBtn(state.agentMode === m)}>
+            <button key={m} onClick={() => update("agentMode", m)} className="px-4 py-2.5 text-[10px] font-medium uppercase tracking-wider font-mono border-none rounded-sm cursor-pointer" style={optBtn(state.agentMode === m)}>
               {m}
             </button>
           ))}
@@ -352,20 +290,18 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
   const renderReady = () => (
     <div>
       {renderLlmStatusBanner()}
-      <div style={{ fontSize: 12, color: C.t2, marginBottom: 24, lineHeight: 1.5 }}>
+      <div className="text-xs mb-6 leading-relaxed" style={{ color: "var(--c-text2)" }}>
         {llmConnected
           ? "Construct is configured and ready to work"
           : "Construct is in Demo Mode — connect an LLM in Settings to enable the agent"}
       </div>
-      <div style={lbl}>Quick Tips</div>
-      <div style={{ marginBottom: 24 }}>
+      <div className="text-[10px] font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--c-text3)" }}>Quick Tips</div>
+      <div className="mb-6">
         {quickTips.map((tip) => (
           <div
             key={tip}
-            style={{
-              fontSize: 11, color: C.t2, padding: "7px 0",
-              borderBottom: `1px solid ${C.s2}`, fontFamily: ff,
-            }}
+            className="text-[11px] font-mono py-[7px]"
+            style={{ color: "var(--c-text2)", borderBottom: "1px solid var(--c-s2)" }}
           >
             {tip}
           </div>
@@ -387,15 +323,11 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
   // ─── Main Render ───────────────────────────────────────────────────
 
   return (
-    <div style={{
-      display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "center", width: "100vw", height: "100vh",
-      background: C.base, fontFamily: ff, color: C.t1,
-    }}>
-      <div style={panel}>
+    <div className="flex flex-col items-center justify-center w-screen h-screen font-mono" style={{ background: "var(--c-base)", color: "var(--c-text)" }}>
+      <div className="border rounded-md" style={{ width: 520, background: "var(--c-s1)", borderColor: "var(--c-s3)", padding: "40px 44px" }}>
         {/* Step Indicator */}
         {step > 1 && (
-          <div style={stepHeader}>
+          <div className="text-[10px] font-medium uppercase tracking-wider mb-6" style={{ color: "var(--c-accent)" }}>
             [{step}/5] {stepLabels[step]}
           </div>
         )}
@@ -404,49 +336,47 @@ export default function OnboardingWizard({ onComplete, onSkip }: OnboardingWizar
         {renderStep()}
 
         {/* Navigation Bar */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          marginTop: 32, paddingTop: 20, borderTop: `1px solid ${C.s2}`,
-        }}>
-          <div style={{ display: "flex", gap: 10 }}>
+        <div className="flex items-center justify-between mt-8 pt-5" style={{ borderTop: "1px solid var(--c-s2)" }}>
+          <div className="flex gap-2.5">
             {step > 1 && (
-              <button style={btnS} onClick={back}>
+              <button className="px-4 py-2.5 text-[10px] font-medium uppercase tracking-wider font-mono border cursor-pointer rounded-sm" style={{ background: "var(--c-s2)", color: "var(--c-text2)", borderColor: "var(--c-s3)" }} onClick={back}>
                 &lt; Back
               </button>
             )}
             {step < 5 && (
-              <button style={btnP} onClick={next}>
+              <button className="px-5 py-2.5 text-[10px] font-semibold uppercase tracking-wider font-mono border-none rounded-sm cursor-pointer" style={{ background: "var(--c-accent)", color: "var(--c-base)" }} onClick={next}>
                 Next &gt;
               </button>
             )}
             {step === 5 && (
-              <button style={btnP} onClick={onComplete}>
+              <button className="px-5 py-2.5 text-[10px] font-semibold uppercase tracking-wider font-mono border-none rounded-sm cursor-pointer" style={{ background: "var(--c-accent)", color: "var(--c-base)" }} onClick={onComplete}>
                 {llmConnected ? "Launch Construct" : "Continue in Demo Mode"}
               </button>
             )}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div className="flex items-center gap-4">
             {/* Progress Indicators */}
-            <div style={{ display: "flex", gap: 5 }}>
+            <div className="flex gap-[5px]">
               {([1, 2, 3, 4, 5] as Step[]).map((s) => (
                 <div
                   key={s}
+                  className="rounded-sm"
                   style={{
-                    width: 7, height: 7, borderRadius: 1,
-                    background: s === step ? C.accent : s < step ? C.t4 : C.s3,
+                    width: 7, height: 7,
+                    background: s === step ? "var(--c-accent)" : s < step ? "var(--c-text4)" : "var(--c-s3)",
                   }}
                 />
               ))}
             </div>
 
-            <button style={btnF} onClick={onSkip}>Skip</button>
+            <button className="text-[10px] font-mono tracking-wider cursor-pointer underline underline-offset-1" style={{ background: "transparent", color: "var(--c-text3)", border: "none", padding: "6px 0" }} onClick={onSkip}>Skip</button>
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div style={{ marginTop: 16, fontSize: 10, color: C.t3, letterSpacing: "0.06em", fontFamily: ff }}>
+      <div className="mt-4 text-[10px] font-mono tracking-wider" style={{ color: "var(--c-text3)" }}>
         Construct v0.1.0-beta
       </div>
     </div>

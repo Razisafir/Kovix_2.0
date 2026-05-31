@@ -1,5 +1,5 @@
 import { Editor as MonacoEditor, loader } from "@monaco-editor/react";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import TabBar, { type EditorTab } from "./TabBar";
 
 loader.config({
@@ -8,20 +8,68 @@ loader.config({
   },
 });
 
-const C = {
-  base: "#0c0c10",
-  s1: "#12121a",
-  s2: "#1a1a24",
-  s3: "#22222e",
-  accent: "#6366f1",
-  t1: "#e8e8ec",
-  t2: "#94949c",
-  t3: "#6b6b73",
-  t4: "#4a4a52",
-  border: "rgba(255,255,255,0.04)",
+/* ─────────────────────── custom monaco theme ─────────────────────── */
+
+const CONSTRUCT_THEME_ID = "construct-dark";
+
+const CONSTRUCT_THEME = {
+  base: "vs-dark" as const,
+  inherit: true,
+  rules: [
+    { token: "comment", foreground: "849495", fontStyle: "italic" },
+    { token: "keyword", foreground: "c678dd" },
+    { token: "keyword.control", foreground: "c678dd" },
+    { token: "string", foreground: "98c379" },
+    { token: "string.escape", foreground: "e5c07b" },
+    { token: "number", foreground: "d19a66" },
+    { token: "type", foreground: "e5c07b" },
+    { token: "type.identifier", foreground: "e5c07b" },
+    { token: "function", foreground: "61afef" },
+    { token: "variable", foreground: "e2e2e6" },
+    { token: "variable.predefined", foreground: "e5c07b" },
+    { token: "operator", foreground: "c678dd" },
+    { token: "delimiter", foreground: "849495" },
+    { token: "tag", foreground: "e06c75" },
+    { token: "attribute.name", foreground: "d19a66" },
+    { token: "attribute.value", foreground: "98c379" },
+    { token: "meta.decorator", foreground: "61afef" },
+    { token: "regexp", foreground: "98c379" },
+  ],
+  colors: {
+    "editor.background": "#0c0e11",
+    "editor.foreground": "#e2e2e6",
+    "editor.lineHighlightBackground": "#1e2023",
+    "editor.selectionBackground": "rgba(0, 245, 255, 0.15)",
+    "editor.inactiveSelectionBackground": "rgba(0, 245, 255, 0.08)",
+    "editorLineNumber.foreground": "#84949580",
+    "editorLineNumber.activeForeground": "#849495",
+    "editorLineNumber.background": "#0c0e11",
+    "editorCursor.foreground": "#00f5ff",
+    "editor.findMatchBackground": "rgba(0, 245, 255, 0.2)",
+    "editor.findMatchHighlightBackground": "rgba(0, 245, 255, 0.08)",
+    "editorIndentGuide.background": "#282a2d",
+    "editorIndentGuide.activeBackground": "#3a494a",
+    "editorBracketMatch.background": "rgba(0, 245, 255, 0.1)",
+    "editorBracketMatch.border": "rgba(0, 245, 255, 0.3)",
+    "editorOverviewRuler.border": "#0c0e11",
+    "editorGutter.background": "#0c0e11",
+    "editorGutter.border": "#282a2d",
+    "scrollbarSlider.background": "#282a2d80",
+    "scrollbarSlider.hoverBackground": "#3a494a",
+    "scrollbarSlider.activeBackground": "#3a494a",
+    "editorWidget.background": "#141619",
+    "editorWidget.border": "#282a2d",
+    "editorSuggestWidget.background": "#141619",
+    "editorSuggestWidget.border": "#282a2d",
+    "editorSuggestWidget.selectedBackground": "#1e2023",
+    "editorSuggestWidget.highlightForeground": "#00f5ff",
+    "peekViewEditor.background": "#0c0e11",
+    "peekViewResult.background": "#141619",
+    "minimap.background": "#0c0e11",
+  },
 };
 
-const ff = '"Geist Mono", "JetBrains Mono", monospace';
+/* ─────────────────────── default code ─────────────────────── */
 
 const defaultCode = `import { useState } from "react";
 
@@ -30,24 +78,30 @@ interface Props {
   count?: number;
 }
 
-// agent: reviewing component structure for memoization opportunities
-export default function Example({ title, count = 0 }: Props) {
-  const [value, setValue] = useState(count);
+# Construct — autonomous API agent
+# memory: SQLite + ChromaDB
 
-  // mem: previous implementation used useCallback here - unnecessary for this case
-  const handleIncrement = () => setValue((v) => v + 1);
+from fastapi import FastAPI, Request
+from contextlib import asynccontextmanager
+from .memory import MemoryStore
+from .agent import Agent
 
-  // agent-suggest: consider extracting this to a separate component
-  return (
-    <div className="p-4">
-      <h1>{title}</h1>
-      <p>Count: {value}</p>
-      <button onClick={handleIncrement}>
-        Increment
-      </button>
-    </div>
-  );
-}
+memory = MemoryStore(db_path="memories.db")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await memory.init()
+    yield
+
+    # agent writes proposed diffs here
+    app.state.pending_diff = []
+
+app = FastAPI(lifespan=lifespan)
+
+@app.websocket("/ws/agent")
+async def agent_stream(ws):
+    await ws.accept()
+    ctx = await memory.get_context()
 `;
 
 /* ─────────────────────── tab helpers ─────────────────────── */
@@ -75,21 +129,20 @@ function createTab(
 /* ─────────────────────── main component ─────────────────────── */
 
 function Editor() {
-  // ── tab state ──
   const [tabs, setTabs] = useState<EditorTab[]>(() => [
-    createTab("App.tsx", "src/App.tsx", "typescript", defaultCode, true),
-    createTab("Sidebar.tsx", "src/components/Sidebar.tsx", "typescript", "// Sidebar component code\n", true),
+    createTab("main.py", "src/main.py", "python", defaultCode, true),
+    createTab("agent.py", "src/agent.py", "python", "# Agent component code\n", true),
     createTab("main.tsx", "src/main.tsx", "typescript", "// main entry point\n", false),
   ]);
 
-  // Activate first tab on mount
+  const themeDefined = useRef(false);
+
   useState(() => {
     setTabs((prev) =>
       prev.map((t, i) => ({ ...t, isActive: i === 0 }))
     );
   });
 
-  // ── derived: active tab ──
   const activeTab = useMemo(
     () => tabs.find((t) => t.isActive) ?? tabs[0] ?? null,
     [tabs]
@@ -97,20 +150,15 @@ function Editor() {
 
   const activeTabId = activeTab?.id ?? null;
 
-  // ── actions ──
-
-  /** Activate a tab by its id */
   const activateTab = useCallback((id: string) => {
     setTabs((prev) =>
       prev.map((t) => ({ ...t, isActive: t.id === id }))
     );
   }, []);
 
-  /** Close a tab by its id. If closing the active tab, activate the nearest neighbor. */
   const closeTab = useCallback((id: string) => {
     setTabs((prev) => {
       if (prev.length <= 1) {
-        // Keep at least one tab
         const onlyTab = prev[0];
         if (onlyTab) {
           return [{ ...onlyTab, isModified: false, isActive: true }];
@@ -128,7 +176,6 @@ function Editor() {
     });
   }, []);
 
-  /** Open a file as a tab. If already open, activate it. */
   const openTab = useCallback(
     (file: {
       fileName: string;
@@ -157,7 +204,6 @@ function Editor() {
     []
   );
 
-  // ── editor change handler ──
   const handleEditorChange = useCallback(
     (value: string | undefined) => {
       if (!activeTab) return;
@@ -173,11 +219,25 @@ function Editor() {
     [activeTab]
   );
 
-  // ── monaco options ──
+  const handleBeforeMount = useCallback((monaco: Parameters<NonNullable<import("@monaco-editor/react").EditorProps["beforeMount"]>>[0]) => {
+    if (!themeDefined.current) {
+      monaco.editor.defineTheme(CONSTRUCT_THEME_ID, CONSTRUCT_THEME);
+      themeDefined.current = true;
+    }
+  }, []);
+
+  const handleOnMount = useCallback((_editor: import("monaco-editor").editor.IStandaloneCodeEditor, monaco: typeof import("monaco-editor")) => {
+    if (!themeDefined.current) {
+      monaco.editor.defineTheme(CONSTRUCT_THEME_ID, CONSTRUCT_THEME);
+      themeDefined.current = true;
+    }
+    monaco.editor.setTheme(CONSTRUCT_THEME_ID);
+  }, []);
+
   const monacoOptions = useMemo(
     () => ({
-      fontSize: 12,
-      fontFamily: "'Geist Mono', 'JetBrains Mono', monospace",
+      fontSize: 13,
+      fontFamily: "'JetBrains Mono', monospace",
       minimap: { enabled: false },
       scrollBeyondLastLine: false,
       automaticLayout: true,
@@ -208,16 +268,7 @@ function Editor() {
   );
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        height: "100%",
-        backgroundColor: C.base,
-        fontFamily: ff,
-      }}
-    >
+    <div className="flex flex-col w-full h-full bg-bg-onyx font-mono">
       {/* ── Tab Bar ── */}
       <TabBar
         tabs={tabs}
@@ -228,67 +279,31 @@ function Editor() {
       />
 
       {/* ── Breadcrumb Path ── */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          height: 22,
-          padding: "0 12px",
-          backgroundColor: C.base,
-          borderBottom: `1px solid ${C.border}`,
-          flexShrink: 0,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 10,
-            fontFamily: ff,
-            color: C.t4,
-            letterSpacing: "0.02em",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
+      <div className="flex items-center h-6 px-3 shrink-0 bg-bg-onyx border-b border-border-subtle">
+        <span className="text-[10px] font-mono text-c-text4 tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
           {activeTab?.filePath ?? "no file open"}
         </span>
         {activeTab?.isModified && (
-          <span
-            style={{
-              marginLeft: 8,
-              fontSize: 9,
-              color: C.accent,
-              fontFamily: ff,
-            }}
-          >
+          <span className="ml-2 text-[9px] font-mono text-accent-cyan">
             ● modified
           </span>
         )}
       </div>
 
       {/* ── Monaco Editor ── */}
-      <div style={{ flex: 1, minHeight: 0 }}>
+      <div className="flex-1 min-h-0">
         <MonacoEditor
           key={activeTabId ?? "empty"}
           height="100%"
           language={activeTab?.language ?? "typescript"}
-          theme="vs-dark"
+          theme={CONSTRUCT_THEME_ID}
           value={activeTab?.content ?? ""}
           onChange={handleEditorChange}
+          beforeMount={handleBeforeMount}
+          onMount={handleOnMount}
           options={monacoOptions}
           loading={
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "100%",
-                height: "100%",
-                fontSize: 11,
-                color: C.t4,
-                fontFamily: ff,
-              }}
-            >
+            <div className="flex items-center justify-center w-full h-full text-[11px] text-c-text4 font-mono">
               loading editor...
             </div>
           }

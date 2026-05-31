@@ -1,20 +1,4 @@
 import { useState, useCallback } from "react";
-import { X, FileCode } from "lucide-react";
-
-const C = {
-  base: "#0c0c10",
-  s1: "#12121a",
-  s2: "#1a1a24",
-  s3: "#22222e",
-  accent: "#6366f1",
-  t1: "#e8e8ec",
-  t2: "#94949c",
-  t3: "#6b6b73",
-  t4: "#4a4a52",
-  border: "rgba(255,255,255,0.04)",
-};
-
-const ff = '"Geist Mono", "JetBrains Mono", monospace';
 
 /* ─────────────────────── types ─────────────────────── */
 
@@ -50,20 +34,7 @@ function TabBar({ tabs, activeTabId, onActivate, onClose }: TabBarProps) {
   );
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        height: 28,
-        backgroundColor: C.s1,
-        borderBottom: `1px solid ${C.border}`,
-        overflowX: "auto",
-        overflowY: "hidden",
-        flexShrink: 0,
-        scrollbarWidth: "thin",
-        scrollbarColor: `${C.s3} transparent`,
-      }}
-    >
+    <div className="h-10 flex bg-panel-bg border-b border-border-subtle overflow-x-auto">
       {tabs.map((tab) => {
         const isActive = tab.id === activeTabId;
         const showClose = hoveredTab === tab.id || tab.isModified;
@@ -74,68 +45,33 @@ function TabBar({ tabs, activeTabId, onActivate, onClose }: TabBarProps) {
             onClick={() => onActivate(tab.id)}
             onMouseEnter={() => setHoveredTab(tab.id)}
             onMouseLeave={() => setHoveredTab(null)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              height: "100%",
-              padding: "0 10px",
-              gap: 6,
-              border: "none",
-              borderRight: `1px solid ${C.border}`,
-              borderBottom: isActive
-                ? `2px solid ${C.accent}`
-                : `2px solid transparent`,
-              backgroundColor: isActive ? C.s2 : "transparent",
-              color: isActive ? C.t1 : C.t3,
-              cursor: "pointer",
-              flexShrink: 0,
-              whiteSpace: "nowrap",
-              fontFamily: ff,
-              fontSize: 11,
-              transition: "background-color 50ms",
-              position: "relative",
-              outline: "none",
-            }}
+            className={`
+              group flex items-center gap-2 px-4 min-w-[120px] cursor-pointer shrink-0 whitespace-nowrap outline-none
+              font-mono text-[13px] border-r border-border-subtle
+              border-t-2 transition-colors duration-[50ms] relative
+              ${isActive
+                ? "bg-bg-onyx border-t-accent-cyan text-text-primary"
+                : "bg-transparent border-t-transparent text-text-secondary hover:bg-white/5"
+              }
+            `}
           >
-            <FileCode size={12} style={{ flexShrink: 0, opacity: 0.8 }} />
-            <span>{tab.fileName}</span>
             {/* Modified dot */}
             {tab.isModified && (
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: "50%",
-                  backgroundColor: C.accent,
-                  flexShrink: 0,
-                  display: "inline-block",
-                }}
-              />
+              <span className="w-2 h-2 rounded-full bg-[#facc15] shrink-0" />
             )}
+
+            <span>{tab.fileName}</span>
+
             {/* Close button */}
             <span
               onClick={(e) => handleClose(e, tab.id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 14,
-                height: 14,
-                marginLeft: 2,
-                opacity: showClose ? 1 : 0,
-                transition: "opacity 50ms",
-                flexShrink: 0,
-                cursor: "pointer",
-                color: C.t4,
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.color = C.t2;
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.color = C.t4;
-              }}
+              className={`
+                flex items-center justify-center w-[14px] h-[14px] ml-0.5 shrink-0 cursor-pointer
+                text-c-text4 hover:text-c-text2 transition-colors duration-[50ms]
+                ${showClose ? "opacity-100" : "opacity-0"}
+              `}
             >
-              <X size={12} />
+              <span className="material-symbols-outlined text-[12px]">close</span>
             </span>
           </button>
         );
@@ -143,17 +79,7 @@ function TabBar({ tabs, activeTabId, onActivate, onClose }: TabBarProps) {
 
       {/* Empty state placeholder */}
       {tabs.length === 0 && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            height: "100%",
-            padding: "0 12px",
-            fontFamily: ff,
-            fontSize: 11,
-            color: C.t4,
-          }}
-        >
+        <div className="flex items-center h-full px-3 font-mono text-[11px] text-c-text4">
           no open files
         </div>
       )}

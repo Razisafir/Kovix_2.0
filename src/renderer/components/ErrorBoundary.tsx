@@ -1,11 +1,5 @@
 import React, { Component, ErrorInfo } from "react";
 
-const C = {
-  base: "#0a0a10", s1: "#12121a", s2: "#1a1a24",
-  accent: "#6366f1", t1: "#e8e8ec", t2: "#94949c", t3: "#6b6b73", t4: "#4a4a52", err: "#ef4444",
-};
-const ff = '"Geist Mono", "JetBrains Mono", monospace';
-
 interface Props {
   children: React.ReactNode;
 }
@@ -26,7 +20,6 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({ error, errorInfo });
     console.error("ErrorBoundary caught:", error, errorInfo);
-    // TODO: Send to backend analytics
   }
 
   handleReload = () => {
@@ -37,47 +30,33 @@ export class ErrorBoundary extends Component<Props, State> {
     if (!this.state.hasError) return this.props.children;
 
     return (
-      <div style={{
-        position: "fixed", inset: 0, background: C.base,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontFamily: ff, zIndex: 9999,
-      }}>
-        <div style={{
-          background: C.s1, border: "1px solid rgba(255,255,255,0.04)",
-          padding: "24px", maxWidth: "560px", width: "90%",
-        }}>
-          <div style={{ fontSize: "13px", fontWeight: 600, color: C.err, marginBottom: "12px" }}>
+      <div className="fixed inset-0 flex items-center justify-center font-mono z-[9999]" style={{ background: "var(--c-base)" }}>
+        <div className="p-6 max-w-[560px] w-[90%]" style={{ background: "var(--c-s1)", border: "1px solid var(--c-border)" }}>
+          <div className="text-[13px] font-semibold mb-3" style={{ color: "var(--c-err)" }}>
             APPLICATION ERROR
           </div>
-          <div style={{ fontSize: "11px", color: C.t2, marginBottom: "16px", lineHeight: 1.5 }}>
+          <div className="text-[11px] mb-4 leading-relaxed" style={{ color: "var(--c-text2)" }}>
             Something went wrong. The error has been logged.
           </div>
 
-          {/* Error details */}
-          <div style={{
-            background: C.s2, padding: "8px 12px",
-            fontSize: "10px", color: C.t3,
-            fontFamily: ff, lineHeight: 1.6,
-            marginBottom: "16px", maxHeight: "200px", overflow: "auto",
-          }}>
+          <div className="p-3 text-[10px] font-mono leading-relaxed mb-4 max-h-[200px] overflow-auto" style={{ background: "var(--c-s2)", color: "var(--c-text3)" }}>
             <div>{this.state.error?.toString()}</div>
-            <div style={{ color: C.t4, marginTop: "8px" }}>
+            <div className="mt-2" style={{ color: "var(--c-text4)" }}>
               {this.state.errorInfo?.componentStack}
             </div>
           </div>
 
-          {/* Actions */}
-          <div style={{ display: "flex", gap: "8px" }}>
+          <div className="flex gap-2">
             <button onClick={this.handleReload}
-              style={{ padding: "6px 16px", background: C.accent, border: "none", color: "#fff", fontFamily: ff, fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.04em", cursor: "pointer" }}>
+              className="px-4 py-1.5 border-none font-mono text-[10px] uppercase tracking-wider cursor-pointer" style={{ background: "var(--c-accent)", color: "var(--c-base)" }}>
               Reload App
             </button>
             <button onClick={() => alert("Report feature coming soon")}
-              style={{ padding: "6px 16px", background: C.s2, border: "1px solid rgba(255,255,255,0.04)", color: C.t3, fontFamily: ff, fontSize: "10px", textTransform: "uppercase", cursor: "pointer" }}>
+              className="px-4 py-1.5 font-mono text-[10px] uppercase cursor-pointer" style={{ background: "var(--c-s2)", border: "1px solid var(--c-border)", color: "var(--c-text3)" }}>
               Report Issue
             </button>
             <button onClick={() => console.log(this.state)}
-              style={{ padding: "6px 16px", background: "transparent", border: "1px solid rgba(255,255,255,0.04)", color: C.t4, fontFamily: ff, fontSize: "10px", textTransform: "uppercase", cursor: "pointer" }}>
+              className="px-4 py-1.5 font-mono text-[10px] uppercase cursor-pointer" style={{ background: "transparent", border: "1px solid var(--c-border)", color: "var(--c-text4)" }}>
               View Logs
             </button>
           </div>

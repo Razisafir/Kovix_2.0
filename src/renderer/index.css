@@ -5,7 +5,8 @@
 @tailwind utilities;
 
 /* ============================================================
-   Base Styles — Minimal, Functional, Zero Decorative CSS
+   Base Styles — Construct AI Agent v2
+   Electric Cyan + Glassmorphism Design System
    ============================================================ */
 
 @layer base {
@@ -26,24 +27,25 @@
   }
 
   body {
-    background-color: var(--c-base);
-    color: var(--c-text);
-    font-family: var(--font-mono);
-    font-size: var(--text-base);      /* 12px */
-    line-height: var(--leading-normal); /* 1.4 */
+    background-color: var(--surface-container-lowest);
+    color: var(--on-surface);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--leading-normal);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
   }
 
   /* ----------------------------------------------------------
      Typography scale
      ---------------------------------------------------------- */
   h1, h2, h3, h4, h5, h6 {
-    font-size: var(--text-lg);        /* 13px */
-    font-weight: var(--weight-semibold); /* 600 */
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    color: var(--c-text);
+    font-family: var(--font-sans);
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    letter-spacing: -0.01em;
+    color: var(--on-surface);
   }
 
   /* ----------------------------------------------------------
@@ -52,41 +54,40 @@
   :focus-visible {
     outline: 1px solid var(--c-accent);
     outline-offset: 1px;
-    border-radius: var(--radius-none);
+    border-radius: var(--radius-default);
   }
 
-  /* Remove default focus ring where we handle it ourselves */
   :focus:not(:focus-visible) {
     outline: none;
   }
 
   /* ----------------------------------------------------------
-     Selection
+     Selection — accent-cyan-dim highlight
      ---------------------------------------------------------- */
   ::selection {
-    background-color: rgba(99, 102, 241, 0.25);
-    color: var(--c-text);
+    background-color: var(--c-accent-dim);
+    color: var(--on-surface);
   }
 
   /* ----------------------------------------------------------
-     Scrollbars — thin, minimal
+     Scrollbars — thin, 8px, #282a2d thumb
      ---------------------------------------------------------- */
   ::-webkit-scrollbar {
-    width: var(--scrollbar-width);   /* 4px  */
-    height: var(--scrollbar-width);  /* 4px  */
+    width: 8px;
+    height: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    background: var(--scrollbar-track);
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: var(--scrollbar-thumb); /* #22222e */
-    border-radius: var(--radius-none);
+    background: #282a2d;
+    border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--c-s3);
+    background: #3a494a;
   }
 
   ::-webkit-scrollbar-corner {
@@ -96,21 +97,87 @@
   /* Firefox scrollbar */
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-color: #282a2d transparent;
   }
 }
 
 /* ============================================================
-   Utility Classes — Functional Only
+   Utility Classes
    ============================================================ */
 
 @layer utilities {
+  /* Glassmorphism panel */
+  .glass-panel {
+    background: rgba(20, 22, 25, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid #282a2d;
+  }
+
+  /* Glowing Cyan border (for active agent panel) */
+  .glow-cyan {
+    box-shadow: 0 0 12px rgba(0, 245, 255, 0.2);
+    border: 1px solid rgba(0, 245, 255, 0.4);
+  }
+
+  /* Luminous gradient border (Cyan → Lavender at 30%) */
+  .luminous-border {
+    border-image: linear-gradient(180deg, rgba(0, 245, 255, 0.3), rgba(167, 139, 250, 0.3)) 1;
+  }
+
+  /* Mac window dots */
+  .mac-dots {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px;
+  }
+  .mac-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .mac-dot.close { background-color: #ff5f56; }
+  .mac-dot.minimize { background-color: #ffbd2e; }
+  .mac-dot.maximize { background-color: #27c93f; }
+
+  /* Micro-label style */
+  .micro-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* LED Indicator dots */
+  .led-cyan {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #00f5ff;
+    animation: led-pulse 2s ease-in-out infinite;
+  }
+  .led-gold {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #e9c349;
+  }
+  .led-error {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #f87171;
+    animation: led-pulse 1.5s ease-in-out infinite;
+  }
+
   /* Tabular numbers for data columns */
   .tabular {
     font-variant-numeric: tabular-nums;
   }
 
-  /* Transition utility using design tokens */
+  /* Transition utility */
   .transition-fast {
     transition-duration: var(--dur-fast);
     transition-timing-function: var(--ease-default);
@@ -119,5 +186,21 @@
   .transition-normal {
     transition-duration: var(--dur-normal);
     transition-timing-function: var(--ease-default);
+  }
+
+  /* Agent pulse animation */
+  @keyframes led-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 4px currentColor; }
+    50% { opacity: 0.5; box-shadow: 0 0 8px currentColor; }
+  }
+
+  @keyframes agent-glow {
+    0%, 100% { box-shadow: 0 0 8px rgba(0, 245, 255, 0.15); }
+    50% { box-shadow: 0 0 16px rgba(0, 245, 255, 0.3); }
+  }
+
+  @keyframes terminal-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
   }
 }

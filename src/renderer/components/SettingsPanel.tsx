@@ -1,10 +1,5 @@
 import React, { useState } from "react";
 
-const C = {
-  base: "#0a0a10", s1: "#12121a", s2: "#1a1a24", s3: "#22222e",
-  accent: "#6366f1", t1: "#e8e8ec", t2: "#94949c", t3: "#6b6b73", t4: "#4a4a52",
-  err: "#ef4444", ok: "#10b981",
-};
 const ff = '"Geist Mono", "JetBrains Mono", monospace';
 
 type Category = "general" | "ai" | "agent" | "memory" | "security" | "shortcuts" | "advanced";
@@ -84,62 +79,48 @@ const SHORTCUTS = [
   { action: "Clear Chat", key: "Ctrl+Shift+X" },
 ];
 
-const sectionSx: React.CSSProperties = {
-  fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.08em",
-  color: C.t3, marginBottom: "8px", marginTop: "24px", fontWeight: 600,
-};
-
-const rowSx: React.CSSProperties = {
-  display: "flex", alignItems: "center", justifyContent: "space-between",
-  padding: "8px 0", borderBottom: `1px solid ${C.s1}`,
-};
-
-const labelSx: React.CSSProperties = {
-  fontSize: "11px", color: C.t1, fontFamily: ff,
-};
-
 const inputSx: React.CSSProperties = {
-  background: C.s1, border: "1px solid rgba(255,255,255,0.04)",
-  borderRadius: 0, color: C.t1, fontFamily: ff, fontSize: "11px",
+  background: "var(--c-s1)", border: "1px solid var(--c-border)",
+  borderRadius: 0, color: "var(--c-text)", fontFamily: ff, fontSize: "11px",
   padding: "6px 10px", outline: "none", width: "200px",
 };
 
 const selectSx: React.CSSProperties = {
-  background: C.s1, border: "1px solid rgba(255,255,255,0.04)",
-  borderRadius: 0, color: C.t1, fontFamily: ff, fontSize: "10px",
+  background: "var(--c-s1)", border: "1px solid var(--c-border)",
+  borderRadius: 0, color: "var(--c-text)", fontFamily: ff, fontSize: "10px",
   padding: "6px 10px", outline: "none", minWidth: "140px",
 };
 
 const btnSx: React.CSSProperties = {
-  background: C.s2, border: "1px solid rgba(255,255,255,0.04)",
-  borderRadius: "2px", color: C.t1, fontFamily: ff, fontSize: "10px",
+  background: "var(--c-s2)", border: "1px solid var(--c-border)",
+  borderRadius: "2px", color: "var(--c-text)", fontFamily: ff, fontSize: "10px",
   textTransform: "uppercase", padding: "6px 14px", cursor: "pointer",
   letterSpacing: "0.04em",
 };
 
 const dangerBtnSx: React.CSSProperties = {
-  ...btnSx, color: C.err, border: `1px solid ${C.err}33`,
+  ...btnSx, color: "var(--c-err)", border: "1px solid rgba(248,113,113,0.2)",
 };
 
 const checkboxSx: React.CSSProperties = {
-  width: "12px", height: "12px", accentColor: C.accent, cursor: "pointer",
+  width: "12px", height: "12px", accentColor: "var(--c-accent)", cursor: "pointer",
 };
 
 const sliderSx: React.CSSProperties = {
-  width: "140px", height: "2px", accentColor: C.accent,
+  width: "140px", height: "2px", accentColor: "var(--c-accent)",
 };
 
 function RadioRow<T extends string | number>({ label, value, options, onChange }: {
   label: string; value: T; options: T[]; onChange: (v: T) => void;
 }) {
   return (
-    <div style={rowSx}>
-      <span style={labelSx}>{label}</span>
-      <div style={{ display: "flex", gap: "14px" }}>
+    <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+      <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>{label}</span>
+      <div className="flex gap-3.5">
         {options.map((o) => (
-          <label key={o} style={{ display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", fontSize: "11px", color: C.t2, fontFamily: ff }}>
+          <label key={o} className="flex items-center gap-1 cursor-pointer text-[11px] font-mono" style={{ color: "var(--c-text2)" }}>
             <input type="radio" checked={value === o} onChange={() => onChange(o)}
-              style={{ accentColor: C.accent, width: "12px", height: "12px", cursor: "pointer" }} />
+              style={{ accentColor: "var(--c-accent)", width: "12px", height: "12px", cursor: "pointer" }} />
             {String(o).charAt(0).toUpperCase() + String(o).slice(1)}
           </label>
         ))}
@@ -152,8 +133,8 @@ function CheckboxRow({ label, checked, onChange }: {
   label: string; checked: boolean; onChange: (v: boolean) => void;
 }) {
   return (
-    <div style={rowSx}>
-      <span style={labelSx}>{label}</span>
+    <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+      <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>{label}</span>
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} style={checkboxSx} />
     </div>
   );
@@ -164,12 +145,12 @@ function SliderRow({ label, value, min, max, step, display, onChange }: {
   display: string; onChange: (v: number) => void;
 }) {
   return (
-    <div style={rowSx}>
-      <span style={labelSx}>{label}</span>
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+    <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+      <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>{label}</span>
+      <div className="flex items-center gap-2.5">
         <input type="range" min={min} max={max} step={step} value={value}
           onChange={(e) => onChange(Number(e.target.value))} style={sliderSx} />
-        <span style={{ fontSize: "11px", color: C.t2, fontFamily: ff, minWidth: "50px", textAlign: "right" }}>{display}</span>
+        <span className="text-[11px] font-mono min-w-[50px] text-right" style={{ color: "var(--c-text2)" }}>{display}</span>
       </div>
     </div>
   );
@@ -182,49 +163,39 @@ export default function SettingsPanel() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const update = <K extends keyof Settings>(key: K, val: Settings[K]) => setS((p) => ({ ...p, [key]: val }));
 
-  const panelBase: React.CSSProperties = {
-    display: "flex", height: "100%", background: C.base,
-    fontFamily: ff, fontSize: "12px", color: C.t1,
-  };
-  const sidebar: React.CSSProperties = {
-    width: "200px", background: C.s1, borderRight: "1px solid rgba(255,255,255,0.04)",
-    display: "flex", flexDirection: "column", padding: "8px 0",
-  };
-  const content: React.CSSProperties = {
-    flex: 1, overflowY: "auto", padding: "24px 32px",
+  const sectionSx: React.CSSProperties = {
+    fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.08em",
+    color: "var(--c-text3)", marginBottom: "8px", marginTop: "24px", fontWeight: 600,
   };
 
   return (
-    <div style={panelBase}>
+    <div className="flex h-full font-mono text-xs" style={{ background: "var(--c-base)", color: "var(--c-text)" }}>
       {/* LEFT SIDEBAR */}
-      <div style={sidebar}>
-        <div style={{ padding: "8px 12px 16px", fontSize: "10px", textTransform: "uppercase",
-          letterSpacing: "0.1em", color: C.t3, fontWeight: 700 }}>Settings</div>
+      <div className="w-[200px] flex flex-col py-2" style={{ background: "var(--c-s1)", borderRight: "1px solid var(--c-border)" }}>
+        <div className="px-3 py-2 pb-4 text-[10px] uppercase tracking-wider font-bold" style={{ color: "var(--c-text3)" }}>Settings</div>
         {CATEGORIES.map((c) => {
           const active = cat === c.id;
           return (
-            <button key={c.id} onClick={() => setCat(c.id)} style={{
-              display: "block", width: "100%", textAlign: "left", padding: "8px 12px",
-              fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.06em",
-              fontFamily: ff, cursor: "pointer", border: "none",
-              background: active ? C.s2 : "transparent", color: active ? C.t1 : C.t3,
-              borderLeft: active ? `2px solid ${C.accent}` : "2px solid transparent",
+            <button key={c.id} onClick={() => setCat(c.id)} className="block w-full text-left px-3 py-2 text-[10px] uppercase tracking-wider font-mono cursor-pointer border-none" style={{
+              background: active ? "var(--c-s2)" : "transparent",
+              color: active ? "var(--c-text)" : "var(--c-text3)",
+              borderLeft: active ? "2px solid var(--c-accent)" : "2px solid transparent",
             }}>{c.label}</button>
           );
         })}
       </div>
 
       {/* RIGHT CONTENT */}
-      <div style={content}>
+      <div className="flex-1 overflow-y-auto px-8 py-6">
 
         {/* ─── GENERAL ─── */}
         {cat === "general" && (
           <div>
-            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>General</div>
+            <div className="text-sm font-semibold mb-1">General</div>
             <div style={{ ...sectionSx, marginTop: 0 }}>Appearance</div>
             <RadioRow label="Theme" value={s.theme} options={["dark", "light", "system"]} onChange={(v) => update("theme", v)} />
-            <div style={rowSx}>
-              <span style={labelSx}>Font Family</span>
+            <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+              <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>Font Family</span>
               <select value={s.font} onChange={(e) => update("font", e.target.value as Settings["font"])} style={selectSx}>
                 <option value="jetbrains">JetBrains Mono</option>
                 <option value="fira">Fira Code</option>
@@ -243,10 +214,10 @@ export default function SettingsPanel() {
         {/* ─── AI / LLM ─── */}
         {cat === "ai" && (
           <div>
-            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>AI / LLM</div>
+            <div className="text-sm font-semibold mb-1">AI / LLM</div>
             <div style={{ ...sectionSx, marginTop: 0 }}>Provider</div>
-            <div style={rowSx}>
-              <span style={labelSx}>Primary Provider</span>
+            <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+              <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>Primary Provider</span>
               <select value={s.primaryProvider} onChange={(e) => update("primaryProvider", e.target.value as Settings["primaryProvider"])} style={selectSx}>
                 <option value="openai">OpenAI</option>
                 <option value="anthropic">Anthropic</option>
@@ -254,8 +225,8 @@ export default function SettingsPanel() {
                 <option value="ollama">Ollama</option>
               </select>
             </div>
-            <div style={rowSx}>
-              <span style={labelSx}>Fallback Provider</span>
+            <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+              <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>Fallback Provider</span>
               <select value={s.fallbackProvider} onChange={(e) => update("fallbackProvider", e.target.value as Settings["fallbackProvider"])} style={selectSx}>
                 <option value="none">None</option>
                 <option value="openai">OpenAI</option>
@@ -265,20 +236,20 @@ export default function SettingsPanel() {
               </select>
             </div>
             <div style={sectionSx}>API Keys</div>
-            <div style={rowSx}>
-              <span style={labelSx}>OpenAI API Key</span>
+            <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+              <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>OpenAI API Key</span>
               <input type="password" value={s.openaiKey} onChange={(e) => update("openaiKey", e.target.value)} placeholder="sk-..." style={inputSx} />
             </div>
-            <div style={rowSx}>
-              <span style={labelSx}>Anthropic API Key</span>
+            <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+              <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>Anthropic API Key</span>
               <input type="password" value={s.anthropicKey} onChange={(e) => update("anthropicKey", e.target.value)} placeholder="sk-ant-..." style={inputSx} />
             </div>
-            <div style={rowSx}>
-              <span style={labelSx}>Google API Key</span>
+            <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+              <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>Google API Key</span>
               <input type="password" value={s.googleKey} onChange={(e) => update("googleKey", e.target.value)} placeholder="AIza..." style={inputSx} />
             </div>
-            <div style={rowSx}>
-              <span style={labelSx}>Ollama URL</span>
+            <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+              <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>Ollama URL</span>
               <input type="text" value={s.ollamaUrl} onChange={(e) => update("ollamaUrl", e.target.value)} placeholder="http://localhost:11434" style={inputSx} />
             </div>
             <div style={sectionSx}>Parameters</div>
@@ -293,10 +264,10 @@ export default function SettingsPanel() {
         {/* ─── AGENT ─── */}
         {cat === "agent" && (
           <div>
-            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>Agent</div>
+            <div className="text-sm font-semibold mb-1">Agent</div>
             <div style={{ ...sectionSx, marginTop: 0 }}>Behavior</div>
-            <div style={rowSx}>
-              <span style={labelSx}>Default Mode</span>
+            <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+              <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>Default Mode</span>
               <select value={s.agentMode} onChange={(e) => update("agentMode", e.target.value as Settings["agentMode"])} style={selectSx}>
                 <option value="code">Code</option>
                 <option value="architect">Architect</option>
@@ -309,8 +280,8 @@ export default function SettingsPanel() {
             <CheckboxRow label="Auto-start Agent" checked={s.autoStart} onChange={(v) => update("autoStart", v)} />
             <CheckboxRow label="Background Execution" checked={s.backgroundExecution} onChange={(v) => update("backgroundExecution", v)} />
             <RadioRow label="Checkpoint Interval" value={s.checkpointInterval} options={[1, 5, 15, 30]} onChange={(v) => update("checkpointInterval", v)} />
-            <div style={rowSx}>
-              <span style={labelSx}>Max Retries</span>
+            <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+              <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>Max Retries</span>
               <input type="number" min={1} max={10} value={s.maxRetries} onChange={(e) => update("maxRetries", Number(e.target.value))} style={{ ...inputSx, width: "60px" }} />
             </div>
             <div style={sectionSx}>Approval Required</div>
@@ -323,10 +294,10 @@ export default function SettingsPanel() {
         {/* ─── MEMORY ─── */}
         {cat === "memory" && (
           <div>
-            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>Memory</div>
+            <div className="text-sm font-semibold mb-1">Memory</div>
             <div style={{ ...sectionSx, marginTop: 0 }}>Context</div>
-            <div style={rowSx}>
-              <span style={labelSx}>Max Conversations</span>
+            <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+              <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>Max Conversations</span>
               <select value={s.maxConversations} onChange={(e) => update("maxConversations", Number(e.target.value) as Settings["maxConversations"])} style={selectSx}>
                 <option value={100}>100</option>
                 <option value={500}>500</option>
@@ -336,13 +307,13 @@ export default function SettingsPanel() {
             <CheckboxRow label="Auto-compact Context" checked={s.autoCompact} onChange={(v) => update("autoCompact", v)} />
             <RadioRow label="Compact Threshold" value={s.compactThreshold} options={[50, 70, 80, 90]} onChange={(v) => update("compactThreshold", v)} />
             <div style={sectionSx}>Data</div>
-            <div style={{ display: "flex", gap: "8px", padding: "8px 0" }}>
+            <div className="flex gap-2 py-2">
               <button style={btnSx}>Export Memory</button>
               {!showClearConfirm ? (
                 <button style={dangerBtnSx} onClick={() => setShowClearConfirm(true)}>Clear Memory</button>
               ) : (
-                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                  <span style={{ fontSize: "10px", color: C.err }}>Are you sure?</span>
+                <div className="flex gap-1.5 items-center">
+                  <span className="text-[10px]" style={{ color: "var(--c-err)" }}>Are you sure?</span>
                   <button style={{ ...btnSx, padding: "4px 10px" }} onClick={() => setShowClearConfirm(false)}>Cancel</button>
                   <button style={{ ...dangerBtnSx, padding: "4px 10px" }} onClick={() => setShowClearConfirm(false)}>Confirm</button>
                 </div>
@@ -354,13 +325,13 @@ export default function SettingsPanel() {
         {/* ─── SECURITY ─── */}
         {cat === "security" && (
           <div>
-            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>Security</div>
+            <div className="text-sm font-semibold mb-1">Security</div>
             <div style={{ ...sectionSx, marginTop: 0 }}>Protection</div>
             <CheckboxRow label="AgentShield" checked={s.agentShield} onChange={(v) => update("agentShield", v)} />
             <CheckboxRow label="Auto-scan on Commit" checked={s.autoScanCommit} onChange={(v) => update("autoScanCommit", v)} />
             <CheckboxRow label="Secrets Detection" checked={s.secretsDetection} onChange={(v) => update("secretsDetection", v)} />
             <div style={sectionSx}>Audit Log</div>
-            <div style={{ display: "flex", gap: "8px", padding: "8px 0" }}>
+            <div className="flex gap-2 py-2">
               <button style={btnSx}>View</button>
               <button style={btnSx}>Export</button>
               <button style={dangerBtnSx}>Clear</button>
@@ -371,27 +342,27 @@ export default function SettingsPanel() {
         {/* ─── SHORTCUTS ─── */}
         {cat === "shortcuts" && (
           <div>
-            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>Shortcuts</div>
+            <div className="text-sm font-semibold mb-1">Shortcuts</div>
             <div style={{ ...sectionSx, marginTop: 0 }}>Keyboard Bindings</div>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: ff }}>
+            <table className="w-full border-collapse font-mono">
               <thead>
-                <tr style={{ borderBottom: `1px solid ${C.s2}` }}>
-                  <th style={{ textAlign: "left", padding: "6px 8px", fontSize: "10px", textTransform: "uppercase", color: C.t3, letterSpacing: "0.06em" }}>Action</th>
-                  <th style={{ textAlign: "right", padding: "6px 8px", fontSize: "10px", textTransform: "uppercase", color: C.t3, letterSpacing: "0.06em" }}>Key</th>
+                <tr style={{ borderBottom: "1px solid var(--c-s2)" }}>
+                  <th className="text-left px-2 py-1.5 text-[10px] uppercase tracking-wider" style={{ color: "var(--c-text3)" }}>Action</th>
+                  <th className="text-right px-2 py-1.5 text-[10px] uppercase tracking-wider" style={{ color: "var(--c-text3)" }}>Key</th>
                 </tr>
               </thead>
               <tbody>
                 {SHORTCUTS.map((sc) => (
-                  <tr key={sc.action} style={{ borderBottom: `1px solid ${C.s1}` }}>
-                    <td style={{ padding: "6px 8px", fontSize: "11px", color: C.t1 }}>{sc.action}</td>
-                    <td style={{ padding: "6px 8px", fontSize: "11px", color: C.t2, textAlign: "right", fontFamily: ff }}>
-                      <kbd style={{ background: C.s1, padding: "2px 6px", fontSize: "10px", border: `1px solid ${C.s3}` }}>{sc.key}</kbd>
+                  <tr key={sc.action} style={{ borderBottom: "1px solid var(--c-s1)" }}>
+                    <td className="px-2 py-1.5 text-[11px]" style={{ color: "var(--c-text)" }}>{sc.action}</td>
+                    <td className="px-2 py-1.5 text-[11px] text-right font-mono" style={{ color: "var(--c-text2)" }}>
+                      <kbd className="text-[10px] px-1.5 py-0.5 border rounded-sm" style={{ background: "var(--c-s1)", borderColor: "var(--c-s3)" }}>{sc.key}</kbd>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <div style={{ padding: "16px 0" }}>
+            <div className="py-4">
               <button style={btnSx}>Reset to Defaults</button>
             </div>
           </div>
@@ -400,14 +371,14 @@ export default function SettingsPanel() {
         {/* ─── ADVANCED ─── */}
         {cat === "advanced" && (
           <div>
-            <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "4px" }}>Advanced</div>
+            <div className="text-sm font-semibold mb-1">Advanced</div>
             <div style={{ ...sectionSx, marginTop: 0 }}>System</div>
-            <div style={rowSx}>
-              <span style={labelSx}>Backend Port</span>
+            <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+              <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>Backend Port</span>
               <input type="number" min={1024} max={65535} value={s.backendPort} onChange={(e) => update("backendPort", Number(e.target.value))} style={{ ...inputSx, width: "80px" }} />
             </div>
-            <div style={rowSx}>
-              <span style={labelSx}>Log Level</span>
+            <div className="flex items-center justify-between py-2" style={{ borderBottom: "1px solid var(--c-s1)" }}>
+              <span className="text-[11px] font-mono" style={{ color: "var(--c-text)" }}>Log Level</span>
               <select value={s.logLevel} onChange={(e) => update("logLevel", e.target.value as Settings["logLevel"])} style={selectSx}>
                 <option value="debug">Debug</option>
                 <option value="info">Info</option>
@@ -418,12 +389,12 @@ export default function SettingsPanel() {
             <CheckboxRow label="Auto-update" checked={s.autoUpdate} onChange={(v) => update("autoUpdate", v)} />
             <CheckboxRow label="Beta Features" checked={s.betaFeatures} onChange={(v) => update("betaFeatures", v)} />
             <div style={sectionSx}>Danger Zone</div>
-            <div style={{ padding: "8px 0" }}>
+            <div className="py-2">
               {!showResetConfirm ? (
                 <button style={dangerBtnSx} onClick={() => setShowResetConfirm(true)}>Reset All Settings</button>
               ) : (
-                <div style={{ display: "flex", gap: "8px", alignItems: "center", background: C.s1, padding: "10px 12px" }}>
-                  <span style={{ fontSize: "11px", color: C.err }}>This will reset all settings to defaults. Are you sure?</span>
+                <div className="flex gap-2 items-center p-2.5 rounded" style={{ background: "var(--c-s1)" }}>
+                  <span className="text-[11px]" style={{ color: "var(--c-err)" }}>This will reset all settings to defaults. Are you sure?</span>
                   <button style={{ ...btnSx, padding: "4px 10px" }} onClick={() => setShowResetConfirm(false)}>Cancel</button>
                   <button style={{ ...dangerBtnSx, padding: "4px 10px" }} onClick={() => { setS(DEFAULT_SETTINGS); setShowResetConfirm(false); }}>Confirm Reset</button>
                 </div>

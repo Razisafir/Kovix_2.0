@@ -1,56 +1,114 @@
 /* ============================================================
-   Design Tokens — Linear x Bloomberg Terminal Aesthetic
-   LCH Color System | Geist Mono | Zero Decorative CSS
+   Design Tokens — Construct AI Agent v2
+   Electric Cyan + Muted Gold + Deep Onyx Aesthetic
    ============================================================ */
 
 :root {
   /* ----------------------------------------------------------
-     Color: Backgrounds (LCH, hue 280)
+     Color: Surfaces (Material Design 3 style naming)
      ---------------------------------------------------------- */
-  --c-base:   #0c0c10;  /* LCH 8%  5% 280 — deep neutral background */
-  --c-s1:     #12121a;  /* LCH 12% 4% 280 — panels */
-  --c-s2:     #1a1a24;  /* LCH 16% 4% 280 — elevated / hover */
-  --c-s3:     #22222e;  /* LCH 20% 5% 280 — hover / active states */
+  --surface:                     #111316;
+  --surface-dim:                 #111316;
+  --surface-container-lowest:    #0c0e11;  /* deepest bg */
+  --surface-container-low:       #1a1c1f;
+  --surface-container:           #1e2023;  /* elevated / hover */
+  --surface-container-high:      #282a2d;  /* borders, scrollbar thumb */
+  --surface-container-highest:   #333538;  /* active states */
+
+  /* Legacy surface aliases (back-compat) */
+  --c-base:              var(--surface-container-lowest);
+  --c-s1:                #141619;  /* panel-bg */
+  --c-s2:                var(--surface-container);
+  --c-s3:                var(--surface-container-high);
+  --c-s4:                var(--surface-container-highest);
 
   /* ----------------------------------------------------------
-     Color: Accent (indigo, used SPARINGLY)
+     Color: Accent — Electric Cyan (agent activity)
      ---------------------------------------------------------- */
-  --c-accent:       #6366f1;  /* LCH 55% 60% 280 */
-  --c-accent-hover: #818cf8;  /* LCH 65% 55% 280 */
+  --c-accent:            #00f5ff;  /* primary — Electric Cyan */
+  --c-accent-dim:        rgba(0, 245, 255, 0.15);
+  --c-accent-hover:      #33f7ff;  /* lighter cyan for hover */
+  --primary:             #00f5ff;
+  --primary-dim:         rgba(0, 245, 255, 0.15);
+
+  /* ----------------------------------------------------------
+     Color: Secondary — Muted Gold (memory/context)
+     ---------------------------------------------------------- */
+  --c-gold:              #e9c349;  /* secondary — Muted Gold */
+  --c-gold-dim:          rgba(233, 195, 73, 0.15);
+  --secondary:           #e9c349;
+  --secondary-dim:       rgba(233, 195, 73, 0.15);
+
+  /* ----------------------------------------------------------
+     Color: Tertiary / Error
+     ---------------------------------------------------------- */
+  --tertiary:            #ffb4ab;
+  --tertiary-dim:        rgba(255, 180, 171, 0.15);
+  --c-err:               #f87171;  /* diff-remove / error */
+  --c-err-bg:            rgba(248, 113, 113, 0.1);
+
+  /* ----------------------------------------------------------
+     Color: Success
+     ---------------------------------------------------------- */
+  --success:             #22c55e;
+  --success-dim:         rgba(34, 197, 94, 0.15);
+  --c-running:           #22c55e;
+  --c-running-bg:        rgba(34, 197, 94, 0.15);
 
   /* ----------------------------------------------------------
      Color: Text (warm whites / grays)
      ---------------------------------------------------------- */
-  --c-text:    #e8e8ec;  /* LCH 92% 2% 280 — primary */
-  --c-text2:   #94949c;  /* LCH 65% 3% 280 — secondary */
-  --c-muted:   #6b6b73;  /* LCH 45% 3% 280 — muted */
-  --c-dim:     #4a4a52;  /* LCH 30% 2% 280 — barely visible */
+  --on-surface:          #e2e2e6;  /* primary text */
+  --on-surface-variant:  #849495;  /* secondary text */
+  --c-text:              #e2e2e6;  /* on-surface — primary */
+  --c-text2:             #b9caca;  /* on-surface-variant — secondary */
+  --c-text3:             #849495;  /* outline — muted */
+  --c-text4:             #3a494a;  /* outline-variant — barely visible */
+
+  /* ----------------------------------------------------------
+     Color: Outlines
+     ---------------------------------------------------------- */
+  --outline:             #849495;
+  --outline-variant:     #3a494a;
 
   /* ----------------------------------------------------------
      Color: Semantic
      ---------------------------------------------------------- */
-  --c-ok:   #10b981;  /* emerald */
-  --c-warn: #f59e0b;  /* amber  */
-  --c-err:  #ef4444;  /* red    */
-  --c-info: #60a5fa;  /* blue   */
+  --c-ok:   #4ade80;  /* diff-add / success */
+  --c-ok-bg: rgba(74, 222, 128, 0.1);
+  --c-warn: #f59e0b;  /* amber / warning */
+  --c-info: #60a5fa;  /* blue / info */
 
   /* ----------------------------------------------------------
      Color: Borders
      ---------------------------------------------------------- */
-  --c-border:         rgba(255, 255, 255, 0.04);
-  --c-border-active:  rgba(99, 102, 241, 0.30);
+  --c-border:            #282a2d;
+  --c-border-active:     rgba(0, 245, 255, 0.30);
+
+  /* ----------------------------------------------------------
+     Color: Glassmorphism
+     ---------------------------------------------------------- */
+  --glass-bg:            rgba(20, 22, 25, 0.6);
+  --glass-blur:          12px;
+
+  /* ----------------------------------------------------------
+     Color: Glow effects
+     ---------------------------------------------------------- */
+  --glow-cyan:           0 0 12px rgba(0, 245, 255, 0.2);
+  --border-glow-cyan:    1px solid rgba(0, 245, 255, 0.4);
 
   /* ----------------------------------------------------------
      Typography
      ---------------------------------------------------------- */
-  --font-mono: "Geist Mono", "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  --font-sans:           "Inter", "system-ui", "sans-serif";
+  --font-mono:           "JetBrains Mono", "Fira Code", "Consolas", monospace;
 
-  --text-xs:   10px;  /* labels       */
+  --text-xs:   10px;  /* micro-labels   */
   --text-sm:   11px;  /* data / numbers */
-  --text-base: 12px;  /* body         */
-  --text-lg:   13px;  /* headings     */
-  --text-xl:   14px;  /* emphasis     */
-  --text-2xl:  16px;  /* max allowed  */
+  --text-base: 12px;  /* body           */
+  --text-lg:   13px;  /* headings       */
+  --text-xl:   14px;  /* emphasis       */
+  --text-2xl:  16px;  /* max allowed    */
 
   --weight-normal: 400;
   --weight-medium: 500;
@@ -63,23 +121,23 @@
   /* ----------------------------------------------------------
      Spacing (px values, max 24)
      ---------------------------------------------------------- */
-  --space-1:  4px;   /* icon gaps               */
-  --space-2:  6px;   /* button padding-y        */
-  --space-3:  8px;   /* section gaps, card pad  */
-  --space-4:  12px;  /* panel padding           */
-  --space-5:  16px;  /* major section separation */
-  --space-6:  24px;  /* page margins            */
+  --space-1:  4px;
+  --space-2:  6px;
+  --space-3:  8px;
+  --space-4:  12px;
+  --space-5:  16px;
+  --space-6:  24px;
 
   /* ----------------------------------------------------------
      Borders & Radius
      ---------------------------------------------------------- */
-  --radius-none: 0px;
-  --radius-sm:   2px;   /* buttons          */
-  --radius-md:   4px;   /* floating menus   */
-  --radius-lg:   4px;   /* max radius       */
+  --radius-sm:   2px;
+  --radius-default: 4px;
+  --radius-md:   6px;
+  --radius-lg:   8px;
 
   /* ----------------------------------------------------------
-     Animation (MINIMAL — no bouncy / floating / breathing)
+     Animation
      ---------------------------------------------------------- */
   --dur-fast:   100ms;
   --dur-normal: 150ms;
@@ -88,12 +146,12 @@
   /* ----------------------------------------------------------
      Scrollbar
      ---------------------------------------------------------- */
-  --scrollbar-width: 4px;
+  --scrollbar-width: 8px;
   --scrollbar-track: transparent;
-  --scrollbar-thumb: var(--c-s3);
+  --scrollbar-thumb: #282a2d;
 
   /* ----------------------------------------------------------
-     Shadows (functional only — no glow)
+     Shadows (functional + glow)
      ---------------------------------------------------------- */
   --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.40);
   --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.50);

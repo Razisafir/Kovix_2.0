@@ -30,13 +30,13 @@ export function GlowButton({
 
   const variantClasses = {
     primary:
-      "bg-[#6366f1] text-white border-[#6366f1] hover:bg-[#5558e0]",
+      "bg-accent-cyan text-bg-onyx border-accent-cyan hover:bg-accent-cyan/80",
     secondary:
-      "bg-[#1a1a24] text-[#e2e2e2] border-[#22222e] hover:bg-[#22222e] hover:border-[#6366f1]",
+      "bg-transparent text-text-primary border-transparent hover:bg-accent-cyan-dim luminous-border",
     danger:
-      "bg-[#1a1a24] text-[#ef4444] border-[#22222e] hover:bg-[#22222e] hover:border-[#ef4444]",
+      "bg-diff-remove/10 text-diff-remove border-diff-remove/30 hover:bg-diff-remove/20",
     ghost:
-      "bg-transparent text-[#666] border-transparent hover:text-[#e2e2e2] hover:border-[#22222e]",
+      "bg-transparent text-text-secondary border-transparent hover:text-text-primary hover:border-border-subtle",
   };
 
   const isDisabled = disabled || loading;
@@ -56,7 +56,7 @@ export function GlowButton({
         ${isDisabled ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}
         ${className}
       `}
-      style={{ borderRadius: 2 }}
+      style={{ borderRadius: 6 }}
     >
       {loading && (
         <Loader2

@@ -35,25 +35,6 @@ import {
 } from "lucide-react";
 import { registry, type Command } from "../commands/registry";
 
-/* ─────────────────────── color system ─────────────────────── */
-
-const C = {
-  base: "#0c0c10",
-  s1: "#12121a",
-  s2: "#1a1a24",
-  s3: "#22222e",
-  accent: "#6366f1",
-  t1: "#e8e8ec",
-  t2: "#94949c",
-  t3: "#6b6b73",
-  t4: "#4a4a52",
-  ok: "#10b981",
-  wrn: "#f59e0b",
-  border: "rgba(255,255,255,0.04)",
-};
-
-const ff = '"Geist Mono", "JetBrains Mono", monospace';
-
 /* ─────────────────────── icon mapping ─────────────────────── */
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -91,10 +72,10 @@ const iconMap: Record<string, React.ReactNode> = {
 /* ─────────────────────── category styling ─────────────────────── */
 
 const categoryColors: Record<string, string> = {
-  agent: "#6366f1",      // Indigo
-  navigation: "#10b981",  // Emerald
-  tools: "#f59e0b",       // Amber
-  system: "#6b6b73",      // Gray
+  agent: "var(--c-accent)",      // Cyan
+  navigation: "var(--c-ok)",     // Green
+  tools: "var(--c-gold)",        // Gold
+  system: "var(--c-text3)",      // Gray
 };
 
 const categoryLabels: Record<string, string> = {
@@ -262,51 +243,22 @@ function CommandPalette({ isOpen, onClose, onCommandSelect }: CommandPaletteProp
 
   return (
     <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 9999,
-        backgroundColor: "rgba(0,0,0,0.6)",
-        backdropFilter: "blur(4px)",
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "center",
-        paddingTop: "15vh",
-        fontFamily: ff,
-      }}
+      className="fixed inset-0 z-[9999] flex items-start justify-center pt-[15vh] font-mono"
+      style={{ backgroundColor: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        style={{
-          width: 640,
-          maxWidth: "90vw",
-          backgroundColor: C.s1,
-          border: `1px solid ${C.border}`,
-          boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-          display: "flex",
-          flexDirection: "column",
-          maxHeight: "60vh",
-          borderRadius: 8,
-          overflow: "hidden",
-        }}
+        className="glass-panel flex flex-col max-h-[60vh] overflow-hidden rounded-lg"
+        style={{ width: 640, maxWidth: "90vw" }}
       >
         {/* Search bar */}
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            padding: "10px 14px",
-            borderBottom: `1px solid ${C.border}`,
-            flexShrink: 0,
-          }}
+          className="flex items-center gap-2 px-3.5 py-2.5 shrink-0"
+          style={{ borderBottom: "1px solid var(--c-border)" }}
         >
-          <Search size={14} style={{ color: C.accent, flexShrink: 0 }} />
+          <Search size={14} className="shrink-0" style={{ color: "var(--c-accent)" }} />
           <input
             ref={inputRef}
             type="text"
@@ -314,36 +266,16 @@ function CommandPalette({ isOpen, onClose, onCommandSelect }: CommandPaletteProp
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a command or search..."
-            style={{
-              flex: 1,
-              background: "transparent",
-              border: "none",
-              outline: "none",
-              fontFamily: ff,
-              fontSize: 13,
-              color: C.t1,
-              caretColor: C.accent,
-            }}
+            className="flex-1 bg-transparent border-none outline-none font-mono text-[13px]"
+            style={{ color: "var(--c-text)", caretColor: "var(--c-accent)" }}
             autoComplete="off"
             autoCorrect="off"
             spellCheck={false}
           />
           <button
             onClick={onClose}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 20,
-              height: 20,
-              border: "none",
-              background: C.s2,
-              color: C.t4,
-              cursor: "pointer",
-              borderRadius: 3,
-              fontFamily: ff,
-              fontSize: 9,
-            }}
+            className="flex items-center justify-center border-none font-mono text-[9px] cursor-pointer rounded"
+            style={{ width: 20, height: 20, background: "var(--c-s2)", color: "var(--c-text4)" }}
           >
             ESC
           </button>
@@ -352,25 +284,14 @@ function CommandPalette({ isOpen, onClose, onCommandSelect }: CommandPaletteProp
         {/* Results list */}
         <div
           ref={listRef}
-          style={{
-            flex: 1,
-            overflow: "auto",
-            scrollbarWidth: "thin",
-            scrollbarColor: `${C.s3} transparent`,
-          }}
+          className="flex-1 overflow-auto"
+          style={{ scrollbarWidth: "thin", scrollbarColor: "var(--c-s3) transparent" }}
         >
           {flatList.length === 0 && (
-            <div
-              style={{
-                padding: "24px 16px",
-                textAlign: "center",
-                fontSize: 11,
-                color: C.t3,
-              }}
-            >
-              <CommandIcon size={24} style={{ color: C.t4, margin: "0 auto 8px", display: "block" }} />
+            <div className="px-4 py-6 text-center text-[11px]" style={{ color: "var(--c-text3)" }}>
+              <CommandIcon size={24} className="mx-auto mb-2 block" style={{ color: "var(--c-text4)" }} />
               <div>No commands found</div>
-              <div style={{ fontSize: 10, color: C.t4, marginTop: 4 }}>
+              <div className="text-[10px] mt-1" style={{ color: "var(--c-text4)" }}>
                 Try a different search term
               </div>
             </div>
@@ -382,18 +303,11 @@ function CommandPalette({ isOpen, onClose, onCommandSelect }: CommandPaletteProp
               return (
                 <div
                   key={`hdr-${item.category}`}
+                  className="px-3.5 py-1 text-[9px] font-semibold uppercase tracking-wider sticky top-0 z-[1]"
                   style={{
-                    padding: "4px 14px",
-                    fontSize: 9,
-                    fontWeight: 600,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                    color: categoryColors[item.category] ?? C.t4,
-                    backgroundColor: C.base,
-                    borderBottom: `1px solid ${C.border}`,
-                    position: "sticky",
-                    top: 0,
-                    zIndex: 1,
+                    color: categoryColors[item.category] ?? "var(--c-text4)",
+                    backgroundColor: "var(--c-base)",
+                    borderBottom: "1px solid var(--c-border)",
                   }}
                 >
                   {categoryLabels[item.category] ?? item.category}
@@ -406,7 +320,7 @@ function CommandPalette({ isOpen, onClose, onCommandSelect }: CommandPaletteProp
             const isSelected = i === selectedIndex;
             const isDisabled = item.enabled?.() === false;
             const actualCmdIndex = i;
-            const catColor = categoryColors[item.category] ?? C.t4;
+            const catColor = categoryColors[item.category] ?? "var(--c-text4)";
 
             return (
               <button
@@ -418,71 +332,44 @@ function CommandPalette({ isOpen, onClose, onCommandSelect }: CommandPaletteProp
                   if (!isDisabled) handleSelect(item);
                 }}
                 onMouseEnter={() => setSelectedIndex(actualCmdIndex)}
+                className="flex items-center gap-2.5 w-full h-9 px-3.5 border-none font-mono text-[11px] text-left outline-none"
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  width: "100%",
-                  height: 36,
-                  padding: "0 14px",
-                  border: "none",
-                  borderBottom: `1px solid ${C.border}`,
-                  backgroundColor: isSelected ? C.s2 : "transparent",
-                  color: isDisabled ? C.t4 : isSelected ? C.t1 : C.t2,
+                  borderBottom: "1px solid var(--c-border)",
+                  backgroundColor: isSelected ? "var(--c-s2)" : "transparent",
+                  color: isDisabled ? "var(--c-text4)" : isSelected ? "var(--c-text)" : "var(--c-text2)",
                   cursor: isDisabled ? "not-allowed" : "pointer",
-                  fontFamily: ff,
-                  fontSize: 11,
-                  textAlign: "left",
-                  outline: "none",
                   transition: "background-color 30ms",
                   opacity: isDisabled ? 0.4 : 1,
                 }}
               >
                 {/* Icon */}
                 <div
+                  className="w-[26px] h-[26px] rounded flex items-center justify-center shrink-0"
                   style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: 4,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    backgroundColor: isSelected ? `${catColor}15` : C.s2,
-                    color: isSelected ? catColor : C.t4,
+                    backgroundColor: isSelected ? "var(--c-accent-dim)" : "var(--c-s2)",
+                    color: isSelected ? catColor : "var(--c-text4)",
                   }}
                 >
                   {iconMap[item.icon || "command"] ?? <CommandIcon size={13} />}
                 </div>
 
                 {/* Content */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontWeight: isSelected ? 600 : 400, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span style={{ fontWeight: isSelected ? 600 : 400 }} className="overflow-hidden text-ellipsis whitespace-nowrap">
                       {item.title}
                     </span>
                     <span
-                      style={{
-                        fontSize: 8,
-                        fontWeight: 600,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                        color: catColor,
-                        opacity: 0.7,
-                      }}
+                      className="text-[8px] font-semibold uppercase tracking-wider opacity-70"
+                      style={{ color: catColor }}
                     >
                       {categoryLabels[item.category]}
                     </span>
                   </div>
                   {item.description && (
                     <div
-                      style={{
-                        fontSize: 10,
-                        color: C.t3,
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
+                      className="text-[10px] whitespace-nowrap overflow-hidden text-ellipsis"
+                      style={{ color: "var(--c-text3)" }}
                     >
                       {item.description}
                     </div>
@@ -492,15 +379,11 @@ function CommandPalette({ isOpen, onClose, onCommandSelect }: CommandPaletteProp
                 {/* Shortcut */}
                 {item.shortcut && (
                   <kbd
+                    className="text-[9px] px-[5px] py-[1px] font-mono rounded-sm shrink-0"
                     style={{
-                      fontSize: 9,
-                      color: C.t4,
-                      backgroundColor: C.base,
-                      border: `1px solid ${C.border}`,
-                      padding: "1px 5px",
-                      fontFamily: ff,
-                      borderRadius: 2,
-                      flexShrink: 0,
+                      color: "var(--c-text4)",
+                      backgroundColor: "var(--c-base)",
+                      border: "1px solid var(--c-border)",
                     }}
                   >
                     {item.shortcut}
@@ -509,7 +392,7 @@ function CommandPalette({ isOpen, onClose, onCommandSelect }: CommandPaletteProp
 
                 {/* Selected indicator */}
                 {isSelected && !isDisabled && (
-                  <ArrowRight size={12} style={{ color: C.accent, flexShrink: 0 }} />
+                  <ArrowRight size={12} className="shrink-0" style={{ color: "var(--c-accent)" }} />
                 )}
               </button>
             );
@@ -518,19 +401,14 @@ function CommandPalette({ isOpen, onClose, onCommandSelect }: CommandPaletteProp
 
         {/* Footer */}
         <div
+          className="flex items-center gap-3.5 px-3.5 py-[5px] text-[9px] shrink-0"
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-            padding: "5px 14px",
-            borderTop: `1px solid ${C.border}`,
-            fontSize: 9,
-            color: C.t4,
-            flexShrink: 0,
-            backgroundColor: C.base,
+            borderTop: "1px solid var(--c-border)",
+            color: "var(--c-text4)",
+            backgroundColor: "var(--c-base)",
           }}
         >
-          <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <span className="flex items-center gap-1">
             <Keyboard size={10} />
             {filteredCommands.length} commands
           </span>
@@ -539,13 +417,6 @@ function CommandPalette({ isOpen, onClose, onCommandSelect }: CommandPaletteProp
           <span>ESC close</span>
         </div>
       </div>
-
-      {/* Scrollbar styles */}
-      <style>{`
-        div::-webkit-scrollbar { width: 4px; }
-        div::-webkit-scrollbar-track { background: transparent; }
-        div::-webkit-scrollbar-thumb { background: ${C.s3}; border-radius: 2px; }
-      `}</style>
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import { lazy, Suspense, useState, useCallback, useEffect } from "react";
-import { Command } from "lucide-react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import OnboardingModal from "./components/OnboardingModal";
 import Sidebar from "./components/Sidebar";
@@ -17,14 +16,7 @@ import useAppStore from "./stores/useAppStore";
 const Editor = lazy(() => import("./components/Editor"));
 const Panel = lazy(() => import("./components/Panel"));
 const SettingsPanel = lazy(() => import("./components/SettingsPanel"));
-
-const C = {
-  base: "#0c0c10",
-  s1: "#12121a",
-  border: "rgba(255,255,255,0.04)",
-  t2: "#94949c",
-  accent: "#6366f1",
-};
+const AgentPanel = lazy(() => import("./components/AgentPanel"));
 
 /* ─── Splash Screen Component ─── */
 function SplashScreen({ onReady }: { onReady: () => void }) {
@@ -45,34 +37,28 @@ function SplashScreen({ onReady }: { onReady: () => void }) {
     const checkBackend = async () => {
       setStatus("checking backend");
       try {
-        // The backend runs on a random port assigned by the Rust sidecar
-        // manager. We try common ports and the env-configured port.
         const ports = [8000, 25147, 8080];
 
-        // Also try to read the port from Tauri if available
         if (typeof window !== "undefined" && (window as any).__TAURI__) {
           try {
             const { invoke } = (window as any).__TAURI__.core || (window as any).__TAURI__;
             if (invoke) {
-              // The backend:ready event carries the actual port
               const { listen } = (window as any).__TAURI__.event || (window as any).__TAURI__;
               if (listen) {
                 const unlisten = await listen("backend:ready", (event: any) => {
                   const port = event.payload;
                   if (typeof port === "number") {
-                    ports.unshift(port); // try this port first
+                    ports.unshift(port);
                   }
                 });
-                // Clean up listener after 5s
                 setTimeout(() => unlisten(), 5000);
               }
             }
           } catch {
-            // Tauri API not available, use default ports
+            // Tauri API not available
           }
         }
 
-        // Try health endpoint up to 8 times with 500ms delay
         for (let i = 0; i < 8; i++) {
           if (cancelled) return;
           for (const port of ports) {
@@ -94,7 +80,6 @@ function SplashScreen({ onReady }: { onReady: () => void }) {
           }
           await new Promise((r) => setTimeout(r, 500));
         }
-        // Timeout: proceed anyway after max retries
         if (!cancelled) {
           setStatus("proceeding offline");
           setTimeout(() => onReady(), 600);
@@ -106,7 +91,6 @@ function SplashScreen({ onReady }: { onReady: () => void }) {
         }
       }
     };
-    // Small delay before starting health check to let window render
     const timer = setTimeout(checkBackend, 300);
     return () => {
       cancelled = true;
@@ -115,31 +99,9 @@ function SplashScreen({ onReady }: { onReady: () => void }) {
   }, [onReady]);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: C.base,
-        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-        gap: "24px",
-      }}
-    >
+    <div className="flex flex-col items-center justify-center w-screen h-screen bg-bg-onyx font-mono gap-6">
       {/* Logo Mark */}
-      <div
-        style={{
-          width: "48px",
-          height: "48px",
-          backgroundColor: C.s1,
-          border: `1px solid ${C.border}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+      <div className="w-12 h-12 bg-panel-bg border border-border-subtle rounded-lg flex items-center justify-center">
         <svg
           width="24"
           height="24"
@@ -152,71 +114,36 @@ function SplashScreen({ onReady }: { onReady: () => void }) {
             y="2"
             width="20"
             height="20"
-            stroke={C.accent}
+            stroke="#00f5ff"
             strokeWidth="1.5"
             fill="none"
           />
-          <line x1="2" y1="8" x2="22" y2="8" stroke={C.accent} strokeWidth="1" />
-          <line x1="8" y1="8" x2="8" y2="22" stroke={C.accent} strokeWidth="1" />
+          <line x1="2" y1="8" x2="22" y2="8" stroke="#00f5ff" strokeWidth="1" />
+          <line x1="8" y1="8" x2="8" y2="22" stroke="#00f5ff" strokeWidth="1" />
         </svg>
       </div>
 
       {/* Title */}
-      <div style={{ textAlign: "center" }}>
-        <div
-          style={{
-            fontSize: "14px",
-            fontWeight: 700,
-            letterSpacing: "0.08em",
-            color: "#e8e8ec",
-            textTransform: "uppercase" as const,
-          }}
-        >
+      <div className="text-center">
+        <div className="text-lg font-bold tracking-tight text-text-primary font-sans">
           CONSTRUCT
         </div>
-        <div
-          style={{
-            fontSize: "10px",
-            color: "#6b6b73",
-            marginTop: "4px",
-            letterSpacing: "0.04em",
-          }}
-        >
-          AI coding agent that never forgets
+        <div className="text-xs text-text-secondary mt-1 tracking-wider font-mono">
+          memory-first AI agent
         </div>
       </div>
 
       {/* Status */}
-      <div
-        style={{
-          fontSize: "10px",
-          color: C.t2,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase" as const,
-          minHeight: "16px",
-        }}
-      >
+      <div className="text-xs text-text-secondary tracking-widest uppercase min-h-4 font-mono">
         {status}
         {dots}
       </div>
 
       {/* Progress Bar */}
-      <div
-        style={{
-          width: "120px",
-          height: "2px",
-          backgroundColor: "rgba(255,255,255,0.04)",
-          overflow: "hidden",
-        }}
-      >
+      <div className="w-[120px] h-[2px] bg-border-subtle overflow-hidden rounded-sm">
         <div
-          style={{
-            width: status === "ready" ? "100%" : "40%",
-            height: "100%",
-            backgroundColor: C.accent,
-            opacity: 0.6,
-            transition: "width 300ms ease",
-          }}
+          className="h-full bg-accent-cyan opacity-60 transition-[width] duration-300 ease-out"
+          style={{ width: status === "ready" ? "100%" : "40%" }}
         />
       </div>
     </div>
@@ -247,22 +174,17 @@ function AppRoot() {
   const onboardingComplete = useAppStore((s) => s.onboardingComplete);
   const setOnboardingComplete = useAppStore((s) => s.setOnboardingComplete);
 
-  // ── App flow state ──
   const [showSplash, setShowSplash] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
-
-  // ── Settings panel state ──
   const [showSettings, setShowSettings] = useState(false);
+  const [agentPanelVisible] = useState(true);
 
-  // ── Command Palette (using new hook) ──
   const { isOpen: showCommandPalette, open: openCommandPalette, close: closeCommandPalette } = useCommandPalette();
 
-  // ── Register default commands on mount ──
   useEffect(() => {
     registerDefaultCommands();
   }, []);
 
-  // ── Listen for settings open event from command palette ──
   useEffect(() => {
     const handler = () => setShowSettings(true);
     window.addEventListener("construct:open-settings", handler);
@@ -270,14 +192,10 @@ function AppRoot() {
   }, []);
 
   const openSettings = useCallback(() => setShowSettings(true), []);
-
-  // ── Settings keyboard shortcut (Ctrl+, / Cmd+,) ──
   useSettingsShortcut(openSettings);
 
-  // ── Splash dismissal handler ──
   const handleSplashReady = useCallback(() => {
     setShowSplash(false);
-    // Check if onboarding is needed
     const completed =
       onboardingComplete ||
       localStorage.getItem("construct_onboarding_complete") === "true";
@@ -286,52 +204,23 @@ function AppRoot() {
     }
   }, [onboardingComplete]);
 
-  // ── Onboarding completion ──
   const handleOnboardingComplete = useCallback(() => {
     setOnboardingComplete(true);
     setShowOnboarding(false);
   }, [setOnboardingComplete]);
 
-  // ── Keyboard shortcuts ──
   const shortcuts = createConstructShortcuts({
-    // File
-    newFile: () => {
-      console.log("[shortcut] new file");
-    },
-    openFile: () => {
-      console.log("[shortcut] open file");
-    },
-    save: () => {
-      console.log("[shortcut] save");
-    },
-    saveAll: () => {
-      console.log("[shortcut] save all");
-    },
-    closeTab: () => {
-      console.log("[shortcut] close tab");
-    },
-
-    // Edit
-    undo: () => {
-      console.log("[shortcut] undo");
-    },
-    redo: () => {
-      console.log("[shortcut] redo");
-    },
-    find: () => {
-      console.log("[shortcut] find");
-    },
-    replace: () => {
-      console.log("[shortcut] replace");
-    },
-    goToLine: () => {
-      console.log("[shortcut] go to line");
-    },
-
-    // View
-    toggleSidebar: () => {
-      toggleSidebar();
-    },
+    newFile: () => { console.log("[shortcut] new file"); },
+    openFile: () => { console.log("[shortcut] open file"); },
+    save: () => { console.log("[shortcut] save"); },
+    saveAll: () => { console.log("[shortcut] save all"); },
+    closeTab: () => { console.log("[shortcut] close tab"); },
+    undo: () => { console.log("[shortcut] undo"); },
+    redo: () => { console.log("[shortcut] redo"); },
+    find: () => { console.log("[shortcut] find"); },
+    replace: () => { console.log("[shortcut] replace"); },
+    goToLine: () => { console.log("[shortcut] go to line"); },
+    toggleSidebar: () => { toggleSidebar(); },
     toggleAgentPanel: () => {
       const store = useAppStore.getState();
       if (!store.panelVisible) store.togglePanel();
@@ -342,9 +231,7 @@ function AppRoot() {
       if (!store.panelVisible) store.togglePanel();
       store.setPanelTab("memory");
     },
-    toggleTerminal: () => {
-      togglePanel();
-    },
+    toggleTerminal: () => { togglePanel(); },
     fullscreen: () => {
       if (document.fullscreenElement) {
         document.exitFullscreen();
@@ -352,19 +239,12 @@ function AppRoot() {
         document.documentElement.requestFullscreen();
       }
     },
-
-    // Agent / Action
-    commandPalette: () => {
-      openCommandPalette();
-    },
-    runCurrentFile: () => {
-      console.log("[shortcut] run current file");
-    },
+    commandPalette: () => { openCommandPalette(); },
+    runCurrentFile: () => { console.log("[shortcut] run current file"); },
   });
 
   useKeyboardShortcuts(shortcuts, true);
 
-  // ── Command palette handler (backward compat logging) ──
   const handleCommandSelect = useCallback(
     (cmd: PaletteCommand) => {
       console.log(`[command palette] selected: ${cmd.id} — ${cmd.label}`);
@@ -372,149 +252,97 @@ function AppRoot() {
     []
   );
 
-  // ── Splash Screen ──
   if (showSplash) {
     return <SplashScreen onReady={handleSplashReady} />;
   }
 
-  // ── Onboarding Wizard ──
   if (showOnboarding) {
     return <OnboardingModal onComplete={handleOnboardingComplete} />;
   }
 
-  // ── Main App ──
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: C.base,
-        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-        overflow: "hidden",
-      }}
-    >
-      {/* Title Bar */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          height: 28,
-          padding: "0 12px",
-          backgroundColor: C.s1,
-          borderBottom: `1px solid ${C.border}`,
-          flexShrink: 0,
-          userSelect: "none",
-        }}
-      >
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 600,
-            letterSpacing: "0.08em",
-            color: C.t2,
-            textTransform: "uppercase" as const,
-          }}
-        >
-          Construct
-        </span>
+    <div className="font-sans h-screen w-screen overflow-hidden flex flex-col antialiased selection:bg-accent-cyan-dim bg-bg-onyx text-text-primary">
+      {/* ── Top Title Bar (h-10) ── */}
+      <header className="h-10 flex-shrink-0 bg-panel-bg flex items-center justify-between border-b border-border-subtle relative z-50">
+        {/* Mac dots */}
+        <div className="mac-dots w-48">
+          <span className="mac-dot close" />
+          <span className="mac-dot minimize" />
+          <span className="mac-dot maximize" />
+        </div>
 
-        {/* Command Palette Trigger */}
-        <button
-          onClick={openCommandPalette}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            marginLeft: 16,
-            height: 20,
-            padding: "0 8px",
-            backgroundColor: C.s1,
-            border: `1px solid ${C.border}`,
-            borderRadius: 3,
-            cursor: "pointer",
-            fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-            fontSize: 10,
-            color: "#6b6b73",
-            outline: "none",
-            transition: "background-color 0.1s, color 0.1s",
-          }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.backgroundColor = "#1a1a24";
-            (e.currentTarget as HTMLElement).style.color = "#94949c";
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.backgroundColor = C.s1;
-            (e.currentTarget as HTMLElement).style.color = "#6b6b73";
-          }}
-        >
-          <Command size={11} />
-          <span>Command Palette</span>
-          <kbd
-            style={{
-              fontSize: 8,
-              padding: "1px 4px",
-              backgroundColor: "#0c0c10",
-              borderRadius: 2,
-              border: "1px solid rgba(255,255,255,0.04)",
-              fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-              color: "#4a4a52",
-            }}
+        {/* Centered title */}
+        <div className="flex-1 flex justify-center items-center text-sm font-medium text-text-secondary">
+          Construct — memory-first AI agent
+        </div>
+
+        {/* Right: LLM status badge */}
+        <div className="w-48 flex justify-end pr-4">
+          <div className="text-xs font-mono text-accent-cyan bg-accent-cyan-dim px-2 py-1 rounded-md border border-accent-cyan/30">
+            Kimi K2.5 · local
+          </div>
+        </div>
+      </header>
+
+      {/* ── Main Content Area ── */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Far Left Icon Rail (w-12) */}
+        <nav className="w-12 flex-shrink-0 bg-panel-bg border-r border-border-subtle flex flex-col items-center py-4 gap-6 z-40">
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded-md bg-accent-cyan-dim text-accent-cyan border border-accent-cyan/30"
+            title="Explorer"
           >
-            Ctrl+Shift+P
-          </kbd>
-        </button>
+            <span className="material-symbols-outlined text-[20px]">folder</span>
+          </button>
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:text-text-primary transition-colors"
+            title="Search"
+            onClick={openCommandPalette}
+          >
+            <span className="material-symbols-outlined text-[20px]">search</span>
+          </button>
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:text-text-primary transition-colors"
+            title="Git"
+          >
+            <span className="material-symbols-outlined text-[20px]">account_tree</span>
+          </button>
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:text-text-primary transition-colors"
+            title="Extensions"
+          >
+            <span className="material-symbols-outlined text-[20px]">extension</span>
+          </button>
+          <div className="mt-auto flex flex-col gap-4">
+            <button
+              className="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:text-text-primary transition-colors"
+              title="Account"
+            >
+              <span className="material-symbols-outlined text-[20px]">account_circle</span>
+            </button>
+            <button
+              className="w-8 h-8 flex items-center justify-center rounded-md text-text-secondary hover:text-text-primary transition-colors"
+              onClick={openSettings}
+              title="Settings"
+            >
+              <span className="material-symbols-outlined text-[20px]">settings</span>
+            </button>
+          </div>
+        </nav>
 
-        <div style={{ flex: 1 }} />
-        <span style={{ fontSize: 10, color: "#6b6b73" }}>v0.1.0-beta</span>
-      </div>
-
-      {/* Main Layout */}
-      <div
-        style={{
-          display: "flex",
-          flex: 1,
-          minHeight: 0,
-          overflow: "hidden",
-        }}
-      >
-        {/* Sidebar */}
+        {/* Left Sidebar: Explorer & Memory (w-64) */}
         {sidebarVisible && (
-          <aside
-            style={{
-              width: 280,
-              flexShrink: 0,
-              display: "flex",
-              borderRight: `1px solid ${C.border}`,
-              overflow: "hidden",
-            }}
-          >
+          <aside className="w-64 flex-shrink-0 bg-bg-onyx border-r border-border-subtle flex flex-col z-30">
             <Sidebar />
           </aside>
         )}
 
-        {/* Center - Editor + Panel */}
-        <main
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            flex: 1,
-            minWidth: 0,
-          }}
-        >
+        {/* Center - Editor + Bottom Panel */}
+        <main className="flex-1 flex flex-col min-w-0 bg-bg-onyx border-r border-border-subtle z-20">
           <div style={{ flex: 1, minHeight: 0 }}>
             <Suspense
               fallback={
-                <div
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    padding: 16,
-                    fontSize: 11,
-                    color: "#6b6b73",
-                  }}
-                >
+                <div className="w-full h-full p-4 text-xs text-text-secondary">
                   loading...
                 </div>
               }
@@ -529,7 +357,7 @@ function AppRoot() {
               style={{
                 height: 240,
                 flexShrink: 0,
-                borderTop: `1px solid ${C.border}`,
+                borderTop: "1px solid #282a2d",
                 overflow: "hidden",
                 display: "flex",
                 flexDirection: "column",
@@ -537,15 +365,7 @@ function AppRoot() {
             >
               <Suspense
                 fallback={
-                  <div
-                    style={{
-                      padding: 8,
-                      fontSize: 10,
-                      color: "#6b6b73",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.08em",
-                    }}
-                  >
+                  <div className="p-2 text-xs text-text-secondary uppercase tracking-widest">
                     loading panel...
                   </div>
                 }
@@ -555,6 +375,15 @@ function AppRoot() {
             </div>
           )}
         </main>
+
+        {/* Right Sidebar: Agent Timeline Panel (w-[400px]) */}
+        {agentPanelVisible && (
+          <aside className="w-[400px] flex-shrink-0 bg-panel-bg flex flex-col z-10 relative">
+            <Suspense fallback={null}>
+              <AgentPanel />
+            </Suspense>
+          </aside>
+        )}
       </div>
 
       <StatusBar />

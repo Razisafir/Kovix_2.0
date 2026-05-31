@@ -1,10 +1,5 @@
 import React from "react";
 
-const C = {
-  s2: "#1a1a24",
-  s3: "#22222e",
-};
-
 interface SkeletonLineProps {
   width?: string;
   height?: string;
@@ -16,12 +11,8 @@ export const SkeletonLine: React.FC<SkeletonLineProps> = ({
 }) => {
   return (
     <div
-      style={{
-        width,
-        height,
-        background: C.s2,
-        borderRadius: "0px",
-      }}
+      className="rounded-none"
+      style={{ width, height, background: "var(--c-s2)" }}
     />
   );
 };
@@ -37,12 +28,8 @@ export const SkeletonBlock: React.FC<SkeletonBlockProps> = ({
 }) => {
   return (
     <div
-      style={{
-        width,
-        height,
-        background: C.s2,
-        borderRadius: "0px",
-      }}
+      className="rounded-none"
+      style={{ width, height, background: "var(--c-s2)" }}
     />
   );
 };
@@ -56,15 +43,11 @@ export const SkeletonCircle: React.FC<SkeletonCircleProps> = ({
 }) => {
   return (
     <div
-      style={{
-        width: size,
-        height: size,
-        background: C.s2,
-        borderRadius: "0px",
-      }}
+      className="rounded-full"
+      style={{ width: size, height: size, background: "var(--c-s2)" }}
     />
   );
-}
+};
 
 interface SkeletonTextProps {
   lines?: number;
@@ -78,7 +61,7 @@ export const SkeletonText: React.FC<SkeletonTextProps> = ({
   lastLineWidth = "60%",
 }) => {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+    <div className="flex flex-col gap-1.5">
       {Array.from({ length: lines }).map((_, i) => (
         <SkeletonLine
           key={i}
@@ -92,10 +75,10 @@ export const SkeletonText: React.FC<SkeletonTextProps> = ({
 
 export const SkeletonCard: React.FC = () => {
   return (
-    <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+    <div className="p-3 flex flex-col gap-2">
+      <div className="flex items-center gap-2">
         <SkeletonCircle size="32px" />
-        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+        <div className="flex-1 flex flex-col gap-1.5">
           <SkeletonLine width="60%" height="12px" />
           <SkeletonLine width="40%" height="10px" />
         </div>

@@ -24,27 +24,11 @@ interface MemoryState {
 
 /* ─────────────────────── colors ─────────────────────── */
 
-const C = {
-  base: "#0c0c10",
-  s1: "#12121a",
-  s2: "#1a1a24",
-  s3: "#22222e",
-  accent: "#6366f1",
-  t1: "#e8e8ec",
-  t2: "#94949c",
-  t3: "#6b6b73",
-  t4: "#4a4a52",
-  epi: "#3b82f6",
-  sem: "#a855f7",
-  prc: "#f59e0b",
-  ref: "#22c55e",
-};
-
 const typeColor: Record<MemoryType, string> = {
-  EPI: C.epi,
-  SEM: C.sem,
-  PRC: C.prc,
-  REF: C.ref,
+  EPI: "#3b82f6",
+  SEM: "#a855f7",
+  PRC: "var(--c-gold)",
+  REF: "var(--c-running)",
 };
 
 /* ─────────────────────── api helpers ─────────────────────── */
@@ -122,19 +106,8 @@ function mapApiResult(item: ApiMemoryResult): MemoryEntry {
 function TypeBadge({ type }: { type: MemoryType }) {
   return (
     <span
-      style={{
-        fontSize: "9px",
-        fontWeight: 700,
-        letterSpacing: "0.06em",
-        color: typeColor[type],
-        backgroundColor: C.s2,
-        borderRadius: "2px",
-        padding: "1px 5px",
-        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-        minWidth: "28px",
-        textAlign: "center",
-        display: "inline-block",
-      }}
+      className="text-[9px] font-bold tracking-wider inline-block text-center min-w-[28px] rounded-sm px-[5px] py-[1px] font-mono"
+      style={{ color: typeColor[type], backgroundColor: "var(--c-s2)" }}
     >
       {type}
     </span>
@@ -152,23 +125,10 @@ function SearchInput({
 }) {
   return (
     <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-        padding: "6px 12px",
-        borderBottom: "1px solid rgba(255,255,255,0.04)",
-      }}
+      className="flex items-center gap-1.5 px-3 py-1.5"
+      style={{ borderBottom: "1px solid var(--c-border)" }}
     >
-      <span
-        style={{
-          fontSize: "10px",
-          color: C.t4,
-          fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-        }}
-      >
+      <span className="text-[10px] uppercase tracking-wider font-mono" style={{ color: "var(--c-text4)" }}>
         QUERY:
       </span>
       <input
@@ -176,42 +136,17 @@ function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && onSearch()}
-        style={{
-          flex: 1,
-          backgroundColor: C.base,
-          border: "1px solid rgba(255,255,255,0.04)",
-          outline: "none",
-          fontSize: "11px",
-          color: C.t1,
-          fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-          padding: "3px 8px",
-          borderRadius: "0px",
-          caretColor: C.accent,
-        }}
+        className="flex-1 px-2 py-[3px] text-[11px] font-mono outline-none rounded-none"
+        style={{ backgroundColor: "var(--c-base)", border: "1px solid var(--c-border)", color: "var(--c-text)", caretColor: "var(--c-accent)" }}
         spellCheck={false}
         autoComplete="off"
       />
       <button
         onClick={onSearch}
-        style={{
-          fontSize: "10px",
-          fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          backgroundColor: C.s2,
-          color: C.t2,
-          border: "1px solid rgba(255,255,255,0.04)",
-          borderRadius: "2px",
-          padding: "3px 10px",
-          cursor: "pointer",
-          fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-        }}
-        onMouseEnter={(e) => {
-          (e.target as HTMLElement).style.backgroundColor = C.s3;
-        }}
-        onMouseLeave={(e) => {
-          (e.target as HTMLElement).style.backgroundColor = C.s2;
-        }}
+        className="text-[10px] font-semibold uppercase tracking-wider px-2.5 py-[3px] cursor-pointer rounded-sm font-mono border-none"
+        style={{ backgroundColor: "var(--c-s2)", color: "var(--c-text2)" }}
+        onMouseEnter={(e) => { (e.target as HTMLElement).style.backgroundColor = "var(--c-s3)"; }}
+        onMouseLeave={(e) => { (e.target as HTMLElement).style.backgroundColor = "var(--c-s2)"; }}
       >
         SEARCH
       </button>
@@ -222,84 +157,45 @@ function SearchInput({
 function DetailPanel({ entry }: { entry: MemoryEntry }) {
   return (
     <div
-      style={{
-        backgroundColor: C.s2,
-        border: "1px solid rgba(255,255,255,0.04)",
-        margin: "6px 12px 6px 12px",
-        padding: "8px 10px",
-        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-      }}
+      className="mx-3 my-1.5 px-2.5 py-2 font-mono"
+      style={{ backgroundColor: "var(--c-s2)", border: "1px solid var(--c-border)" }}
     >
       {/* metadata row */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "16px",
-          fontSize: "10px",
-          color: C.t3,
-          marginBottom: "6px",
-          flexWrap: "wrap",
-        }}
-      >
+      <div className="flex items-center gap-4 text-[10px] mb-1.5 flex-wrap" style={{ color: "var(--c-text3)" }}>
         <span>
           TYPE:{" "}
           <span style={{ color: typeColor[entry.type] }}>{entry.type}</span>
         </span>
         <span>
           TIME:{" "}
-          <span style={{ color: C.t2 }}>{entry.timestamp}</span>
+          <span style={{ color: "var(--c-text2)" }}>{entry.timestamp}</span>
         </span>
         <span>
           CONFIDENCE:{" "}
-          <span style={{ color: C.t2 }}>{(entry.confidence ?? 0).toFixed(2)}</span>
+          <span style={{ color: "var(--c-text2)" }}>{(entry.confidence ?? 0).toFixed(2)}</span>
         </span>
         <span>
           SOURCE:{" "}
-          <span style={{ color: C.t2 }}>{entry.source}</span>
+          <span style={{ color: "var(--c-text2)" }}>{entry.source}</span>
         </span>
       </div>
 
       {/* divider */}
-      <div
-        style={{
-          height: "1px",
-          backgroundColor: "rgba(255,255,255,0.04)",
-          margin: "6px 0",
-        }}
-      />
+      <div className="h-px my-1.5" style={{ backgroundColor: "var(--c-border)" }} />
 
       {/* content */}
-      <div
-        style={{
-          fontSize: "11px",
-          color: C.t1,
-          lineHeight: "16px",
-          wordBreak: "break-word",
-        }}
-      >
+      <div className="text-[11px] leading-4" style={{ color: "var(--c-text)", wordBreak: "break-word" }}>
         {entry.fullContent}
       </div>
 
       {/* related files */}
       {entry.relatedFiles && entry.relatedFiles.length > 0 && (
         <>
-          <div
-            style={{
-              height: "1px",
-              backgroundColor: "rgba(255,255,255,0.04)",
-              margin: "6px 0",
-            }}
-          />
-          <div
-            style={{
-              fontSize: "10px",
-              color: C.t3,
-            }}
-          >
+          <div className="h-px my-1.5" style={{ backgroundColor: "var(--c-border)" }} />
+          <div className="text-[10px]" style={{ color: "var(--c-text3)" }}>
             RELATED:{" "}
             {entry.relatedFiles.map((f, i) => (
-              <span key={f} style={{ color: C.t2 }}>
+              <span key={f} style={{ color: "var(--c-text2)" }}>
                 {f}
                 {i < entry.relatedFiles!.length - 1 ? "  " : ""}
               </span>
@@ -351,7 +247,6 @@ function MemoryPanel() {
       const res = await fetch(`${API_BASE}/memory/recent?limit=20`);
       if (res.ok) {
         const data = await res.json();
-        // API returns a flat array of SearchResultItem
         const items: ApiMemoryResult[] = Array.isArray(data) ? data : (data.results ?? []);
         const entries: MemoryEntry[] = items.map(mapApiResult);
         setState((prev) => ({ ...prev, entries }));
@@ -389,7 +284,6 @@ function MemoryPanel() {
       });
       if (res.ok) {
         const data = await res.json();
-        // API returns a flat array of SearchResultItem
         const items: ApiMemoryResult[] = Array.isArray(data) ? data : (data.results ?? []);
         const entries: MemoryEntry[] = items.map(mapApiResult);
         setState((prev) => ({ ...prev, entries }));
@@ -407,34 +301,17 @@ function MemoryPanel() {
 
   return (
     <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        backgroundColor: C.base,
-        border: "1px solid rgba(255,255,255,0.04)",
-        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-        overflow: "hidden",
-      }}
+      className="flex flex-col h-full overflow-hidden font-mono"
+      style={{ backgroundColor: "var(--c-base)", border: "1px solid var(--c-border)" }}
     >
       {/* ── HEADER ── */}
       <div
-        style={{
-          padding: "8px 12px",
-          fontSize: "10px",
-          fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          color: C.t3,
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
+        className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider flex justify-between items-center"
+        style={{ color: "var(--c-text3)", borderBottom: "1px solid var(--c-border)" }}
       >
         <span>MEMORY</span>
         {totalMemories !== null && (
-          <span style={{ color: C.t4 }}>
+          <span style={{ color: "var(--c-text4)" }}>
             {totalMemories} entries
           </span>
         )}
@@ -449,18 +326,8 @@ function MemoryPanel() {
 
       {/* ── TABLE HEADER ── */}
       <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "44px 80px 100px 1fr",
-          gap: "8px",
-          padding: "4px 12px",
-          fontSize: "10px",
-          fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          color: C.t4,
-          borderBottom: "1px solid rgba(255,255,255,0.04)",
-        }}
+        className="grid gap-2 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider"
+        style={{ gridTemplateColumns: "44px 80px 100px 1fr", color: "var(--c-text4)", borderBottom: "1px solid var(--c-border)" }}
       >
         <span>TYPE</span>
         <span>TIMESTAMP</span>
@@ -470,22 +337,11 @@ function MemoryPanel() {
 
       {/* ── TABLE BODY ── */}
       <div
-        style={{
-          flex: 1,
-          overflow: "auto",
-          scrollbarWidth: "thin",
-          scrollbarColor: `${C.s3} transparent`,
-        }}
+        className="flex-1 overflow-auto"
+        style={{ scrollbarWidth: "thin", scrollbarColor: "var(--c-s3) transparent" }}
       >
         {loading && (
-          <div
-            style={{
-              padding: "16px 12px",
-              fontSize: "10px",
-              color: C.t4,
-              textAlign: "center",
-            }}
-          >
+          <div className="px-3 py-4 text-[10px] text-center" style={{ color: "var(--c-text4)" }}>
             loading...
           </div>
         )}
@@ -497,60 +353,29 @@ function MemoryPanel() {
               <div key={entry.id}>
                 <div
                   onClick={() => handleSelect(entry.id)}
+                  className="grid gap-2 px-3 py-1 text-[11px] font-mono cursor-pointer items-center"
                   style={{
-                    display: "grid",
                     gridTemplateColumns: "44px 80px 100px 1fr",
-                    gap: "8px",
-                    padding: "4px 12px",
-                    fontSize: "11px",
-                    fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
-                    color: C.t2,
-                    backgroundColor: isSelected ? C.s2 : "transparent",
-                    borderBottom: "1px solid rgba(255,255,255,0.04)",
-                    cursor: "pointer",
-                    alignItems: "center",
+                    color: "var(--c-text2)",
+                    backgroundColor: isSelected ? "var(--c-s2)" : "transparent",
+                    borderBottom: "1px solid var(--c-border)",
                     transition: "background-color 0.05s",
                   }}
                   onMouseEnter={(e) => {
-                    if (!isSelected) {
-                      (e.currentTarget as HTMLElement).style.backgroundColor = C.s1;
-                    }
+                    if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = "var(--c-s1)";
                   }}
                   onMouseLeave={(e) => {
-                    if (!isSelected) {
-                      (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-                    }
+                    if (!isSelected) (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
                   }}
                 >
                   <TypeBadge type={entry.type} />
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      color: C.t3,
-                      whiteSpace: "nowrap",
-                    }}
-                  >
+                  <span className="text-[10px] whitespace-nowrap" style={{ color: "var(--c-text3)" }}>
                     {entry.relativeTime}
                   </span>
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      color: entry.source === "--" ? C.t4 : C.t2,
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
+                  <span className="text-[10px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: entry.source === "--" ? "var(--c-text4)" : "var(--c-text2)" }}>
                     {entry.source}
                   </span>
-                  <span
-                    style={{
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      color: C.t2,
-                    }}
-                  >
+                  <span className="overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: "var(--c-text2)" }}>
                     {entry.content}
                   </span>
                 </div>
@@ -564,14 +389,7 @@ function MemoryPanel() {
           })}
 
         {!loading && state.entries.length === 0 && (
-          <div
-            style={{
-              padding: "16px 12px",
-              fontSize: "10px",
-              color: C.t4,
-              textAlign: "center",
-            }}
-          >
+          <div className="px-3 py-4 text-[10px] text-center" style={{ color: "var(--c-text4)" }}>
             no memories yet
           </div>
         )}
@@ -581,7 +399,7 @@ function MemoryPanel() {
       <style>{`
         div::-webkit-scrollbar { width: 4px; height: 4px; }
         div::-webkit-scrollbar-track { background: transparent; }
-        div::-webkit-scrollbar-thumb { background: ${C.s3}; border-radius: 2px; }
+        div::-webkit-scrollbar-thumb { background: var(--c-s3); border-radius: 2px; }
         div::-webkit-scrollbar-thumb:hover { background: #3a3a4f; }
       `}</style>
     </div>

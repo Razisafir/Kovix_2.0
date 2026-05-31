@@ -54,10 +54,10 @@ export function LazyPanel({ activeTab }: LazyPanelProps) {
 
 function PanelSkeleton() {
   return (
-    <div style={{ width: "100%", height: "100%", padding: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
-      <div style={{ height: "12px", width: "33%", background: "#1a1a24" }} />
-      <div style={{ height: "12px", width: "66%", background: "#1a1a24" }} />
-      <div style={{ height: "12px", width: "50%", background: "#1a1a24" }} />
+    <div className="w-full h-full p-3 flex flex-col gap-2">
+      <div className="h-3 w-1/3 rounded-sm" style={{ background: "var(--c-s2)" }} />
+      <div className="h-3 w-2/3 rounded-sm" style={{ background: "var(--c-s2)" }} />
+      <div className="h-3 w-1/2 rounded-sm" style={{ background: "var(--c-s2)" }} />
     </div>
   );
 }

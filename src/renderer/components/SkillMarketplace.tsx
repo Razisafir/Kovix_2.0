@@ -21,20 +21,6 @@ interface Skill {
   examples: string[];
 }
 
-/* ─── Colors ─── */
-const BASE = "#0c0c10";
-const S1 = "#12121a";
-const S2 = "#1a1a24";
-const S3 = "#22222e";
-const ACCENT = "#6366f1";
-const TEXT = "#e8e8ec";
-const TEXT_MUTED = "#94949c";
-const TEXT_DIM = "#6b6b73";
-const TEXT_FAINT = "#4a4a52";
-const BORDER = "rgba(255,255,255,0.04)";
-
-const ff = '"Geist Mono", "JetBrains Mono", monospace';
-
 const categories = ["ALL", "CODING", "DESIGN", "RESEARCH", "DEVOPS", "SECURITY", "TESTING", "DOCUMENTS"];
 
 /* ─── Demo Data ─── */
@@ -104,84 +90,33 @@ export default function SkillMarketplace() {
   }, []);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        overflow: "hidden",
-        fontFamily: ff,
-        background: BASE,
-        color: TEXT,
-      }}
-    >
+    <div className="flex flex-col h-full overflow-hidden font-mono bg-c-base text-c-text">
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          padding: "8px 12px",
-          borderBottom: `1px solid ${BORDER}`,
-          flexShrink: 0,
-          background: S1,
-        }}
-      >
-        <span
-          style={{
-            fontSize: "10px",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            color: TEXT_MUTED,
-          }}
-        >
+      <div className="flex items-center justify-between px-3 py-2 shrink-0" style={{ borderBottom: "1px solid var(--c-border)", background: "var(--c-s1)" }}>
+        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "var(--c-text2)" }}>
           Skills
         </span>
-        <span style={{ fontSize: "10px", color: TEXT_DIM }}>
+        <span className="text-[10px]" style={{ color: "var(--c-text3)" }}>
           {skills.length} total
         </span>
       </div>
 
       {/* Category Tabs */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "2px",
-          padding: "6px 12px",
-          borderBottom: `1px solid ${BORDER}`,
-          flexShrink: 0,
-          background: S1,
-          overflowX: "auto",
-        }}
-      >
+      <div className="flex items-center gap-[2px] px-3 py-1.5 shrink-0 overflow-x-auto" style={{ borderBottom: "1px solid var(--c-border)", background: "var(--c-s1)" }}>
         {categories.map((cat) => {
           const active = activeCategory === cat;
           return (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
+              className="px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider font-mono border-none cursor-pointer whitespace-nowrap"
               style={{
-                padding: "4px 10px",
-                fontSize: "10px",
-                fontWeight: 500,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                fontFamily: ff,
-                background: active ? S2 : "transparent",
-                color: active ? TEXT : TEXT_DIM,
-                border: "none",
-                borderBottom: active ? `2px solid ${ACCENT}` : "2px solid transparent",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
+                background: active ? "var(--c-s2)" : "transparent",
+                color: active ? "var(--c-text)" : "var(--c-text3)",
+                borderBottom: active ? "2px solid var(--c-accent)" : "2px solid transparent",
               }}
-              onMouseEnter={(e) => {
-                if (!active) (e.currentTarget as HTMLButtonElement).style.color = TEXT_MUTED;
-              }}
-              onMouseLeave={(e) => {
-                if (!active) (e.currentTarget as HTMLButtonElement).style.color = TEXT_DIM;
-              }}
+              onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.color = "var(--c-text2)"; }}
+              onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.color = "var(--c-text3)"; }}
             >
               {cat}
             </button>
@@ -190,33 +125,11 @@ export default function SkillMarketplace() {
       </div>
 
       {/* Table */}
-      <div style={{ flex: 1, overflow: "auto" }}>
+      <div className="flex-1 overflow-auto">
         {/* Table Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            borderBottom: `1px solid ${BORDER}`,
-            position: "sticky",
-            top: 0,
-            zIndex: 1,
-            background: S1,
-          }}
-        >
+        <div className="flex items-center sticky top-0 z-[1]" style={{ borderBottom: "1px solid var(--c-border)", background: "var(--c-s1)" }}>
           {["NAME", "CATEGORY", "VERSION", "INSTALLED", "ACTIONS"].map((h) => (
-            <div
-              key={h}
-              style={{
-                flex: h === "NAME" ? 2 : h === "ACTIONS" ? 1.5 : 1,
-                padding: "6px 8px",
-                fontSize: "10px",
-                fontWeight: 500,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: TEXT_DIM,
-                whiteSpace: "nowrap",
-              }}
-            >
+            <div key={h} className="px-2 py-1.5 text-[10px] font-medium uppercase tracking-wider whitespace-nowrap" style={{ flex: h === "NAME" ? 2 : h === "ACTIONS" ? 1.5 : 1, color: "var(--c-text3)" }}>
               {h}
             </div>
           ))}
@@ -229,144 +142,25 @@ export default function SkillMarketplace() {
             <div
               key={skill.id}
               onClick={() => handleView(skill)}
+              className="flex items-center cursor-pointer"
               style={{
-                display: "flex",
-                alignItems: "center",
-                cursor: "pointer",
-                background: isSelected ? S2 : BASE,
-                borderLeft: isSelected ? `2px solid ${ACCENT}` : "2px solid transparent",
+                background: isSelected ? "var(--c-s2)" : "var(--c-base)",
+                borderLeft: isSelected ? "2px solid var(--c-accent)" : "2px solid transparent",
               }}
-              onMouseEnter={(e) => {
-                if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = S2;
-              }}
-              onMouseLeave={(e) => {
-                if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = BASE;
-              }}
+              onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = "var(--c-s2)"; }}
+              onMouseLeave={(e) => { if (!isSelected) (e.currentTarget as HTMLDivElement).style.background = "var(--c-base)"; }}
             >
-              {/* NAME */}
-              <div
-                style={{
-                  flex: 2,
-                  padding: "6px 8px",
-                  fontSize: "11px",
-                  color: TEXT,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {skill.name}
+              <div className="px-2 py-1.5 text-[11px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ flex: 2, color: "var(--c-text)" }}>{skill.name}</div>
+              <div className="px-2 py-1.5" style={{ flex: 1 }}>
+                <span className="text-[9px] uppercase tracking-wider px-1.5 py-[2px] rounded-sm" style={{ background: "var(--c-s2)", color: "var(--c-text2)" }}>{skill.category}</span>
               </div>
-              {/* CATEGORY */}
-              <div style={{ flex: 1, padding: "6px 8px" }}>
-                <span
-                  style={{
-                    fontSize: "9px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    background: S2,
-                    color: TEXT_MUTED,
-                    padding: "2px 6px",
-                    borderRadius: "2px",
-                  }}
-                >
-                  {skill.category}
-                </span>
-              </div>
-              {/* VERSION */}
-              <div
-                style={{
-                  flex: 1,
-                  padding: "6px 8px",
-                  fontSize: "11px",
-                  color: TEXT_MUTED,
-                  fontFamily: ff,
-                }}
-              >
-                {skill.version}
-              </div>
-              {/* INSTALLED */}
-              <div
-                style={{
-                  flex: 1,
-                  padding: "6px 8px",
-                  fontSize: "11px",
-                  color: skill.installed ? TEXT_DIM : ACCENT,
-                  fontFamily: ff,
-                }}
-              >
-                {skill.installed ? "yes" : "no"}
-              </div>
-              {/* ACTIONS */}
-              <div
-                style={{
-                  flex: 1.5,
-                  padding: "6px 8px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleView(skill);
-                  }}
-                  style={{
-                    padding: "3px 8px",
-                    fontSize: "9px",
-                    fontFamily: ff,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    background: S2,
-                    color: TEXT_MUTED,
-                    border: "none",
-                    borderRadius: "2px",
-                    cursor: "pointer",
-                  }}
-                >
-                  VIEW
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleView(skill);
-                  }}
-                  style={{
-                    padding: "3px 8px",
-                    fontSize: "9px",
-                    fontFamily: ff,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    background: S2,
-                    color: TEXT_MUTED,
-                    border: "none",
-                    borderRadius: "2px",
-                    cursor: "pointer",
-                  }}
-                >
-                  RUN
-                </button>
+              <div className="px-2 py-1.5 text-[11px] font-mono" style={{ flex: 1, color: "var(--c-text2)" }}>{skill.version}</div>
+              <div className="px-2 py-1.5 text-[11px] font-mono" style={{ flex: 1, color: skill.installed ? "var(--c-text3)" : "var(--c-accent)" }}>{skill.installed ? "yes" : "no"}</div>
+              <div className="px-2 py-1.5 flex items-center gap-1" style={{ flex: 1.5 }}>
+                <button onClick={(e) => { e.stopPropagation(); handleView(skill); }} className="px-2 py-[3px] text-[9px] font-mono uppercase tracking-wider border-none rounded-sm cursor-pointer" style={{ background: "var(--c-s2)", color: "var(--c-text2)" }}>VIEW</button>
+                <button onClick={(e) => { e.stopPropagation(); handleView(skill); }} className="px-2 py-[3px] text-[9px] font-mono uppercase tracking-wider border-none rounded-sm cursor-pointer" style={{ background: "var(--c-s2)", color: "var(--c-text2)" }}>RUN</button>
                 {!skill.installed && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleInstall(skill.id);
-                    }}
-                    disabled={installing === skill.id}
-                    style={{
-                      padding: "3px 8px",
-                      fontSize: "9px",
-                      fontFamily: ff,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                      background: S2,
-                      color: installing === skill.id ? TEXT_DIM : ACCENT,
-                      border: "none",
-                      borderRadius: "2px",
-                      cursor: "pointer",
-                    }}
-                  >
+                  <button onClick={(e) => { e.stopPropagation(); handleInstall(skill.id); }} disabled={installing === skill.id} className="px-2 py-[3px] text-[9px] font-mono uppercase tracking-wider border-none rounded-sm cursor-pointer" style={{ background: "var(--c-s2)", color: installing === skill.id ? "var(--c-text3)" : "var(--c-accent)" }}>
                     {installing === skill.id ? "..." : "INST"}
                   </button>
                 )}
@@ -377,65 +171,24 @@ export default function SkillMarketplace() {
       </div>
 
       {/* GitHub Install */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "8px 12px",
-          borderTop: `1px solid ${BORDER}`,
-          borderBottom: `1px solid ${BORDER}`,
-          flexShrink: 0,
-          background: S1,
-        }}
-      >
-        <span
-          style={{
-            fontSize: "10px",
-            fontWeight: 500,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            color: TEXT_DIM,
-            whiteSpace: "nowrap",
-          }}
-        >
+      <div className="flex items-center gap-2 px-3 py-2 shrink-0" style={{ borderTop: "1px solid var(--c-border)", borderBottom: "1px solid var(--c-border)", background: "var(--c-s1)" }}>
+        <span className="text-[10px] font-medium uppercase tracking-wider whitespace-nowrap" style={{ color: "var(--c-text3)" }}>
           Install from GitHub
         </span>
         <input
           type="text"
           value={githubRepo}
           onChange={(e) => setGithubRepo(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") handleGithubInstall();
-          }}
+          onKeyDown={(e) => { if (e.key === "Enter") handleGithubInstall(); }}
           placeholder="owner/repo"
-          style={{
-            flex: 1,
-            padding: "4px 8px",
-            fontSize: "11px",
-            fontFamily: ff,
-            background: BASE,
-            color: TEXT,
-            border: `1px solid ${BORDER}`,
-            outline: "none",
-          }}
+          className="flex-1 px-2 py-1 text-[11px] font-mono outline-none"
+          style={{ background: "var(--c-base)", color: "var(--c-text)", border: "1px solid var(--c-border)" }}
         />
         <button
           onClick={handleGithubInstall}
           disabled={!githubRepo.trim()}
-          style={{
-            padding: "4px 10px",
-            fontSize: "10px",
-            fontFamily: ff,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            fontWeight: 500,
-            background: S2,
-            color: githubRepo.trim() ? TEXT : TEXT_DIM,
-            border: "none",
-            borderRadius: "2px",
-            cursor: githubRepo.trim() ? "pointer" : "default",
-          }}
+          className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider font-medium border-none rounded-sm"
+          style={{ background: "var(--c-s2)", color: githubRepo.trim() ? "var(--c-text)" : "var(--c-text3)", cursor: githubRepo.trim() ? "pointer" : "default" }}
         >
           INSTALL
         </button>
@@ -443,153 +196,34 @@ export default function SkillMarketplace() {
 
       {/* Selected Detail Panel */}
       {selectedSkill && (
-        <div
-          style={{
-            flexShrink: 0,
-            maxHeight: "240px",
-            overflow: "auto",
-            background: S2,
-            borderTop: `1px solid ${BORDER}`,
-          }}
-        >
-          {/* Detail Header */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "6px 12px",
-              borderBottom: `1px solid ${BORDER}`,
-            }}
-          >
-            <span style={{ fontSize: "11px", fontWeight: 600, color: TEXT }}>
-              {selectedSkill.name}
-            </span>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span
-                style={{
-                  fontSize: "9px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  background: S3,
-                  color: TEXT_MUTED,
-                  padding: "2px 6px",
-                  borderRadius: "2px",
-                }}
-              >
-                {selectedSkill.category}
-              </span>
-              <span style={{ fontSize: "10px", color: TEXT_DIM }}>
-                v{selectedSkill.version}
-              </span>
-              <button
-                onClick={() => setSelectedSkill(null)}
-                style={{
-                  fontSize: "10px",
-                  color: TEXT_DIM,
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: ff,
-                }}
-              >
-                x
-              </button>
+        <div className="shrink-0 max-h-[240px] overflow-auto" style={{ background: "var(--c-s2)", borderTop: "1px solid var(--c-border)" }}>
+          <div className="flex items-center justify-between px-3 py-1.5" style={{ borderBottom: "1px solid var(--c-border)" }}>
+            <span className="text-[11px] font-semibold" style={{ color: "var(--c-text)" }}>{selectedSkill.name}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] uppercase tracking-wider px-1.5 py-[2px] rounded-sm" style={{ background: "var(--c-s3)", color: "var(--c-text2)" }}>{selectedSkill.category}</span>
+              <span className="text-[10px]" style={{ color: "var(--c-text3)" }}>v{selectedSkill.version}</span>
+              <button onClick={() => setSelectedSkill(null)} className="text-[10px] bg-none border-none cursor-pointer font-mono" style={{ color: "var(--c-text3)" }}>x</button>
             </div>
           </div>
-
-          {/* Description */}
-          <div style={{ padding: "6px 12px", borderBottom: `1px solid ${BORDER}` }}>
-            <p style={{ fontSize: "11px", color: TEXT_MUTED, margin: 0 }}>
-              {selectedSkill.description}
-            </p>
+          <div className="px-3 py-1.5" style={{ borderBottom: "1px solid var(--c-border)" }}>
+            <p className="text-[11px] m-0" style={{ color: "var(--c-text2)" }}>{selectedSkill.description}</p>
           </div>
-
-          {/* Steps */}
-          <div style={{ padding: "6px 12px", borderBottom: `1px solid ${BORDER}` }}>
-            <div
-              style={{
-                fontSize: "10px",
-                fontWeight: 500,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: TEXT_DIM,
-                marginBottom: "6px",
-              }}
-            >
-              Steps
-            </div>
+          <div className="px-3 py-1.5" style={{ borderBottom: "1px solid var(--c-border)" }}>
+            <div className="text-[10px] font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--c-text3)" }}>Steps</div>
             {selectedSkill.steps.map((step) => (
-              <div
-                key={step.order}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "3px 0",
-                  fontSize: "11px",
-                  color: TEXT_MUTED,
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "9px",
-                    color: TEXT_FAINT,
-                    fontFamily: ff,
-                    minWidth: "14px",
-                  }}
-                >
-                  {String(step.order).padStart(2, "0")}
-                </span>
-                <span style={{ color: TEXT, fontFamily: ff }}>{step.action}</span>
-                <span style={{ color: TEXT_DIM }}>{step.description}</span>
-                {step.tool && (
-                  <span
-                    style={{
-                      fontSize: "9px",
-                      background: S3,
-                      color: TEXT_FAINT,
-                      padding: "1px 4px",
-                      borderRadius: "2px",
-                    }}
-                  >
-                    {step.tool}
-                  </span>
-                )}
+              <div key={step.order} className="flex items-center gap-2 py-[3px] text-[11px]" style={{ color: "var(--c-text2)" }}>
+                <span className="text-[9px] font-mono min-w-[14px]" style={{ color: "var(--c-text4)" }}>{String(step.order).padStart(2, "0")}</span>
+                <span className="font-mono" style={{ color: "var(--c-text)" }}>{step.action}</span>
+                <span style={{ color: "var(--c-text3)" }}>{step.description}</span>
+                {step.tool && <span className="text-[9px] px-1 py-[1px] rounded-sm" style={{ background: "var(--c-s3)", color: "var(--c-text4)" }}>{step.tool}</span>}
               </div>
             ))}
           </div>
-
-          {/* Tools */}
-          <div style={{ padding: "6px 12px" }}>
-            <div
-              style={{
-                fontSize: "10px",
-                fontWeight: 500,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: TEXT_DIM,
-                marginBottom: "6px",
-              }}
-            >
-              Tools
-            </div>
-            <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+          <div className="px-3 py-1.5">
+            <div className="text-[10px] font-medium uppercase tracking-wider mb-1.5" style={{ color: "var(--c-text3)" }}>Tools</div>
+            <div className="flex gap-1 flex-wrap">
               {selectedSkill.tools_needed.map((tool) => (
-                <span
-                  key={tool}
-                  style={{
-                    fontSize: "9px",
-                    background: S3,
-                    color: TEXT_MUTED,
-                    padding: "2px 6px",
-                    borderRadius: "2px",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                  }}
-                >
-                  {tool}
-                </span>
+                <span key={tool} className="text-[9px] px-1.5 py-[2px] rounded-sm uppercase tracking-wider" style={{ background: "var(--c-s3)", color: "var(--c-text2)" }}>{tool}</span>
               ))}
             </div>
           </div>

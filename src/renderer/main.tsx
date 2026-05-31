@@ -6,12 +6,12 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import "./index.css";
 
 const C = {
-  base: "#0c0c10",
-  s1: "#12121a",
-  s2: "#1a1a24",
-  accent: "#6366f1",
-  t2: "#94949c",
-  t3: "#6b6b73",
+  base: "#0c0e11",
+  s1: "#141619",
+  s3: "#282a2d",
+  accent: "#00f5ff",
+  text: "#e2e2e6",
+  t3: "#849495",
 };
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -38,7 +38,7 @@ function LoadingScreen() {
         height: "100%",
         background: C.base,
         gap: "16px",
-        fontFamily: '"Geist Mono", "JetBrains Mono", monospace',
+        fontFamily: '"JetBrains Mono", monospace',
       }}
     >
       <div

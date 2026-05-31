@@ -8,8 +8,7 @@ interface GlassCardProps {
 export function GlassCard({ children, className = "" }: GlassCardProps) {
   return (
     <div
-      className={`bg-[#12121a] border border-[#22222e] p-3 ${className}`}
-      style={{ borderRadius: 0 }}
+      className={`bg-[rgba(20,22,25,0.6)] backdrop-blur-[12px] -webkit-backdrop-blur-[12px] border border-border-subtle rounded p-3 ${className}`}
     >
       {children}
     </div>

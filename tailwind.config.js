@@ -6,40 +6,91 @@ export default {
   ],
   theme: {
     /* ----------------------------------------------------------
-       Colors — LCH-based design tokens
+       Colors — Construct v2 Design Tokens
        ---------------------------------------------------------- */
     colors: {
       transparent: "transparent",
       current:     "currentColor",
 
-      "c-base":    "#0c0c10",   /* LCH 8%  5% 280 */
-      "c-s1":      "#12121a",   /* LCH 12% 4% 280 */
-      "c-s2":      "#1a1a24",   /* LCH 16% 4% 280 */
-      "c-s3":      "#22222e",   /* LCH 20% 5% 280 */
+      /* Surfaces */
+      "c-base":    "#0c0e11",
+      "c-s1":      "#141619",
+      "c-s2":      "#1e2023",
+      "c-s3":      "#282a2d",
+      "c-s4":      "#333538",
 
-      "c-accent":  "#6366f1",   /* LCH 55% 60% 280 — use sparingly */
-      "c-accent-hover": "#818cf8",
+      /* Accent — Electric Cyan */
+      "c-accent":  "#00f5ff",
+      "c-accent-dim": "rgba(0, 245, 255, 0.15)",
 
-      "c-text":    "#e8e8ec",   /* primary   */
-      "c-text2":   "#94949c",   /* secondary */
-      "c-muted":   "#6b6b73",   /* muted     */
-      "c-dim":     "#4a4a52",   /* barely visible */
+      /* Gold — Memory/Context */
+      "c-gold":    "#e9c349",
+      "c-gold-dim": "rgba(233, 195, 73, 0.15)",
 
-      "c-ok":      "#10b981",   /* emerald */
-      "c-warn":    "#f59e0b",   /* amber   */
-      "c-err":     "#ef4444",   /* red     */
-      "c-info":    "#60a5fa",   /* blue    */
+      /* Text */
+      "c-text":    "#e2e2e6",
+      "c-text2":   "#b9caca",
+      "c-text3":   "#849495",
+      "c-text4":   "#3a494a",
 
-      "c-border":  "rgba(255, 255, 255, 0.04)",
-      "c-border-active": "rgba(99, 102, 241, 0.30)",
+      /* Semantic */
+      "c-ok":      "#4ade80",
+      "c-ok-bg":   "rgba(74, 222, 128, 0.1)",
+      "c-warn":    "#f59e0b",
+      "c-err":     "#f87171",
+      "c-err-bg":  "rgba(248, 113, 113, 0.1)",
+      "c-info":    "#60a5fa",
+
+      /* Running status */
+      "c-running": "#22c55e",
+      "c-running-bg": "rgba(34, 197, 94, 0.15)",
+
+      /* Borders */
+      "c-border":  "#282a2d",
+      "c-border-active": "rgba(0, 245, 255, 0.30)",
+
+      /* Diff */
+      "diff-add":     "#4ade80",
+      "diff-add-bg":  "rgba(74, 222, 128, 0.1)",
+      "diff-remove":  "#f87171",
+      "diff-remove-bg": "rgba(248, 113, 113, 0.1)",
+
+      /* Status */
+      "status-running": "#22c55e",
+      "status-running-bg": "rgba(34, 197, 94, 0.15)",
+
+      /* Onyx for backgrounds */
+      "bg-onyx":    "#0c0e11",
+      "panel-bg":   "#141619",
+      "border-subtle": "#282a2d",
+      "text-primary": "#e2e2e6",
+      "text-secondary": "#849495",
+      "accent-cyan": "#00f5ff",
+      "accent-cyan-dim": "rgba(0, 245, 255, 0.15)",
+
+      /* Gold accent aliases */
+      "accent-gold": "#e9c349",
+      "accent-gold-dim": "rgba(233, 195, 73, 0.15)",
+
+      /* Tertiary / Error */
+      "tertiary": "#ffb4ab",
+      "tertiary-dim": "rgba(255, 180, 171, 0.15)",
+
+      /* Success */
+      "success": "#22c55e",
+      "success-dim": "rgba(34, 197, 94, 0.15)",
     },
 
     /* ----------------------------------------------------------
-       Font Family — Geist Mono primary
+       Font Family — Inter + JetBrains Mono
        ---------------------------------------------------------- */
     fontFamily: {
+      sans: [
+        '"Inter"',
+        '"system-ui"',
+        '"sans-serif"',
+      ],
       mono: [
-        '"Geist Mono"',
         '"JetBrains Mono"',
         '"Fira Code"',
         '"Consolas"',
@@ -48,39 +99,43 @@ export default {
     },
 
     /* ----------------------------------------------------------
-       Font Size — strict 10–16px range
+       Font Size
        ---------------------------------------------------------- */
     fontSize: {
-      xs:   ["10px", { lineHeight: "1.4" }],   /* labels         */
-      sm:   ["11px", { lineHeight: "1.4" }],   /* data / numbers */
-      base: ["12px", { lineHeight: "1.4" }],   /* body           */
-      lg:   ["13px", { lineHeight: "1.4" }],   /* headings       */
-      xl:   ["14px", { lineHeight: "1.4" }],   /* emphasis       */
-      "2xl": ["16px", { lineHeight: "1.2" }],  /* MAX allowed    */
+      xs:   ["10px", { lineHeight: "1.4" }],
+      sm:   ["11px", { lineHeight: "1.4" }],
+      base: ["12px", { lineHeight: "1.4" }],
+      lg:   ["13px", { lineHeight: "1.4" }],
+      xl:   ["14px", { lineHeight: "1.4" }],
+      "2xl": ["16px", { lineHeight: "1.2" }],
+      "3xl": ["20px", { lineHeight: "1.2" }],
     },
 
     /* ----------------------------------------------------------
-       Spacing — strict 4–24px range
+       Spacing
        ---------------------------------------------------------- */
     spacing: {
       0:  "0px",
-      1:  "4px",    /* icon gaps              */
-      2:  "6px",    /* button padding-y       */
-      3:  "8px",    /* section gaps, card pad */
-      4:  "12px",   /* panel padding          */
-      5:  "16px",   /* major section sep      */
-      6:  "24px",   /* page margins           */
+      1:  "4px",
+      2:  "6px",
+      3:  "8px",
+      4:  "12px",
+      5:  "16px",
+      6:  "24px",
+      7:  "32px",
+      8:  "48px",
     },
 
     /* ----------------------------------------------------------
-       Border Radius — sharp by default
+       Border Radius
        ---------------------------------------------------------- */
     borderRadius: {
       none: "0px",
-      sm:   "2px",    /* buttons            */
-      DEFAULT: "2px",
-      md:   "4px",    /* dropdown menus     */
-      lg:   "4px",    /* max radius         */
+      sm:   "2px",
+      DEFAULT: "4px",
+      md:   "6px",
+      lg:   "8px",
+      full: "9999px",
     },
 
     /* ----------------------------------------------------------
@@ -99,11 +154,12 @@ export default {
       tight:  "-0.01em",
       normal: "0em",
       wide:   "0.02em",
-      wider:  "0.08em",
+      wider:  "0.06em",
+      widest: "0.1em",
     },
 
     /* ----------------------------------------------------------
-       Transition Duration — minimal
+       Transition Duration
        ---------------------------------------------------------- */
     transitionDuration: {
       fast:   "100ms",
@@ -117,9 +173,6 @@ export default {
       default: "cubic-bezier(0.4, 0, 0.2, 1)",
     },
 
-    /* ----------------------------------------------------------
-       extend — keep empty, all tokens defined above
-       ---------------------------------------------------------- */
     extend: {},
   },
   plugins: [],

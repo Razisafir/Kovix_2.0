@@ -1,26 +1,6 @@
 import { useState } from "react";
-import { Check, X, FileCode } from "lucide-react";
 
-const C = {
-  base: "#0c0c10",
-  s1: "#12121a",
-  s2: "#1a1a24",
-  s3: "#22222e",
-  accent: "#6366f1",
-  t1: "#e8e8ec",
-  t2: "#94949c",
-  t3: "#6b6b73",
-  t4: "#4a4a52",
-  ok: "#10b981",
-  err: "#ef4444",
-  border: "rgba(255,255,255,0.04)",
-};
-
-const ff = '"Geist Mono", "JetBrains Mono", monospace';
-
-/* ─────────────────────── types ─────────────────────── */
-
-export interface DiffHunk {
+export interface DiffHunk_ {
   oldStart: number;
   oldLines: number;
   newStart: number;
@@ -38,8 +18,8 @@ export interface PendingChange {
   id: string;
   filePath: string;
   description: string;
-  hunks: DiffHunk[];
-  accepted: boolean | null; // null = pending, true = accepted, false = rejected
+  hunks: DiffHunk_[];
+  accepted: boolean | null;
 }
 
 interface InlineDiffProps {
@@ -50,103 +30,47 @@ interface InlineDiffProps {
   onRejectAll: () => void;
 }
 
-/* ─────────────────────── sub-components ─────────────────────── */
-
 function DiffLineView({ line }: { line: DiffLine }) {
   const bgColor =
     line.type === "add"
-      ? "rgba(16,185,129,0.08)"
+      ? "var(--c-ok-bg)"
       : line.type === "remove"
-      ? "rgba(239,68,68,0.08)"
+      ? "var(--c-err-bg)"
       : "transparent";
 
   const gutterColor =
     line.type === "add"
-      ? C.ok
+      ? "var(--c-ok)"
       : line.type === "remove"
-      ? C.err
-      : C.t4;
+      ? "var(--c-err)"
+      : "var(--c-text4)";
 
-  const sign =
-    line.type === "add" ? "+" : line.type === "remove" ? "-" : " ";
+  const sign = line.type === "add" ? "+" : line.type === "remove" ? "-" : " ";
 
   return (
     <div
-      style={{
-        display: "flex",
-        fontFamily: ff,
-        fontSize: 10,
-        lineHeight: "16px",
-        backgroundColor: bgColor,
-        whiteSpace: "pre",
-        overflow: "hidden",
-      }}
+      className="flex font-mono text-[10px] leading-4 whitespace-pre overflow-hidden"
+      style={{ backgroundColor: bgColor }}
     >
-      {/* Line number gutter */}
-      <span
-        style={{
-          width: 32,
-          paddingLeft: 6,
-          color: C.t4,
-          flexShrink: 0,
-          textAlign: "right",
-          userSelect: "none",
-        }}
-      >
+      <span className="w-8 pl-1.5 shrink-0 text-right select-none" style={{ color: "var(--c-text4)" }}>
         {line.lineNumber ?? ""}
       </span>
-      {/* +/- sign */}
-      <span
-        style={{
-          width: 14,
-          paddingLeft: 4,
-          color: gutterColor,
-          flexShrink: 0,
-          userSelect: "none",
-          fontWeight: 600,
-        }}
-      >
+      <span className="w-[14px] pl-1 shrink-0 select-none font-semibold" style={{ color: gutterColor }}>
         {sign}
       </span>
-      {/* Code content */}
-      <span
-        style={{
-          flex: 1,
-          paddingLeft: 4,
-          color:
-            line.type === "add"
-              ? C.ok
-              : line.type === "remove"
-              ? C.err
-              : C.t2,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-        }}
-      >
+      <span className="flex-1 pl-1 overflow-hidden text-ellipsis" style={{ color: line.type === "add" ? "var(--c-ok)" : line.type === "remove" ? "var(--c-err)" : "var(--c-text2)" }}>
         {line.content}
       </span>
     </div>
   );
 }
 
-function DiffHunkView({ hunk }: { hunk: DiffHunk }) {
+function DiffHunkView({ hunk }: { hunk: DiffHunk_ }) {
   return (
-    <div style={{ borderLeft: `2px solid ${C.accent}`, marginLeft: 8 }}>
-      {/* Hunk header */}
-      <div
-        style={{
-          padding: "2px 8px",
-          fontFamily: ff,
-          fontSize: 9,
-          color: C.t4,
-          backgroundColor: C.s1,
-          borderTop: `1px solid ${C.border}`,
-          borderBottom: `1px solid ${C.border}`,
-        }}
-      >
+    <div className="ml-2" style={{ borderLeft: "2px solid var(--c-accent)" }}>
+      <div className="py-[2px] px-2 font-mono text-[9px]" style={{ color: "var(--c-text4)", backgroundColor: "var(--c-s1)", borderTop: "1px solid var(--c-border)", borderBottom: "1px solid var(--c-border)" }}>
         @@ -{hunk.oldStart},{hunk.oldLines} +{hunk.newStart},{hunk.newLines}
       </div>
-      {/* Hunk lines */}
       {hunk.lines.map((line, i) => (
         <DiffLineView key={i} line={line} />
       ))}
@@ -168,113 +92,34 @@ function ChangeCard({
   const [expanded, setExpanded] = useState(true);
 
   return (
-    <div
-      style={{
-        border: `1px solid ${C.border}`,
-        marginBottom: 4,
-        backgroundColor: C.base,
-      }}
-    >
-      {/* Change header */}
+    <div className="border mb-1 bg-c-base rounded-md overflow-hidden" style={{ borderColor: "var(--c-border)" }}>
       <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "4px 8px",
-          backgroundColor: C.s1,
-          cursor: "pointer",
-          userSelect: "none",
-        }}
+        className="flex items-center gap-2 px-2 py-1 cursor-pointer select-none"
+        style={{ backgroundColor: "var(--c-s1)" }}
         onClick={() => setExpanded(!expanded)}
       >
-        <span style={{ fontSize: 9, color: C.t4, fontFamily: ff }}>
-          [{index + 1}]
-        </span>
-        <FileCode size={11} style={{ color: C.t3, flexShrink: 0 }} />
-        <span
-          style={{
-            flex: 1,
-            fontFamily: ff,
-            fontSize: 10,
-            color: C.t2,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-          title={change.filePath}
-        >
-          {change.filePath}
-        </span>
-        <span
-          style={{
-            fontFamily: ff,
-            fontSize: 9,
-            color: C.t4,
-            flexShrink: 0,
-          }}
-        >
-          {change.hunks.reduce((acc, h) => acc + h.lines.length, 0)} lines
-        </span>
-        <span
-          style={{
-            fontSize: 8,
-            color: C.t4,
-            marginLeft: 4,
-            transition: "transform 0.1s",
-            transform: expanded ? "rotate(0deg)" : "rotate(-90deg)",
-            display: "inline-block",
-          }}
-        >
-          ▼
-        </span>
+        <span className="text-[9px] font-mono" style={{ color: "var(--c-text4)" }}>[{index + 1}]</span>
+        <span className="material-symbols-outlined text-[11px] shrink-0" style={{ color: "var(--c-text3)" }}>description</span>
+        <span className="flex-1 font-mono text-[10px] overflow-hidden text-ellipsis whitespace-nowrap" style={{ color: "var(--c-text2)" }} title={change.filePath}>{change.filePath}</span>
+        <span className="font-mono text-[9px] shrink-0" style={{ color: "var(--c-text4)" }}>{change.hunks.reduce((acc, h) => acc + h.lines.length, 0)} lines</span>
+        <span className="text-[8px] ml-1 inline-block" style={{ color: "var(--c-text4)", transform: expanded ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.1s" }}>▼</span>
       </div>
 
-      {/* Expandable diff content */}
       {expanded && (
         <>
           {change.description && (
-            <div
-              style={{
-                padding: "4px 8px",
-                fontFamily: ff,
-                fontSize: 10,
-                color: C.t3,
-                borderBottom: `1px solid ${C.border}`,
-                fontStyle: "italic",
-              }}
-            >
-              {change.description}
-            </div>
+            <div className="px-2 py-1 font-mono text-[10px] italic" style={{ color: "var(--c-text3)", borderBottom: "1px solid var(--c-border)" }}>{change.description}</div>
           )}
-          <div style={{ maxHeight: 200, overflow: "auto" }}>
-            {change.hunks.map((hunk, i) => (
-              <DiffHunkView key={i} hunk={hunk} />
-            ))}
+          <div className="max-h-[200px] overflow-auto">
+            {change.hunks.map((hunk, i) => (<DiffHunkView key={i} hunk={hunk} />))}
           </div>
-
-          {/* Action buttons */}
-          <div
-            style={{
-              display: "flex",
-              gap: 6,
-              padding: "4px 8px",
-              borderTop: `1px solid ${C.border}`,
-              justifyContent: "flex-end",
-            }}
-          >
-            <ActionBtn
-              icon={<X size={10} />}
-              label="REJECT"
-              color={C.err}
-              onClick={() => onReject(change.id)}
-            />
-            <ActionBtn
-              icon={<Check size={10} />}
-              label="ACCEPT"
-              color={C.ok}
-              onClick={() => onAccept(change.id)}
-            />
+          <div className="flex gap-1.5 px-2 py-1 justify-end" style={{ borderTop: "1px solid var(--c-border)" }}>
+            <button onClick={() => onReject(change.id)} className="flex items-center gap-1 h-5 px-2 bg-transparent border font-mono text-[9px] font-semibold tracking-wider cursor-pointer rounded" style={{ borderColor: "rgba(248,113,113,0.2)", color: "var(--c-err)" }}>
+              <span className="material-symbols-outlined text-[10px]">close</span> REJECT
+            </button>
+            <button onClick={() => onAccept(change.id)} className="flex items-center gap-1 h-5 px-2 bg-transparent border font-mono text-[9px] font-semibold tracking-wider cursor-pointer rounded" style={{ borderColor: "rgba(74,222,128,0.2)", color: "var(--c-ok)" }}>
+              <span className="material-symbols-outlined text-[10px]">check</span> ACCEPT
+            </button>
           </div>
         </>
       )}
@@ -282,167 +127,28 @@ function ChangeCard({
   );
 }
 
-function ActionBtn({
-  icon,
-  label,
-  color,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  color: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 4,
-        height: 20,
-        padding: "0 8px",
-        backgroundColor: "transparent",
-        border: `1px solid ${color}33`,
-        color: color,
-        fontFamily: ff,
-        fontSize: 9,
-        fontWeight: 600,
-        letterSpacing: "0.06em",
-        cursor: "pointer",
-        transition: "background-color 0.1s",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.backgroundColor = `${color}22`;
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-      }}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
-
-/* ─────────────────────── main component ─────────────────────── */
-
-function InlineDiff({
-  changes,
-  onAccept,
-  onReject,
-  onAcceptAll,
-  onRejectAll,
-}: InlineDiffProps) {
+function InlineDiff({ changes, onAccept, onReject, onAcceptAll, onRejectAll }: InlineDiffProps) {
   const pendingCount = changes.filter((c) => c.accepted === null).length;
-
   if (changes.length === 0) return null;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        backgroundColor: C.base,
-        fontFamily: ff,
-      }}
-    >
-      {/* Header with count + bulk actions */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "4px 8px",
-          borderBottom: `1px solid ${C.border}`,
-          flexShrink: 0,
-        }}
-      >
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 600,
-            letterSpacing: "0.06em",
-            color: C.accent,
-          }}
-        >
+    <div className="flex flex-col h-full bg-bg-onyx font-mono">
+      <div className="flex items-center gap-2 px-2 py-1 shrink-0" style={{ borderBottom: "1px solid var(--c-border)" }}>
+        <span className="text-[10px] font-semibold tracking-wider text-accent-cyan">
           {pendingCount} pending {pendingCount === 1 ? "change" : "changes"}
         </span>
         {pendingCount > 0 && (
           <>
-            <div style={{ flex: 1 }} />
-            <BulkBtn label="REJECT ALL" color={C.err} onClick={onRejectAll} />
-            <BulkBtn label="ACCEPT ALL" color={C.ok} onClick={onAcceptAll} />
+            <div className="flex-1" />
+            <button onClick={onRejectAll} className="h-5 px-2 bg-transparent border font-mono text-[9px] font-semibold tracking-wider cursor-pointer rounded" style={{ borderColor: "rgba(248,113,113,0.2)", color: "var(--c-err)" }}>REJECT ALL</button>
+            <button onClick={onAcceptAll} className="h-5 px-2 bg-transparent border font-mono text-[9px] font-semibold tracking-wider cursor-pointer rounded" style={{ borderColor: "rgba(74,222,128,0.2)", color: "var(--c-ok)" }}>ACCEPT ALL</button>
           </>
         )}
       </div>
-
-      {/* Changes list */}
-      <div
-        style={{
-          flex: 1,
-          overflow: "auto",
-          padding: 4,
-          scrollbarWidth: "thin",
-          scrollbarColor: `${C.s3} transparent`,
-        }}
-      >
-        {changes.map((change, i) => (
-          <ChangeCard
-            key={change.id}
-            change={change}
-            index={i}
-            onAccept={onAccept}
-            onReject={onReject}
-          />
-        ))}
+      <div className="flex-1 overflow-auto p-1" style={{ scrollbarWidth: "thin", scrollbarColor: "var(--c-s3) transparent" }}>
+        {changes.map((change, i) => (<ChangeCard key={change.id} change={change} index={i} onAccept={onAccept} onReject={onReject} />))}
       </div>
-
-      {/* Scrollbar styles */}
-      <style>{`
-        div::-webkit-scrollbar { width: 4px; height: 4px; }
-        div::-webkit-scrollbar-track { background: transparent; }
-        div::-webkit-scrollbar-thumb { background: ${C.s3}; border-radius: 2px; }
-      `}</style>
     </div>
-  );
-}
-
-function BulkBtn({
-  label,
-  color,
-  onClick,
-}: {
-  label: string;
-  color: string;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        height: 20,
-        padding: "0 8px",
-        backgroundColor: "transparent",
-        border: `1px solid ${color}33`,
-        color: color,
-        fontFamily: ff,
-        fontSize: 9,
-        fontWeight: 600,
-        letterSpacing: "0.06em",
-        cursor: "pointer",
-        transition: "background-color 0.1s",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.backgroundColor = `${color}22`;
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.backgroundColor = "transparent";
-      }}
-    >
-      {label}
-    </button>
   );
 }
 
