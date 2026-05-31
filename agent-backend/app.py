@@ -1767,93 +1767,77 @@ async def get_context_stats(session_id: str) -> dict:
 # Skill Installer Endpoints
 # ===========================================================================
 
-# In-memory skill registry (persisted to disk in production)
-_installed_skills: Dict[str, dict] = {}
-_bundled_skills: Dict[str, dict] = {
-    "code_engineer": {
-        "name": "code_engineer",
-        "version": "1.0.0",
-        "description": "Write, refactor, and debug code across languages",
-        "installed_at": 0.0,
-        "source": "bundled",
+# Lazy-initialised skill installer (uses real git clone + file extraction)
+_skill_installer = None
+
+
+def _get_skill_installer():
+    """Return (creating if needed) the shared SkillInstaller instance."""
+    global _skill_installer
+    if _skill_installer is None:
+        from skills.installer import SkillInstaller
+        _skill_installer = SkillInstaller()
+    return _skill_installer
+
+
+def _skill_to_dict(skill) -> dict:
+    """Convert a Skill dataclass to a dict suitable for SkillResponse."""
+    # Convert ISO timestamp to unix float for SkillResponse compatibility
+    installed_at = skill.installed_at
+    if isinstance(installed_at, str):
+        try:
+            from datetime import datetime, timezone
+            dt = datetime.fromisoformat(installed_at)
+            installed_at = dt.timestamp()
+        except (ValueError, TypeError):
+            installed_at = 0.0
+    elif not isinstance(installed_at, (int, float)):
+        installed_at = 0.0
+
+    return {
+        "name": skill.name,
+        "version": skill.version,
+        "description": skill.description,
+        "installed_at": installed_at,
+        "source": skill.source.value,
         "status": "active",
-    },
-    "test_engineer": {
-        "name": "test_engineer",
-        "version": "1.0.0",
-        "description": "Generate and run unit/integration tests",
-        "installed_at": 0.0,
-        "source": "bundled",
-        "status": "active",
-    },
-    "security_auditor": {
-        "name": "security_auditor",
-        "version": "1.0.0",
-        "description": "Scan code for security vulnerabilities",
-        "installed_at": 0.0,
-        "source": "bundled",
-        "status": "active",
-    },
-    "doc_writer": {
-        "name": "doc_writer",
-        "version": "1.0.0",
-        "description": "Generate documentation and README files",
-        "installed_at": 0.0,
-        "source": "bundled",
-        "status": "active",
-    },
-    "git_manager": {
-        "name": "git_manager",
-        "version": "1.0.0",
-        "description": "Handle git operations, commits, and PRs",
-        "installed_at": 0.0,
-        "source": "bundled",
-        "status": "active",
-    },
-}
+    }
 
 
 @app.post("/skills/install/github", response_model=SkillResponse)
 async def install_skill_from_github(
-    owner: str,
-    repo: str,
-    skill_name: Optional[str] = None,
-    branch: str = "main",
+    req: InstallSkillGithubRequest,
 ) -> dict:
-    """Install a skill from a GitHub repository."""
-    try:
-        import aiohttp
+    """Install a skill from a GitHub repository.
 
-        name = skill_name or repo
-        # Construct raw GitHub URL for the skill manifest
-        manifest_url = (
-            f"https://raw.githubusercontent.com/{owner}/{repo}/{branch}/skill.json"
+    Clones the repo, extracts skill directories containing SKILL.md files,
+    copies them to the installed skills directory, and loads any tools
+    into the ToolRegistry.
+    """
+    installer = _get_skill_installer()
+    try:
+        # Run the blocking git clone + file copy in a thread pool
+        skill = await asyncio.to_thread(
+            installer.install_from_github,
+            owner=req.owner,
+            repo=req.repo,
+            skill_name=req.skill_name,
+            branch=req.branch,
         )
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(manifest_url, timeout=aiohttp.ClientTimeout(total=30)) as resp:
-                if resp.status == 200:
-                    manifest = await resp.json()
-                else:
-                    # Fallback: create minimal manifest
-                    manifest = {
-                        "name": name,
-                        "version": "0.1.0",
-                        "description": f"Skill installed from {owner}/{repo}",
-                    }
+        # Load any tools from the newly installed skill into the registry
+        if _tool_registry is not None:
+            from pathlib import Path as _Path
+            skill_dir = _Path(skill.path)
+            if skill_dir.is_dir():
+                try:
+                    _tool_registry._load_single_skill(skill_dir)
+                    logger.info("Loaded tools from skill '%s' into registry", skill.name)
+                except Exception as exc:
+                    logger.warning("Failed to load tools from skill '%s': %s", skill.name, exc)
 
-        skill_record = {
-            "name": name,
-            "version": manifest.get("version", "0.1.0"),
-            "description": manifest.get("description", f"Skill from {owner}/{repo}"),
-            "installed_at": time.time(),
-            "source": f"github:{owner}/{repo}:{branch}",
-            "status": "active",
-        }
-        _installed_skills[name] = skill_record
-
-        logger.info("Installed skill '%s' from github:%s/%s", name, owner, repo)
-        return skill_record
+        logger.info("Installed skill '%s' from github:%s/%s", skill.name, req.owner, req.repo)
+        return _skill_to_dict(skill)
     except Exception as exc:
         logger.error("Failed to install skill from GitHub: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
@@ -1861,38 +1845,35 @@ async def install_skill_from_github(
 
 @app.post("/skills/install/url", response_model=SkillResponse)
 async def install_skill_from_url(
-    url: str,
-    skill_name: Optional[str] = None,
+    req: InstallSkillUrlRequest,
 ) -> dict:
-    """Install a skill from a URL (zip or tar.gz)."""
+    """Install a skill from a URL (SKILL.md file).
+
+    Downloads the skill manifest, saves it to the installed skills directory,
+    and loads any tools into the ToolRegistry.
+    """
+    installer = _get_skill_installer()
     try:
-        import aiohttp
+        # Run the blocking download + file save in a thread pool
+        skill = await asyncio.to_thread(
+            installer.install_from_url,
+            url=req.url,
+            skill_name=req.skill_name,
+        )
 
-        # Derive name from URL if not provided
-        name = skill_name or url.split("/")[-1].replace(".zip", "").replace(".tar.gz", "")
+        # Load any tools from the newly installed skill into the registry
+        if _tool_registry is not None:
+            from pathlib import Path as _Path
+            skill_dir = _Path(skill.path)
+            if skill_dir.is_dir():
+                try:
+                    _tool_registry._load_single_skill(skill_dir)
+                    logger.info("Loaded tools from skill '%s' into registry", skill.name)
+                except Exception as exc:
+                    logger.warning("Failed to load tools from skill '%s': %s", skill.name, exc)
 
-        async with aiohttp.ClientSession() as session:
-            async with session.head(url, timeout=aiohttp.ClientTimeout(total=30)) as resp:
-                if resp.status not in (200, 302):
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"URL returned status {resp.status}",
-                    )
-
-        skill_record = {
-            "name": name,
-            "version": "0.1.0",
-            "description": f"Skill installed from URL",
-            "installed_at": time.time(),
-            "source": f"url:{url}",
-            "status": "active",
-        }
-        _installed_skills[name] = skill_record
-
-        logger.info("Installed skill '%s' from url:%s", name, url)
-        return skill_record
-    except HTTPException:
-        raise
+        logger.info("Installed skill '%s' from url:%s", skill.name, req.url)
+        return _skill_to_dict(skill)
     except Exception as exc:
         logger.error("Failed to install skill from URL: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
@@ -1900,68 +1881,77 @@ async def install_skill_from_url(
 
 @app.get("/skills/installed", response_model=SkillListResponse)
 async def list_installed_skills() -> dict:
-    """List all user-installed skills."""
-    skills = [
-        SkillResponse(**data).model_dump()
-        for data in _installed_skills.values()
-    ]
-    return {"skills": skills, "total": len(skills)}
+    """List all user-installed skills from the filesystem."""
+    installer = _get_skill_installer()
+    try:
+        installed = await asyncio.to_thread(installer.list_installed)
+        skills = [_skill_to_dict(s) for s in installed]
+        return {"skills": skills, "total": len(skills)}
+    except Exception as exc:
+        logger.error("Failed to list installed skills: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @app.get("/skills/bundled", response_model=SkillListResponse)
 async def list_bundled_skills() -> dict:
-    """List all bundled (pre-installed) skills."""
-    skills = [
-        SkillResponse(**data).model_dump()
-        for data in _bundled_skills.values()
-    ]
-    return {"skills": skills, "total": len(skills)}
+    """List all bundled (pre-installed) skills from the filesystem."""
+    installer = _get_skill_installer()
+    try:
+        bundled = await asyncio.to_thread(installer.list_bundled)
+        skills = [_skill_to_dict(s) for s in bundled]
+        return {"skills": skills, "total": len(skills)}
+    except Exception as exc:
+        logger.error("Failed to list bundled skills: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @app.delete("/skills/{skill_name}")
 async def uninstall_skill(
     skill_name: str = Path(..., description="The skill name to uninstall"),
 ) -> dict:
-    """Uninstall a user-installed skill."""
-    if skill_name not in _installed_skills:
-        raise HTTPException(status_code=404, detail=f"Skill '{skill_name}' not found")
-
-    del _installed_skills[skill_name]
-    logger.info("Uninstalled skill '%s'", skill_name)
-    return {"skill_name": skill_name, "uninstalled": True}
+    """Uninstall a user-installed skill, removing files from disk."""
+    installer = _get_skill_installer()
+    try:
+        await asyncio.to_thread(installer.uninstall_skill, skill_name)
+        logger.info("Uninstalled skill '%s'", skill_name)
+        return {"skill_name": skill_name, "uninstalled": True}
+    except Exception as exc:
+        # Check if it's a "not found" error
+        from skills.installer import SkillNotFoundError
+        if isinstance(exc, SkillNotFoundError):
+            raise HTTPException(status_code=404, detail=f"Skill '{skill_name}' not found")
+        logger.error("Failed to uninstall skill '%s': %s", skill_name, exc)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @app.post("/skills/{skill_name}/update", response_model=SkillResponse)
 async def update_skill(
     skill_name: str = Path(..., description="The skill name to update"),
 ) -> dict:
-    """Update a skill to the latest version."""
-    if skill_name not in _installed_skills:
-        raise HTTPException(status_code=404, detail=f"Skill '{skill_name}' not found")
+    """Update a skill to the latest version by re-installing from source."""
+    installer = _get_skill_installer()
+    try:
+        skill = await asyncio.to_thread(installer.update_skill, skill_name)
 
-    skill = _installed_skills[skill_name]
-    source = skill.get("source", "")
+        # Reload tools in the registry
+        if _tool_registry is not None:
+            from pathlib import Path as _Path
+            skill_dir = _Path(skill.path)
+            if skill_dir.is_dir():
+                try:
+                    _tool_registry._load_single_skill(skill_dir)
+                    logger.info("Reloaded tools from updated skill '%s'", skill.name)
+                except Exception as exc:
+                    logger.warning("Failed to reload tools from skill '%s': %s", skill.name, exc)
 
-    # Re-install from original source
-    if source.startswith("github:"):
-        parts = source.replace("github:", "").split(":")
-        owner_repo = parts[0].split("/")
-        if len(owner_repo) == 2:
-            return await install_skill_from_github(
-                owner=owner_repo[0],
-                repo=owner_repo[1],
-                skill_name=skill_name,
-                branch=parts[1] if len(parts) > 1 else "main",
-            )
-    elif source.startswith("url:"):
-        url = source.replace("url:", "")
-        return await install_skill_from_url(url=url, skill_name=skill_name)
-
-    # Generic version bump
-    skill["version"] = _bump_version(skill.get("version", "0.1.0"))
-    skill["installed_at"] = time.time()
-    _installed_skills[skill_name] = skill
-    return skill
+        logger.info("Updated skill '%s' to %s", skill.name, skill.version)
+        return _skill_to_dict(skill)
+    except Exception as exc:
+        from skills.installer import SkillNotFoundError, SkillInstallError
+        if isinstance(exc, SkillNotFoundError):
+            raise HTTPException(status_code=404, detail=f"Skill '{skill_name}' not found")
+        logger.error("Failed to update skill '%s': %s", skill_name, exc)
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 def _bump_version(version: str) -> str:
@@ -1977,31 +1967,46 @@ def _bump_version(version: str) -> str:
 
 @app.get("/skills/search", response_model=SkillSearchResponse)
 async def search_skills(query: str) -> dict:
-    """Search for skills across installed, bundled, and marketplace."""
+    """Search for skills across installed, bundled, and GitHub marketplace."""
     results = []
     query_lower = query.lower()
 
-    # Search installed skills
-    for name, data in _installed_skills.items():
-        if query_lower in name.lower() or query_lower in data.get("description", "").lower():
-            results.append({**data, "location": "installed"})
+    # Search installed skills from filesystem
+    installer = _get_skill_installer()
+    try:
+        installed = await asyncio.to_thread(installer.list_installed)
+        for skill in installed:
+            if query_lower in skill.name.lower() or query_lower in skill.description.lower():
+                results.append({**_skill_to_dict(skill), "location": "installed"})
+    except Exception as exc:
+        logger.warning("Failed to search installed skills: %s", exc)
 
-    # Search bundled skills
-    for name, data in _bundled_skills.items():
-        if query_lower in name.lower() or query_lower in data.get("description", "").lower():
-            results.append({**data, "location": "bundled"})
+    # Search bundled skills from filesystem
+    try:
+        bundled = await asyncio.to_thread(installer.list_bundled)
+        for skill in bundled:
+            if query_lower in skill.name.lower() or query_lower in skill.description.lower():
+                results.append({**_skill_to_dict(skill), "location": "bundled"})
+    except Exception as exc:
+        logger.warning("Failed to search bundled skills: %s", exc)
 
-    # Simulated marketplace results
-    marketplace_skills = [
-        {"name": "docker_manager", "description": "Build and manage Docker containers", "version": "0.2.0", "installs": 1250},
-        {"name": "ci_cd_pipeline", "description": "GitHub Actions and CI/CD automation", "version": "1.1.0", "installs": 890},
-        {"name": "database_designer", "description": "Schema design and migration tools", "version": "0.5.0", "installs": 2100},
-        {"name": "api_tester", "description": "Test REST and GraphQL APIs", "version": "0.3.0", "installs": 650},
-        {"name": "performance_profiler", "description": "Profile code performance and bottlenecks", "version": "0.4.0", "installs": 430},
-    ]
-    for skill in marketplace_skills:
-        if query_lower in skill["name"].lower() or query_lower in skill["description"].lower():
-            results.append({**skill, "location": "marketplace"})
+    # Search real GitHub marketplace
+    try:
+        marketplace_results = await asyncio.to_thread(
+            installer.search_marketplace, query, limit=10
+        )
+        for item in marketplace_results:
+            results.append({
+                "name": item.get("full_name", "").split("/")[-1],
+                "description": item.get("description", ""),
+                "version": "latest",
+                "source": item.get("clone_url", ""),
+                "stars": item.get("stars", "0"),
+                "url": item.get("url", ""),
+                "location": "marketplace",
+            })
+    except Exception as exc:
+        logger.warning("Marketplace search failed: %s", exc)
 
     return {"results": results, "total": len(results), "query": query}
 
