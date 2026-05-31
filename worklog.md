@@ -250,3 +250,34 @@ Stage Summary:
   4. ✅ Branch name includes "construct-agent" (construct-agent/{session-id})
 - Key changes: AgentSession.git_branch field, _create_feature_branch stores branch name, moved to start_session
 - Commit: 8fd0a4d "feat: git sandboxing — agent works on feature branch, not main"
+---
+Task ID: 4.3
+Agent: Main Agent
+Task: Memory Panel Wired — Connect MemoryPanel to Real ChromaDB Search (Prompt 4.3)
+
+Work Log:
+- Read MemoryPanel.tsx: found existing real API integration code but with critical bugs
+- Identified 3 bugs:
+  1. HTTP method mismatch: Frontend used GET /memory/query but backend only has POST /memory/query
+  2. Response shape mismatch: Frontend expected data.results but API returns flat array
+  3. No recent endpoint: loadRecent() called GET /memory/query?limit=20 with no query, but query_similar() requires non-empty query_text
+- Added get_recent_memories() function to memory/semantic.py (browses ChromaDB without search query, sorts by timestamp descending)
+- Added GET /memory/recent endpoint to app.py (limit param, returns List[SearchResultItem])
+- Updated memory/__init__.py to export get_recent_memories
+- Fixed MemoryPanel.tsx:
+  - loadRecent() now calls GET /memory/recent?limit=20
+  - handleSearch() now uses POST /memory/query with JSON body {query, n_results}
+  - Both handle flat array response (Array.isArray check + fallback to data.results)
+  - Added distance field to ApiMemoryResult interface
+- TypeScript compiles cleanly (npx tsc --noEmit passes)
+- Verified end-to-end: store_conversation_message + store_code_event → get_recent_memories returns both with source and timestamp
+- Committed: 2ef886e
+
+Stage Summary:
+- All 4 success criteria verified:
+  1. ✅ MemoryPanel shows real search results (POST /memory/query with JSON body)
+  2. ✅ Query returns memories from past sessions (query_similar + get_recent_memories)
+  3. ✅ No mock data (all data comes from real ChromaDB API calls)
+  4. ✅ Source and timestamp displayed (mapApiResult extracts from metadata)
+- Key fixes: GET→POST for search, new /memory/recent endpoint, response shape handling
+- Commit: 2ef886e "feat: wire MemoryPanel to real ChromaDB search API"
