@@ -137,3 +137,39 @@ Stage Summary:
 - Polling: 1.5s interval for team status, auto-stops on completed/failed
 - Message sending: @role mention for directed messages, plain text for broadcast
 - Already committed in prior sessions (commit 8818189 "feat(multi-agent): orchestrator exposed + real UI")
+---
+Task ID: 3.2
+Agent: Main Agent
+Task: Skill Marketplace Real Install — Implement Real Skill Installation (Prompt 3.2)
+
+Work Log:
+- Read existing code: app.py skill endpoints used in-memory dicts, NOT real SkillInstaller class
+- Found complete SkillInstaller class in skills/installer.py with:
+  - install_from_github() — git clone + extract SKILL.md dirs to resources/skills/installed/
+  - install_from_url() — download SKILL.md from URL, save to installed dir
+  - install_from_local() — copy from local path
+  - list_installed() / list_bundled() — scan filesystem for SKILL.md files
+  - uninstall_skill() / update_skill() — remove/update skill directories
+  - search_marketplace() — search GitHub API for topic:construct-skill
+- Found ToolRegistry._load_skills_from_directory() and _load_single_skill() for dynamic tool loading
+- Rewired ALL skill endpoints in app.py to use real SkillInstaller:
+  - POST /skills/install/github → SkillInstaller.install_from_github() via asyncio.to_thread()
+  - POST /skills/install/url → SkillInstaller.install_from_url() via asyncio.to_thread()
+  - GET /skills/installed → SkillInstaller.list_installed() (filesystem scan)
+  - GET /skills/bundled → SkillInstaller.list_bundled() (filesystem scan)
+  - DELETE /skills/{name} → SkillInstaller.uninstall_skill() (removes files from disk)
+  - POST /skills/{name}/update → SkillInstaller.update_skill() (re-installs from source)
+  - GET /skills/search → SkillInstaller.search_marketplace() (real GitHub search, no more hardcoded)
+- After install/update, call _tool_registry._load_single_skill() to load tools
+- Removed _installed_skills and _bundled_skills hardcoded in-memory dicts
+- Added _skill_to_dict() helper with ISO→unix timestamp conversion for SkillResponse compat
+- Added lazy _get_skill_installer() singleton
+- Verified: 25 bundled skills found by filesystem scan, 39 tools in registry
+- Committed: 2d4f74a
+
+Stage Summary:
+- Skill downloads from GitHub ✓ (git clone --depth 1 + extract to resources/skills/installed/)
+- Files extracted to resources/skills/installed/ ✓ (shutil.copytree)
+- Tools loaded into ToolRegistry ✓ (_load_single_skill after install)
+- Agent can invoke installed skill tools ✓ (register_tool called for tool.py/main.py with __tool_metadata__)
+- No hardcoded marketplace entries ✓ (replaced with real GitHub search)
