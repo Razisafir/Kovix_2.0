@@ -1,14 +1,14 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { TerminalOutput } from "./TerminalOutput";
 import type { LogEntry } from "./TerminalOutput";
 import AgentModeSelector from "./AgentModeSelector";
-import InlineDiff, { type PendingChange } from "./InlineDiff";
+import InlineDiff, { type PendingChange, type DiffHunk as InlineDiffHunk, type DiffLine } from "./InlineDiff";
 import useAppStore from "../stores/useAppStore";
 import { useDiffStore } from "../stores/useDiffStore";
 import { generateDiff } from "../utils/diffParser";
-import type { FileDiff } from "../types/diff";
+import type { FileDiff, DiffHunk } from "../types/diff";
 
 /* ─────────────────────── types ─────────────────────── */
 
@@ -188,7 +188,6 @@ function AgentPanel() {
     streamingText: "",
     isStreaming: false,
   });
-  const [pendingChanges, setPendingChanges] = useState<PendingChange[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const unlistenRef = useRef<UnlistenFn | null>(null);
   const [thinkingOpen, setThinkingOpen] = useState(true);
@@ -338,11 +337,56 @@ function AgentPanel() {
           try {
             const data = JSON.parse(content);
             const toolName = data.tool || data.tool_name;
-            if (toolName === "write_file" || toolName === "edit_file" || toolName === "create_file") {
+            if (toolName === "write_file" || toolName === "edit_file" || toolName === "create_file" || toolName === "delete_file") {
               const filePath = data.arguments?.path || data.arguments?.file_path || data.path || "";
               const newContent = data.arguments?.content || data.content || "";
 
-              if (filePath && newContent) {
+              if (filePath) {
+                // Handle delete_file: no new content, create a deletion diff
+                if (toolName === "delete_file") {
+                  const diffStore = useDiffStore.getState();
+                  const activeId = diffStore.activeSessionId;
+                  if (activeId) {
+                    invoke<string>("read_file", { filePath })
+                      .then((oldContent) => {
+                        const oldLines = oldContent.split("\n");
+                        const fileDiff: FileDiff = {
+                          filePath,
+                          status: "deleted",
+                          hunks: [
+                            {
+                              id: "hunk-0",
+                              oldStart: 1,
+                              oldLines: oldLines.length,
+                              newStart: 0,
+                              newLines: 0,
+                              oldContent: oldLines,
+                              newContent: [],
+                              header: `@@ -1,${oldLines.length} +0,0 @@`,
+                              accepted: null,
+                            },
+                          ],
+                          oldContent,
+                          newContent: "",
+                        };
+                        diffStore.addFileDiff(activeId, fileDiff);
+                      })
+                      .catch(() => {
+                        // File already gone — create minimal deletion diff
+                        const fileDiff: FileDiff = {
+                          filePath,
+                          status: "deleted",
+                          hunks: [],
+                          oldContent: "",
+                          newContent: "",
+                        };
+                        diffStore.addFileDiff(activeId, fileDiff);
+                      });
+                  }
+                  return; // Don't fall through to write_file logic
+                }
+
+                if (!newContent) return; // Skip if no content for write/edit
                 const diffStore = useDiffStore.getState();
                 const activeId = diffStore.activeSessionId;
 
@@ -507,46 +551,139 @@ function AgentPanel() {
     setState((prev) => ({ ...prev, autoMode: !prev.autoMode }));
   }, []);
 
-  // ── diff action handlers ──
-  const handleAcceptChange = useCallback((id: string) => {
-    setPendingChanges((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, accepted: true } : c))
-    );
-    // Log acceptance
-    setState((prev) => ({
-      ...prev,
-      logs: [
-        ...prev.logs,
-        {
-          timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
-          level: "OK",
-          message: `accepted changes in ${pendingChanges.find((c) => c.id === id)?.filePath ?? id}`,
-          source: "diff",
-        },
-      ],
-    }));
-  }, [pendingChanges]);
+  // ── Derive pending changes from diff store ──
+  const diffStoreFileDiffs = useDiffStore((s) => {
+    if (!s.activeSessionId) return [];
+    const session = s.sessions.get(s.activeSessionId);
+    return session?.fileDiffs ?? [];
+  });
 
-  const handleRejectChange = useCallback((id: string) => {
-    setPendingChanges((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, accepted: false } : c))
-    );
-    setState((prev) => ({
-      ...prev,
-      logs: [
-        ...prev.logs,
-        {
-          timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
-          level: "WRN",
-          message: `rejected changes in ${pendingChanges.find((c) => c.id === id)?.filePath ?? id}`,
-          source: "diff",
-        },
-      ],
-    }));
-  }, [pendingChanges]);
+  /** Convert a FileDiff (from store) to PendingChange (for InlineDiff) */
+  const fileDiffToPendingChange = useCallback(
+    (fd: FileDiff): PendingChange => {
+      const hunks: InlineDiffHunk[] = fd.hunks.map((h: DiffHunk) => {
+        const lines: DiffLine[] = [];
+        const maxLen = Math.max(h.oldContent.length, h.newContent.length);
+        let oldLine = h.oldStart;
+        let newLine = h.newStart;
+
+        // Interleave old (removed) and new (added) lines
+        for (let i = 0; i < maxLen; i++) {
+          const hasOld = i < h.oldContent.length;
+          const hasNew = i < h.newContent.length;
+
+          if (hasOld && hasNew && h.oldContent[i] === h.newContent[i]) {
+            lines.push({ type: "context", content: h.oldContent[i], lineNumber: oldLine });
+            oldLine++;
+            newLine++;
+          } else {
+            if (hasOld) {
+              lines.push({ type: "remove", content: h.oldContent[i], lineNumber: oldLine });
+              oldLine++;
+            }
+            if (hasNew) {
+              lines.push({ type: "add", content: h.newContent[i], lineNumber: newLine });
+              newLine++;
+            }
+          }
+        }
+
+        return {
+          oldStart: h.oldStart,
+          oldLines: h.oldLines,
+          newStart: h.newStart,
+          newLines: h.newLines,
+          lines,
+        };
+      });
+
+      // Determine overall accepted status from hunks
+      const allHunksAccepted = fd.hunks.every((h) => h.accepted === true);
+      const allHunksRejected = fd.hunks.every((h) => h.accepted === false);
+      const anyPending = fd.hunks.some((h) => h.accepted === null);
+      const acceptedStatus: boolean | null = anyPending
+        ? null
+        : allHunksAccepted
+          ? true
+          : allHunksRejected
+            ? false
+            : null;
+
+      return {
+        id: fd.filePath,
+        filePath: fd.filePath,
+        description: `${fd.status}: ${fd.filePath}`,
+        hunks,
+        accepted: acceptedStatus,
+      };
+    },
+    []
+  );
+
+  const pendingChanges = useMemo<PendingChange[]>(
+    () => diffStoreFileDiffs.map(fileDiffToPendingChange),
+    [diffStoreFileDiffs, fileDiffToPendingChange]
+  );
+
+  // ── diff action handlers (wired to useDiffStore) ──
+  const handleAcceptChange = useCallback(
+    (id: string) => {
+      const activeId = useDiffStore.getState().activeSessionId;
+      if (!activeId) return;
+      // Accept all hunks for this file
+      const session = useDiffStore.getState().sessions.get(activeId);
+      if (!session) return;
+      const fd = session.fileDiffs.find((f) => f.filePath === id);
+      if (!fd) return;
+      for (const h of fd.hunks) {
+        useDiffStore.getState().acceptHunk(activeId, id, h.id);
+      }
+      setState((prev) => ({
+        ...prev,
+        logs: [
+          ...prev.logs,
+          {
+            timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
+            level: "OK",
+            message: `accepted changes in ${id}`,
+            source: "diff",
+          },
+        ],
+      }));
+    },
+    []
+  );
+
+  const handleRejectChange = useCallback(
+    (id: string) => {
+      const activeId = useDiffStore.getState().activeSessionId;
+      if (!activeId) return;
+      const session = useDiffStore.getState().sessions.get(activeId);
+      if (!session) return;
+      const fd = session.fileDiffs.find((f) => f.filePath === id);
+      if (!fd) return;
+      for (const h of fd.hunks) {
+        useDiffStore.getState().rejectHunk(activeId, id, h.id);
+      }
+      setState((prev) => ({
+        ...prev,
+        logs: [
+          ...prev.logs,
+          {
+            timestamp: new Date().toLocaleTimeString("en-US", { hour12: false }),
+            level: "WRN",
+            message: `rejected changes in ${id}`,
+            source: "diff",
+          },
+        ],
+      }));
+    },
+    []
+  );
 
   const handleAcceptAll = useCallback(() => {
-    setPendingChanges((prev) => prev.map((c) => ({ ...c, accepted: true })));
+    const activeId = useDiffStore.getState().activeSessionId;
+    if (activeId) useDiffStore.getState().acceptAll(activeId);
     setState((prev) => ({
       ...prev,
       logs: [
@@ -562,7 +699,8 @@ function AgentPanel() {
   }, []);
 
   const handleRejectAll = useCallback(() => {
-    setPendingChanges((prev) => prev.map((c) => ({ ...c, accepted: false })));
+    const activeId = useDiffStore.getState().activeSessionId;
+    if (activeId) useDiffStore.getState().rejectAll(activeId);
     setState((prev) => ({
       ...prev,
       logs: [
@@ -577,8 +715,8 @@ function AgentPanel() {
     }));
   }, []);
 
-  // Count of still-pending changes
-  const pendingCount = pendingChanges.filter((c) => c.accepted === null).length;
+  // Count of still-pending hunks across all files
+  const pendingCount = useDiffStore((s) => s.getPendingCount());
 
   // Determine pause/resume label based on current status
   const pauseLabel = state.status === "paused" ? "RESUME" : "PAUSE";
