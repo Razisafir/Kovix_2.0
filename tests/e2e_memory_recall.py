@@ -21,7 +21,7 @@ import sqlite3
 import logging
 import asyncio
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 # ---------------------------------------------------------------------------
 # Setup paths
@@ -46,7 +46,7 @@ logger = logging.getLogger("e2e_memory_recall")
 # ---------------------------------------------------------------------------
 results = {
     "test_name": "E2E Memory Recall — Prompt 1.7",
-    "timestamp": datetime.utcnow().isoformat(),
+    "timestamp": datetime.now(timezone.utc).isoformat(),
     "sessions": {},
     "verifications": {},
     "overall_pass": False,
@@ -64,7 +64,7 @@ def record(session: str, step: str, status: str, detail: str = ""):
         "step": step,
         "status": status,
         "detail": detail,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     })
     icon = "✅" if status == PASS else "❌"
     logger.info("  %s [%s] %s — %s", icon, session, step, detail)
@@ -237,7 +237,6 @@ def session_2_recall_files():
         recalled_any = len(results_conv) > 0
 
         if recalled_any:
-            # Check if recall mentions hello_world.py
             mentions_hello = any("hello_world" in t.lower() for t in recalled_texts)
             record("session2", "recall_context", PASS,
                    f"Recalled {len(results_conv)} results. "
@@ -385,11 +384,10 @@ def session_3_build_on_past():
             final_content = f.read()
         has_original = "Hello from Construct!" in final_content
         has_greet = "def greet(name)" in final_content
-        has_return = "Hello, {name}! Welcome to Construct!" in final_content or "Hello, " in final_content
 
         if has_original and has_greet:
             record("session3", "verify_both_contents", PASS,
-                   f"File has original print: {has_original}, greet function: {has_greet}, return stmt: {has_return}")
+                   f"File has original print: {has_original}, greet function: {has_greet}")
             results["verifications"]["file_has_both"] = True
         else:
             record("session3", "verify_both_contents", FAIL,
@@ -433,18 +431,16 @@ def verify_persistence():
         record("verify", "chromadb_stats", PASS,
                f"Total: {total}, Conversations: {conv_count}, Code events: {code_count}")
         results["verifications"]["chromadb_has_data"] = total > 0
-        results["verifications"]["chromadb_stats"] = stats
     except Exception as e:
         record("verify", "chromadb_stats", FAIL, str(e))
         results["verifications"]["chromadb_has_data"] = False
 
-    # --- Step 2: Cross-session recall (query from session 1 data in session 3 context) ---
+    # --- Step 2: Cross-session recall ---
     try:
         cross_results = query_similar(
             query_text="What files have we created or modified?",
             n_results=10,
         )
-        # Should find both the creation and modification of hello_world.py
         mentions_create = any("create" in r.text.lower() and "hello_world" in r.text.lower() for r in cross_results)
         mentions_modify = any("modify" in r.text.lower() and "hello_world" in r.text.lower() for r in cross_results)
         record("verify", "cross_session_recall", PASS,
@@ -468,19 +464,15 @@ def verify_persistence():
         record("verify", "file_on_disk", FAIL, str(e))
         results["verifications"]["file_on_disk_correct"] = False
 
-    # --- Step 4: Verify ChromaDB has actual embeddings (not just keyword storage) ---
+    # --- Step 4: Verify ChromaDB has actual embeddings ---
     try:
         client = get_chroma_client()
         conv_collection = client.get_collection("conversation_embeddings")
         code_collection = client.get_collection("code_embeddings")
-
-        # Peek at some entries to verify they have embeddings
         conv_peek = conv_collection.peek(limit=3)
         code_peek = code_collection.peek(limit=3)
-
         conv_has_embeddings = conv_peek.get("embeddings") is not None and len(conv_peek.get("embeddings", [])) > 0
         code_has_embeddings = code_peek.get("embeddings") is not None and len(code_peek.get("embeddings", [])) > 0
-
         record("verify", "chromadb_embeddings", PASS,
                f"Conversation embeddings: {conv_has_embeddings}, Code embeddings: {code_has_embeddings}")
         results["verifications"]["chromadb_has_embeddings"] = conv_has_embeddings or code_has_embeddings
@@ -488,7 +480,7 @@ def verify_persistence():
         record("verify", "chromadb_embeddings", FAIL, str(e))
         results["verifications"]["chromadb_has_embeddings"] = False
 
-    # --- Step 5: Verify Rust/SQLite conversation DB (if it exists) ---
+    # --- Step 5: Verify Rust/SQLite DB ---
     sqlite_paths = [
         Path.home() / ".local" / "share" / "construct" / "construct.db",
         Path.home() / "construct-data" / "memory.db",
@@ -500,7 +492,6 @@ def verify_persistence():
             try:
                 conn = sqlite3.connect(str(db_path))
                 cursor = conn.cursor()
-                # Check for conversations table
                 cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
                 tables = [row[0] for row in cursor.fetchall()]
                 if "conversations" in tables:
@@ -610,18 +601,16 @@ def print_results():
     logger.info("Total steps: %d | Passed: %d | Failed: %d", total_steps, passed_steps, failed_steps)
     logger.info("Overall: %s", "✅ PASS" if results["overall_pass"] else "❌ FAIL")
 
-    # Save results to JSON for the markdown doc
+    # Save results to JSON
     results_file = TEST_DATA_DIR / "e2e_results.json"
     TEST_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Make verifications serializable (remove stats dict which has non-serializable items)
     serializable_results = dict(results)
     serializable_verifications = {}
     for k, v in serializable_results.get("verifications", {}).items():
         if isinstance(v, (bool, str, int, float, type(None))):
             serializable_verifications[k] = v
         elif isinstance(v, dict):
-            # For stats, just keep counts
             simplified = {}
             for sk, sv in v.items():
                 if isinstance(sv, (bool, str, int, float, type(None))):
