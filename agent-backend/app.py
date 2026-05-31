@@ -2036,11 +2036,7 @@ _thinking_mode: Dict[str, dict] = {}
 
 
 @app.post("/agent/think", response_model=ThinkingModeResponse)
-async def enable_thinking_mode(
-    session_id: str,
-    enabled: bool = True,
-    depth: str = "standard",
-) -> dict:
+async def enable_thinking_mode(req: ThinkingModeRequest) -> dict:
     """
     Enable or disable deep thinking mode for a session.
 
@@ -2052,32 +2048,49 @@ async def enable_thinking_mode(
     - "deep": detailed chain-of-thought with self-verification
     """
     executor = _get_executor()
-    session = executor.get_session(session_id)
+    session = executor.get_session(req.session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
     # Store on session for executor to read
     session.thinking_mode = {
-        "enabled": enabled,
-        "depth": depth,
+        "enabled": req.enabled,
+        "depth": req.depth,
         "updated_at": time.time(),
     }
 
     # Also store in global dict for backward compatibility
-    _thinking_mode[session_id] = session.thinking_mode.copy()
+    _thinking_mode[req.session_id] = session.thinking_mode.copy()
 
     depth_desc = {"light": "lightweight", "standard": "standard", "deep": "maximum"}
     msg = (
-        f"Deep thinking mode {'enabled' if enabled else 'disabled'} "
-        f"({depth_desc.get(depth, depth)} depth) for session {session_id}"
+        f"Deep thinking mode {'enabled' if req.enabled else 'disabled'} "
+        f"({depth_desc.get(req.depth, req.depth)} depth) for session {req.session_id}"
     )
     logger.info(msg)
 
     return {
-        "session_id": session_id,
-        "thinking_enabled": enabled,
-        "depth": depth,
+        "session_id": req.session_id,
+        "thinking_enabled": req.enabled,
+        "depth": req.depth,
         "message": msg,
+    }
+
+
+@app.get("/agent/think", response_model=ThinkingModeResponse)
+async def get_thinking_mode(session_id: str) -> dict:
+    """Get the current thinking mode configuration for a session."""
+    executor = _get_executor()
+    session = executor.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    return {
+        "session_id": session_id,
+        "thinking_enabled": session.thinking_mode.get("enabled", False),
+        "depth": session.thinking_mode.get("depth", "standard"),
+        "message": f"Thinking mode: {session.thinking_mode.get('depth', 'standard')} depth, "
+                   f"{'enabled' if session.thinking_mode.get('enabled', False) else 'disabled'}",
     }
 
 
