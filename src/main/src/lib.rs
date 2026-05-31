@@ -50,8 +50,36 @@ pub fn run() {
             }
 
             // ── 3. Initialise SQLite database ───────────────────────────────
-            let state = db::init_db(app).expect("failed to initialise database");
-            app.manage(state);
+            // Graceful fallback: if the DB fails to init, the app still opens
+            // but memory/recall features won't work.
+            match db::init_db(app) {
+                Ok(state) => {
+                    app.manage(state);
+                    log::info!("Database initialised successfully");
+                }
+                Err(e) => {
+                    log::error!("Failed to initialise database: {}. Memory features disabled.", e);
+                    // Provide a stub so commands don't panic on state access.
+                    // We create an in-memory DB as a fallback.
+                    match rusqlite::Connection::open_in_memory()
+                        .and_then(|conn| {
+                            conn.execute_batch(db::INIT_SQL)?;
+                            Ok(conn)
+                        })
+                        .map(|conn| db::AppState {
+                            db: std::sync::Mutex::new(db::SendConnection(conn)),
+                        })
+                    {
+                        Ok(fallback) => {
+                            app.manage(fallback);
+                            log::warn!("Using in-memory database fallback — data will NOT persist.");
+                        }
+                        Err(e2) => {
+                            log::error!("Even in-memory DB failed: {}. This should not happen.", e2);
+                        }
+                    }
+                }
+            }
 
             // ── 4. Agent state ──────────────────────────────────────────────
             app.manage(AgentState::new());
@@ -60,19 +88,26 @@ pub fn run() {
             app.manage(AutonomousManager::new());
 
             // ── 6. System tray ──────────────────────────────────────────────
+            // Graceful fallback: if tray setup fails, the app still opens
             let app_handle = app.handle();
-            tray::setup_tray(&app_handle).expect("failed to set up system tray");
+            if let Err(e) = tray::setup_tray(&app_handle) {
+                log::error!("Failed to set up system tray: {}. Tray icon won't be available.", e);
+            }
 
-            // ── 7. Check for updates ────────────────────────────────────────
+            // ── 7. Check for updates (deferred 30s so it doesn't block startup) ──
             let update_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
+                // Wait 30 seconds before checking for updates so the
+                // window is fully loaded and the user isn't interrupted.
+                tokio::time::sleep(std::time::Duration::from_secs(30)).await;
                 check_for_updates(update_handle).await;
             });
 
             #[cfg(debug_assertions)]
             {
-                let window = app.get_webview_window("main").unwrap();
-                window.open_devtools();
+                if let Some(window) = app.get_webview_window("main") {
+                    window.open_devtools();
+                }
             }
             Ok(())
         })
@@ -109,11 +144,9 @@ pub fn run() {
         .expect("error while running tauri application");
 }
 
-/// Check for app updates on startup using the Tauri updater plugin.
+/// Check for app updates using the Tauri updater plugin.
 ///
-/// If an update is available, the built-in dialog will prompt the user
-/// (configured via `plugins.updater.dialog: true` in tauri.conf.json).
-/// If the user accepts, the update is downloaded and installed automatically.
+/// Deferred by 30s on startup so the window loads first.
 /// Errors are logged but never crash the app — updater failures are non-critical.
 async fn check_for_updates(app_handle: tauri::AppHandle) {
     use tauri_plugin_updater::UpdaterExt;
@@ -126,10 +159,6 @@ async fn check_for_updates(app_handle: tauri::AppHandle) {
                     update.version,
                     app_handle.config().version.as_deref().unwrap_or("unknown")
                 );
-                // The dialog plugin handles user confirmation when
-                // plugins.updater.dialog is true in tauri.conf.json.
-                // download_and_install will show the dialog, download,
-                // and restart the app after the user confirms.
                 match update.download_and_install(
                     |chunk_len, content_len| {
                         log::debug!("Downloaded {} bytes (total: {:?})", chunk_len, content_len);

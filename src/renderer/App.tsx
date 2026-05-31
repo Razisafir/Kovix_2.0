@@ -45,23 +45,52 @@ function SplashScreen({ onReady }: { onReady: () => void }) {
     const checkBackend = async () => {
       setStatus("checking backend");
       try {
-        // Try health endpoint up to 10 times with 500ms delay
-        for (let i = 0; i < 10; i++) {
-          if (cancelled) return;
+        // The backend runs on a random port assigned by the Rust sidecar
+        // manager. We try common ports and the env-configured port.
+        const ports = [8000, 25147, 8080];
+
+        // Also try to read the port from Tauri if available
+        if (typeof window !== "undefined" && (window as any).__TAURI__) {
           try {
-            const res = await fetch("http://localhost:25147/health", {
-              method: "GET",
-              signal: AbortSignal.timeout(2000),
-            });
-            if (res.ok) {
-              setStatus("ready");
-              setTimeout(() => {
-                if (!cancelled) onReady();
-              }, 400);
-              return;
+            const { invoke } = (window as any).__TAURI__.core || (window as any).__TAURI__;
+            if (invoke) {
+              // The backend:ready event carries the actual port
+              const { listen } = (window as any).__TAURI__.event || (window as any).__TAURI__;
+              if (listen) {
+                const unlisten = await listen("backend:ready", (event: any) => {
+                  const port = event.payload;
+                  if (typeof port === "number") {
+                    ports.unshift(port); // try this port first
+                  }
+                });
+                // Clean up listener after 5s
+                setTimeout(() => unlisten(), 5000);
+              }
             }
           } catch {
-            // Backend not ready yet
+            // Tauri API not available, use default ports
+          }
+        }
+
+        // Try health endpoint up to 8 times with 500ms delay
+        for (let i = 0; i < 8; i++) {
+          if (cancelled) return;
+          for (const port of ports) {
+            try {
+              const res = await fetch(`http://127.0.0.1:${port}/health`, {
+                method: "GET",
+                signal: AbortSignal.timeout(1500),
+              });
+              if (res.ok) {
+                setStatus("ready");
+                setTimeout(() => {
+                  if (!cancelled) onReady();
+                }, 400);
+                return;
+              }
+            } catch {
+              // Backend not ready on this port
+            }
           }
           await new Promise((r) => setTimeout(r, 500));
         }

@@ -24,11 +24,11 @@
         "decorations": true,
         "transparent": false,
         "focus": true,
-        "visible": false
+        "visible": true
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' https://api.github.com https://*.openai.com https://*.anthropic.com https://*.googleapis.com https://api.construct.ai https://github.com https://*.githubusercontent.com; img-src 'self' data: https:; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
+      "csp": "default-src 'self'; connect-src 'self' http://127.0.0.1:* http://localhost:* https://api.github.com https://*.openai.com https://*.anthropic.com https://*.googleapis.com https://api.construct.ai https://github.com https://*.githubusercontent.com; img-src 'self' data: https:; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
     }
   },
   "plugins": {

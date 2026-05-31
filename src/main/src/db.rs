@@ -95,7 +95,7 @@ pub struct AppState {
 // ---------------------------------------------------------------------------
 
 /// SQL executed once when the database is first created.
-const INIT_SQL: &str = r#"
+pub const INIT_SQL: &str = r#"
 -- conversations: stores all agent conversations
 CREATE TABLE IF NOT EXISTS conversations (
     id TEXT PRIMARY KEY,
