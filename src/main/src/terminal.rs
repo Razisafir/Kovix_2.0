@@ -1,13 +1,13 @@
 use std::io::{Read, Write};
+use std::process::{Child, Command, Stdio};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager};
 
 /// State held by the app for a single terminal session.
 struct TerminalSession {
-    writer: Arc<Mutex<Box<dyn Write + Send>>>,
-    _child: Box<dyn portable_pty::Child + Send + Sync>,
-    master: Arc<Mutex<Box<dyn portable_pty::MasterPty + Send>>>,
+    stdin: Arc<Mutex<std::process::ChildStdin>>,
+    child: Arc<Mutex<Child>>,
 }
 
 /// Managed state: one terminal session per app (extendable to multiple).
@@ -23,26 +23,13 @@ impl TerminalState {
     }
 }
 
-/// Spawn a new PTY and connect it to the frontend via Tauri events.
+/// Spawn a new shell process and connect it to the frontend via Tauri events.
 #[tauri::command]
 pub async fn spawn_terminal(
     app: AppHandle,
-    cols: u16,
-    rows: u16,
+    _cols: u16,
+    _rows: u16,
 ) -> Result<String, String> {
-    use portable_pty::{CommandBuilder, NativePtySystem, PtySize, PtySystem};
-
-    let pty_system = NativePtySystem::default();
-
-    let pair = pty_system
-        .openpty(PtySize {
-            rows,
-            cols,
-            pixel_width: 0,
-            pixel_height: 0,
-        })
-        .map_err(|e| format!("Failed to open PTY: {}", e))?;
-
     // Choose shell based on OS
     let shell = if cfg!(target_os = "windows") {
         "powershell"
@@ -57,50 +44,66 @@ pub async fn spawn_terminal(
         }
     };
 
-    let cmd = CommandBuilder::new(shell);
-    let child = pair
-        .slave
-        .spawn_command(cmd)
+    let mut child = Command::new(shell)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
         .map_err(|e| format!("Failed to spawn shell: {}", e))?;
 
-    // Drop the slave side in the parent process
-    drop(pair.slave);
+    let stdin = child
+        .stdin
+        .take()
+        .ok_or_else(|| "Failed to get shell stdin".to_string())?;
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| "Failed to get shell stdout".to_string())?;
+    let stderr = child
+        .stderr
+        .take()
+        .ok_or_else(|| "Failed to get shell stderr".to_string())?;
 
-    // Get a blocking reader from the master PTY
-    let reader = pair
-        .master
-        .try_clone_reader()
-        .map_err(|e| format!("Failed to clone PTY reader: {}", e))?;
+    let stdin = Arc::new(Mutex::new(stdin));
+    let child = Arc::new(Mutex::new(child));
 
-    // Get a blocking writer from the master PTY (implements std::io::Write)
-    let writer = pair
-        .master
-        .try_clone_writer()
-        .map_err(|e| format!("Failed to clone PTY writer: {}", e))?;
-
-    let writer = Arc::new(Mutex::new(writer));
-    let master = Arc::new(Mutex::new(pair.master));
-
-    // Spawn a blocking reader task that emits data to the frontend
+    // Spawn blocking reader task for stdout
     let app_clone = app.clone();
     tokio::task::spawn_blocking(move || {
-        let mut reader = reader;
+        let mut reader = stdout;
         let mut buf = [0u8; 4096];
-
         loop {
             match reader.read(&mut buf) {
                 Ok(0) => {
-                    // EOF — shell exited
                     let _ = app_clone.emit("terminal:data", "\r\n[Process exited]\r\n");
                     break;
                 }
                 Ok(n) => {
-                    // Convert bytes to string, replacing invalid UTF-8
                     let data = String::from_utf8_lossy(&buf[..n]).to_string();
                     let _ = app_clone.emit("terminal:data", data);
                 }
                 Err(e) => {
-                    log::error!("Terminal read error: {}", e);
+                    log::error!("Terminal stdout read error: {}", e);
+                    break;
+                }
+            }
+        }
+    });
+
+    // Spawn blocking reader task for stderr
+    let app_clone2 = app.clone();
+    tokio::task::spawn_blocking(move || {
+        let mut reader = stderr;
+        let mut buf = [0u8; 4096];
+        loop {
+            match reader.read(&mut buf) {
+                Ok(0) => break,
+                Ok(n) => {
+                    let data = String::from_utf8_lossy(&buf[..n]).to_string();
+                    let _ = app_clone2.emit("terminal:data", data);
+                }
+                Err(e) => {
+                    log::error!("Terminal stderr read error: {}", e);
                     break;
                 }
             }
@@ -110,16 +113,12 @@ pub async fn spawn_terminal(
     // Store session
     let state = app.state::<TerminalState>();
     let mut session = state.session.lock().await;
-    *session = Some(TerminalSession {
-        writer,
-        _child: child,
-        master,
-    });
+    *session = Some(TerminalSession { stdin, child });
 
     Ok("terminal_spawned".to_string())
 }
 
-/// Send input from the frontend to the PTY.
+/// Send input from the frontend to the shell.
 #[tauri::command]
 pub async fn terminal_input(
     app: AppHandle,
@@ -129,38 +128,26 @@ pub async fn terminal_input(
     let session_guard = state.session.lock().await;
 
     if let Some(session) = session_guard.as_ref() {
-        let mut writer = session.writer.lock().await;
-        writer
+        let mut stdin = session.stdin.lock().await;
+        stdin
             .write_all(data.as_bytes())
             .map_err(|e| format!("Write error: {}", e))?;
-        writer.flush().map_err(|e| format!("Flush error: {}", e))?;
+        stdin.flush().map_err(|e| format!("Flush error: {}", e))?;
     }
 
     Ok(())
 }
 
-/// Resize the PTY to match the terminal viewport.
+/// Resize the terminal viewport.
+/// Note: Without PTY, true resize is not supported. This is a no-op for now.
+/// PTY support can be added in a future release for proper terminal resizing.
 #[tauri::command]
 pub async fn terminal_resize(
-    app: AppHandle,
-    cols: u16,
-    rows: u16,
+    _app: AppHandle,
+    _cols: u16,
+    _rows: u16,
 ) -> Result<(), String> {
-    let state = app.state::<TerminalState>();
-    let session_guard = state.session.lock().await;
-
-    if let Some(session) = session_guard.as_ref() {
-        let master = session.master.lock().await;
-        master
-            .resize(portable_pty::PtySize {
-                rows,
-                cols,
-                pixel_width: 0,
-                pixel_height: 0,
-            })
-            .map_err(|e| format!("Resize error: {}", e))?;
-    }
-
+    // Resize not supported without PTY — no-op for beta
     Ok(())
 }
 
@@ -169,6 +156,12 @@ pub async fn terminal_resize(
 pub async fn kill_terminal(app: AppHandle) -> Result<(), String> {
     let state = app.state::<TerminalState>();
     let mut session_guard = state.session.lock().await;
-    *session_guard = None;
+
+    if let Some(session) = session_guard.take() {
+        let mut child = session.child.lock().await;
+        let _ = child.kill();
+        let _ = child.wait();
+    }
+
     Ok(())
 }
