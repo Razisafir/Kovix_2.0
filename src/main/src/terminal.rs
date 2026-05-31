@@ -1,11 +1,13 @@
+use std::io::{Read, Write};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tauri::{AppHandle, Emitter, Manager};
 
 /// State held by the app for a single terminal session.
 struct TerminalSession {
-    writer: Arc<Mutex<Box<dyn portable_pty::MasterPty + Send>>>,
+    writer: Arc<Mutex<Box<dyn Write + Send>>>,
     _child: Box<dyn portable_pty::Child + Send + Sync>,
+    master: Arc<Mutex<Box<dyn portable_pty::MasterPty + Send>>>,
 }
 
 /// Managed state: one terminal session per app (extendable to multiple).
@@ -29,7 +31,6 @@ pub async fn spawn_terminal(
     rows: u16,
 ) -> Result<String, String> {
     use portable_pty::{CommandBuilder, NativePtySystem, PtySize, PtySystem};
-    use tokio::io::AsyncReadExt;
 
     let pty_system = NativePtySystem::default();
 
@@ -65,22 +66,29 @@ pub async fn spawn_terminal(
     // Drop the slave side in the parent process
     drop(pair.slave);
 
-    // Get reader and writer
+    // Get a blocking reader from the master PTY
     let reader = pair
         .master
         .try_clone_reader()
         .map_err(|e| format!("Failed to clone PTY reader: {}", e))?;
 
-    let writer = Arc::new(Mutex::new(pair.master));
+    // Get a blocking writer from the master PTY (implements std::io::Write)
+    let writer = pair
+        .master
+        .try_clone_writer()
+        .map_err(|e| format!("Failed to clone PTY writer: {}", e))?;
 
-    // Spawn async reader task that emits data to the frontend
+    let writer = Arc::new(Mutex::new(writer));
+    let master = Arc::new(Mutex::new(pair.master));
+
+    // Spawn a blocking reader task that emits data to the frontend
     let app_clone = app.clone();
-    tokio::spawn(async move {
+    tokio::task::spawn_blocking(move || {
         let mut reader = reader;
         let mut buf = [0u8; 4096];
 
         loop {
-            match reader.read(&mut buf).await {
+            match reader.read(&mut buf) {
                 Ok(0) => {
                     // EOF — shell exited
                     let _ = app_clone.emit("terminal:data", "\r\n[Process exited]\r\n");
@@ -105,6 +113,7 @@ pub async fn spawn_terminal(
     *session = Some(TerminalSession {
         writer,
         _child: child,
+        master,
     });
 
     Ok("terminal_spawned".to_string())
@@ -121,7 +130,6 @@ pub async fn terminal_input(
 
     if let Some(session) = session_guard.as_ref() {
         let mut writer = session.writer.lock().await;
-        use std::io::Write;
         writer
             .write_all(data.as_bytes())
             .map_err(|e| format!("Write error: {}", e))?;
@@ -142,8 +150,8 @@ pub async fn terminal_resize(
     let session_guard = state.session.lock().await;
 
     if let Some(session) = session_guard.as_ref() {
-        let writer = session.writer.lock().await;
-        writer
+        let master = session.master.lock().await;
+        master
             .resize(portable_pty::PtySize {
                 rows,
                 cols,
