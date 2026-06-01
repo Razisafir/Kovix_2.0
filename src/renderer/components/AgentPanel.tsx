@@ -1,13 +1,13 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { writeTextFile, readTextFile } from "@tauri-apps/plugin-fs";
 import type { LogEntry } from "./TerminalOutput";
-import { type PendingChange, type DiffHunk_ as InlineDiffHunk, type DiffLine } from "./InlineDiff";
+
 import useAppStore from "../stores/useAppStore";
 import { useDiffStore } from "../stores/useDiffStore";
 import { generateDiff } from "../utils/diffParser";
-import type { FileDiff, DiffHunk } from "../types/diff";
+import type { FileDiff } from "../types/diff";
 
 /* ─────────────────────── types ─────────────────────── */
 
@@ -387,75 +387,8 @@ function AgentPanel() {
     setState((prev) => ({ ...prev, autoMode: !prev.autoMode }));
   }, []);
 
-  const diffStoreFileDiffs = useDiffStore((s) => {
-    if (!s.activeSessionId) return [];
-    const session = s.sessions.get(s.activeSessionId);
-    return session?.fileDiffs ?? [];
-  });
-
-  const fileDiffToPendingChange = useCallback(
-    (fd: FileDiff): PendingChange => {
-      const hunks: InlineDiffHunk[] = fd.hunks.map((h: DiffHunk) => {
-        const lines: DiffLine[] = [];
-        const maxLen = Math.max(h.oldContent.length, h.newContent.length);
-        let oldLine = h.oldStart;
-        let newLine = h.newStart;
-
-        for (let i = 0; i < maxLen; i++) {
-          const hasOld = i < h.oldContent.length;
-          const hasNew = i < h.newContent.length;
-
-          if (hasOld && hasNew && h.oldContent[i] === h.newContent[i]) {
-            lines.push({ type: "context", content: h.oldContent[i], lineNumber: oldLine });
-            oldLine++;
-            newLine++;
-          } else {
-            if (hasOld) {
-              lines.push({ type: "remove", content: h.oldContent[i], lineNumber: oldLine });
-              oldLine++;
-            }
-            if (hasNew) {
-              lines.push({ type: "add", content: h.newContent[i], lineNumber: newLine });
-              newLine++;
-            }
-          }
-        }
-
-        return {
-          oldStart: h.oldStart,
-          oldLines: h.oldLines,
-          newStart: h.newStart,
-          newLines: h.newLines,
-          lines,
-        };
-      });
-
-      const allHunksAccepted = fd.hunks.every((h) => h.accepted === true);
-      const allHunksRejected = fd.hunks.every((h) => h.accepted === false);
-      const anyPending = fd.hunks.some((h) => h.accepted === null);
-      const acceptedStatus: boolean | null = anyPending
-        ? null
-        : allHunksAccepted
-          ? true
-          : allHunksRejected
-            ? false
-            : null;
-
-      return {
-        id: fd.filePath,
-        filePath: fd.filePath,
-        description: `${fd.status}: ${fd.filePath}`,
-        hunks,
-        accepted: acceptedStatus,
-      };
-    },
-    []
-  );
-
-  const _pendingChanges = useMemo<PendingChange[]>(
-    () => diffStoreFileDiffs.map(fileDiffToPendingChange),
-    [diffStoreFileDiffs, fileDiffToPendingChange]
-  );
+  // Diff store access is done via getState() in callbacks to avoid
+  // infinite re-render loops from unstable selector references.
 
   const _handleAcceptChange = useCallback(
     (id: string) => {
@@ -626,15 +559,13 @@ function AgentPanel() {
     }
   }, []);
 
-  const _pendingCount = useDiffStore((s) => s.getPendingCount());
-
   // Suppress unused-local warnings for callbacks reserved for future wiring
   void _setAgentMode; void _thinkingOpen; void _setThinkingOpen;
   void _viewMode; void _setViewMode; void _handleCommand;
   void _handleRemoveFile; void _handleFileInputKeyDown;
-  void _toggleAuto; void _pendingChanges; void _handleAcceptChange;
+  void _toggleAuto; void _handleAcceptChange;
   void _handleRejectChange; void _handleAcceptAll; void _handleRejectAll;
-  void _applyAcceptedDiffs; void _pendingCount;
+  void _applyAcceptedDiffs;
 
   /* Status-dependent classes for the status badge pill */
   const statusPillClasses = {

@@ -20,6 +20,7 @@ import type {
   AgentMessage,
   AgentTask,
   AgentConflict,
+  RightSidebarTab,
 } from "../types";
 
 interface CursorPosition {
@@ -31,22 +32,28 @@ interface AppState {
   // UI Visibility
   sidebarVisible: boolean;
   panelVisible: boolean;
+  rightSidebarVisible: boolean;
+  // Backward compat aliases (used by IDELayout/RightAgentPanel — will be removed)
+  rightPanelVisible: boolean;
   toggleSidebar: () => void;
   togglePanel: () => void;
+  toggleRightSidebar: () => void;
+  toggleRightPanel: () => void;
 
-  // Panel tab (shared state for command palette + keyboard shortcuts)
+  // Panel tab (bottom panel — VS Code standard: Problems, Output, Debug Console, Terminal, Ports)
   panelTab: string;
   setPanelTab: (tab: string) => void;
 
-  // Right Agent Panel
-  rightPanelVisible: boolean;
-  toggleRightPanel: () => void;
-  rightPanelTab: string;
-  setRightPanelTab: (tab: string) => void;
-
-  // Sidebar
+  // Sidebar (left — controlled by ActivityBar)
   activeSidebarTab: string;
   setActiveSidebarTab: (tab: string) => void;
+
+  // Right sidebar tab (Chat, Agent, Memory)
+  rightSidebarTab: RightSidebarTab;
+  setRightSidebarTab: (tab: RightSidebarTab) => void;
+  // Backward compat alias
+  rightPanelTab: RightSidebarTab;
+  setRightPanelTab: (tab: string) => void;
 
   // Agent Mode (shared state for Command Palette + AgentPanel)
   agentMode: "code" | "architect" | "debug" | "review" | "security" | "devops";
@@ -114,7 +121,7 @@ interface AppState {
   removeMcpConnection: (id: string) => void;
   updateMcpConnection: (id: string, updates: Partial<MCPConnection>) => void;
 
-  // Screen Control
+  // Screen Control (kept for compatibility)
   screenActions: ScreenAction[];
   setScreenActions: (actions: ScreenAction[]) => void;
   addScreenAction: (action: ScreenAction) => void;
@@ -159,25 +166,30 @@ const useAppStore = create<AppState>((set) => ({
   // UI
   sidebarVisible: true,
   panelVisible: true,
+  rightSidebarVisible: true,
+  rightPanelVisible: true, // backward compat alias
   toggleSidebar: () =>
     set((state) => ({ sidebarVisible: !state.sidebarVisible })),
   togglePanel: () =>
     set((state) => ({ panelVisible: !state.panelVisible })),
+  toggleRightSidebar: () =>
+    set((state) => ({ rightSidebarVisible: !state.rightSidebarVisible, rightPanelVisible: !state.rightPanelVisible })),
+  toggleRightPanel: () =>
+    set((state) => ({ rightSidebarVisible: !state.rightSidebarVisible, rightPanelVisible: !state.rightPanelVisible })),
 
-  // Panel tab
+  // Panel tab — default to Terminal
   panelTab: "terminal" as const,
   setPanelTab: (tab) => set({ panelTab: tab }),
 
-  // Right Agent Panel
-  rightPanelVisible: true,
-  toggleRightPanel: () =>
-    set((state) => ({ rightPanelVisible: !state.rightPanelVisible })),
-  rightPanelTab: "agent",
-  setRightPanelTab: (tab) => set({ rightPanelTab: tab }),
-
-  // Sidebar
+  // Sidebar — default to Explorer
   activeSidebarTab: "explorer",
   setActiveSidebarTab: (tab) => set({ activeSidebarTab: tab }),
+
+  // Right sidebar — default to Agent
+  rightSidebarTab: "agent" as RightSidebarTab,
+  setRightSidebarTab: (tab) => set({ rightSidebarTab: tab, rightPanelTab: tab }),
+  rightPanelTab: "agent" as RightSidebarTab,
+  setRightPanelTab: (tab) => set({ rightSidebarTab: tab as RightSidebarTab, rightPanelTab: tab as RightSidebarTab }),
 
   // Agent Mode
   agentMode: "code" as const,
@@ -318,7 +330,6 @@ const useAppStore = create<AppState>((set) => ({
     set((state) => {
       const id = `toast-${++toastIdCounter}-${Date.now()}`;
       const newToast: Toast = { ...toast, id };
-      // Keep max 5 toasts, remove oldest if exceeding
       const toasts = [...state.toasts, newToast].slice(-5);
       return { toasts };
     }),

@@ -1,6 +1,9 @@
 import { lazy, Suspense, useState, useCallback, useEffect } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import OnboardingModal from "./components/OnboardingModal";
+import ActivityBar from "./components/ActivityBar";
+import Sidebar from "./components/Sidebar";
+import StatusBar from "./components/StatusBar";
 import CommandPalette from "./components/CommandPalette";
 import type { PaletteCommand } from "./components/CommandPalette";
 import {
@@ -11,26 +14,15 @@ import { useCommandPalette } from "./hooks/useCommandPalette";
 import { registerDefaultCommands } from "./commands/defaultCommands";
 import useAppStore from "./stores/useAppStore";
 
-const IDELayout = lazy(() => import("./components/IDELayout"));
+const Editor = lazy(() => import("./components/Editor"));
+const Panel = lazy(() => import("./components/Panel"));
 const SettingsPanel = lazy(() => import("./components/SettingsPanel"));
-
-const C = {
-  base: "#0c0e11",
-  s1: "#141619",
-  s2: "#1e2023",
-  border: "rgba(0, 229, 255, 0.12)",
-  borderActive: "rgba(0, 229, 255, 0.25)",
-  t2: "#849495",
-  accent: "#00e5ff",
-  accentGlow: "rgba(0, 229, 255, 0.15)",
-  gold: "#e9c349",
-};
+const RightSidebar = lazy(() => import("./components/RightSidebar"));
 
 /* ─── Splash Screen Component ─── */
 function SplashScreen({ onReady }: { onReady: () => void }) {
   const [status, setStatus] = useState<string>("initializing...");
   const [dots, setDots] = useState("");
-  const [progress, setProgress] = useState(20);
 
   // Animate loading dots
   useEffect(() => {
@@ -40,63 +32,43 @@ function SplashScreen({ onReady }: { onReady: () => void }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Slowly increase progress
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setProgress((p) => Math.min(p + 5, 80));
-    }, 800);
-    return () => clearInterval(timer);
-  }, []);
-
-  // Backend health check — with fast fallback in web mode
+  // Backend health check
   useEffect(() => {
     let cancelled = false;
     const checkBackend = async () => {
       setStatus("checking backend");
-
-      // If NOT running in Tauri, skip quickly (web dev mode)
-      const isTauri = typeof window !== "undefined" && (window as any).__TAURI__;
-      if (!isTauri) {
-        // In web browser without Tauri, skip splash after 1.5s
-        setProgress(100);
-        setStatus("web mode");
-        setTimeout(() => {
-          if (!cancelled) onReady();
-        }, 1500);
-        return;
-      }
-
       try {
         const ports = [8000, 25147, 8080];
 
-        try {
-          const { invoke } = (window as any).__TAURI__.core || (window as any).__TAURI__;
-          if (invoke) {
-            const { listen } = (window as any).__TAURI__.event || (window as any).__TAURI__;
-            if (listen) {
-              const unlisten = await listen("backend:ready", (event: any) => {
-                const port = event.payload;
-                if (typeof port === "number") {
-                  ports.unshift(port);
-                }
-              });
-              setTimeout(() => unlisten(), 5000);
+        if (typeof window !== "undefined" && (window as any).__TAURI__) {
+          try {
+            const { invoke } = (window as any).__TAURI__.core || (window as any).__TAURI__;
+            if (invoke) {
+              const { listen } = (window as any).__TAURI__.event || (window as any).__TAURI__;
+              if (listen) {
+                const unlisten = await listen("backend:ready", (event: any) => {
+                  const port = event.payload;
+                  if (typeof port === "number") {
+                    ports.unshift(port);
+                  }
+                });
+                setTimeout(() => unlisten(), 5000);
+              }
             }
+          } catch {
+            // Tauri API not available
           }
-        } catch {
-          // Tauri API not available
         }
 
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 8; i++) {
           if (cancelled) return;
           for (const port of ports) {
             try {
               const res = await fetch(`http://127.0.0.1:${port}/health`, {
                 method: "GET",
-                signal: AbortSignal.timeout(2000),
+                signal: AbortSignal.timeout(1500),
               });
               if (res.ok) {
-                setProgress(100);
                 setStatus("ready");
                 setTimeout(() => {
                   if (!cancelled) onReady();
@@ -104,20 +76,18 @@ function SplashScreen({ onReady }: { onReady: () => void }) {
                 return;
               }
             } catch {
-              // Backend not ready yet
+              // Backend not ready on this port
             }
           }
           await new Promise((r) => setTimeout(r, 500));
         }
         if (!cancelled) {
           setStatus("proceeding offline");
-          setProgress(100);
           setTimeout(() => onReady(), 600);
         }
       } catch {
         if (!cancelled) {
           setStatus("proceeding offline");
-          setProgress(100);
           setTimeout(() => onReady(), 600);
         }
       }
@@ -130,77 +100,52 @@ function SplashScreen({ onReady }: { onReady: () => void }) {
   }, [onReady]);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        width: "100vw",
-        height: "100vh",
-        backgroundColor: C.base,
-        fontFamily: '"Inter", "system-ui", sans-serif',
-        gap: "24px",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      {/* Ambient glow */}
-      <div style={{
-        position: "absolute",
-        top: "30%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        width: 600,
-        height: 600,
-        borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(0, 229, 255, 0.06) 0%, transparent 70%)",
-        filter: "blur(80px)",
-        pointerEvents: "none",
-      }} />
-
+    <div className="flex flex-col items-center justify-center w-screen h-screen bg-bg-onyx font-mono gap-6">
       {/* Logo Mark */}
-      <div
-        className="luminous-border"
-        style={{
-          width: "56px",
-          height: "56px",
-          backgroundColor: "rgba(15, 23, 42, 0.8)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          border: "1px solid rgba(0, 229, 255, 0.2)",
-          borderRadius: 12,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: "0 0 20px rgba(0, 229, 255, 0.15)",
-        }}
-      >
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="2" y="2" width="20" height="20" stroke={C.accent} strokeWidth="1.5" fill="none" />
-          <line x1="2" y1="8" x2="22" y2="8" stroke={C.accent} strokeWidth="1" />
-          <line x1="8" y1="8" x2="8" y2="22" stroke={C.accent} strokeWidth="1" />
+      <div className="w-12 h-12 bg-panel-bg border border-border-subtle rounded-lg flex items-center justify-center">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            x="2"
+            y="2"
+            width="20"
+            height="20"
+            stroke="#00f5ff"
+            strokeWidth="1.5"
+            fill="none"
+          />
+          <line x1="2" y1="8" x2="22" y2="8" stroke="#00f5ff" strokeWidth="1" />
+          <line x1="8" y1="8" x2="8" y2="22" stroke="#00f5ff" strokeWidth="1" />
         </svg>
       </div>
 
       {/* Title */}
-      <div style={{ textAlign: "center", position: "relative", zIndex: 1 }}>
-        <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: "0.1em", color: "#e2e2e6", textTransform: "uppercase", fontFamily: '"Inter", "system-ui", sans-serif' }}>
+      <div className="text-center">
+        <div className="text-lg font-bold tracking-tight text-text-primary font-sans">
           CONSTRUCT
         </div>
-        <div style={{ fontSize: 11, color: "#849495", marginTop: 6, letterSpacing: "0.04em", fontFamily: '"Inter", "system-ui", sans-serif' }}>
-          AI coding agent that never forgets
+        <div className="text-xs text-text-secondary mt-1 tracking-wider font-mono">
+          memory-first AI agent
         </div>
       </div>
 
       {/* Status */}
-      <div style={{ fontSize: 10, color: C.accent, letterSpacing: "0.08em", textTransform: "uppercase", minHeight: 16, fontFamily: '"JetBrains Mono", monospace', textShadow: "0 0 10px rgba(0, 229, 255, 0.3)" }}>
-        {status}{dots}
+      <div className="text-xs text-text-secondary tracking-widest uppercase min-h-4 font-mono">
+        {status}
+        {dots}
       </div>
 
       {/* Progress Bar */}
-      <div style={{ width: 160, height: 2, backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 1, overflow: "hidden" }}>
-        <div style={{ width: `${progress}%`, height: "100%", background: `linear-gradient(90deg, ${C.accent}, rgba(0, 229, 255, 0.6))`, borderRadius: 1, boxShadow: "0 0 8px rgba(0, 229, 255, 0.4)", transition: "width 300ms ease" }} />
+      <div className="w-[120px] h-[2px] bg-border-subtle overflow-hidden rounded-sm">
+        <div
+          className="h-full bg-accent-cyan opacity-60 transition-[width] duration-300 ease-out"
+          style={{ width: status === "ready" ? "100%" : "40%" }}
+        />
       </div>
     </div>
   );
@@ -221,11 +166,143 @@ function useSettingsShortcut(onOpen: () => void) {
   }, [onOpen]);
 }
 
+/* ─── Title Bar Menu ─── */
+interface MenuItem {
+  label: string;
+  action?: () => void;
+  shortcut?: string;
+}
+
+interface MenuGroup {
+  label: string;
+  items: MenuItem[];
+}
+
+function TitleBarMenu({ onTogglePanel, onToggleSidebar, onToggleRightSidebar }: {
+  onTogglePanel: () => void;
+  onToggleSidebar: () => void;
+  onToggleRightSidebar: () => void;
+}) {
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  const store = useAppStore();
+
+  const menuGroups: MenuGroup[] = [
+    {
+      label: "File",
+      items: [
+        { label: "New File", shortcut: "Ctrl+N" },
+        { label: "Open File...", shortcut: "Ctrl+O" },
+        { label: "Save", shortcut: "Ctrl+S" },
+        { label: "Save All", shortcut: "Ctrl+Shift+S" },
+      ],
+    },
+    {
+      label: "Edit",
+      items: [
+        { label: "Undo", shortcut: "Ctrl+Z" },
+        { label: "Redo", shortcut: "Ctrl+Shift+Z" },
+        { label: "Find", shortcut: "Ctrl+F" },
+        { label: "Replace", shortcut: "Ctrl+H" },
+      ],
+    },
+    {
+      label: "View",
+      items: [
+        { label: "Command Palette...", shortcut: "Ctrl+Shift+P" },
+        { label: "Toggle Sidebar", action: onToggleSidebar, shortcut: "Ctrl+B" },
+        { label: "Toggle Right Sidebar", action: onToggleRightSidebar, shortcut: "Ctrl+Shift+B" },
+        { label: "Toggle Bottom Panel", action: onTogglePanel, shortcut: "Ctrl+`" },
+      ],
+    },
+    {
+      label: "Agent",
+      items: [
+        { label: "New Chat", action: () => store.setRightSidebarTab("chat") },
+        { label: "Plan Mode" },
+        { label: "Act Mode" },
+        { label: "YOLO Mode" },
+        { label: "Memory Browser", action: () => store.setRightSidebarTab("memory") },
+        { label: "Agent Dashboard", action: () => store.setRightSidebarTab("agent") },
+      ],
+    },
+    {
+      label: "Terminal",
+      items: [
+        { label: "New Terminal", action: () => { store.setPanelTab("terminal"); if (!store.panelVisible) store.togglePanel(); } },
+        { label: "Clear Terminal" },
+      ],
+    },
+    {
+      label: "Help",
+      items: [
+        { label: "Documentation" },
+        { label: "Keyboard Shortcuts", shortcut: "Ctrl+K Ctrl+S" },
+        { label: "About Construct" },
+      ],
+    },
+  ];
+
+  return (
+    <div className="flex items-center h-full gap-0">
+      {menuGroups.map((group) => (
+        <div key={group.label} className="relative">
+          <button
+            onClick={() => setOpenMenu(openMenu === group.label ? null : group.label)}
+            onMouseEnter={() => { if (openMenu) setOpenMenu(group.label); }}
+            className={`h-full px-3 text-[12px] font-sans border-none cursor-pointer transition-colors ${
+              openMenu === group.label
+                ? "bg-c-s2 text-text-primary"
+                : "bg-transparent text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            {group.label}
+          </button>
+
+          {openMenu === group.label && (
+            <>
+              {/* Invisible overlay to catch outside clicks */}
+              <div
+                className="fixed inset-0 z-[998]"
+                onClick={() => setOpenMenu(null)}
+              />
+              <div
+                className="absolute left-0 top-full z-[999] min-w-[220px] bg-panel-bg border border-border-subtle rounded-md shadow-lg py-1"
+                style={{ boxShadow: "0 8px 24px rgba(0,0,0,0.4)" }}
+              >
+                {group.items.map((item, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      item.action?.();
+                      setOpenMenu(null);
+                    }}
+                    className="flex items-center justify-between w-full px-3 py-1.5 text-[12px] font-sans border-none cursor-pointer bg-transparent text-text-secondary hover:bg-c-s2 hover:text-text-primary transition-colors text-left"
+                  >
+                    <span>{item.label}</span>
+                    {item.shortcut && (
+                      <span className="text-[10px] text-text-secondary/50 ml-4 font-mono">
+                        {item.shortcut}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /* ─── App Root ─── */
 function AppRoot() {
+  const sidebarVisible = useAppStore((s) => s.sidebarVisible);
+  const panelVisible = useAppStore((s) => s.panelVisible);
+  const rightSidebarVisible = useAppStore((s) => s.rightSidebarVisible);
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
   const togglePanel = useAppStore((s) => s.togglePanel);
-  const toggleRightPanel = useAppStore((s) => s.toggleRightPanel);
+  const toggleRightSidebar = useAppStore((s) => s.toggleRightSidebar);
   const onboardingComplete = useAppStore((s) => s.onboardingComplete);
   const setOnboardingComplete = useAppStore((s) => s.setOnboardingComplete);
 
@@ -235,7 +312,9 @@ function AppRoot() {
 
   const { isOpen: showCommandPalette, open: openCommandPalette, close: closeCommandPalette } = useCommandPalette();
 
-  useEffect(() => { registerDefaultCommands(); }, []);
+  useEffect(() => {
+    registerDefaultCommands();
+  }, []);
 
   useEffect(() => {
     const handler = () => setShowSettings(true);
@@ -248,14 +327,17 @@ function AppRoot() {
 
   const handleSplashReady = useCallback(() => {
     setShowSplash(false);
-    const completed = onboardingComplete || localStorage.getItem("construct_onboarding_complete") === "true";
-    if (!completed) setShowOnboarding(true);
+    const completed =
+      onboardingComplete ||
+      localStorage.getItem("construct_onboarding_complete") === "true";
+    if (!completed) {
+      setShowOnboarding(true);
+    }
   }, [onboardingComplete]);
 
   const handleOnboardingComplete = useCallback(() => {
     setOnboardingComplete(true);
     setShowOnboarding(false);
-    localStorage.setItem("construct_onboarding_complete", "true");
   }, [setOnboardingComplete]);
 
   const shortcuts = createConstructShortcuts({
@@ -270,16 +352,21 @@ function AppRoot() {
     replace: () => { console.log("[shortcut] replace"); },
     goToLine: () => { console.log("[shortcut] go to line"); },
     toggleSidebar: () => { toggleSidebar(); },
-    toggleAgentPanel: () => { toggleRightPanel(); },
+    toggleAgentPanel: () => {
+      toggleRightSidebar();
+    },
     toggleMemoryPanel: () => {
       const store = useAppStore.getState();
-      if (!store.rightPanelVisible) store.toggleRightPanel();
-      store.setRightPanelTab("memory");
+      store.setRightSidebarTab("memory");
+      if (!store.rightSidebarVisible) store.toggleRightSidebar();
     },
     toggleTerminal: () => { togglePanel(); },
     fullscreen: () => {
-      if (document.fullscreenElement) document.exitFullscreen();
-      else document.documentElement.requestFullscreen();
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        document.documentElement.requestFullscreen();
+      }
     },
     commandPalette: () => { openCommandPalette(); },
     runCurrentFile: () => { console.log("[shortcut] run current file"); },
@@ -287,63 +374,133 @@ function AppRoot() {
 
   useKeyboardShortcuts(shortcuts, true);
 
-  const handleCommandSelect = useCallback((cmd: PaletteCommand) => {
-    console.log(`[command palette] selected: ${cmd.id} \u2014 ${cmd.label}`);
-  }, []);
+  const handleCommandSelect = useCallback(
+    (cmd: PaletteCommand) => {
+      console.log(`[command palette] selected: ${cmd.id} — ${cmd.label}`);
+    },
+    []
+  );
 
-  // Splash screen
   if (showSplash) {
     return <SplashScreen onReady={handleSplashReady} />;
   }
 
-  // Onboarding wizard
   if (showOnboarding) {
     return <OnboardingModal onComplete={handleOnboardingComplete} />;
   }
 
-  // Main IDE — IDELayout manages its own full layout including status bar
   return (
-    <ErrorBoundary>
-      <Suspense
-        fallback={
-          <div
-            style={{
-              width: "100vw",
-              height: "100vh",
-              background: "#0A0E1A",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#4A5568",
-              fontSize: 11,
-              fontFamily: "sans-serif",
-            }}
-          >
-            Loading IDE...
+    <div className="font-sans h-screen w-screen overflow-hidden flex flex-col antialiased selection:bg-accent-cyan-dim bg-bg-onyx text-text-primary">
+      {/* ── Top Title Bar (h-8) ── */}
+      <header className="h-8 flex-shrink-0 bg-panel-bg flex items-center justify-between border-b border-border-subtle relative z-50" style={{ WebkitAppRegion: "drag" } as React.CSSProperties}>
+        {/* Left: Mac dots + Menu */}
+        <div className="flex items-center" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+          <div className="mac-dots flex items-center pl-4 pr-2">
+            <span className="mac-dot close" />
+            <span className="mac-dot minimize" />
+            <span className="mac-dot maximize" />
           </div>
-        }
-      >
-        <IDELayout />
-      </Suspense>
+          <TitleBarMenu
+            onTogglePanel={togglePanel}
+            onToggleSidebar={toggleSidebar}
+            onToggleRightSidebar={toggleRightSidebar}
+          />
+        </div>
 
-      {/* Command Palette — overlay */}
+        {/* Centered title */}
+        <div className="flex-1 flex justify-center items-center text-[12px] font-medium text-text-secondary pointer-events-none select-none">
+          Construct
+        </div>
+
+        {/* Right: LLM status + window controls */}
+        <div className="flex items-center pr-3 gap-2" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
+          <div className="text-[10px] font-mono text-accent-cyan bg-accent-cyan-dim px-2 py-0.5 rounded-md border border-accent-cyan/30">
+            Kimi K2.5 · local
+          </div>
+        </div>
+      </header>
+
+      {/* ── Main Content Area ── */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Far Left: Activity Bar (w-12) */}
+        <ActivityBar />
+
+        {/* Left Sidebar: Explorer/MCP/etc (w-64) */}
+        {sidebarVisible && (
+          <aside className="w-64 flex-shrink-0 bg-bg-onyx border-r border-border-subtle flex flex-col z-30">
+            <Sidebar />
+          </aside>
+        )}
+
+        {/* Center - Editor + Bottom Panel */}
+        <main className="flex-1 flex flex-col min-w-0 bg-bg-onyx z-20">
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <Suspense
+              fallback={
+                <div className="w-full h-full p-4 text-xs text-text-secondary">
+                  loading...
+                </div>
+              }
+            >
+              <Editor />
+            </Suspense>
+          </div>
+
+          {/* Bottom Panel */}
+          {panelVisible && (
+            <div
+              style={{
+                height: 240,
+                flexShrink: 0,
+                borderTop: "1px solid #282a2d",
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <Suspense
+                fallback={
+                  <div className="p-2 text-xs text-text-secondary uppercase tracking-widest">
+                    loading panel...
+                  </div>
+                }
+              >
+                <Panel />
+              </Suspense>
+            </div>
+          )}
+        </main>
+
+        {/* Right Sidebar: Chat/Agent/Memory (w-[320px]) */}
+        {rightSidebarVisible && (
+          <aside className="w-[320px] flex-shrink-0 bg-panel-bg border-l border-border-subtle flex flex-col z-10">
+            <Suspense fallback={null}>
+              <RightSidebar />
+            </Suspense>
+          </aside>
+        )}
+      </div>
+
+      <StatusBar />
+
+      {/* ── Command Palette ── */}
       <CommandPalette
         isOpen={showCommandPalette}
         onClose={closeCommandPalette}
         onCommandSelect={handleCommandSelect}
       />
 
-      {/* Settings — overlay */}
+      {/* ── Settings Panel ── */}
       {showSettings && (
         <Suspense fallback={null}>
           <SettingsPanel />
         </Suspense>
       )}
-    </ErrorBoundary>
+    </div>
   );
 }
 
-/* ─── Exported App ─── */
+/* ─── Exported App with Error Boundary ─── */
 export default function App() {
   return (
     <ErrorBoundary>

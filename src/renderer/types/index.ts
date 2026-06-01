@@ -32,8 +32,9 @@ export interface AppSettings {
   tabSize: number;
 }
 
-export type PanelTab = "autonomous" | "terminal" | "problems" | "chat" | "agent" | "memory" | "skills" | "mcp" | "screen" | "agents";
-export type SidebarTab = "explorer" | "search" | "git" | "debug" | "extensions" | "mcp" | "files";
+export type PanelTab = "problems" | "output" | "debug-console" | "terminal" | "ports";
+export type SidebarTab = "explorer" | "search" | "git" | "debug" | "extensions" | "mcp";
+export type RightSidebarTab = "chat" | "agent" | "memory";
 
 // Toast notification system
 export type ToastType = "success" | "error" | "info" | "warning";
@@ -93,7 +94,7 @@ export interface MCPTool {
 }
 
 // ============================================================
-// Screen Control Types
+// Screen Control Types (kept for store compatibility)
 // ============================================================
 
 export interface ScreenAction {
