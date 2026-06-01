@@ -103,6 +103,9 @@ import { SyncDescriptor } from '../platform/instantiation/common/descriptors.js'
 
 registerSingleton(IUserDataInitializationService, new SyncDescriptor(UserDataInitializationService, [[]], true));
 
+// Construct IDE integration
+import '../platform/construct/node/constructService.js';
+
 
 //#endregion
 
@@ -196,6 +199,10 @@ import './contrib/policyExport/electron-browser/policyExport.contribution.js';
 
 // Keybindings Export
 import './contrib/keybindingsExport/electron-browser/keybindingsExport.contribution.js';
+
+// Construct Agent
+import './contrib/construct/browser/construct.contribution.js';
+import './contrib/construct/browser/constructStatusBar.js';
 
 //#endregion
 

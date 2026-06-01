@@ -66,6 +66,9 @@ import './contrib/readOnlyMessage/browser/contribution.js';
 import './contrib/diffEditorBreadcrumbs/browser/contribution.js';
 import './contrib/floatingMenu/browser/floatingMenu.contribution.js';
 
+// Construct IDE inline agent
+import './contrib/construct/browser/inlineAgent.js';
+
 // Load up these strings even in VSCode, even if they are not used
 // in order to get them translated
 import './common/standaloneStrings.js';
