@@ -13,6 +13,7 @@ function StatusBar() {
   const toggleSidebar = useAppStore((s) => s.toggleSidebar);
   const agentStatus = useAppStore((s) => s.agentStatus);
   const agentMode = useAppStore((s) => s.agentMode);
+  const skills = useAppStore((s) => s.skills);
 
   // Track cursor position from Monaco via custom events
   const [cursor, setCursor] = useState<CursorPosition>({ line: 1, column: 1 });
@@ -84,6 +85,9 @@ function StatusBar() {
 
       {/* Right: Notifications + Toggles */}
       <div className="flex items-center gap-2">
+        <span className="cursor-pointer hover:text-[#E0E7FF] text-[#4A5568]">
+          {"\u2699\uFE0F"} {skills.length} skills
+        </span>
         {pendingChanges > 0 && (
           <span className="text-[#00E5FF]">
             {pendingChanges} pending

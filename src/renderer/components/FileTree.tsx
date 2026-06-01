@@ -367,31 +367,7 @@ export const FileTree: React.FC<FileTreeProps> = ({ onFileSelect }) => {
         ))}
       </div>
 
-      {/* Recent Memory (legacy from Sidebar) */}
-      <div className="border-t border-[#1A1F2E] shrink-0">
-        <div className="h-[26px] flex items-center px-3">
-          <span className="text-[10px] font-bold tracking-widest uppercase text-[#4A5568]">
-            Recent Memory
-          </span>
-        </div>
-        <div className="px-3 pb-2 flex flex-col gap-[6px]">
-          {[
-            { text: "auth-flow", color: "#00E5FF" },
-            { text: "api-integration", color: "#E9C349" },
-            { text: "ui-components", color: "#00E5FF" },
-          ].map((mem, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <span
-                className="w-[6px] h-[6px] rounded-full shrink-0"
-                style={{ backgroundColor: mem.color, boxShadow: `0 0 6px ${mem.color}40` }}
-              />
-              <span className="text-[10px] text-[#849495] truncate">
-                {mem.text}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
+
     </div>
   );
 };

@@ -33,7 +33,7 @@ export interface AppSettings {
 }
 
 export type PanelTab = "autonomous" | "terminal" | "problems" | "chat" | "agent" | "memory" | "skills" | "mcp" | "screen" | "agents";
-export type SidebarTab = "files" | "search" | "git" | "extensions";
+export type SidebarTab = "explorer" | "search" | "git" | "debug" | "extensions" | "mcp" | "files";
 
 // Toast notification system
 export type ToastType = "success" | "error" | "info" | "warning";

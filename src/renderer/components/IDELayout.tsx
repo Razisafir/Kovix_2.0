@@ -1,7 +1,8 @@
 import React, { useState, useCallback, Suspense, lazy, useEffect } from "react";
 import { Allotment } from "allotment";
 import "allotment/dist/style.css";
-import { FileTree } from "./FileTree";
+import { LeftSidebar } from "./LeftSidebar";
+import { ActivityBar } from "./ActivityBar";
 import { MonacoEditor } from "./MonacoEditor";
 import TabBar, { type EditorTab } from "./TabBar";
 import useAppStore from "../stores/useAppStore";
@@ -11,8 +12,6 @@ import { isTauri, getWriteTextFile } from "../utils/tauriHelpers";
 const TerminalPanel = lazy(() =>
   import("./TerminalPanel").then((m) => ({ default: m.TerminalPanel }))
 );
-const DiffPanel = lazy(() => import("./DiffPanel"));
-const MemoryPanel = lazy(() => import("./MemoryPanel"));
 const RightAgentPanel = lazy(() => import("./RightAgentPanel"));
 
 /* ─────────────────────── Default code ─────────────────────── */
@@ -71,6 +70,20 @@ function createTab(
     isActive: false,
   };
 }
+
+/* ─────────────────────── Bottom Panel Tabs ─────────────────────── */
+
+const BOTTOM_TABS = [
+  { id: "problems", label: "\u26A0\uFE0F Problems" },
+  { id: "output", label: "\u{1F4E4} Output" },
+  { id: "debug-console", label: "\u{1F41E} Debug Console" },
+  { id: "terminal", label: "\u{1F5A5}\uFE0F Terminal" },
+  { id: "ports", label: "\u{1F50C} Ports" },
+];
+
+/* ─────────────────────── Menu Items ─────────────────────── */
+
+const MENU_ITEMS = ["File", "Edit", "Selection", "View", "Go", "Run", "Terminal", "Agent", "Help"];
 
 /* ─────────────────────── IDE Layout ─────────────────────── */
 
@@ -200,16 +213,6 @@ export const IDELayout: React.FC = () => {
     [activeTabId, activeTab]
   );
 
-  /* ─── Bottom panel tabs ─── */
-  const bottomTabs = [
-    { id: "terminal", label: "Terminal" },
-    { id: "chat", label: "Chat" },
-    { id: "memory", label: "Memory" },
-    { id: "changes", label: "Changes" },
-    { id: "skills", label: "Skills" },
-    { id: "mcp", label: "MCP" },
-  ];
-
   return (
     <InlineAgentManager>
       <div className="h-screen w-screen flex flex-col bg-[#0A0E1A] text-[#E0E7FF] overflow-hidden font-sans">
@@ -218,16 +221,14 @@ export const IDELayout: React.FC = () => {
           <span className="font-bold text-[#00E5FF] mr-5 tracking-wider text-[12px]">
             CONSTRUCT
           </span>
-          {["File", "Edit", "Selection", "View", "Go", "Run", "Terminal", "Help"].map(
-            (item) => (
-              <span
-                key={item}
-                className="text-[#4A5568] hover:text-[#E0E7FF] cursor-pointer px-2.5 transition-colors"
-              >
-                {item}
-              </span>
-            )
-          )}
+          {MENU_ITEMS.map((item) => (
+            <span
+              key={item}
+              className="text-[#4A5568] hover:text-[#E0E7FF] cursor-pointer px-2.5 transition-colors"
+            >
+              {item}
+            </span>
+          ))}
           <div className="ml-auto flex items-center gap-3">
             {agentStatus === "running" && (
               <div className="flex items-center gap-1.5">
@@ -240,142 +241,151 @@ export const IDELayout: React.FC = () => {
         </div>
 
         {/* ── Main Content ── */}
-        <div className="flex-1 overflow-hidden">
-          <Allotment defaultSizes={sidebarVisible ? [220, 1, 320] : [0, 1, 320]}>
-            {/* Left Sidebar — File Tree */}
-            {sidebarVisible && (
-              <Allotment.Pane preferredSize={220} minSize={150} maxSize={400}>
-                <FileTree onFileSelect={handleFileSelect} />
-              </Allotment.Pane>
-            )}
+        <div className="flex-1 overflow-hidden flex">
+          {/* Activity Bar (48px) */}
+          <ActivityBar />
 
-            {/* Center — Editor + Bottom Panel */}
-            <Allotment.Pane minSize={300}>
-              <Allotment vertical defaultSizes={panelVisible ? [1, 200] : [1, 0]}>
-                {/* Editor Area */}
-                <Allotment.Pane minSize={200}>
-                  <div className="h-full flex flex-col">
-                    {/* Tab Bar */}
-                    <TabBar
-                      tabs={tabs}
-                      activeTabId={activeTabId}
-                      onActivate={handleActivateTab}
-                      onClose={handleCloseTab}
-                      onOpen={handleOpenTab}
-                    />
-
-                    {/* Breadcrumb */}
-                    <div className="flex items-center h-[22px] px-3 shrink-0 bg-[#0A0E1A] border-b border-[#1A1F2E]">
-                      <span className="text-[10px] font-mono text-[#4A5568] tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
-                        {activeTab?.filePath ?? "no file open"}
-                      </span>
-                      {activeTab?.isModified && (
-                        <span className="ml-2 text-[9px] font-mono text-[#00E5FF]">
-                          {"\u25CF"} modified
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Editor */}
-                    <div className="flex-1 min-h-0">
-                      {activeTab ? (
-                        <MonacoEditor
-                          filePath={activeTab.filePath}
-                          content={activeTab.content}
-                          language={activeTab.language}
-                          onChange={handleEditorChange}
-                          onSave={handleSave}
-                        />
-                      ) : (
-                        <div className="h-full flex items-center justify-center text-[#4A5568] text-sm">
-                          <div className="text-center">
-                            <div className="text-5xl mb-4 opacity-15">
-                              {"\u{1F916}"}
-                            </div>
-                            <p className="text-[13px]">
-                              Open a file or ask the agent to create one
-                            </p>
-                            <p className="text-[11px] mt-2 opacity-50">
-                              Ctrl+Shift+L for inline agent
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+          {/* Left Sidebar + Center + Right Sidebar */}
+          <div className="flex-1 overflow-hidden">
+            <Allotment defaultSizes={sidebarVisible ? [220, 1, 320] : [0, 1, 320]}>
+              {/* Left Sidebar */}
+              {sidebarVisible && (
+                <Allotment.Pane preferredSize={220} minSize={150} maxSize={400}>
+                  <LeftSidebar onFileSelect={handleFileSelect} />
                 </Allotment.Pane>
+              )}
 
-                {/* Bottom Panel */}
-                {panelVisible && (
-                  <Allotment.Pane preferredSize={200} minSize={100} maxSize={600}>
-                    <div className="h-full bg-[#0A0E1A] border-t border-[#1A1F2E] flex flex-col">
-                      {/* Bottom Tabs */}
-                      <div className="h-[28px] bg-[#141B2D] flex items-center text-[11px] shrink-0 overflow-x-auto">
-                        {bottomTabs.map((tab) => (
-                          <button
-                            key={tab.id}
-                            className={`px-3 py-1 border-b-2 whitespace-nowrap cursor-pointer bg-transparent transition-colors ${
-                              panelTab === tab.id
-                                ? "border-b-[#00E5FF] text-[#E0E7FF]"
-                                : "border-b-transparent text-[#4A5568] hover:text-[#E0E7FF]"
-                            }`}
-                            onClick={() => setPanelTab(tab.id)}
-                          >
-                            {tab.label}
-                          </button>
-                        ))}
+              {/* Center — Editor + Bottom Panel */}
+              <Allotment.Pane minSize={300}>
+                <Allotment vertical defaultSizes={panelVisible ? [1, 200] : [1, 0]}>
+                  {/* Editor Area */}
+                  <Allotment.Pane minSize={200}>
+                    <div className="h-full flex flex-col">
+                      {/* Tab Bar */}
+                      <TabBar
+                        tabs={tabs}
+                        activeTabId={activeTabId}
+                        onActivate={handleActivateTab}
+                        onClose={handleCloseTab}
+                        onOpen={handleOpenTab}
+                      />
+
+                      {/* Breadcrumb */}
+                      <div className="flex items-center h-[22px] px-3 shrink-0 bg-[#0A0E1A] border-b border-[#1A1F2E]">
+                        <span className="text-[10px] font-mono text-[#4A5568] tracking-wide whitespace-nowrap overflow-hidden text-ellipsis">
+                          {activeTab?.filePath ?? "no file open"}
+                        </span>
+                        {activeTab?.isModified && (
+                          <span className="ml-2 text-[9px] font-mono text-[#00E5FF]">
+                            {"\u25CF"} modified
+                          </span>
+                        )}
                       </div>
 
-                      {/* Bottom Content */}
-                      <div className="flex-1 overflow-hidden">
-                        <Suspense
-                          fallback={
-                            <div className="p-2 text-[10px] text-[#4A5568] font-mono">
-                              loading...
+                      {/* Editor */}
+                      <div className="flex-1 min-h-0">
+                        {activeTab ? (
+                          <MonacoEditor
+                            filePath={activeTab.filePath}
+                            content={activeTab.content}
+                            language={activeTab.language}
+                            onChange={handleEditorChange}
+                            onSave={handleSave}
+                          />
+                        ) : (
+                          <div className="h-full flex items-center justify-center text-[#4A5568] text-sm">
+                            <div className="text-center">
+                              <div className="text-5xl mb-4 opacity-15">
+                                {"\u{1F916}"}
+                              </div>
+                              <p className="text-[13px]">
+                                Open a file or ask the agent to create one
+                              </p>
+                              <p className="text-[11px] mt-2 opacity-50">
+                                Ctrl+Shift+L for inline agent
+                              </p>
                             </div>
-                          }
-                        >
-                          {panelTab === "terminal" && <TerminalPanel />}
-                          {panelTab === "changes" && <DiffPanel />}
-                          {panelTab === "memory" && <MemoryPanel />}
-                          {panelTab === "chat" && (
-                            <div className="p-3 text-[11px] text-[#849495] font-mono">
-                              Chat panel — send messages to the agent
-                            </div>
-                          )}
-                          {panelTab === "skills" && (
-                            <div className="p-3 text-[11px] text-[#849495] font-mono">
-                              Skills marketplace
-                            </div>
-                          )}
-                          {panelTab === "mcp" && (
-                            <div className="p-3 text-[11px] text-[#849495] font-mono">
-                              MCP connectors
-                            </div>
-                          )}
-                        </Suspense>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </Allotment.Pane>
-                )}
-              </Allotment>
-            </Allotment.Pane>
 
-            {/* Right — Agent Sidebar */}
-            {rightPanelVisible && (
-              <Allotment.Pane preferredSize={320} minSize={250} maxSize={500}>
-                <Suspense
-                  fallback={
-                    <div className="h-full flex items-center justify-center text-[11px] text-[#4A5568]">
-                      loading agent...
-                    </div>
-                  }
-                >
-                  <RightAgentPanel />
-                </Suspense>
+                  {/* Bottom Panel */}
+                  {panelVisible && (
+                    <Allotment.Pane preferredSize={200} minSize={100} maxSize={600}>
+                      <div className="h-full bg-[#0A0E1A] border-t border-[#1A1F2E] flex flex-col">
+                        {/* Bottom Tabs */}
+                        <div className="h-[28px] bg-[#141B2D] flex items-center text-[11px] shrink-0 overflow-x-auto">
+                          {BOTTOM_TABS.map((tab) => (
+                            <button
+                              key={tab.id}
+                              className={`px-3 py-1 border-b-2 whitespace-nowrap cursor-pointer bg-transparent transition-colors ${
+                                panelTab === tab.id
+                                  ? "border-b-[#00E5FF] text-[#E0E7FF]"
+                                  : "border-b-transparent text-[#4A5568] hover:text-[#E0E7FF]"
+                              }`}
+                              onClick={() => setPanelTab(tab.id)}
+                            >
+                              {tab.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Bottom Content */}
+                        <div className="flex-1 overflow-hidden">
+                          <Suspense
+                            fallback={
+                              <div className="p-2 text-[10px] text-[#4A5568] font-mono">
+                                loading...
+                              </div>
+                            }
+                          >
+                            {panelTab === "terminal" && <TerminalPanel />}
+                            {panelTab === "problems" && (
+                              <div className="p-3 text-[11px] text-[#849495] font-mono">
+                                No problems detected in the workspace.
+                              </div>
+                            )}
+                            {panelTab === "output" && (
+                              <div className="p-3 text-[11px] text-[#849495] font-mono">
+                                Output channel — select a source from the dropdown
+                              </div>
+                            )}
+                            {panelTab === "debug-console" && (
+                              <div className="p-3 text-[11px] text-[#849495] font-mono">
+                                Debug console — evaluate expressions during debugging
+                              </div>
+                            )}
+                            {panelTab === "ports" && (
+                              <div className="p-3 text-[11px] text-[#849495] font-mono">
+                                No ports forwarded.
+                              </div>
+                            )}
+                          </Suspense>
+                        </div>
+                      </div>
+                    </Allotment.Pane>
+                  )}
+                </Allotment>
               </Allotment.Pane>
-            )}
-          </Allotment>
+
+              {/* Right — Agent Sidebar */}
+              {rightPanelVisible && (
+                <Allotment.Pane preferredSize={320} minSize={250} maxSize={500}>
+                  <Suspense
+                    fallback={
+                      <div className="h-full flex items-center justify-center text-[11px] text-[#4A5568]">
+                        loading agent...
+                      </div>
+                    }
+                  >
+                    <RightAgentPanel />
+                  </Suspense>
+                </Allotment.Pane>
+              )}
+            </Allotment>
+          </div>
         </div>
 
         {/* ── Status Bar ── */}

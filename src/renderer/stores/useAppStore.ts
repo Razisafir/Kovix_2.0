@@ -176,7 +176,7 @@ const useAppStore = create<AppState>((set) => ({
   setRightPanelTab: (tab) => set({ rightPanelTab: tab }),
 
   // Sidebar
-  activeSidebarTab: "files",
+  activeSidebarTab: "explorer",
   setActiveSidebarTab: (tab) => set({ activeSidebarTab: tab }),
 
   // Agent Mode

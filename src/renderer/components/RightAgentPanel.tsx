@@ -17,8 +17,6 @@ const tabs = [
   { id: "chat", icon: "message_square", label: "Chat" },
   { id: "agent", icon: "smart_toy", label: "Agent" },
   { id: "memory", icon: "brain", label: "Memory" },
-  { id: "skills", icon: "puzzle", label: "Skills" },
-  { id: "mcp", icon: "plug", label: "MCP" },
 ];
 
 /** A single chat/agent message in the panel */
@@ -730,31 +728,11 @@ function RightAgentPanel() {
     </div>
   );
 
-  const renderSkillsContent = () => (
-    <div className="flex-1 overflow-auto p-4">
-      <div className="glass-panel p-3 text-center">
-        <span className="material-symbols-outlined text-[24px] text-accent-cyan mb-2">extension</span>
-        <div className="text-xs text-text-secondary">Skill marketplace coming soon</div>
-      </div>
-    </div>
-  );
-
-  const renderMcpContent = () => (
-    <div className="flex-1 overflow-auto p-4">
-      <div className="glass-panel p-3 text-center">
-        <span className="material-symbols-outlined text-[24px] text-accent-gold mb-2">hub</span>
-        <div className="text-xs text-text-secondary">MCP connectors coming soon</div>
-      </div>
-    </div>
-  );
-
   const renderContent = () => {
     switch (rightPanelTab) {
       case "chat": return renderChatContent();
       case "agent": return renderAgentContent();
       case "memory": return renderMemoryContent();
-      case "skills": return renderSkillsContent();
-      case "mcp": return renderMcpContent();
       default: return renderChatContent();
     }
   };
