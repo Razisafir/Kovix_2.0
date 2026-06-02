@@ -20,6 +20,21 @@ import { ServicesAccessor } from '../../../../platform/instantiation/common/inst
 import { IViewsService } from '../../../../workbench/services/views/common/viewsService.js';
 import { KeybindingWeight } from '../../../../platform/keybinding/common/keybindingsRegistry.js';
 import { KeyMod, KeyCode } from '../../../../base/common/keyCodes.js';
+import { InstantiationType, registerSingleton } from '../../../../platform/instantiation/common/extensions.js';
+
+// Phase 1: LLM Provider Service registrations
+import { ILLMProviderService, IModelRegistryService, ICredentialStoreService, ILLMStreamingService, IProviderHealthService } from '../../../../platform/construct/common/llmProvider.js';
+import { LLMProviderService, ModelRegistryService, CredentialStoreService, LLMStreamingService, ProviderHealthService } from './services/llmProviderService.js';
+import { ICostGovernorService } from '../../../../platform/construct/common/costGovernor.js';
+import { CostGovernorService } from './services/costGovernorService.js';
+
+// Phase 1: Register LLM Provider singletons
+registerSingleton(ILLMProviderService, LLMProviderService, InstantiationType.Delayed);
+registerSingleton(IModelRegistryService, ModelRegistryService, InstantiationType.Delayed);
+registerSingleton(ICredentialStoreService, CredentialStoreService, InstantiationType.Delayed);
+registerSingleton(ILLMStreamingService, LLMStreamingService, InstantiationType.Delayed);
+registerSingleton(IProviderHealthService, ProviderHealthService, InstantiationType.Delayed);
+registerSingleton(ICostGovernorService, CostGovernorService, InstantiationType.Delayed);
 
 const constructViewIcon = registerIcon('construct-view-icon', Codicon.robot, localize('constructViewIcon', 'View icon of the Construct Agent view.'));
 
