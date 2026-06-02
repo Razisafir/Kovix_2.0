@@ -40,7 +40,91 @@ import { StreamingOutputService } from './services/streamingOutputService.js';
 import { ITokenEstimationService } from '../../../../platform/construct/common/tokenEstimation.js';
 import { TokenEstimationService } from './services/tokenEstimationService.js';
 
-// Phase 1: Register LLM Provider singletons
+// Phase 4: Autonomous Execution + Approval System
+import { IAutonomousExecutionService, IExecutionQueueService } from '../../../../platform/construct/common/autonomousExecution.js';
+import { AutonomousExecutionService, ExecutionQueueService } from './services/autonomousExecutionService.js';
+import { IAutonomousExecutionLoopService } from '../../../../platform/construct/common/autonomousExecutionLoop.js';
+import { AutonomousExecutionLoopService } from './services/autonomousExecutionLoopService.js';
+
+// Phase 5: Code Editing + Transactional Edits
+import { ICodeEditingService } from '../../../../platform/construct/common/codeEditing.js';
+import { CodeEditingService } from './services/codeEditingService.js';
+import { ITransactionalEditService } from '../../../../platform/construct/common/transactionalEdit.js';
+import { TransactionalEditService } from './services/transactionalEditService.js';
+
+// Phase 6: Terminal Execution + Command Safety
+import { ITerminalExecutionBridgeService } from '../../../../platform/construct/common/terminalExecutionBridge.js';
+import { TerminalExecutionBridgeService } from './services/terminalExecutionBridgeService.js';
+import { ICommandSafetyService } from '../../../../platform/construct/common/commandSafety.js';
+import { CommandSafetyService } from './services/commandSafetyService.js';
+import { ITerminalSessionManagerService } from '../../../../platform/construct/common/terminalSessionManager.js';
+import { TerminalSessionManagerService } from './services/terminalSessionManagerService.js';
+
+// Phase 7: Observability + Audit Logging
+import { IObservabilityService } from '../../../../platform/construct/common/observabilityService.js';
+import { ObservabilityService } from './services/observabilityService.js';
+
+// Phase 8: AI Unified State + Execution Sandbox
+import { IAIUnifiedStateService } from '../../../../platform/construct/common/aiUnifiedStateService.js';
+import { AIUnifiedStateService } from './services/aiUnifiedStateService.js';
+import { IExecutionSandboxService } from '../../../../platform/construct/common/executionSandbox.js';
+import { ExecutionSandboxService } from './services/executionSandboxService.js';
+
+// Phase 9: Project Memory + Repository Intelligence
+import { IProjectMemoryService } from '../../../../platform/construct/common/projectMemory.js';
+import { ProjectMemoryService } from './services/projectMemoryService.js';
+import { IRepositoryIntelligenceService } from '../../../../platform/construct/common/repositoryIntelligence.js';
+import { RepositoryIntelligenceService } from './services/repositoryIntelligenceService.js';
+import { ILongHorizonMemoryService } from '../../../../platform/construct/common/longHorizonMemory.js';
+import { LongHorizonMemoryService } from './services/longHorizonMemoryService.js';
+
+// Phase 10: Execution Verification + Git Workflow
+import { IExecutionVerificationService } from '../../../../platform/construct/common/executionVerification.js';
+import { ExecutionVerificationService } from './services/executionVerificationService.js';
+import { IGitWorkflowService } from '../../../../platform/construct/common/gitWorkflow.js';
+import { GitWorkflowService } from './services/gitWorkflowService.js';
+
+// Phase 11: Execution Lock + Sanity Checks
+import { IExecutionLockService } from '../../../../platform/construct/common/executionLock.js';
+import { ExecutionLockService } from './services/executionLockService.js';
+import { IExecutionSanityService } from '../../../../platform/construct/common/executionSanity.js';
+import { ExecutionSanityService } from './services/executionSanityService.js';
+import { IContextWindowOptimizationService } from '../../../../platform/construct/common/contextWindowOptimization.js';
+import { ContextWindowOptimizationService } from './services/contextWindowOptimizationService.js';
+
+// Phase 12: Crash Recovery + Watchdog
+import { ICrashRecoveryService, IWatchdogService, ISessionRecoveryService } from '../../../../platform/construct/common/crashRecovery.js';
+import { CrashRecoveryService, WatchdogService, SessionRecoveryService } from './services/crashRecoveryService.js';
+
+// Phase 13: Agent Orchestration + AI Context
+import { IAgentOrchestratorService } from '../../../../platform/construct/common/agentOrchestratorService.js';
+import { AgentOrchestratorService } from './services/agentOrchestratorService.js';
+import { IAIContextService } from '../../../../platform/construct/common/aiContextService.js';
+import { AIContextService } from './services/aiContextService.js';
+
+// Phase 14: MCP Server Support
+import { IMCPServerService } from '../../../../platform/construct/common/mcpServerService.js';
+import { MCPServerService } from './services/mcpServerService.js';
+
+// Phase 15: Plugin Sandbox + Safe Mode
+import { IPluginSandboxService, ISafeModeService } from '../../../../platform/construct/common/pluginSandbox.js';
+import { PluginSandboxService, SafeModeService } from './services/pluginSandboxService.js';
+
+// Additional services
+import { IRepairIntelligenceService } from '../../../../platform/construct/common/repairIntelligence.js';
+import { RepairIntelligenceService } from './services/repairIntelligenceService.js';
+import { IRealUIIntegrationService } from '../../../../platform/construct/common/realUIIntegration.js';
+import { RealUIIntegrationService } from './services/realUIIntegrationService.js';
+import { IAutonomousRepairService } from '../../../../platform/construct/common/autonomousRepair.js';
+import { AutonomousRepairService } from './services/autonomousRepairService.js';
+import { IMultiAgentExecutionService } from '../../../../platform/construct/common/multiAgentExecution.js';
+import { MultiAgentExecutionService } from './services/multiAgentExecutionService.js';
+
+// ─────────────────────────────────────────────────────────────
+// Singleton Registrations — 40 services total
+// ─────────────────────────────────────────────────────────────
+
+// Phase 1 (6): LLM Provider + Credential Store + Cost Governor
 registerSingleton(ILLMProviderService, LLMProviderService, InstantiationType.Delayed);
 registerSingleton(IModelRegistryService, ModelRegistryService, InstantiationType.Delayed);
 registerSingleton(ICredentialStoreService, CredentialStoreService, InstantiationType.Delayed);
@@ -48,13 +132,70 @@ registerSingleton(ILLMStreamingService, LLMStreamingService, InstantiationType.D
 registerSingleton(IProviderHealthService, ProviderHealthService, InstantiationType.Delayed);
 registerSingleton(ICostGovernorService, CostGovernorService, InstantiationType.Delayed);
 
-// Phase 2: Register AI Execution + Execution Graph singletons
+// Phase 2 (2): AI Execution + Execution Graph
 registerSingleton(IAIExecutionService, AIExecutionService, InstantiationType.Delayed);
 registerSingleton(IExecutionGraphService, ExecutionGraphService, InstantiationType.Delayed);
 
-// Phase 3: Register Streaming Output + Token Estimation singletons
+// Phase 3 (2): Streaming Output + Token Estimation
 registerSingleton(IStreamingOutputService, StreamingOutputService, InstantiationType.Delayed);
 registerSingleton(ITokenEstimationService, TokenEstimationService, InstantiationType.Delayed);
+
+// Phase 4 (3): Autonomous Execution + Loop + Queue
+registerSingleton(IAutonomousExecutionService, AutonomousExecutionService, InstantiationType.Delayed);
+registerSingleton(IExecutionQueueService, ExecutionQueueService, InstantiationType.Delayed);
+registerSingleton(IAutonomousExecutionLoopService, AutonomousExecutionLoopService, InstantiationType.Delayed);
+
+// Phase 5 (2): Code Editing + Transactional Edits
+registerSingleton(ICodeEditingService, CodeEditingService, InstantiationType.Delayed);
+registerSingleton(ITransactionalEditService, TransactionalEditService, InstantiationType.Delayed);
+
+// Phase 6 (3): Terminal Execution + Command Safety + Session Manager
+registerSingleton(ITerminalExecutionBridgeService, TerminalExecutionBridgeService, InstantiationType.Delayed);
+registerSingleton(ICommandSafetyService, CommandSafetyService, InstantiationType.Delayed);
+registerSingleton(ITerminalSessionManagerService, TerminalSessionManagerService, InstantiationType.Delayed);
+
+// Phase 7 (1): Observability
+registerSingleton(IObservabilityService, ObservabilityService, InstantiationType.Delayed);
+
+// Phase 8 (2): AI Unified State + Execution Sandbox
+registerSingleton(IAIUnifiedStateService, AIUnifiedStateService, InstantiationType.Delayed);
+registerSingleton(IExecutionSandboxService, ExecutionSandboxService, InstantiationType.Delayed);
+
+// Phase 9 (3): Project Memory + Repository Intelligence + Long Horizon Memory
+registerSingleton(IProjectMemoryService, ProjectMemoryService, InstantiationType.Delayed);
+registerSingleton(IRepositoryIntelligenceService, RepositoryIntelligenceService, InstantiationType.Delayed);
+registerSingleton(ILongHorizonMemoryService, LongHorizonMemoryService, InstantiationType.Delayed);
+
+// Phase 10 (2): Execution Verification + Git Workflow
+registerSingleton(IExecutionVerificationService, ExecutionVerificationService, InstantiationType.Delayed);
+registerSingleton(IGitWorkflowService, GitWorkflowService, InstantiationType.Delayed);
+
+// Phase 11 (3): Execution Lock + Sanity + Context Window Optimization
+registerSingleton(IExecutionLockService, ExecutionLockService, InstantiationType.Delayed);
+registerSingleton(IExecutionSanityService, ExecutionSanityService, InstantiationType.Delayed);
+registerSingleton(IContextWindowOptimizationService, ContextWindowOptimizationService, InstantiationType.Delayed);
+
+// Phase 12 (3): Crash Recovery + Watchdog + Session Recovery
+registerSingleton(ICrashRecoveryService, CrashRecoveryService, InstantiationType.Delayed);
+registerSingleton(IWatchdogService, WatchdogService, InstantiationType.Delayed);
+registerSingleton(ISessionRecoveryService, SessionRecoveryService, InstantiationType.Delayed);
+
+// Phase 13 (2): Agent Orchestration + AI Context
+registerSingleton(IAgentOrchestratorService, AgentOrchestratorService, InstantiationType.Delayed);
+registerSingleton(IAIContextService, AIContextService, InstantiationType.Delayed);
+
+// Phase 14 (1): MCP Server
+registerSingleton(IMCPServerService, MCPServerService, InstantiationType.Delayed);
+
+// Phase 15 (2): Plugin Sandbox + Safe Mode
+registerSingleton(IPluginSandboxService, PluginSandboxService, InstantiationType.Delayed);
+registerSingleton(ISafeModeService, SafeModeService, InstantiationType.Delayed);
+
+// Additional (4): Repair Intelligence + UI Integration + Autonomous Repair + Multi-Agent
+registerSingleton(IRepairIntelligenceService, RepairIntelligenceService, InstantiationType.Delayed);
+registerSingleton(IRealUIIntegrationService, RealUIIntegrationService, InstantiationType.Delayed);
+registerSingleton(IAutonomousRepairService, AutonomousRepairService, InstantiationType.Delayed);
+registerSingleton(IMultiAgentExecutionService, MultiAgentExecutionService, InstantiationType.Delayed);
 
 const constructViewIcon = registerIcon('construct-view-icon', Codicon.robot, localize('constructViewIcon', 'View icon of the Construct Agent view.'));
 
@@ -82,19 +223,15 @@ Registry.as<IViewsRegistry>(ViewExtensions.ViewsRegistry).registerViews([{
 class ConstructStatusBarContribution extends Disposable implements IWorkbenchContribution {
 	static readonly ID = 'workbench.contrib.constructStatusBar';
 
-	// @ts-expect-error statusbar entries used for future updates
-	private readonly _agentStatusEntry: IStatusbarEntryAccessor;
-	// @ts-expect-error statusbar entries used for future updates
-	private readonly _modelEntry: IStatusbarEntryAccessor;
-	// @ts-expect-error statusbar entries used for future updates
-	private readonly _changesEntry: IStatusbarEntryAccessor;
+	private _agentStatusEntry: IStatusbarEntryAccessor | undefined;
+	private _modelEntry: IStatusbarEntryAccessor | undefined;
+	private _changesEntry: IStatusbarEntryAccessor | undefined;
 
 	constructor(
 		@IStatusbarService private readonly statusbarService: IStatusbarService,
 	) {
 		super();
 
-		// Agent status (left side)
 		this._agentStatusEntry = this._register(this.statusbarService.addEntry({
 			name: localize('constructAgentStatus', "Construct Agent Status"),
 			text: '$(robot) Ready',
@@ -103,7 +240,6 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
 			command: 'construct.focusPanel',
 		}, 'construct.agentStatus', StatusbarAlignment.LEFT, 50));
 
-		// Model info (left side)
 		this._modelEntry = this._register(this.statusbarService.addEntry({
 			name: localize('constructModel', "Construct Model"),
 			text: '$(sparkle) Claude Sonnet',
@@ -111,13 +247,14 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
 			tooltip: localize('constructModelTooltip', "Active LLM: Claude 3.5 Sonnet"),
 		}, 'construct.model', StatusbarAlignment.LEFT, 51));
 
-		// Pending changes (right side)
 		this._changesEntry = this._register(this.statusbarService.addEntry({
 			name: localize('constructChanges', "Construct Changes"),
 			text: '$(diff-added) 0 pending',
 			ariaLabel: localize('constructChangesAria', "No changes awaiting approval"),
 			tooltip: localize('constructChangesTooltip', "No changes awaiting approval"),
 		}, 'construct.changes', StatusbarAlignment.RIGHT, 50));
+		// Status bar entries are stored for future updates
+		void this._agentStatusEntry; void this._modelEntry; void this._changesEntry;
 	}
 }
 
@@ -137,6 +274,7 @@ registerAction2(class FocusConstructPanelAction extends Action2 {
 			category: localize2('constructCategory', "Construct"),
 		});
 	}
+
 	run(accessor: ServicesAccessor): void {
 		accessor.get(IViewsService).openView('construct.agentPanel', true);
 	}
@@ -170,9 +308,6 @@ registerAction2(class ShowInlineAgentAction extends Action2 {
 		});
 	}
 	run(accessor: ServicesAccessor): void {
-		// The inline agent widget is activated through the editor contribution
-		// which is registered separately. This command is a placeholder that
-		// opens the agent panel as a fallback.
 		accessor.get(IViewsService).openView('construct.agentPanel', true);
 	}
 });
