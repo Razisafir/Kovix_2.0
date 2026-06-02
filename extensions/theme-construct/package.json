@@ -9,6 +9,7 @@
   "contributes": {
     "themes": [
       {
+        "id": "construct-dark",
         "label": "Construct Dark",
         "uiTheme": "vs-dark",
         "path": "./themes/construct-dark-color-theme.json"

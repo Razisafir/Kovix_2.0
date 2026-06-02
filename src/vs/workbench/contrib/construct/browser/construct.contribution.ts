@@ -5,13 +5,15 @@
 
 import { localize, localize2 } from '../../../../nls.js';
 import { Registry } from '../../../../platform/registry/common/platform.js';
-import { IViewsRegistry, Extensions as ViewExtensions } from '../../../../workbench/common/views.js';
-import { IViewContainersRegistry, ViewContainerLocation } from '../../../../workbench/common/views.js';
+import { IViewsRegistry, Extensions as ViewExtensions, IViewContainersRegistry, ViewContainerLocation } from '../../../../workbench/common/views.js';
 import { SyncDescriptor } from '../../../../platform/instantiation/common/descriptors.js';
 import { Codicon } from '../../../../base/common/codicons.js';
 import { registerIcon } from '../../../../platform/theme/common/iconRegistry.js';
 import { ViewPaneContainer } from '../../../../workbench/browser/parts/views/viewPaneContainer.js';
 import { ConstructAgentViewPane } from './constructAgentView.js';
+import { IStatusbarService, StatusbarAlignment, IStatusbarEntryAccessor } from '../../../../workbench/services/statusbar/browser/statusbar.js';
+import { IWorkbenchContribution, registerWorkbenchContribution, WorkbenchPhase } from '../../../../workbench/common/contributions.js';
+import { Disposable } from '../../../../base/common/lifecycle.js';
 
 const constructViewIcon = registerIcon('construct-view-icon', Codicon.robot, localize('constructViewIcon', 'View icon of the Construct Agent view.'));
 
@@ -34,3 +36,45 @@ Registry.as<IViewsRegistry>(ViewExtensions.ViewsRegistry).registerViews([{
 	canMoveView: true,
 	order: 1,
 }], constructViewContainer);
+
+// Status Bar Integration
+class ConstructStatusBarContribution extends Disposable implements IWorkbenchContribution {
+	static readonly ID = 'workbench.contrib.constructStatusBar';
+
+	private readonly agentStatusEntry: IStatusbarEntryAccessor;
+	private readonly modelEntry: IStatusbarEntryAccessor;
+	private readonly changesEntry: IStatusbarEntryAccessor;
+
+	constructor(
+		@IStatusbarService private readonly statusbarService: IStatusbarService,
+	) {
+		super();
+
+		// Agent status (left side)
+		this.agentStatusEntry = this._register(this.statusbarService.addEntry({
+			name: localize('constructAgentStatus', "Construct Agent Status"),
+			text: '$(robot) Ready',
+			ariaLabel: localize('constructAgentStatusAria', "Construct Agent: Ready"),
+			tooltip: localize('constructAgentStatusTooltip', "Construct Agent: Idle — click to open panel"),
+			command: 'construct.focusPanel',
+		}, 'construct.agentStatus', StatusbarAlignment.LEFT, 50));
+
+		// Model info (left side)
+		this.modelEntry = this._register(this.statusbarService.addEntry({
+			name: localize('constructModel', "Construct Model"),
+			text: '$(sparkle) Claude Sonnet',
+			ariaLabel: localize('constructModelAria', "Active LLM: Claude 3.5 Sonnet"),
+			tooltip: localize('constructModelTooltip', "Active LLM: Claude 3.5 Sonnet"),
+		}, 'construct.model', StatusbarAlignment.LEFT, 51));
+
+		// Pending changes (right side)
+		this.changesEntry = this._register(this.statusbarService.addEntry({
+			name: localize('constructChanges', "Construct Changes"),
+			text: '$(diff-added) 0 pending',
+			ariaLabel: localize('constructChangesAria', "No changes awaiting approval"),
+			tooltip: localize('constructChangesTooltip', "No changes awaiting approval"),
+		}, 'construct.changes', StatusbarAlignment.RIGHT, 50));
+	}
+}
+
+registerWorkbenchContribution(ConstructStatusBarContribution, WorkbenchPhase.AfterRestored);
