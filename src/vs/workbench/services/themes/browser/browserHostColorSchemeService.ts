@@ -12,46 +12,47 @@ import { mainWindow } from '../../../../base/browser/window.js';
 
 export class BrowserHostColorSchemeService extends Disposable implements IHostColorSchemeService {
 
-	declare readonly _serviceBrand: undefined;
+        declare readonly _serviceBrand: undefined;
 
-	private readonly _onDidSchemeChangeEvent = this._register(new Emitter<void>());
+        private readonly _onDidSchemeChangeEvent = this._register(new Emitter<void>());
 
-	constructor(
-	) {
-		super();
+        constructor(
+        ) {
+                super();
 
-		this.registerListeners();
-	}
+                this.registerListeners();
+        }
 
-	private registerListeners(): void {
+        private registerListeners(): void {
 
-		addMatchMediaChangeListener(mainWindow, '(prefers-color-scheme: dark)', () => {
-			this._onDidSchemeChangeEvent.fire();
-		});
-		addMatchMediaChangeListener(mainWindow, '(forced-colors: active)', () => {
-			this._onDidSchemeChangeEvent.fire();
-		});
-	}
+                addMatchMediaChangeListener(mainWindow, '(prefers-color-scheme: dark)', () => {
+                        this._onDidSchemeChangeEvent.fire();
+                });
+                addMatchMediaChangeListener(mainWindow, '(forced-colors: active)', () => {
+                        this._onDidSchemeChangeEvent.fire();
+                });
+        }
 
-	get onDidChangeColorScheme(): Event<void> {
-		return this._onDidSchemeChangeEvent.event;
-	}
+        get onDidChangeColorScheme(): Event<void> {
+                return this._onDidSchemeChangeEvent.event;
+        }
 
-	get dark(): boolean {
-		if (mainWindow.matchMedia(`(prefers-color-scheme: light)`).matches) {
-			return false;
-		} else if (mainWindow.matchMedia(`(prefers-color-scheme: dark)`).matches) {
-			return true;
-		}
-		return false;
-	}
+        get dark(): boolean {
+                if (mainWindow.matchMedia(`(prefers-color-scheme: light)`).matches) {
+                        return false;
+                } else if (mainWindow.matchMedia(`(prefers-color-scheme: dark)`).matches) {
+                        return true;
+                }
+                // Construct IDE: Default to dark when no system preference is detected
+                return true;
+        }
 
-	get highContrast(): boolean {
-		if (mainWindow.matchMedia(`(forced-colors: active)`).matches) {
-			return true;
-		}
-		return false;
-	}
+        get highContrast(): boolean {
+                if (mainWindow.matchMedia(`(forced-colors: active)`).matches) {
+                        return true;
+                }
+                return false;
+        }
 
 }
 

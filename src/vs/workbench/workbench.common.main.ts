@@ -192,6 +192,7 @@ import './contrib/speech/browser/speech.contribution.js';
 
 // Construct Agent
 import './contrib/construct/browser/construct.contribution.js';
+import '../platform/construct/common/construct.js';
 import './contrib/chat/browser/chat.contribution.js';
 import './contrib/inlineChat/browser/inlineChat.contribution.js';
 

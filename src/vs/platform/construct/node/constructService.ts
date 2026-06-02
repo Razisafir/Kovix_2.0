@@ -4,9 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { spawn, ChildProcess } from 'child_process';
-import { join } from 'vs/base/common/path';
-import { IConstructService } from 'vs/platform/construct/common/construct';
-import { registerSingleton, InstantiationType } from 'vs/platform/instantiation/common/extensions';
+import { join } from '../../../../base/common/path.js';
+import { IConstructService } from '../common/construct.js';
+import { registerSingleton, InstantiationType } from '../../../../platform/instantiation/common/extensions.js';
 
 class ConstructService implements IConstructService {
 	declare readonly _serviceBrand: undefined;

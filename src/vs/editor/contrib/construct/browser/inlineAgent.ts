@@ -3,19 +3,13 @@
  *  Licensed under the MIT License.
  *--------------------------------------------------------------------------------------------*/
 
-import { EditorContributionInstantiation, registerEditorContribution } from 'vs/editor/browser/editorExtensions';
-import { ICodeEditor } from 'vs/editor/browser/editorBrowser';
-import { IEditorContribution } from 'vs/editor/common/editorCommon';
-import * as dom from 'vs/base/browser/dom';
-import { Disposable } from 'vs/base/common/lifecycle';
-import { IContentWidget, IContentWidgetPosition } from 'vs/editor/browser/editorBrowser';
-import { Position } from 'vs/editor/common/core/position';
-import { localize } from 'vs/nls';
-import { Action2, registerAction2 } from 'vs/platform/actions/common/actions';
-import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';
-import { KeybindingWeight } from 'vs/platform/keybinding/common/keybindingsRegistry';
-import { KeyMod, KeyCode } from 'vs/base/common/keyCodes';
-import { IEditorService } from 'vs/workbench/services/editor/common/editorService';
+import { EditorContributionInstantiation, registerEditorContribution } from '../../../browser/editorExtensions.js';
+import { ICodeEditor, IContentWidget, IContentWidgetPosition } from '../../../browser/editorBrowser.js';
+import { IEditorContribution } from '../../../common/editorCommon.js';
+import * as dom from '../../../../../base/browser/dom.js';
+import { Disposable } from '../../../../../base/common/lifecycle.js';
+import { Position } from '../../../common/core/position.js';
+import { localize } from '../../../../../nls.js';
 
 class InlineAgentWidget implements IContentWidget {
 	private readonly _domNode: HTMLElement;
@@ -106,30 +100,5 @@ export class InlineAgentController extends Disposable implements IEditorContribu
 	}
 }
 
-// Register the editor contribution
+// Register the editor contribution only (no workbench-dependent actions)
 registerEditorContribution(InlineAgentController.ID, InlineAgentController, EditorContributionInstantiation.AfterFirstRender);
-
-// Register the keybinding action
-registerAction2(class ShowInlineAgentAction extends Action2 {
-	constructor() {
-		super({
-			id: 'construct.showInlineAgent',
-			title: localize2('showInlineAgent', "Show Construct Agent"),
-			keybinding: {
-				primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyI,
-				weight: KeybindingWeight.EditorContrib,
-			},
-			f1: true,
-			category: localize2('constructCategory', "Construct"),
-		});
-	}
-
-	run(accessor: ServicesAccessor): void {
-		const editorService = accessor.get(IEditorService);
-		const editor = editorService.activeEditorPane?.getControl() as ICodeEditor | undefined;
-		if (editor) {
-			const contribution = editor.getContribution<InlineAgentController>(InlineAgentController.ID);
-			contribution?.showInlineWidget();
-		}
-	}
-});

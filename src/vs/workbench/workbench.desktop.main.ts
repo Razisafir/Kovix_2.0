@@ -86,7 +86,7 @@ import './services/auxiliaryWindow/electron-sandbox/auxiliaryWindowService.js';
 import '../platform/extensionManagement/electron-sandbox/extensionsProfileScannerService.js';
 
 import { registerSingleton } from '../platform/instantiation/common/extensions.js';
-import '../platform/construct/node/constructService.js';
+// Construct service is registered via workbench.common.main.ts (browser-safe version)
 import { IUserDataInitializationService, UserDataInitializationService } from './services/userData/browser/userDataInit.js';
 import { SyncDescriptor } from '../platform/instantiation/common/descriptors.js';
 

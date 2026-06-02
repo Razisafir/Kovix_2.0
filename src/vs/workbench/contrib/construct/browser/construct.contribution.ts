@@ -12,8 +12,14 @@ import { registerIcon } from '../../../../platform/theme/common/iconRegistry.js'
 import { ViewPaneContainer } from '../../../../workbench/browser/parts/views/viewPaneContainer.js';
 import { ConstructAgentViewPane } from './constructAgentView.js';
 import { IStatusbarService, StatusbarAlignment, IStatusbarEntryAccessor } from '../../../../workbench/services/statusbar/browser/statusbar.js';
-import { IWorkbenchContribution, registerWorkbenchContribution, WorkbenchPhase } from '../../../../workbench/common/contributions.js';
+import { IWorkbenchContribution, Extensions as WorkbenchExtensions, IWorkbenchContributionsRegistry } from '../../../../workbench/common/contributions.js';
+import { LifecyclePhase } from '../../../../workbench/services/lifecycle/common/lifecycle.js';
 import { Disposable } from '../../../../base/common/lifecycle.js';
+import { Action2, registerAction2 } from '../../../../platform/actions/common/actions.js';
+import { ServicesAccessor } from '../../../../platform/instantiation/common/instantiation.js';
+import { IViewsService } from '../../../../workbench/services/views/common/viewsService.js';
+import { KeybindingWeight } from '../../../../platform/keybinding/common/keybindingsRegistry.js';
+import { KeyMod, KeyCode } from '../../../../base/common/keyCodes.js';
 
 const constructViewIcon = registerIcon('construct-view-icon', Codicon.robot, localize('constructViewIcon', 'View icon of the Construct Agent view.'));
 
@@ -77,4 +83,58 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
 	}
 }
 
-registerWorkbenchContribution(ConstructStatusBarContribution, WorkbenchPhase.AfterRestored);
+Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(ConstructStatusBarContribution, LifecyclePhase.Restored);
+
+// Register Construct commands
+registerAction2(class FocusConstructPanelAction extends Action2 {
+	constructor() {
+		super({
+			id: 'construct.focusPanel',
+			title: localize2('focusConstructPanel', "Show Construct Agent"),
+			keybinding: {
+				primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyC,
+				weight: KeybindingWeight.WorkbenchContrib,
+			},
+			f1: true,
+			category: localize2('constructCategory', "Construct"),
+		});
+	}
+	run(accessor: ServicesAccessor): void {
+		accessor.get(IViewsService).openView('construct.agentPanel', true);
+	}
+});
+
+registerAction2(class NewConstructChatAction extends Action2 {
+	constructor() {
+		super({
+			id: 'construct.newChat',
+			title: localize2('newConstructChat', "New Construct Chat"),
+			f1: true,
+			category: localize2('constructCategory2', "Construct"),
+		});
+	}
+	run(accessor: ServicesAccessor): void {
+		accessor.get(IViewsService).openView('construct.agentPanel', true);
+	}
+});
+
+registerAction2(class ShowInlineAgentAction extends Action2 {
+	constructor() {
+		super({
+			id: 'construct.showInlineAgent',
+			title: localize2('showInlineAgent', "Show Inline Agent"),
+			keybinding: {
+				primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyI,
+				weight: KeybindingWeight.WorkbenchContrib,
+			},
+			f1: true,
+			category: localize2('constructCategory3', "Construct"),
+		});
+	}
+	run(accessor: ServicesAccessor): void {
+		// The inline agent widget is activated through the editor contribution
+		// which is registered separately. This command is a placeholder that
+		// opens the agent panel as a fallback.
+		accessor.get(IViewsService).openView('construct.agentPanel', true);
+	}
+});

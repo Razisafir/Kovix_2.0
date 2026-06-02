@@ -3,14 +3,61 @@ name: Build Construct IDE
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: npm install
+        timeout-minutes: 30
+
+      - name: Transpile client
+        run: npx gulp transpile-client
+        timeout-minutes: 10
+
+      - name: Build Windows installer
+        run: npx gulp vscode-win32-x64
+        timeout-minutes: 60
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: construct-ide-windows-x64
+          path: .build/win32-x64/
+          retention-days: 30
+
+      - name: Create Release
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            .build/win32-x64/Setup.exe
+            .build/win32-x64/*.zip
+          tag_name: v0.2.0-beta
+          draft: true
+          name: Construct IDE v0.2.0-beta
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-linux:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -20,32 +67,20 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: |
-          npm install --ignore-scripts
-          npm install --ignore-scripts --prefix build
-          npm install --ignore-scripts --prefix extensions/markdown-language-features
-          npm install --ignore-scripts --prefix extensions/markdown-math
-          npm install --ignore-scripts --prefix extensions/simple-browser
-          npm install --ignore-scripts --prefix extensions/json-language-features
-          npm install --ignore-scripts --prefix extensions/html-language-features
-          npm install --ignore-scripts --prefix extensions/css-language-features
-          npm install --ignore-scripts --prefix extensions/extension-editing
-          npm install --ignore-scripts --prefix extensions/vscode-colorize-tests
-          npm install --ignore-scripts --prefix extensions/typescript-language-features
-          npm install esbuild
-
-      - name: Download builtin extensions
-        run: npm run download-builtin-extensions
+        run: npm install
+        timeout-minutes: 30
 
       - name: Transpile client
         run: npx gulp transpile-client
+        timeout-minutes: 10
 
-      - name: Verify compile
-        run: echo "Transpile completed with 0 errors"
+      - name: Build Linux package
+        run: npx gulp vscode-linux-x64
+        timeout-minutes: 60
 
-      - name: Upload artifact
+      - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
-          name: construct-ide-out
-          path: out/
-          retention-days: 7
+          name: construct-ide-linux-x64
+          path: .build/linux/x64/
+          retention-days: 30
