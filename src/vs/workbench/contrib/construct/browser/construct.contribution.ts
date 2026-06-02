@@ -34,6 +34,12 @@ import { AIExecutionService } from './services/aiExecutionService.js';
 import { IExecutionGraphService } from '../../../../platform/construct/common/executionGraphService.js';
 import { ExecutionGraphService } from './services/executionGraphService.js';
 
+// Phase 3: Streaming Output + Token Estimation registrations
+import { IStreamingOutputService } from '../../../../platform/construct/common/streamingOutput.js';
+import { StreamingOutputService } from './services/streamingOutputService.js';
+import { ITokenEstimationService } from '../../../../platform/construct/common/tokenEstimation.js';
+import { TokenEstimationService } from './services/tokenEstimationService.js';
+
 // Phase 1: Register LLM Provider singletons
 registerSingleton(ILLMProviderService, LLMProviderService, InstantiationType.Delayed);
 registerSingleton(IModelRegistryService, ModelRegistryService, InstantiationType.Delayed);
@@ -45,6 +51,10 @@ registerSingleton(ICostGovernorService, CostGovernorService, InstantiationType.D
 // Phase 2: Register AI Execution + Execution Graph singletons
 registerSingleton(IAIExecutionService, AIExecutionService, InstantiationType.Delayed);
 registerSingleton(IExecutionGraphService, ExecutionGraphService, InstantiationType.Delayed);
+
+// Phase 3: Register Streaming Output + Token Estimation singletons
+registerSingleton(IStreamingOutputService, StreamingOutputService, InstantiationType.Delayed);
+registerSingleton(ITokenEstimationService, TokenEstimationService, InstantiationType.Delayed);
 
 const constructViewIcon = registerIcon('construct-view-icon', Codicon.robot, localize('constructViewIcon', 'View icon of the Construct Agent view.'));
 
