@@ -11,8 +11,6 @@
 
 import { URI } from '../../../base/common/uri.js';
 import { Event } from '../../../base/common/event.js';
-import { IDisposable } from '../../../base/common/lifecycle.js';
-import { CancellationToken } from '../../../base/common/cancellation.js';
 import { createDecorator } from '../../instantiation/common/instantiation.js';
 import { AIMutationSource } from './aiExecutionService.js';
 

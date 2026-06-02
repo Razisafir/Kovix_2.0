@@ -25,13 +25,14 @@ import { generateUuid } from '../../../../../base/common/uuid.js';
 import {
         ILLMProviderService, IModelRegistryService, ICredentialStoreService,
         ILLMStreamingService, IProviderHealthService,
-        LLMProviderConfig, ModelInfo, LLMRequest, LLMResponse,
+        LLMProviderType, LLMProviderConfig, ModelInfo, LLMRequest, LLMResponse,
         LLMMessage, StreamChunk, StreamChunkType,
+        ProviderCredential, StreamChunkEvent, LLMToolDefinition,
         ProviderConnectionStatus, ProviderHealth, HealthSeverity,
         FallbackChainConfig, FallbackBehavior,
         KNOWN_PROVIDER_CONFIGS, KNOWN_MODELS,
-} from '../../../../platform/construct/common/llmProvider.js';
-import { ICostGovernorService } from '../../../../platform/construct/common/costGovernor.js';
+} from '../../../../../platform/construct/common/llmProvider.js';
+import { ICostGovernorService } from '../../../../../platform/construct/common/costGovernor.js';
 
 // =====================================================================
 // BudgetExceededError -- Specific error for budget-exceeded fallback
@@ -301,7 +302,7 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
                                         maxTokens: 1,
                                 },
                                 apiKey || '',
-                                CancellationTokenSource.create().token,
+                                new CancellationTokenSource().token,
                         );
                         return testResponse ? ProviderConnectionStatus.Connected : ProviderConnectionStatus.Error;
                 } catch (error: any) {
@@ -374,19 +375,19 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
 
         private buildRequestURL(config: LLMProviderConfig, request: LLMRequest): string {
                 switch (config.type) {
-                        case 0: // OpenAI
+                        case LLMProviderType.OpenAI: // OpenAI
                                 return `${config.apiEndpoint}/chat/completions`;
-                        case 1: // Anthropic
+                        case LLMProviderType.Anthropic: // Anthropic
                                 return `${config.apiEndpoint}/messages`;
-                        case 2: // Google Gemini
+                        case LLMProviderType.GoogleGemini: // Google Gemini
                                 return `${config.apiEndpoint}/models/${request.model}:generateContent`;
-                        case 3: // OpenRouter
+                        case LLMProviderType.OpenRouter: // OpenRouter
                                 return `${config.apiEndpoint}/chat/completions`;
-                        case 4: // Ollama
+                        case LLMProviderType.Ollama: // Ollama
                                 return `${config.apiEndpoint}/chat`;
-                        case 5: // LM Studio
+                        case LLMProviderType.LMStudio: // LM Studio
                                 return `${config.apiEndpoint}/chat/completions`;
-                        case 6: // Generic OpenAI
+                        case LLMProviderType.GenericOpenAI: // Generic OpenAI
                                 return `${config.apiEndpoint}/chat/completions`;
                         default:
                                 return `${config.apiEndpoint}/chat/completions`;
@@ -399,26 +400,26 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
                 };
 
                 switch (config.type) {
-                        case 0: // OpenAI
+                        case LLMProviderType.OpenAI: // OpenAI
                                 headers['Authorization'] = `Bearer ${apiKey}`;
                                 break;
-                        case 1: // Anthropic
+                        case LLMProviderType.Anthropic: // Anthropic
                                 headers['x-api-key'] = apiKey;
                                 headers['anthropic-version'] = '2023-06-01';
                                 break;
-                        case 2: // Google Gemini
+                        case LLMProviderType.GoogleGemini: // Google Gemini
                                 headers['x-goog-api-key'] = apiKey;
                                 break;
-                        case 3: // OpenRouter
+                        case LLMProviderType.OpenRouter: // OpenRouter
                                 headers['Authorization'] = `Bearer ${apiKey}`;
                                 headers['HTTP-Referer'] = 'https://construct-ide.dev';
                                 headers['X-Title'] = 'Construct IDE';
                                 break;
-                        case 4: // Ollama (no auth needed)
+                        case LLMProviderType.Ollama: // Ollama (no auth needed)
                                 break;
-                        case 5: // LM Studio (no auth needed)
+                        case LLMProviderType.LMStudio: // LM Studio (no auth needed)
                                 break;
-                        case 6: // Generic OpenAI
+                        case LLMProviderType.GenericOpenAI: // Generic OpenAI
                                 if (apiKey) { headers['Authorization'] = `Bearer ${apiKey}`; }
                                 break;
                 }
@@ -428,10 +429,10 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
 
         private buildRequestBody(config: LLMProviderConfig, request: LLMRequest): Record<string, unknown> {
                 // OpenAI-compatible format (works for OpenAI, OpenRouter, LM Studio, Generic)
-                if ([0, 3, 5, 6].includes(config.type)) {
+                if ([LLMProviderType.OpenAI, LLMProviderType.OpenRouter, LLMProviderType.LMStudio, LLMProviderType.GenericOpenAI].includes(config.type)) {
                         const body: Record<string, unknown> = {
                                 model: request.model,
-                                messages: request.messages.map(m => ({
+                                messages: request.messages.map((m: LLMMessage) => ({
                                         role: m.role,
                                         content: m.content,
                                         ...(m.toolCalls ? { tool_calls: m.toolCalls } : {}),
@@ -443,7 +444,7 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
                         if (request.topP !== undefined) { body.top_p = request.topP; }
                         if (request.stopSequences) { body.stop = request.stopSequences; }
                         if (request.tools) {
-                                body.tools = request.tools.map(t => ({
+                                body.tools = request.tools.map((t: LLMToolDefinition) => ({
                                         type: 'function',
                                         function: { name: t.name, description: t.description, parameters: t.parameters },
                                 }));
@@ -452,12 +453,12 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
                 }
 
                 // Anthropic format
-                if (config.type === 1) {
-                        const systemMsg = request.messages.find(m => m.role === 'system');
-                        const nonSystem = request.messages.filter(m => m.role !== 'system');
+                if (config.type === LLMProviderType.Anthropic) {
+                        const systemMsg = request.messages.find((m: LLMMessage) => m.role === 'system');
+                        const nonSystem = request.messages.filter((m: LLMMessage) => m.role !== 'system');
                         const body: Record<string, unknown> = {
                                 model: request.model,
-                                messages: nonSystem.map(m => ({
+                                messages: nonSystem.map((m: LLMMessage) => ({
                                         role: m.role === 'tool' ? 'user' : m.role,
                                         content: m.content,
                                 })),
@@ -468,7 +469,7 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
                         if (request.topP !== undefined) { body.top_p = request.topP; }
                         if (request.stopSequences) { body.stop_sequences = request.stopSequences; }
                         if (request.tools) {
-                                body.tools = request.tools.map(t => ({
+                                body.tools = request.tools.map((t: LLMToolDefinition) => ({
                                         name: t.name,
                                         description: t.description,
                                         input_schema: t.parameters,
@@ -478,16 +479,16 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
                 }
 
                 // Google Gemini format (FULL integration with tool declarations)
-                if (config.type === 2) {
+                if (config.type === LLMProviderType.GoogleGemini) {
                         const body: Record<string, unknown> = {
                                 contents: request.messages
-                                        .filter(m => m.role !== 'system')
-                                        .map(m => ({
+                                        .filter((m: LLMMessage) => m.role !== 'system')
+                                        .map((m: LLMMessage) => ({
                                                 role: m.role === 'assistant' ? 'model' : 'user',
                                                 parts: [{ text: m.content }],
                                         })),
-                                systemInstruction: request.messages.find(m => m.role === 'system')
-                                        ? { parts: [{ text: request.messages.find(m => m.role === 'system')!.content }] }
+                                systemInstruction: request.messages.find((m: LLMMessage) => m.role === 'system')
+                                        ? { parts: [{ text: request.messages.find((m: LLMMessage) => m.role === 'system')!.content }] }
                                         : undefined,
                                 generationConfig: {
                                         maxOutputTokens: request.maxTokens || 4096,
@@ -499,7 +500,7 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
                         // Add tool declarations in Gemini format
                         if (request.tools && request.tools.length > 0) {
                                 body.tools = [{
-                                        functionDeclarations: request.tools.map(t => ({
+                                        functionDeclarations: request.tools.map((t: LLMToolDefinition) => ({
                                                 name: t.name,
                                                 description: t.description,
                                                 parameters: t.parameters,
@@ -510,10 +511,10 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
                 }
 
                 // Ollama format
-                if (config.type === 4) {
+                if (config.type === LLMProviderType.Ollama) {
                         return {
                                 model: request.model,
-                                messages: request.messages.map(m => ({ role: m.role, content: m.content })),
+                                messages: request.messages.map((m: LLMMessage) => ({ role: m.role, content: m.content })),
                                 stream: false,
                                 options: {
                                         num_predict: request.maxTokens || 4096,
@@ -526,14 +527,14 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
                 // Fallback: OpenAI format
                 return {
                         model: request.model,
-                        messages: request.messages.map(m => ({ role: m.role, content: m.content })),
+                        messages: request.messages.map((m: LLMMessage) => ({ role: m.role, content: m.content })),
                         max_tokens: request.maxTokens || 4096,
                 };
         }
 
         private parseProviderResponse(config: LLMProviderConfig, request: LLMRequest, json: any, latencyMs: number): LLMResponse {
                 // OpenAI-compatible response
-                if ([0, 3, 5, 6].includes(config.type)) {
+                if ([LLMProviderType.OpenAI, LLMProviderType.OpenRouter, LLMProviderType.LMStudio, LLMProviderType.GenericOpenAI].includes(config.type)) {
                         const choice = json.choices?.[0];
                         const usage = json.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
                         return {
@@ -559,7 +560,7 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
                 }
 
                 // Anthropic response
-                if (config.type === 1) {
+                if (config.type === LLMProviderType.Anthropic) {
                         const content = json.content || [];
                         const textBlocks = content.filter((b: any) => b.type === 'text');
                         const toolBlocks = content.filter((b: any) => b.type === 'tool_use');
@@ -586,7 +587,7 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
                 }
 
                 // Google Gemini response (FULL integration with tool calls)
-                if (config.type === 2) {
+                if (config.type === LLMProviderType.GoogleGemini) {
                         const candidate = json.candidates?.[0];
                         const parts = candidate?.content?.parts || [];
                         // Extract text parts and function call parts separately
@@ -617,7 +618,7 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
                 }
 
                 // Ollama response
-                if (config.type === 4) {
+                if (config.type === LLMProviderType.Ollama) {
                         return {
                                 requestId: request.requestId,
                                 providerId: config.id,
@@ -691,7 +692,7 @@ export class ModelRegistryService extends Disposable implements IModelRegistrySe
         }
 
         getModelsForProvider(providerId: string): ModelInfo[] {
-                return Array.from(this._models.values()).filter(m => m.providerId === providerId);
+                return Array.from(this._models.values()).filter((m: ModelInfo) => m.providerId === providerId);
         }
 
         getModel(modelId: string): ModelInfo | undefined {
@@ -989,13 +990,13 @@ export class LLMStreamingService extends Disposable implements ILLMStreamingServ
         private buildStreamingURL(config: LLMProviderConfig, request: LLMRequest): string {
                 // Same as non-streaming URL
                 switch (config.type) {
-                        case 0: return `${config.apiEndpoint}/chat/completions`;
-                        case 1: return `${config.apiEndpoint}/messages`;
-                        case 2: return `${config.apiEndpoint}/models/${request.model}:streamGenerateContent?alt=sse`;
-                        case 3: return `${config.apiEndpoint}/chat/completions`;
-                        case 4: return `${config.apiEndpoint}/chat`;
-                        case 5: return `${config.apiEndpoint}/chat/completions`;
-                        case 6: return `${config.apiEndpoint}/chat/completions`;
+                        case LLMProviderType.OpenAI: return `${config.apiEndpoint}/chat/completions`;
+                        case LLMProviderType.Anthropic: return `${config.apiEndpoint}/messages`;
+                        case LLMProviderType.GoogleGemini: return `${config.apiEndpoint}/models/${request.model}:streamGenerateContent?alt=sse`;
+                        case LLMProviderType.OpenRouter: return `${config.apiEndpoint}/chat/completions`;
+                        case LLMProviderType.Ollama: return `${config.apiEndpoint}/chat`;
+                        case LLMProviderType.LMStudio: return `${config.apiEndpoint}/chat/completions`;
+                        case LLMProviderType.GenericOpenAI: return `${config.apiEndpoint}/chat/completions`;
                         default: return `${config.apiEndpoint}/chat/completions`;
                 }
         }
@@ -1007,11 +1008,11 @@ export class LLMStreamingService extends Disposable implements ILLMStreamingServ
                 };
 
                 switch (config.type) {
-                        case 0: headers['Authorization'] = `Bearer ${apiKey}`; break;
-                        case 1: headers['x-api-key'] = apiKey; headers['anthropic-version'] = '2023-06-01'; break;
-                        case 2: headers['x-goog-api-key'] = apiKey; break;
-                        case 3: headers['Authorization'] = `Bearer ${apiKey}`; headers['HTTP-Referer'] = 'https://construct-ide.dev'; break;
-                        case 6: if (apiKey) { headers['Authorization'] = `Bearer ${apiKey}`; } break;
+                        case LLMProviderType.OpenAI: headers['Authorization'] = `Bearer ${apiKey}`; break;
+                        case LLMProviderType.Anthropic: headers['x-api-key'] = apiKey; headers['anthropic-version'] = '2023-06-01'; break;
+                        case LLMProviderType.GoogleGemini: headers['x-goog-api-key'] = apiKey; break;
+                        case LLMProviderType.OpenRouter: headers['Authorization'] = `Bearer ${apiKey}`; headers['HTTP-Referer'] = 'https://construct-ide.dev'; break;
+                        case LLMProviderType.GenericOpenAI: if (apiKey) { headers['Authorization'] = `Bearer ${apiKey}`; } break;
                 }
 
                 return headers;
@@ -1020,7 +1021,7 @@ export class LLMStreamingService extends Disposable implements ILLMStreamingServ
         private buildStreamingBody(config: LLMProviderConfig, request: LLMRequest): Record<string, unknown> {
                 const base: Record<string, unknown> = {
                         model: request.model,
-                        messages: request.messages.map(m => ({ role: m.role, content: m.content })),
+                        messages: request.messages.map((m: LLMMessage) => ({ role: m.role, content: m.content })),
                         max_tokens: request.maxTokens || 4096,
                         stream: true,
                 };
@@ -1030,7 +1031,7 @@ export class LLMStreamingService extends Disposable implements ILLMStreamingServ
 
         private parseStreamChunk(config: LLMProviderConfig, parsed: any): StreamChunk {
                 // OpenAI-compatible SSE
-                if ([0, 3, 5, 6].includes(config.type)) {
+                if ([LLMProviderType.OpenAI, LLMProviderType.OpenRouter, LLMProviderType.LMStudio, LLMProviderType.GenericOpenAI].includes(config.type)) {
                         const delta = parsed.choices?.[0]?.delta;
                         if (delta?.content) {
                                 return { type: StreamChunkType.Token, content: delta.content, done: false };
@@ -1042,7 +1043,7 @@ export class LLMStreamingService extends Disposable implements ILLMStreamingServ
                 }
 
                 // Anthropic SSE
-                if (config.type === 1) {
+                if (config.type === LLMProviderType.Anthropic) {
                         if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
                                 return { type: StreamChunkType.Token, content: parsed.delta.text, done: false };
                         }
@@ -1053,14 +1054,14 @@ export class LLMStreamingService extends Disposable implements ILLMStreamingServ
                 }
 
                 // Gemini SSE
-                if (config.type === 2) {
+                if (config.type === LLMProviderType.GoogleGemini) {
                         const parts = parsed.candidates?.[0]?.content?.parts || [];
                         const text = parts.map((p: any) => p.text || '').join('');
                         return { type: StreamChunkType.Token, content: text, done: false };
                 }
 
                 // Ollama SSE
-                if (config.type === 4) {
+                if (config.type === LLMProviderType.Ollama) {
                         if (parsed.done) {
                                 return { type: StreamChunkType.Done, done: true };
                         }
@@ -1084,7 +1085,7 @@ export class ProviderHealthService extends Disposable implements IProviderHealth
 
         // Rolling window for success rate calculation
         private readonly _recentResults = new Map<string, { success: boolean; timestamp: number }[]>();
-        private readonly WINDOW_SIZE = 50;
+        private readonly _WINDOW_SIZE = 50;
         private readonly WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
         constructor(@ILogService private readonly logService: ILogService) {
@@ -1219,7 +1220,12 @@ export class ProviderHealthService extends Disposable implements IProviderHealth
                 if (!this._recentResults.has(providerId)) {
                         this._recentResults.set(providerId, []);
                 }
-                return this._recentResults.get(providerId)!;
+                const results = this._recentResults.get(providerId)!;
+                // Trim to rolling window size
+                if (results.length > this._WINDOW_SIZE) {
+                        results.splice(0, results.length - this._WINDOW_SIZE);
+                }
+                return results;
         }
 
         private calculateSuccessRate(results: { success: boolean; timestamp: number }[]): number {

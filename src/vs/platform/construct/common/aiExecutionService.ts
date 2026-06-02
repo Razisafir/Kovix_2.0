@@ -12,10 +12,7 @@
 import { IDisposable } from '../../../base/common/lifecycle.js';
 import { URI } from '../../../base/common/uri.js';
 import { Event } from '../../../base/common/event.js';
-import { CancellationToken } from '../../../base/common/cancellation.js';
 import { createDecorator } from '../../instantiation/common/instantiation.js';
-import { IProgress, IProgressStep } from '../../progress/common/progress.js';
-import { UndoRedoGroup, UndoRedoSource } from '../../undoRedo/common/undoRedo.js';
 import { IBulkEditOptions, IBulkEditResult, ResourceEdit } from '../../../editor/browser/services/bulkEditService.js';
 
 export const IAIExecutionService = createDecorator<IAIExecutionService>('construct.aiExecutionService');

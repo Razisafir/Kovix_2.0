@@ -82,9 +82,12 @@ Registry.as<IViewsRegistry>(ViewExtensions.ViewsRegistry).registerViews([{
 class ConstructStatusBarContribution extends Disposable implements IWorkbenchContribution {
 	static readonly ID = 'workbench.contrib.constructStatusBar';
 
-	private readonly agentStatusEntry: IStatusbarEntryAccessor;
-	private readonly modelEntry: IStatusbarEntryAccessor;
-	private readonly changesEntry: IStatusbarEntryAccessor;
+	// @ts-expect-error statusbar entries used for future updates
+	private readonly _agentStatusEntry: IStatusbarEntryAccessor;
+	// @ts-expect-error statusbar entries used for future updates
+	private readonly _modelEntry: IStatusbarEntryAccessor;
+	// @ts-expect-error statusbar entries used for future updates
+	private readonly _changesEntry: IStatusbarEntryAccessor;
 
 	constructor(
 		@IStatusbarService private readonly statusbarService: IStatusbarService,
@@ -92,7 +95,7 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
 		super();
 
 		// Agent status (left side)
-		this.agentStatusEntry = this._register(this.statusbarService.addEntry({
+		this._agentStatusEntry = this._register(this.statusbarService.addEntry({
 			name: localize('constructAgentStatus', "Construct Agent Status"),
 			text: '$(robot) Ready',
 			ariaLabel: localize('constructAgentStatusAria', "Construct Agent: Ready"),
@@ -101,7 +104,7 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
 		}, 'construct.agentStatus', StatusbarAlignment.LEFT, 50));
 
 		// Model info (left side)
-		this.modelEntry = this._register(this.statusbarService.addEntry({
+		this._modelEntry = this._register(this.statusbarService.addEntry({
 			name: localize('constructModel', "Construct Model"),
 			text: '$(sparkle) Claude Sonnet',
 			ariaLabel: localize('constructModelAria', "Active LLM: Claude 3.5 Sonnet"),
@@ -109,7 +112,7 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
 		}, 'construct.model', StatusbarAlignment.LEFT, 51));
 
 		// Pending changes (right side)
-		this.changesEntry = this._register(this.statusbarService.addEntry({
+		this._changesEntry = this._register(this.statusbarService.addEntry({
 			name: localize('constructChanges', "Construct Changes"),
 			text: '$(diff-added) 0 pending',
 			ariaLabel: localize('constructChangesAria', "No changes awaiting approval"),

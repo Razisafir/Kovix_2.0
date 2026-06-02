@@ -12,7 +12,7 @@
 
 import { Disposable } from '../../../../../base/common/lifecycle.js';
 import { ILogService } from '../../../../../platform/log/common/log.js';
-import { ICostGovernorService, CostRecord, BudgetSnapshot } from '../../../../platform/construct/common/costGovernor.js';
+import { ICostGovernorService, CostRecord, BudgetSnapshot } from '../../../../../platform/construct/common/costGovernor.js';
 
 export class CostGovernorService extends Disposable implements ICostGovernorService {
 	declare readonly _serviceBrand: undefined;

@@ -25,7 +25,7 @@ import {
 	IExecutionGraphService, IExecutionNode, IExecutionEdge, IExecutionScope,
 	ExecutionNodeType, ExecutionEdgeType, RollbackStrategy,
 	IExecutionNodeCreateParams, IExecutionNodeCompleteParams,
-	IExecutionNodeFilter, IExecutionGraphQueryResult
+	IExecutionNodeFilter
 } from '../../../../../platform/construct/common/executionGraphService.js';
 
 // ─── Persistence Constants ─────────────────────────────────────────────────────
@@ -189,6 +189,9 @@ export class ExecutionGraphService extends Disposable implements IExecutionGraph
 				this.createEdge(scope.ownerNodeId, id, ExecutionEdgeType.Parent);
 			}
 		}
+
+		// Prune memory cache if it exceeds the limit
+		this._pruneMemoryCache();
 
 		// Fire event
 		this._onDidCreateNode.fire(node);
@@ -377,7 +380,7 @@ export class ExecutionGraphService extends Disposable implements IExecutionGraph
 				chain.unshift(node); // Prepend for root-first ordering
 			}
 			// Get the first parent via Parent edge
-			const parentEdges = this.getIncomingEdges(currentId).filter(e => e.type === ExecutionEdgeType.Parent);
+			const parentEdges: IExecutionEdge[] = this.getIncomingEdges(currentId).filter(e => e.type === ExecutionEdgeType.Parent);
 			currentId = parentEdges.length > 0 ? parentEdges[0].sourceId : undefined;
 		}
 
@@ -688,7 +691,7 @@ export class ExecutionGraphService extends Disposable implements IExecutionGraph
 	// ─── Private: File I/O Helpers ──────────────────────────────────────────────
 
 	private _getGraphDir(): string {
-		return this._joinPath(this.environmentService.globalStorageHome.fsPath, GRAPH_DIR);
+		return this._joinPath(this.environmentService.userRoamingDataHome.fsPath, GRAPH_DIR);
 	}
 
 	private _joinPath(...segments: string[]): string {

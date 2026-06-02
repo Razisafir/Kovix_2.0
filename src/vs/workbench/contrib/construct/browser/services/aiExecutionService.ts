@@ -23,17 +23,15 @@ import { ILogService } from '../../../../../platform/log/common/log.js';
 import { IEditorService } from '../../../../services/editor/common/editorService.js';
 import { ITextFileService } from '../../../../services/textfile/common/textfiles.js';
 import { IBulkEditService, IBulkEditOptions, IBulkEditResult, ResourceEdit, ResourceTextEdit } from '../../../../../editor/browser/services/bulkEditService.js';
-import { IProgress, IProgressStep, Progress } from '../../../../../platform/progress/common/progress.js';
+import { Progress } from '../../../../../platform/progress/common/progress.js';
 import { CancellationToken } from '../../../../../base/common/cancellation.js';
-import { UndoRedoGroup, UndoRedoSource } from '../../../../../platform/undoRedo/common/undoRedo.js';
 import {
 	IAIExecutionService, IAIFileEdit, IAITerminalExecution, IAIWorkspaceChange, IAIAction,
 	IAIExecutionRecord, IAIMutationContext, IAIControlledBulkEditOptions,
 	AIMutationSource, AIMutationBypassToken, AIMutationPolicyResult, IAIMutationPolicy
 } from '../../../../../platform/construct/common/aiExecutionService.js';
 import {
-	IExecutionGraphService, ExecutionNodeType, ExecutionEdgeType, RollbackStrategy,
-	IExecutionNode
+IExecutionGraphService, ExecutionNodeType, ExecutionEdgeType, RollbackStrategy
 } from '../../../../../platform/construct/common/executionGraphService.js';
 
 // ─── Default Mutation Policy ───────────────────────────────────────────────────
@@ -85,7 +83,8 @@ export class AIExecutionService extends Disposable implements IAIExecutionServic
 
 	constructor(
 		@ILogService private readonly logService: ILogService,
-		@IEditorService private readonly editorService: IEditorService,
+		// @ts-expect-error editorService used for future editor integration
+		@IEditorService private readonly _editorService: IEditorService,
 		@ITextFileService private readonly textFileService: ITextFileService,
 		@IBulkEditService private readonly bulkEditService: IBulkEditService,
 		@IExecutionGraphService private readonly graphService: IExecutionGraphService,
@@ -310,7 +309,6 @@ export class AIExecutionService extends Disposable implements IAIExecutionServic
 				undoRedoSource: options?.undoRedoSource,
 				confirmBeforeUndo: options?.confirmBeforeUndo,
 				respectAutoSaveConfig: options?.respectAutoSaveConfig,
-				reason: options?.reason,
 			};
 
 			// STEP 5: Apply via bulk edit service

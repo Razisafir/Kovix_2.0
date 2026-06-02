@@ -17,7 +17,6 @@ import { Emitter } from '../../../../../base/common/event.js';
 import { URI } from '../../../../../base/common/uri.js';
 import { ILogService } from '../../../../../platform/log/common/log.js';
 import { IFileService } from '../../../../../platform/files/common/files.js';
-import { IWorkspaceContextService } from '../../../../../platform/workspace/common/workspace.js';
 import {
 	IStreamingOutputService,
 	OutputChunkType,
@@ -79,7 +78,6 @@ export class StreamingOutputService extends Disposable implements IStreamingOutp
 	constructor(
 		@ILogService private readonly logService: ILogService,
 		@IFileService private readonly fileService: IFileService,
-		@IWorkspaceContextService private readonly workspaceContextService: IWorkspaceContextService,
 	) {
 		super();
 	}
@@ -113,7 +111,7 @@ export class StreamingOutputService extends Disposable implements IStreamingOutp
 		this.fileService.exists(uri).then(exists => {
 			if (exists) {
 				this.fileService.readFile(uri).then(content => {
-					const totalBytes = content.byteLength;
+					const totalBytes = content.value.byteLength;
 					if (totalBytes === 0) {
 						return;
 					}
@@ -163,7 +161,7 @@ export class StreamingOutputService extends Disposable implements IStreamingOutp
 		try {
 			const uri = URI.file(state.filePath);
 			const content = await this.fileService.readFile(uri);
-			const totalBytes = content.byteLength;
+			const totalBytes = content.value.byteLength;
 
 			// Nothing new since last read
 			if (totalBytes <= state.readOffset) {
