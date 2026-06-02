@@ -4,117 +4,90 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Event } from '../../../../base/common/event.js';
+import { IDisposable } from '../../../../base/common/lifecycle.js';
 import { createDecorator } from '../../../../platform/instantiation/common/instantiation.js';
 import {
-	IMCPServerConfig, IMCPTool, IMCPResource, IMCPPrompt,
-	MCPConnectionState, IMCPHealthCheck, IMCPToolExecutionResult,
-	IMCPResourceReadResult
+	IMCPServerDefinition,
+	IMCPTool,
+	IMCPResource,
+	IMCPPrompt,
+	IMCPHealthStatus,
+	IMCPConnectionEvent,
+	IMCPExecutionResult,
+	IMCPResourceResult
 } from './mcpTypes.js';
 
-export const IMCPServerManager = createDecorator<IMCPServerManager>('mcpServerManager');
+export const IMCPServerManager = createDecorator<IMCPServerManager>('construct.mcpServerManager');
 
-export interface IMCPServerManager {
+export interface IMCPServerManager extends IDisposable {
 	readonly _serviceBrand: undefined;
 
-	// ─── Server Lifecycle ──────────────────────────────────────────────────
+	// ─── Discovery & Lifecycle ──────────────────────────────────────────
 
-	/**
-	 * Discover available MCP servers from the marketplace registry.
-	 * Returns a list of server configurations that can be installed.
-	 */
-	discoverServers(): Promise<IMCPServerConfig[]>;
+	/** Discover available MCP servers (installed + auto-detected). */
+	discoverServers(): Promise<IMCPServerDefinition[]>;
 
-	/**
-	 * Install an MCP server by registering its configuration.
-	 * This stores the server config and makes it available to start.
-	 */
-	installServer(config: IMCPServerConfig): Promise<void>;
+	/** Install a server definition (persist + optionally start). */
+	installServer(def: IMCPServerDefinition): Promise<void>;
 
-	/**
-	 * Uninstall an MCP server: stop it if running, then remove its config.
-	 */
+	/** Uninstall: stop if running, then remove from registry. */
 	uninstallServer(name: string): Promise<void>;
 
-	/**
-	 * Start a previously installed MCP server.
-	 * Connects via the configured transport (stdio or SSE).
-	 */
+	/** Start a previously installed server. */
 	startServer(name: string): Promise<void>;
 
-	/**
-	 * Stop a running MCP server and clean up resources.
-	 */
+	/** Stop a running server and clean up resources. */
 	stopServer(name: string): Promise<void>;
 
-	/**
-	 * Restart a running MCP server (stop + start).
-	 */
+	/** Stop then start. */
 	restartServer(name: string): Promise<void>;
 
-	/**
-	 * List all installed server configurations.
-	 */
-	listInstalledServers(): IMCPServerConfig[];
+	/** List all installed server definitions. */
+	listInstalledServers(): IMCPServerDefinition[];
 
-	/**
-	 * Get the current connection state of a server.
-	 */
-	getConnectionState(name: string): MCPConnectionState;
+	/** Get the current health status of a server. */
+	getServerHealth(name: string): IMCPHealthStatus;
 
-	// ─── Tool Execution ───────────────────────────────────────────────────
+	// ─── Tool Execution ─────────────────────────────────────────────────
 
-	/**
-	 * Execute an MCP tool on a specific server.
-	 * Enforces a 30-second timeout by default.
-	 */
-	executeTool(serverName: string, toolName: string, args: Record<string, unknown>, timeoutMs?: number): Promise<IMCPToolExecutionResult>;
+	/** Execute an MCP tool. 30-second timeout enforced. */
+	executeTool(serverName: string, toolName: string, args: any): Promise<IMCPExecutionResult>;
 
-	/**
-	 * List all tools available on a connected server.
-	 */
-	listTools(serverName: string): Promise<IMCPTool[]>;
+	/** List tools from one server, or all connected servers. */
+	listTools(serverName?: string): Promise<IMCPTool[]>;
 
-	// ─── Resource Access ──────────────────────────────────────────────────
+	// ─── Resource Access ────────────────────────────────────────────────
 
-	/**
-	 * Read an MCP resource from a specific server.
-	 * Uses a 5-minute TTL cache.
-	 */
-	readResource(serverName: string, uri: string): Promise<IMCPResourceReadResult>;
+	/** Read a resource (5-minute TTL cache). */
+	readResource(serverName: string, uri: string): Promise<IMCPResourceResult>;
 
-	/**
-	 * List all resources available on a connected server.
-	 */
-	listResources(serverName: string): Promise<IMCPResource[]>;
+	/** List resources from one server, or all connected servers. */
+	listResources(serverName?: string): Promise<IMCPResource[]>;
 
-	// ─── Prompts ──────────────────────────────────────────────────────────
+	// ─── Prompts ────────────────────────────────────────────────────────
 
-	/**
-	 * List all prompts available on a connected server.
-	 */
-	listPrompts(serverName: string): Promise<IMCPPrompt[]>;
+	/** List prompts from one server, or all connected servers. */
+	listPrompts(serverName?: string): Promise<IMCPPrompt[]>;
 
-	// ─── Health Monitoring ────────────────────────────────────────────────
+	/** Get a rendered prompt. */
+	getPrompt(serverName: string, promptName: string, args?: Record<string, string>): Promise<string>;
 
-	/**
-	 * Get the health status of a server.
-	 */
-	getServerHealth(name: string): IMCPHealthCheck | undefined;
+	// ─── Events ─────────────────────────────────────────────────────────
 
-	// ─── Events ───────────────────────────────────────────────────────────
+	readonly onDidChangeConnection: Event<IMCPConnectionEvent>;
+	readonly onDidDiscoverTools: Event<IMCPTool[]>;
+	readonly onDidDiscoverResources: Event<IMCPResource[]>;
+	readonly onDidDiscoverPrompts: Event<IMCPPrompt[]>;
+	readonly onDidUpdateHealth: Event<IMCPHealthStatus>;
 
-	/**
-	 * Fired when any server's connection state changes.
-	 */
-	onDidChangeConnection: Event<{ serverName: string; state: MCPConnectionState }>;
+	// ─── Bulk Operations ────────────────────────────────────────────────
 
-	/**
-	 * Fired when tools are discovered/updated on a server.
-	 */
-	onDidDiscoverTools: Event<{ serverName: string; tools: IMCPTool[] }>;
+	/** Start all installed servers. */
+	startAllServers(): Promise<void>;
 
-	/**
-	 * Fired when a server's health status changes.
-	 */
-	onDidChangeHealth: Event<{ serverName: string; health: IMCPHealthCheck }>;
+	/** Stop all connected servers. */
+	stopAllServers(): Promise<void>;
+
+	/** Get the string representation of a server's connection state. */
+	getServerStatus(name: string): string;
 }

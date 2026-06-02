@@ -4,69 +4,65 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { Event } from '../../../../base/common/event.js';
+import { IDisposable } from '../../../../base/common/lifecycle.js';
 import { createDecorator } from '../../../../platform/instantiation/common/instantiation.js';
-import { IMCPMarketplaceEntry, MCPServerCategory } from './mcpTypes.js';
+import { IMCPMarketplaceItem } from './mcpTypes.js';
 
-export const IMCPMarketplace = createDecorator<IMCPMarketplace>('mcpMarketplace');
+export const IMCPMarketplace = createDecorator<IMCPMarketplace>('construct.mcpMarketplace');
 
-export interface IMCPMarketplace {
+export interface IMCPMarketplace extends IDisposable {
 	readonly _serviceBrand: undefined;
 
-	// ─── Catalog Access ───────────────────────────────────────────────────
+	// ─── Catalog Operations ─────────────────────────────────────────────
 
-	/**
-	 * Fetch the full marketplace catalog from the remote registry.
-	 * Uses a 1-hour local cache to avoid hammering GitHub.
-	 */
-	fetchCatalog(): Promise<IMCPMarketplaceEntry[]>;
+	/** Fetch the full marketplace catalog (1-hour cached). */
+	fetchCatalog(): Promise<IMCPMarketplaceItem[]>;
 
-	/**
-	 * Search the catalog by keyword. Searches name, description,
-	 * author, and tags.
-	 */
-	searchCatalog(query: string): Promise<IMCPMarketplaceEntry[]>;
+	/** Search the catalog by keyword. */
+	searchCatalog(query: string): Promise<IMCPMarketplaceItem[]>;
 
-	/**
-	 * Get the featured / recommended servers.
-	 * These are hand-picked high-quality servers: github, filesystem,
-	 * playwright, postgresql, brave-search, figma.
-	 */
-	getFeaturedServers(): Promise<IMCPMarketplaceEntry[]>;
+	/** Get the featured / recommended servers. */
+	getFeaturedServers(): Promise<IMCPMarketplaceItem[]>;
 
-	/**
-	 * Get servers filtered by category.
-	 */
-	getServerByCategory(category: MCPServerCategory): Promise<IMCPMarketplaceEntry[]>;
+	/** Get servers filtered by category. */
+	getServersByCategory(category: string): Promise<IMCPMarketplaceItem[]>;
 
-	// ─── Install Flow ─────────────────────────────────────────────────────
+	/** Get all unique categories. */
+	getAllCategories(): Promise<string[]>;
 
-	/**
-	 * One-click install from the marketplace.
-	 * Flow: validate config -> register -> start server.
-	 */
-	installFromMarketplace(entryId: string): Promise<void>;
+	// ─── Installation ───────────────────────────────────────────────────
 
-	// ─── Ratings ──────────────────────────────────────────────────────────
+	/** One-click install from marketplace. */
+	installFromMarketplace(itemId: string): Promise<void>;
 
-	/**
-	 * Rate a server (1-5 stars). Stored locally in IStorageService.
-	 */
-	rateServer(entryId: string, rating: number): Promise<void>;
+	/** Uninstall a marketplace item. */
+	uninstallMarketplaceItem(itemId: string): Promise<void>;
 
-	/**
-	 * Get the current user rating for a server.
-	 */
-	getUserRating(entryId: string): number | undefined;
+	/** Check if a marketplace item is installed. */
+	isInstalled(itemId: string): boolean;
 
-	// ─── Events ───────────────────────────────────────────────────────────
+	// ─── Rating & Metadata ──────────────────────────────────────────────
 
-	/**
-	 * Fired when the catalog is refreshed.
-	 */
-	onDidRefreshCatalog: Event<IMCPMarketplaceEntry[]>;
+	/** Rate a server (1-5 stars), stored in IStorageService. */
+	rateServer(itemId: string, rating: number): Promise<void>;
 
-	/**
-	 * Fired when a server is installed from the marketplace.
-	 */
-	onDidInstallFromMarketplace: Event<IMCPMarketplaceEntry>;
+	/** Get the current rating for a server. */
+	getServerRating(itemId: string): number;
+
+	/** Get reviews for a server (placeholder for backend integration). */
+	getServerReviews(itemId: string): Array<{ rating: number; comment: string; timestamp: number }>;
+
+	// ─── Events ─────────────────────────────────────────────────────────
+
+	readonly onDidUpdateCatalog: Event<IMCPMarketplaceItem[]>;
+	readonly onDidInstallItem: Event<string>;
+	readonly onDidUninstallItem: Event<string>;
+
+	// ─── Cache Management ───────────────────────────────────────────────
+
+	/** Force-refresh the catalog from the remote registry. */
+	refreshCatalog(): Promise<void>;
+
+	/** Get the timestamp of the last successful catalog sync. */
+	getLastSyncTime(): number;
 }

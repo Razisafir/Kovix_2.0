@@ -1,234 +1,290 @@
 /*---------------------------------------------------------------------------------------------
  *  Construct IDE - MCP Server Registry
  *  Licensed under the MIT License.
+ *  Cline-compatible JSON format for .claude-mcp/settings.json
  *--------------------------------------------------------------------------------------------*/
 
 import { Disposable } from '../../../../base/common/lifecycle.js';
 import { Emitter, Event } from '../../../../base/common/event.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { ISecretStorageService } from '../../../../platform/secrets/common/secrets.js';
+import { IStorageService, StorageScope, StorageTarget } from '../../../../platform/storage/common/storage.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
-import { IMCPServerConfig, MCPServerConfigSchema, MCP_CONFIG_KEY, MCP_CREDENTIAL_KEY_PREFIX } from '../../../../platform/construct/common/mcp/mcpTypes.js';
+import {
+	IMCPServerDefinition,
+	MCPTransportType,
+	MCP_CONFIG_KEY,
+	MCP_CREDENTIALS_PREFIX,
+	MCP_MARKETPLACE_RATINGS_KEY,
+	MCP_INSTALLED_MARKETPLACE_KEY
+} from '../../../../platform/construct/common/mcp/mcpTypes.js';
 
-/**
- * Cline-compatible JSON format.
- * This mirrors the structure of .claude-mcp/settings.json:
- * {
- *   "mcpServers": {
- *     "server-name": {
- *       "command": "...",
- *       "args": [...],
- *       "env": { ... }
- *     }
- *   }
- * }
- */
+/** Cline-compatible .claude-mcp/settings.json format */
 export interface IClineMcpSettings {
-        mcpServers: Record<string, {
-                command?: string;
-                args?: string[];
-                env?: Record<string, string>;
-                url?: string;
-        }>;
+	mcpServers: Record<string, {
+		command?: string;
+		args?: string[];
+		env?: Record<string, string>;
+		url?: string;
+	}>;
+}
+
+interface ISerializedServer {
+	name: string;
+	command: string;
+	args: string[];
+	env: Record<string, string>;
+	transport: string;
+	version?: string;
+	description?: string;
+	categories: string[];
+	installPath?: string;
+	isBuiltin?: boolean;
+	secretEnvKeys?: string[];
 }
 
 export class MCPServerRegistry extends Disposable {
-        private readonly _servers = new Map<string, IMCPServerConfig>();
-        private readonly _onDidChangeServers = this._register(new Emitter<void>());
-        readonly onDidChangeServers: Event<void> = this._onDidChangeServers.event;
+	private servers = new Map<string, IMCPServerDefinition>();
+	private marketplaceRatings = new Map<string, number>();
+	private installedMarketplaceItems = new Set<string>();
+	/** Track which credential keys we've stored so we can clean them up */
+	private credentialKeys = new Map<string, string[]>();
 
-        private _loaded: boolean = false;
+	private readonly _onDidChangeServers = this._register(new Emitter<void>());
+	readonly onDidChangeServers: Event<void> = this._onDidChangeServers.event;
 
-        constructor(
-                @IConfigurationService private readonly _configurationService: IConfigurationService,
-                @ISecretStorageService private readonly _secretStorageService: ISecretStorageService,
-                @ILogService private readonly _logService: ILogService,
-        ) {
-                super();
-        }
+	constructor(
+		@IConfigurationService private readonly configurationService: IConfigurationService,
+		@ISecretStorageService private readonly secretStorageService: ISecretStorageService,
+		@IStorageService private readonly storageService: IStorageService,
+		@ILogService private readonly logService: ILogService
+	) {
+		super();
+		this.loadServers();
+		this.loadMarketplaceData();
+	}
 
-        // ─── Loading ──────────────────────────────────────────────────────────
+	// ─── Loading ──────────────────────────────────────────────────────────
 
-        async ensureLoaded(): Promise<void> {
-                if (this._loaded) { return; }
-                await this._loadFromConfiguration();
-                this._loaded = true;
-        }
+	private loadServers(): void {
+		try {
+			const config = this.configurationService.getValue<ISerializedServer[]>(MCP_CONFIG_KEY) ?? [];
+			for (const serialized of config) {
+				const server: IMCPServerDefinition = {
+					name: serialized.name,
+					command: serialized.command,
+					args: serialized.args ?? [],
+					env: serialized.env ?? {},
+					transport: serialized.transport as MCPTransportType,
+					version: serialized.version,
+					description: serialized.description,
+					categories: serialized.categories ?? [],
+					installPath: serialized.installPath,
+					isBuiltin: serialized.isBuiltin ?? false,
+					secretEnvKeys: serialized.secretEnvKeys
+				};
+				this.servers.set(server.name, server);
+			}
+			this.logService.info(`[MCP Registry] Loaded ${this.servers.size} servers`);
+		} catch (error) {
+			this.logService.error('[MCP Registry] Failed to load servers:', error);
+		}
+	}
 
-        private async _loadFromConfiguration(): Promise<void> {
-                const configData = this._configurationService.getValue<Record<string, IMCPServerConfig>>(MCP_CONFIG_KEY);
-                if (!configData || typeof configData !== 'object') {
-                        this._logService.trace('[MCP Registry] No server configurations found');
-                        return;
-                }
+	private loadMarketplaceData(): void {
+		try {
+			const ratingsRaw = this.storageService.get(MCP_MARKETPLACE_RATINGS_KEY, StorageScope.APPLICATION);
+			if (ratingsRaw) {
+				const ratings: Record<string, number> = JSON.parse(ratingsRaw);
+				this.marketplaceRatings = new Map(Object.entries(ratings));
+			}
 
-                for (const [name, rawConfig] of Object.entries(configData)) {
-                        try {
-                                // Zod validation on load
-                                const validatedConfig = MCPServerConfigSchema.parse({
-                                        ...(rawConfig as Record<string, unknown>),
-                                        name,
-                                });
+			const installedRaw = this.storageService.get(MCP_INSTALLED_MARKETPLACE_KEY, StorageScope.APPLICATION);
+			if (installedRaw) {
+				const installed: string[] = JSON.parse(installedRaw);
+				this.installedMarketplaceItems = new Set(installed);
+			}
+		} catch (error) {
+			this.logService.error('[MCP Registry] Failed to load marketplace data:', error);
+		}
+	}
 
-                                // Merge in credentials from SecretStorage
-                                if (validatedConfig.credentials?.length) {
-                                        for (const cred of validatedConfig.credentials) {
-                                                const secretValue = await this._secretStorageService.get(`${MCP_CREDENTIAL_KEY_PREFIX}${name}.${cred.key}`);
-                                                if (secretValue && validatedConfig.env) {
-                                                        validatedConfig.env[cred.key] = secretValue;
-                                                }
-                                        }
-                                }
+	// ─── Server CRUD ──────────────────────────────────────────────────────
 
-                                this._servers.set(name, validatedConfig);
-                        } catch (validationError) {
-                                this._logService.error(`[MCP Registry] Invalid config for server "${name}": ${validationError}`);
-                        }
-                }
+	async addServer(def: IMCPServerDefinition): Promise<void> {
+		if (!def.name || !def.command) {
+			throw new Error('Server definition must have name and command');
+		}
 
-                this._logService.info(`[MCP Registry] Loaded ${this._servers.size} server configurations`);
-        }
+		// Store credentials in SecretStorage, NEVER plaintext
+		const envPlain: Record<string, string> = {};
+		const secretKeys: string[] = [];
 
-        // ─── CRUD Operations ──────────────────────────────────────────────────
+		for (const [key, value] of Object.entries(def.env)) {
+			if (this.looksLikeSecret(key, value)) {
+				await this.secretStorageService.set(`${MCP_CREDENTIALS_PREFIX}${def.name}.${key}`, value);
+				secretKeys.push(key);
+			} else {
+				envPlain[key] = value;
+			}
+		}
 
-        getServer(name: string): IMCPServerConfig | undefined {
-                return this._servers.get(name);
-        }
+		this.credentialKeys.set(def.name, secretKeys);
+		this.servers.set(def.name, def);
+		await this.saveServers();
+		this._onDidChangeServers.fire();
 
-        getAllServers(): IMCPServerConfig[] {
-                return [...this._servers.values()];
-        }
+		this.logService.info(`[MCP Registry] Added server ${def.name}`);
+	}
 
-        hasServer(name: string): boolean {
-                return this._servers.has(name);
-        }
+	async removeServer(name: string): Promise<void> {
+		// Clean up credentials from SecretStorage
+		const secretKeys = this.credentialKeys.get(name) ?? [];
+		for (const key of secretKeys) {
+			await this.secretStorageService.delete(`${MCP_CREDENTIALS_PREFIX}${name}.${key}`);
+		}
+		this.credentialKeys.delete(name);
 
-        async registerServer(config: IMCPServerConfig): Promise<void> {
-                // Validate with Zod
-                const validatedConfig = MCPServerConfigSchema.parse(config);
+		this.servers.delete(name);
+		await this.saveServers();
+		this._onDidChangeServers.fire();
 
-                // Store credentials in SecretStorage, never plaintext
-                if (validatedConfig.credentials?.length) {
-                        for (const cred of validatedConfig.credentials) {
-                                const envValue = validatedConfig.env?.[cred.key];
-                                if (envValue) {
-                                        await this._secretStorageService.set(`${MCP_CREDENTIAL_KEY_PREFIX}${validatedConfig.name}.${cred.key}`, envValue);
-                                        // Remove from the config that gets stored in settings
-                                        delete validatedConfig.env![cred.key];
-                                }
-                        }
-                }
+		this.logService.info(`[MCP Registry] Removed server ${name}`);
+	}
 
-                this._servers.set(validatedConfig.name, validatedConfig);
-                await this._persistToConfiguration();
-                this._onDidChangeServers.fire();
+	async getServer(name: string): Promise<IMCPServerDefinition | undefined> {
+		const server = this.servers.get(name);
+		if (!server) { return undefined; }
 
-                this._logService.info(`[MCP Registry] Registered server "${validatedConfig.name}"`);
-        }
+		// Merge credentials from SecretStorage
+		const env = { ...server.env };
+		const secretKeys = this.credentialKeys.get(name) ?? [];
+		for (const key of secretKeys) {
+			const value = await this.secretStorageService.get(`${MCP_CREDENTIALS_PREFIX}${name}.${key}`);
+			if (value) {
+				env[key] = value;
+			}
+		}
 
-        async unregisterServer(name: string): Promise<void> {
-                if (!this._servers.has(name)) {
-                        return;
-                }
+		return { ...server, env };
+	}
 
-                // Clean up stored credentials
-                const config = this._servers.get(name)!;
-                if (config.credentials?.length) {
-                        for (const cred of config.credentials) {
-                                await this._secretStorageService.delete(`${MCP_CREDENTIAL_KEY_PREFIX}${name}.${cred.key}`);
-                        }
-                }
+	getAllServers(): IMCPServerDefinition[] {
+		return Array.from(this.servers.values());
+	}
 
-                this._servers.delete(name);
-                await this._persistToConfiguration();
-                this._onDidChangeServers.fire();
+	hasServer(name: string): boolean {
+		return this.servers.has(name);
+	}
 
-                this._logService.info(`[MCP Registry] Unregistered server "${name}"`);
-        }
+	private async saveServers(): Promise<void> {
+		const serialized: ISerializedServer[] = Array.from(this.servers.values()).map(s => ({
+			name: s.name,
+			command: s.command,
+			args: s.args,
+			env: s.env,
+			transport: s.transport,
+			version: s.version,
+			description: s.description,
+			categories: s.categories,
+			installPath: s.installPath,
+			isBuiltin: s.isBuiltin,
+			secretEnvKeys: this.credentialKeys.get(s.name) ?? []
+		}));
 
-        async updateServer(name: string, updates: Partial<IMCPServerConfig>): Promise<void> {
-                const existing = this._servers.get(name);
-                if (!existing) {
-                        throw new Error(`Server "${name}" is not registered`);
-                }
+		await this.configurationService.updateValue(MCP_CONFIG_KEY, serialized);
+	}
 
-                const merged = { ...existing, ...updates, name }; // name is immutable
-                const validatedConfig = MCPServerConfigSchema.parse(merged);
-                this._servers.set(name, validatedConfig);
-                await this._persistToConfiguration();
-                this._onDidChangeServers.fire();
-        }
+	/** Detect likely secrets by key name patterns. */
+	private looksLikeSecret(key: string, value: string): boolean {
+		const secretPatterns = [
+			/api[_-]?key/i,
+			/token/i,
+			/secret/i,
+			/password/i,
+			/auth/i,
+			/credential/i,
+			/private/i
+		];
+		return secretPatterns.some(p => p.test(key)) ||
+			(value.length > 20 && !value.includes(' '));
+	}
 
-        // ─── Cline Compatibility ──────────────────────────────────────────────
+	// ─── Cline Compatibility ──────────────────────────────────────────────
 
-        /**
-         * Export the registry in Cline-compatible format (.claude-mcp/settings.json).
-         */
-        toClineFormat(): IClineMcpSettings {
-                const mcpServers: IClineMcpSettings['mcpServers'] = {};
+	/** Export in .claude-mcp/settings.json format. */
+	toClineFormat(): IClineMcpSettings {
+		const mcpServers: IClineMcpSettings['mcpServers'] = {};
+		for (const [name, config] of this.servers) {
+			mcpServers[name] = {};
+			if (config.command) { mcpServers[name].command = config.command; }
+			if (config.args) { mcpServers[name].args = config.args; }
+			if (config.env) { mcpServers[name].env = config.env; }
+			if (config.transport === MCPTransportType.SSE) { mcpServers[name].url = config.command; }
+		}
+		return { mcpServers };
+	}
 
-                for (const [name, config] of this._servers) {
-                        mcpServers[name] = {};
-                        if (config.command) { mcpServers[name].command = config.command; }
-                        if (config.args) { mcpServers[name].args = config.args; }
-                        if (config.env) { mcpServers[name].env = config.env; }
-                        if (config.url) { mcpServers[name].url = config.url; }
-                }
+	/** Import from Cline-compatible format. */
+	async fromClineFormat(settings: IClineMcpSettings): Promise<void> {
+		for (const [name, serverConfig] of Object.entries(settings.mcpServers)) {
+			const def: IMCPServerDefinition = {
+				name,
+				command: serverConfig.command ?? serverConfig.url ?? '',
+				args: serverConfig.args ?? [],
+				env: serverConfig.env ?? {},
+				transport: serverConfig.url ? MCPTransportType.SSE : MCPTransportType.Stdio,
+				categories: [],
+				isBuiltin: false
+			};
+			await this.addServer(def);
+		}
+	}
 
-                return { mcpServers };
-        }
+	// ─── Marketplace Data ─────────────────────────────────────────────────
 
-        /**
-         * Import from Cline-compatible format.
-         */
-        async fromClineFormat(settings: IClineMcpSettings): Promise<void> {
-                for (const [name, serverConfig] of Object.entries(settings.mcpServers)) {
-                        const config: IMCPServerConfig = {
-                                name,
-                                command: serverConfig.command,
-                                args: serverConfig.args,
-                                env: serverConfig.env,
-                                url: serverConfig.url,
-                                transport: serverConfig.url ? 'sse' : 'stdio',
-                                enabled: true,
-                                autoRestart: true,
-                        };
-                        await this.registerServer(config);
-                }
-        }
+	async setRating(itemId: string, rating: number): Promise<void> {
+		this.marketplaceRatings.set(itemId, Math.max(1, Math.min(5, rating)));
+		await this.saveMarketplaceData();
+	}
 
-        // ─── Credential Management ────────────────────────────────────────────
+	getRating(itemId: string): number {
+		return this.marketplaceRatings.get(itemId) ?? 0;
+	}
 
-        async getCredential(serverName: string, key: string): Promise<string | undefined> {
-                return this._secretStorageService.get(`${MCP_CREDENTIAL_KEY_PREFIX}${serverName}.${key}`);
-        }
+	async markInstalled(itemId: string): Promise<void> {
+		this.installedMarketplaceItems.add(itemId);
+		await this.saveMarketplaceData();
+	}
 
-        async setCredential(serverName: string, key: string, value: string): Promise<void> {
-                await this._secretStorageService.set(`${MCP_CREDENTIAL_KEY_PREFIX}${serverName}.${key}`, value);
-        }
+	async markUninstalled(itemId: string): Promise<void> {
+		this.installedMarketplaceItems.delete(itemId);
+		await this.saveMarketplaceData();
+	}
 
-        async deleteCredential(serverName: string, key: string): Promise<void> {
-                await this._secretStorageService.delete(`${MCP_CREDENTIAL_KEY_PREFIX}${serverName}.${key}`);
-        }
+	isInstalled(itemId: string): boolean {
+		return this.installedMarketplaceItems.has(itemId);
+	}
 
-        // ─── Persistence ──────────────────────────────────────────────────────
+	private async saveMarketplaceData(): Promise<void> {
+		this.storageService.store(
+			MCP_MARKETPLACE_RATINGS_KEY,
+			JSON.stringify(Object.fromEntries(this.marketplaceRatings)),
+			StorageScope.APPLICATION,
+			StorageTarget.USER
+		);
+		this.storageService.store(
+			MCP_INSTALLED_MARKETPLACE_KEY,
+			JSON.stringify(Array.from(this.installedMarketplaceItems)),
+			StorageScope.APPLICATION,
+			StorageTarget.USER
+		);
+	}
 
-        private async _persistToConfiguration(): Promise<void> {
-                const configData: Record<string, unknown> = {};
-                for (const [name, config] of this._servers) {
-                        // Strip the name field since it's the key
-                        const { name: _, ...rest } = config;
-                        configData[name] = rest;
-                }
+	// ─── Lifecycle ────────────────────────────────────────────────────────
 
-                await this._configurationService.updateValue(MCP_CONFIG_KEY, configData);
-                this._logService.trace(`[MCP Registry] Persisted ${this._servers.size} server configurations`);
-        }
-
-        // ─── Lifecycle ────────────────────────────────────────────────────────
-
-        override dispose(): void {
-                this._servers.clear();
-                super.dispose();
-        }
+	override dispose(): void {
+		this.servers.clear();
+		super.dispose();
+	}
 }

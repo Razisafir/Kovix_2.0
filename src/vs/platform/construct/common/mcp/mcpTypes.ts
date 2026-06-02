@@ -3,157 +3,148 @@
  *  Licensed under the MIT License.
  *--------------------------------------------------------------------------------------------*/
 
-import { z } from 'zod';
+import { Event } from '../../../../base/common/event.js';
+import { IDisposable } from '../../../../base/common/lifecycle.js';
 
-// ─── Zod Schemas for Runtime Validation ──────────────────────────────────────
+// ─── Transport & Connection Enums ──────────────────────────────────────────
 
-export const MCPServerConfigSchema = z.object({
-        name: z.string().min(1),
-        command: z.string().optional(),
-        args: z.array(z.string()).optional(),
-        env: z.record(z.string(), z.string()).optional(),
-        url: z.string().url().optional(),
-        transport: z.enum(['stdio', 'sse', 'streamable-http']),
-        enabled: z.boolean().default(true),
-        autoRestart: z.boolean().default(true),
-        description: z.string().optional(),
-        icon: z.string().optional(),
-        category: z.string().optional(),
-        credentials: z.array(z.object({
-                key: z.string(),
-                required: z.boolean().default(false),
-                description: z.string().optional(),
-        })).optional(),
-});
-
-export type IMCPServerConfig = z.infer<typeof MCPServerConfigSchema>;
-
-export const MCPToolSchema = z.object({
-        name: z.string().min(1),
-        description: z.string().optional(),
-        inputSchema: z.record(z.string(), z.unknown()).optional(),
-        outputSchema: z.record(z.string(), z.unknown()).optional(),
-        annotations: z.record(z.string(), z.unknown()).optional(),
-});
-
-export type IMCPTool = z.infer<typeof MCPToolSchema>;
-
-export const MCPResourceSchema = z.object({
-        uri: z.string().min(1),
-        name: z.string().min(1),
-        description: z.string().optional(),
-        mimeType: z.string().optional(),
-});
-
-export type IMCPResource = z.infer<typeof MCPResourceSchema>;
-
-export const MCPPromptSchema = z.object({
-        name: z.string().min(1),
-        description: z.string().optional(),
-        arguments: z.array(z.object({
-                name: z.string(),
-                description: z.string().optional(),
-                required: z.boolean().optional(),
-        })).optional(),
-});
-
-export type IMCPPrompt = z.infer<typeof MCPPromptSchema>;
-
-// ─── Connection & Health Types ───────────────────────────────────────────────
+export const enum MCPTransportType {
+	Stdio = 'stdio',
+	SSE = 'sse'
+}
 
 export const enum MCPConnectionState {
-        Disconnected = 'disconnected',
-        Connecting = 'connecting',
-        Connected = 'connected',
-        Reconnecting = 'reconnecting',
-        Error = 'error',
-        Stopping = 'stopping',
+	Disconnected = 'disconnected',
+	Connecting = 'connecting',
+	Connected = 'connected',
+	Reconnecting = 'reconnecting',
+	Error = 'error',
+	Stopping = 'stopping'
 }
 
 export const enum MCPHealthStatus {
-        Healthy = 'healthy',
-        Degraded = 'degraded',
-        Unhealthy = 'unhealthy',
-        Unknown = 'unknown',
+	Healthy = 'healthy',
+	Degraded = 'degraded',
+	Unhealthy = 'unhealthy',
+	Unknown = 'unknown'
 }
 
-export interface IMCPHealthCheck {
-        status: MCPHealthStatus;
-        latencyMs: number;
-        lastChecked: number;
-        errorMessage?: string;
-        consecutiveFailures: number;
+// ─── Server Definition ─────────────────────────────────────────────────────
+
+export interface IMCPServerDefinition {
+	readonly name: string;
+	readonly command: string;
+	readonly args: string[];
+	readonly env: Record<string, string>;
+	readonly transport: MCPTransportType;
+	readonly version?: string;
+	readonly description?: string;
+	readonly categories: string[];
+	readonly installPath?: string;
+	readonly isBuiltin?: boolean;
+	readonly enabled?: boolean;
+	readonly autoRestart?: boolean;
+	readonly icon?: string;
+	/** Keys that should be stored in ISecretStorage (never plaintext) */
+	readonly secretEnvKeys?: string[];
 }
 
-// ─── Marketplace Types ───────────────────────────────────────────────────────
+// ─── Tool, Resource, Prompt ────────────────────────────────────────────────
 
-export const enum MCPServerCategory {
-        FileSystem = 'filesystem',
-        Browser = 'browser',
-        Database = 'database',
-        Search = 'search',
-        Communication = 'communication',
-        DevTools = 'devtools',
-        Design = 'design',
-        Data = 'data',
+export interface IMCPTool {
+	readonly name: string;
+	readonly description: string;
+	readonly inputSchema: object;
+	readonly serverName: string;
 }
 
-export const MCP_CATEGORIES: readonly { id: MCPServerCategory; label: string }[] = [
-        { id: MCPServerCategory.FileSystem, label: 'File System' },
-        { id: MCPServerCategory.Browser, label: 'Browser Automation' },
-        { id: MCPServerCategory.Database, label: 'Database' },
-        { id: MCPServerCategory.Search, label: 'Search' },
-        { id: MCPServerCategory.Communication, label: 'Communication' },
-        { id: MCPServerCategory.DevTools, label: 'Developer Tools' },
-        { id: MCPServerCategory.Design, label: 'Design' },
-        { id: MCPServerCategory.Data, label: 'Data' },
-];
-
-export interface IMCPMarketplaceEntry {
-        id: string;
-        name: string;
-        description: string;
-        author: string;
-        repository: string;
-        category: MCPServerCategory;
-        icon?: string;
-        featured: boolean;
-        installConfig: IMCPServerConfig;
-        tags: string[];
-        downloads: number;
-        rating: number;
-        ratingCount: number;
-        verified: boolean;
+export interface IMCPResource {
+	readonly uri: string;
+	readonly mimeType: string;
+	readonly name: string;
+	readonly description: string;
+	readonly serverName: string;
 }
 
-export interface IMCPToolExecutionResult {
-        success: boolean;
-        data: unknown;
-        error?: string;
-        executionTimeMs: number;
-        toolName: string;
-        serverName: string;
+export interface IMCPPrompt {
+	readonly name: string;
+	readonly description: string;
+	readonly arguments?: Array<{ name: string; description: string; required?: boolean }>;
+	readonly serverName: string;
 }
 
-export interface IMCPResourceReadResult {
-        uri: string;
-        mimeType?: string;
-        text?: string;
-        blob?: string;
-        cached: boolean;
-        serverName: string;
+// ─── Health & Connection Events ────────────────────────────────────────────
+
+export interface IMCPHealthStatus {
+	readonly serverName: string;
+	readonly status: MCPHealthStatus;
+	readonly lastPing: number;
+	readonly errorCount: number;
+	readonly latencyMs: number;
+	readonly message?: string;
 }
+
+export interface IMCPConnectionEvent {
+	readonly serverName: string;
+	readonly state: MCPConnectionState;
+	readonly timestamp: number;
+	readonly error?: string;
+}
+
+// ─── Marketplace ───────────────────────────────────────────────────────────
+
+export interface IMCPMarketplaceItem {
+	readonly id: string;
+	readonly name: string;
+	readonly description: string;
+	readonly author: string;
+	readonly version: string;
+	readonly categories: string[];
+	readonly tags: string[];
+	readonly rating: number;
+	readonly downloadCount: number;
+	readonly command: string;
+	readonly args: string[];
+	readonly env: Record<string, string>;
+	readonly transport: MCPTransportType;
+	readonly featured?: boolean;
+	readonly iconUrl?: string;
+	readonly documentationUrl?: string;
+	readonly repositoryUrl?: string;
+}
+
+// ─── Execution Results ─────────────────────────────────────────────────────
+
+export interface IMCPExecutionResult {
+	readonly success: boolean;
+	readonly data?: any;
+	readonly error?: string;
+	readonly durationMs: number;
+	readonly toolName: string;
+	readonly serverName: string;
+}
+
+export interface IMCPResourceResult {
+	readonly success: boolean;
+	readonly content?: string;
+	readonly mimeType?: string;
+	readonly error?: string;
+	readonly serverName: string;
+	readonly uri: string;
+}
+
+// ─── Constants ─────────────────────────────────────────────────────────────
 
 export const MCP_REGISTRY_URL = 'https://raw.githubusercontent.com/modelcontextprotocol/servers/main/registry.json';
-
 export const MCP_CONFIG_KEY = 'construct.mcp.servers';
-export const MCP_CREDENTIAL_KEY_PREFIX = 'construct.mcp.credentials.';
+export const MCP_CREDENTIALS_PREFIX = 'construct.mcp.credentials.';
 export const MCP_MARKETPLACE_CACHE_KEY = 'construct.mcp.marketplace.cache';
-export const MCP_RATINGS_KEY = 'construct.mcp.ratings';
+export const MCP_MARKETPLACE_RATINGS_KEY = 'construct.mcp.marketplace.ratings';
+export const MCP_INSTALLED_MARKETPLACE_KEY = 'construct.mcp.marketplace.installed';
 
 export const MCP_MAX_CONCURRENT_SERVERS = 10;
 export const MCP_DEFAULT_TOOL_TIMEOUT_MS = 30_000;
-export const MCP_HEALTH_PING_INTERVAL_MS = 30_000;
+export const MCP_HEALTH_CHECK_INTERVAL_MS = 30_000;
 export const MCP_RESOURCE_CACHE_TTL_MS = 5 * 60 * 1_000; // 5 minutes
 export const MCP_MARKETPLACE_CACHE_TTL_MS = 60 * 60 * 1_000; // 1 hour
 export const MCP_MAX_RESTART_BACKOFF_MS = 60_000;

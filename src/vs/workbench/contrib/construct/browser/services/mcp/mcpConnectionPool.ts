@@ -6,666 +6,436 @@
 import { Disposable, IDisposable } from '../../../../base/common/lifecycle.js';
 import { Emitter, Event } from '../../../../base/common/event.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
-import { ChildProcess, spawn } from 'child_process';
-import { IMCPServerConfig, MCPConnectionState, MCPHealthStatus, IMCPHealthCheck, MCP_MAX_CONCURRENT_SERVERS, MCP_HEALTH_PING_INTERVAL_MS, MCP_RESTART_BACKOFF_BASE_MS, MCP_MAX_RESTART_BACKOFF_MS } from '../../../../platform/construct/common/mcp/mcpTypes.js';
+import {
+	IMCPServerDefinition,
+	MCPTransportType,
+	MCPConnectionState,
+	IMCPConnectionEvent,
+	IMCPHealthStatus,
+	MCPHealthStatus,
+	MCP_MAX_CONCURRENT_SERVERS,
+	MCP_HEALTH_CHECK_INTERVAL_MS,
+	MCP_DEFAULT_TOOL_TIMEOUT_MS,
+	MCP_MAX_RESTART_BACKOFF_MS,
+	MCP_RESTART_BACKOFF_BASE_MS
+} from '../../../../platform/construct/common/mcp/mcpTypes.js';
 
-interface IPooledConnection {
-        readonly name: string;
-        readonly config: IMCPServerConfig;
-        client: unknown | null; // MCP Client instance (typed as unknown to avoid import issues)
-        transport: unknown | null; // MCP Transport instance
-        process: ChildProcess | null;
-        state: MCPConnectionState;
-        health: IMCPHealthCheck;
-        restartAttempts: number;
-        lastRestartTime: number;
-        healthTimer: IDisposable | null;
-        restartTimer: IDisposable | null;
-        tools: unknown[];
-        resources: unknown[];
-        prompts: unknown[];
+interface IConnectionEntry {
+	client: any; // MCP Client instance
+	transport: any; // MCP Transport instance
+	definition: IMCPServerDefinition;
+	state: MCPConnectionState;
+	lastPing: number;
+	errorCount: number;
+	connectedAt?: number;
+	retryCount: number;
+	disposables: IDisposable[];
 }
 
 export class MCPConnectionPool extends Disposable {
-        private readonly _connections = new Map<string, IPooledConnection>();
-        private readonly _onDidChangeConnection = this._register(new Emitter<{ serverName: string; state: MCPConnectionState }>());
-        readonly onDidChangeConnection: Event<{ serverName: string; state: MCPConnectionState }> = this._onDidChangeConnection.event;
-
-        private readonly _onDidChangeHealth = this._register(new Emitter<{ serverName: string; health: IMCPHealthCheck }>());
-        readonly onDidChangeHealth: Event<{ serverName: string; health: IMCPHealthCheck }> = this._onDidChangeHealth.event;
-
-        private readonly _onDidDiscoverTools = this._register(new Emitter<{ serverName: string; tools: unknown[] }>());
-        readonly onDidDiscoverTools: Event<{ serverName: string; tools: unknown[] }> = this._onDidDiscoverTools.event;
-
-        constructor(
-                @ILogService private readonly _logService: ILogService,
-        ) {
-                super();
-        }
-
-        // ─── Connection Management ────────────────────────────────────────────
-
-        get activeConnectionCount(): number {
-                let count = 0;
-                for (const conn of this._connections.values()) {
-                        if (conn.state === MCPConnectionState.Connected || conn.state === MCPConnectionState.Connecting) {
-                                count++;
-                        }
-                }
-                return count;
-        }
-
-        canConnect(): boolean {
-                return this.activeConnectionCount < MCP_MAX_CONCURRENT_SERVERS;
-        }
-
-        getConnection(name: string): IPooledConnection | undefined {
-                return this._connections.get(name);
-        }
-
-        getConnectionState(name: string): MCPConnectionState {
-                return this._connections.get(name)?.state ?? MCPConnectionState.Disconnected;
-        }
-
-        getHealth(name: string): IMCPHealthCheck | undefined {
-                return this._connections.get(name)?.health;
-        }
-
-        getAllConnections(): ReadonlyMap<string, IPooledConnection> {
-                return this._connections;
-        }
-
-        async connect(name: string, config: IMCPServerConfig): Promise<void> {
-                if (this._connections.has(name)) {
-                        const existing = this._connections.get(name)!;
-                        if (existing.state === MCPConnectionState.Connected) {
-                                this._logService.warn(`[MCP] Server "${name}" is already connected`);
-                                return;
-                        }
-                        await this.disconnect(name);
-                }
-
-                if (!this.canConnect()) {
-                        throw new Error(`Cannot connect to "${name}": maximum concurrent connections (${MCP_MAX_CONCURRENT_SERVERS}) reached. Stop another server first.`);
-                }
-
-                const connection: IPooledConnection = {
-                        name,
-                        config,
-                        client: null,
-                        transport: null,
-                        process: null,
-                        state: MCPConnectionState.Connecting,
-                        health: {
-                                status: MCPHealthStatus.Unknown,
-                                latencyMs: -1,
-                                lastChecked: 0,
-                                consecutiveFailures: 0,
-                        },
-                        restartAttempts: 0,
-                        lastRestartTime: 0,
-                        healthTimer: null,
-                        restartTimer: null,
-                        tools: [],
-                        resources: [],
-                        prompts: [],
-                };
-
-                this._connections.set(name, connection);
-                this._fireConnectionState(name, MCPConnectionState.Connecting);
-
-                try {
-                        if (config.transport === 'stdio') {
-                                await this._connectStdio(connection);
-                        } else if (config.transport === 'sse') {
-                                await this._connectSSE(connection);
-                        } else {
-                                throw new Error(`Unsupported transport: ${config.transport}`);
-                        }
-
-                        connection.restartAttempts = 0;
-                        this._fireConnectionState(name, MCPConnectionState.Connected);
-                        this._startHealthMonitor(name);
-
-                        // Discover tools after connection
-                        await this._discoverTools(connection);
-
-                } catch (error) {
-                        this._logService.error(`[MCP] Failed to connect to "${name}": ${error}`);
-                        this._fireConnectionState(name, MCPConnectionState.Error);
-                        connection.health.status = MCPHealthStatus.Unhealthy;
-                        connection.health.errorMessage = String(error);
-                        this._updateHealth(name, connection.health);
-
-                        // Auto-restart if enabled
-                        if (config.autoRestart) {
-                                this._scheduleRestart(name);
-                        }
-
-                        throw error;
-                }
-        }
-
-        async disconnect(name: string): Promise<void> {
-                const connection = this._connections.get(name);
-                if (!connection) {
-                        return;
-                }
-
-                this._fireConnectionState(name, MCPConnectionState.Stopping);
-
-                // Cancel timers
-                connection.healthTimer?.dispose();
-                connection.healthTimer = null;
-                connection.restartTimer?.dispose();
-                connection.restartTimer = null;
-
-                try {
-                        // Close the MCP client if it exists
-                        if (connection.client && typeof (connection.client as any).close === 'function') {
-                                await (connection.client as any).close();
-                        }
-
-                        // Close the transport if it exists
-                        if (connection.transport && typeof (connection.transport as any).close === 'function') {
-                                await (connection.transport as any).close();
-                        }
-                } catch (error) {
-                        this._logService.warn(`[MCP] Error closing transport for "${name}": ${error}`);
-                }
-
-                // Kill the child process if stdio
-                if (connection.process && !connection.process.killed) {
-                        try {
-                                connection.process.kill('SIGTERM');
-                                // Give it 5 seconds to exit gracefully
-                                const timeout = setTimeout(() => {
-                                        if (connection.process && !connection.process.killed) {
-                                                connection.process.kill('SIGKILL');
-                                        }
-                                }, 5000);
-                                connection.process.on('exit', () => clearTimeout(timeout));
-                        } catch (error) {
-                                this._logService.warn(`[MCP] Error killing process for "${name}": ${error}`);
-                        }
-                        connection.process = null;
-                }
-
-                connection.client = null;
-                connection.transport = null;
-                connection.state = MCPConnectionState.Disconnected;
-                connection.tools = [];
-                connection.resources = [];
-                connection.prompts = [];
-
-                this._fireConnectionState(name, MCPConnectionState.Disconnected);
-        }
-
-        async disconnectAll(): Promise<void> {
-                const names = [...this._connections.keys()];
-                await Promise.allSettled(names.map(n => this.disconnect(n)));
-        }
-
-        // ─── Tool Execution ───────────────────────────────────────────────────
-
-        async executeTool(name: string, toolName: string, args: Record<string, unknown>, timeoutMs: number): Promise<unknown> {
-                const connection = this._connections.get(name);
-                if (!connection || !connection.client) {
-                        throw new Error(`Server "${name}" is not connected`);
-                }
-                if (connection.state !== MCPConnectionState.Connected) {
-                        throw new Error(`Server "${name}" is not in connected state (state: ${connection.state})`);
-                }
-
-                const client = connection.client as any;
-                const startTime = Date.now();
-
-                return new Promise<unknown>((resolve, reject) => {
-                        const timer = setTimeout(() => {
-                                reject(new Error(`Tool "${toolName}" timed out after ${timeoutMs}ms`));
-                        }, timeoutMs);
-
-                        client.callTool({ name: toolName, arguments: args })
-                                .then((result: any) => {
-                                        clearTimeout(timer);
-                                        const executionTimeMs = Date.now() - startTime;
-                                        this._logService.trace(`[MCP] Tool "${toolName}" on "${name}" completed in ${executionTimeMs}ms`);
-                                        resolve(result);
-                                })
-                                .catch((error: any) => {
-                                        clearTimeout(timer);
-                                        reject(error);
-                                });
-                });
-        }
-
-        // ─── Resource Reading ─────────────────────────────────────────────────
-
-        async readResource(name: string, uri: string): Promise<unknown> {
-                const connection = this._connections.get(name);
-                if (!connection || !connection.client) {
-                        throw new Error(`Server "${name}" is not connected`);
-                }
-                const client = connection.client as any;
-                return client.readResource({ uri });
-        }
-
-        // ─── List Operations ──────────────────────────────────────────────────
-
-        async listTools(name: string): Promise<unknown[]> {
-                const connection = this._connections.get(name);
-                if (!connection || !connection.client) {
-                        throw new Error(`Server "${name}" is not connected`);
-                }
-                const client = connection.client as any;
-                const result = await client.listTools();
-                connection.tools = result?.tools ?? [];
-                return connection.tools;
-        }
-
-        async listResources(name: string): Promise<unknown[]> {
-                const connection = this._connections.get(name);
-                if (!connection || !connection.client) {
-                        throw new Error(`Server "${name}" is not connected`);
-                }
-                const client = connection.client as any;
-                const result = await client.listResources();
-                connection.resources = result?.resources ?? [];
-                return connection.resources;
-        }
-
-        async listPrompts(name: string): Promise<unknown[]> {
-                const connection = this._connections.get(name);
-                if (!connection || !connection.client) {
-                        throw new Error(`Server "${name}" is not connected`);
-                }
-                const client = connection.client as any;
-                const result = await client.listPrompts();
-                connection.prompts = result?.prompts ?? [];
-                return connection.prompts;
-        }
-
-        // ─── Private: Connection Methods ──────────────────────────────────────
-
-        private async _connectStdio(connection: IPooledConnection): Promise<void> {
-                const { config, name } = connection;
-
-                if (!config.command) {
-                        throw new Error(`Stdio server "${name}" requires a "command" in its config`);
-                }
-
-                this._logService.info(`[MCP] Starting stdio server "${name}": ${config.command} ${(config.args ?? []).join(' ')}`);
-
-                // Spawn the child process with proper cleanup on dispose
-                const childProcess = spawn(config.command, config.args ?? [], {
-                        env: { ...process.env as Record<string, string>, ...config.env },
-                        stdio: ['pipe', 'pipe', 'pipe'],
-                        cwd: config.env?.cwd,
-                });
-
-                connection.process = childProcess;
-
-                // Set up cleanup handlers
-                childProcess.on('error', (error) => {
-                        this._logService.error(`[MCP] Process error for "${name}": ${error.message}`);
-                        this._handleConnectionError(name, error);
-                });
-
-                childProcess.on('exit', (code, signal) => {
-                        this._logService.info(`[MCP] Process for "${name}" exited with code ${code}, signal ${signal}`);
-                        if (connection.state === MCPConnectionState.Connected) {
-                                this._handleConnectionError(name, new Error(`Process exited unexpectedly with code ${code}`));
-                        }
-                });
-
-                // Log stderr output
-                if (childProcess.stderr) {
-                        childProcess.stderr.on('data', (data: Buffer) => {
-                                this._logService.trace(`[MCP] stderr[${name}]: ${data.toString().trim()}`);
-                        });
-                }
-
-                // Create the MCP SDK stdio transport and client
-                try {
-                        const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
-                        const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
-
-                        const transport = new StdioClientTransport({
-                                command: config.command,
-                                args: config.args,
-                                env: { ...process.env as Record<string, string>, ...config.env },
-                        });
-
-                        // Close the spawned process since the SDK will spawn its own
-                        if (childProcess && !childProcess.killed) {
-                                childProcess.kill('SIGTERM');
-                        }
-                        connection.process = null;
-
-                        const client = new Client(
-                                { name: 'construct-ide', version: '1.0.0' },
-                                { capabilities: {} }
-                        );
-
-                        await client.connect(transport);
-
-                        connection.client = client;
-                        connection.transport = transport;
-
-                        // Track the SDK's child process via transport
-                        const pid = (transport as any).pid;
-                        if (pid) {
-                                this._logService.info(`[MCP] Stdio server "${name}" started with PID ${pid}`);
-                        }
-                } catch (importError) {
-                        // If MCP SDK is not available, fall back to raw process management
-                        this._logService.warn(`[MCP] MCP SDK import failed for "${name}", using raw process mode: ${importError}`);
-                        connection.client = this._createRawStdioClient(connection);
-                        connection.transport = null;
-                }
-        }
-
-        private async _connectSSE(connection: IPooledConnection): Promise<void> {
-                const { config, name } = connection;
-
-                if (!config.url) {
-                        throw new Error(`SSE server "${name}" requires a "url" in its config`);
-                }
-
-                this._logService.info(`[MCP] Connecting to SSE server "${name}" at ${config.url}`);
-
-                try {
-                        const { SSEClientTransport } = await import('@modelcontextprotocol/sdk/client/sse.js');
-                        const { Client } = await import('@modelcontextprotocol/sdk/client/index.js');
-
-                        const url = new URL(config.url);
-                        const transport = new SSEClientTransport(url);
-                        const client = new Client(
-                                { name: 'construct-ide', version: '1.0.0' },
-                                { capabilities: {} }
-                        );
-
-                        await client.connect(transport);
-
-                        connection.client = client;
-                        connection.transport = transport;
-                } catch (importError) {
-                        this._logService.warn(`[MCP] MCP SDK import failed for SSE "${name}": ${importError}`);
-                        throw new Error(`Failed to connect SSE server "${name}": ${importError}`);
-                }
-        }
-
-        /**
-         * Creates a minimal client-like wrapper for raw stdio processes
-         * when the MCP SDK cannot be imported.
-         */
-        private _createRawStdioClient(connection: IPooledConnection): any {
-                const proc = connection.process;
-                if (!proc || !proc.stdin || !proc.stdout) {
-                        throw new Error('Cannot create raw stdio client: process streams not available');
-                }
-
-                let messageId = 0;
-                const pendingRequests = new Map<number, { resolve: (value: any) => void; reject: (error: any) => void }>();
-                let buffer = '';
-
-                proc.stdout!.on('data', (data: Buffer) => {
-                        buffer += data.toString();
-                        const lines = buffer.split('\n');
-                        buffer = lines.pop() ?? '';
-
-                        for (const line of lines) {
-                                if (!line.trim()) { continue; }
-                                try {
-                                        const message = JSON.parse(line);
-                                        const pending = pendingRequests.get(message.id);
-                                        if (pending) {
-                                                pendingRequests.delete(message.id);
-                                                if (message.error) {
-                                                        pending.reject(new Error(message.error.message ?? 'Unknown error'));
-                                                } else {
-                                                        pending.resolve(message.result);
-                                                }
-                                        }
-                                } catch {
-                                        // Not a JSON line, ignore
-                                }
-                        }
-                });
-
-                return {
-                        callTool: (params: { name: string; arguments: Record<string, unknown> }) => {
-                                return new Promise((resolve, reject) => {
-                                        const id = ++messageId;
-                                        pendingRequests.set(id, { resolve, reject });
-                                        const request = {
-                                                jsonrpc: '2.0',
-                                                id,
-                                                method: 'tools/call',
-                                                params,
-                                        };
-                                        proc.stdin!.write(JSON.stringify(request) + '\n');
-
-                                        // Timeout handled by caller
-                                        setTimeout(() => {
-                                                if (pendingRequests.has(id)) {
-                                                        pendingRequests.delete(id);
-                                                        reject(new Error('Request timed out'));
-                                                }
-                                        }, 60_000);
-                                });
-                        },
-                        listTools: () => {
-                                return new Promise((resolve, reject) => {
-                                        const id = ++messageId;
-                                        pendingRequests.set(id, { resolve, reject });
-                                        const request = {
-                                                jsonrpc: '2.0',
-                                                id,
-                                                method: 'tools/list',
-                                                params: {},
-                                        };
-                                        proc.stdin!.write(JSON.stringify(request) + '\n');
-
-                                        setTimeout(() => {
-                                                if (pendingRequests.has(id)) {
-                                                        pendingRequests.delete(id);
-                                                        reject(new Error('Request timed out'));
-                                                }
-                                        }, 30_000);
-                                });
-                        },
-                        listResources: () => {
-                                return new Promise((resolve, reject) => {
-                                        const id = ++messageId;
-                                        pendingRequests.set(id, { resolve, reject });
-                                        proc.stdin!.write(JSON.stringify({ jsonrpc: '2.0', id, method: 'resources/list', params: {} }) + '\n');
-                                        setTimeout(() => {
-                                                if (pendingRequests.has(id)) {
-                                                        pendingRequests.delete(id);
-                                                        reject(new Error('Request timed out'));
-                                                }
-                                        }, 30_000);
-                                });
-                        },
-                        readResource: (params: { uri: string }) => {
-                                return new Promise((resolve, reject) => {
-                                        const id = ++messageId;
-                                        pendingRequests.set(id, { resolve, reject });
-                                        proc.stdin!.write(JSON.stringify({ jsonrpc: '2.0', id, method: 'resources/read', params }) + '\n');
-                                        setTimeout(() => {
-                                                if (pendingRequests.has(id)) {
-                                                        pendingRequests.delete(id);
-                                                        reject(new Error('Request timed out'));
-                                                }
-                                        }, 30_000);
-                                });
-                        },
-                        listPrompts: () => {
-                                return new Promise((resolve, reject) => {
-                                        const id = ++messageId;
-                                        pendingRequests.set(id, { resolve, reject });
-                                        proc.stdin!.write(JSON.stringify({ jsonrpc: '2.0', id, method: 'prompts/list', params: {} }) + '\n');
-                                        setTimeout(() => {
-                                                if (pendingRequests.has(id)) {
-                                                        pendingRequests.delete(id);
-                                                        reject(new Error('Request timed out'));
-                                                }
-                                        }, 30_000);
-                                });
-                        },
-                        close: async () => {
-                                pendingRequests.clear();
-                                if (proc && !proc.killed) {
-                                        proc.kill('SIGTERM');
-                                }
-                        },
-                        connect: async () => { /* already connected */ },
-                };
-        }
-
-        // ─── Private: Tool Discovery ──────────────────────────────────────────
-
-        private async _discoverTools(connection: IPooledConnection): Promise<void> {
-                try {
-                        if (connection.client && typeof (connection.client as any).listTools === 'function') {
-                                const result = await this.listTools(connection.name);
-                                connection.tools = result;
-                                this._onDidDiscoverTools.fire({ serverName: connection.name, tools: result });
-                        }
-                } catch (error) {
-                        this._logService.warn(`[MCP] Failed to discover tools for "${connection.name}": ${error}`);
-                }
-        }
-
-        // ─── Private: Health Monitoring ───────────────────────────────────────
-
-        private _startHealthMonitor(name: string): void {
-                const connection = this._connections.get(name);
-                if (!connection) { return; }
-
-                connection.healthTimer?.dispose();
-
-                const interval = setInterval(() => {
-                        this._performHealthCheck(name).catch(error => {
-                                this._logService.trace(`[MCP] Health check failed for "${name}": ${error}`);
-                        });
-                }, MCP_HEALTH_PING_INTERVAL_MS);
-
-                connection.healthTimer = {
-                        dispose: () => clearInterval(interval),
-                };
-        }
-
-        private async _performHealthCheck(name: string): Promise<void> {
-                const connection = this._connections.get(name);
-                if (!connection || connection.state !== MCPConnectionState.Connected) { return; }
-
-                const startTime = Date.now();
-                const previousHealth = { ...connection.health };
-
-                try {
-                        // Try listing tools as a health check
-                        if (connection.client && typeof (connection.client as any).listTools === 'function') {
-                                await (connection.client as any).listTools();
-                        }
-
-                        const latencyMs = Date.now() - startTime;
-                        connection.health = {
-                                status: latencyMs < 1000 ? MCPHealthStatus.Healthy : MCPHealthStatus.Degraded,
-                                latencyMs,
-                                lastChecked: Date.now(),
-                                consecutiveFailures: 0,
-                        };
-                } catch (error) {
-                        connection.health = {
-                                status: MCPHealthStatus.Unhealthy,
-                                latencyMs: -1,
-                                lastChecked: Date.now(),
-                                consecutiveFailures: previousHealth.consecutiveFailures + 1,
-                                errorMessage: String(error),
-                        };
-                }
-
-                this._updateHealth(name, connection.health);
-        }
-
-        private _updateHealth(name: string, health: IMCPHealthCheck): void {
-                this._onDidChangeHealth.fire({ serverName: name, health });
-        }
-
-        // ─── Private: Auto-Restart with Exponential Backoff ───────────────────
-
-        private _scheduleRestart(name: string): void {
-                const connection = this._connections.get(name);
-                if (!connection) { return; }
-
-                connection.restartTimer?.dispose();
-
-                const backoffMs = Math.min(
-                        MCP_RESTART_BACKOFF_BASE_MS * Math.pow(2, connection.restartAttempts),
-                        MCP_MAX_RESTART_BACKOFF_MS
-                );
-
-                this._logService.info(`[MCP] Scheduling restart for "${name}" in ${backoffMs}ms (attempt ${connection.restartAttempts + 1})`);
-
-                const timer = setTimeout(async () => {
-                        connection.restartAttempts++;
-                        connection.lastRestartTime = Date.now();
-                        try {
-                                await this.disconnect(name);
-                                await this.connect(name, connection.config);
-                        } catch (error) {
-                                this._logService.error(`[MCP] Auto-restart failed for "${name}": ${error}`);
-                        }
-                }, backoffMs);
-
-                connection.restartTimer = {
-                        dispose: () => clearTimeout(timer),
-                };
-        }
-
-        private _handleConnectionError(name: string, error: Error): void {
-                const connection = this._connections.get(name);
-                if (!connection) { return; }
-
-                if (connection.state === MCPConnectionState.Connected || connection.state === MCPConnectionState.Connecting) {
-                        this._fireConnectionState(name, MCPConnectionState.Error);
-                        connection.health.status = MCPHealthStatus.Unhealthy;
-                        connection.health.errorMessage = error.message;
-                        this._updateHealth(name, connection.health);
-
-                        if (connection.config.autoRestart) {
-                                this._scheduleRestart(name);
-                        }
-                }
-        }
-
-        private _fireConnectionState(name: string, state: MCPConnectionState): void {
-                const connection = this._connections.get(name);
-                if (connection) {
-                        connection.state = state;
-                }
-                this._onDidChangeConnection.fire({ serverName: name, state });
-        }
-
-        // ─── Lifecycle ────────────────────────────────────────────────────────
-
-        override dispose(): void {
-                for (const connection of this._connections.values()) {
-                        connection.healthTimer?.dispose();
-                        connection.restartTimer?.dispose();
-                        if (connection.process && !connection.process.killed) {
-                                connection.process.kill('SIGKILL');
-                        }
-                        if (connection.client && typeof (connection.client as any).close === 'function') {
-                                (connection.client as any).close().catch(() => { });
-                        }
-                        if (connection.transport && typeof (connection.transport as any).close === 'function') {
-                                (connection.transport as any).close().catch(() => { });
-                        }
-                }
-                this._connections.clear();
-                super.dispose();
-        }
+	private connections = new Map<string, IConnectionEntry>();
+	private readonly maxConcurrentServers = MCP_MAX_CONCURRENT_SERVERS;
+	private readonly healthCheckIntervalMs = MCP_HEALTH_CHECK_INTERVAL_MS;
+	private readonly defaultTimeoutMs = MCP_DEFAULT_TOOL_TIMEOUT_MS;
+	private readonly maxRetryDelayMs = MCP_MAX_RESTART_BACKOFF_MS;
+
+	private readonly _onConnectionChange = this._register(new Emitter<IMCPConnectionEvent>());
+	readonly onConnectionChange: Event<IMCPConnectionEvent> = this._onConnectionChange.event;
+
+	private readonly _onHealthUpdate = this._register(new Emitter<IMCPHealthStatus>());
+	readonly onHealthUpdate: Event<IMCPHealthStatus> = this._onHealthUpdate.event;
+
+	private healthCheckTimer: IDisposable | undefined;
+
+	constructor(
+		@ILogService private readonly logService: ILogService
+	) {
+		super();
+		this.startHealthChecks();
+	}
+
+	// ─── Health Checks ────────────────────────────────────────────────────
+
+	private startHealthChecks(): void {
+		const timer = setInterval(() => this.runHealthChecks(), this.healthCheckIntervalMs);
+		this.healthCheckTimer = { dispose: () => clearInterval(timer) };
+	}
+
+	private async runHealthChecks(): Promise<void> {
+		for (const [name, entry] of this.connections) {
+			if (entry.state !== MCPConnectionState.Connected) { continue; }
+
+			try {
+				const pingStart = Date.now();
+				if (entry.client && typeof entry.client.listTools === 'function') {
+					await entry.client.listTools();
+				}
+				const latency = Date.now() - pingStart;
+				entry.lastPing = Date.now();
+
+				const status = entry.errorCount > 2 ? MCPHealthStatus.Degraded : MCPHealthStatus.Healthy;
+				this.emitHealthUpdate(name, status, latency);
+			} catch (error) {
+				entry.errorCount++;
+				const status = entry.errorCount > 5 ? MCPHealthStatus.Unhealthy : MCPHealthStatus.Degraded;
+				this.emitHealthUpdate(name, status, undefined, error instanceof Error ? error.message : String(error));
+			}
+		}
+	}
+
+	// ─── Connection Management ────────────────────────────────────────────
+
+	get activeConnectionCount(): number {
+		let count = 0;
+		for (const entry of this.connections.values()) {
+			if (entry.state === MCPConnectionState.Connected || entry.state === MCPConnectionState.Connecting) {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	canConnect(): boolean {
+		return this.activeConnectionCount < this.maxConcurrentServers;
+	}
+
+	async connect(def: IMCPServerDefinition): Promise<any> {
+		if (this.connections.size >= this.maxConcurrentServers && !this.connections.has(def.name)) {
+			throw new Error(`Connection pool full (max ${this.maxConcurrentServers}). Stop another server first.`);
+		}
+
+		// Disconnect existing if reconnecting
+		if (this.connections.has(def.name)) {
+			await this.disconnect(def.name);
+		}
+
+		this.logService.info(`[MCP] Connecting to ${def.name} via ${def.transport}`);
+
+		let transport: any;
+
+		try {
+			if (def.transport === MCPTransportType.Stdio) {
+				const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
+				transport = new StdioClientTransport({
+					command: def.command,
+					args: def.args,
+					env: { ...process.env as Record<string, string>, ...def.env }
+				});
+			} else {
+				const { SSEClientTransport } = await import('@modelcontextprotocol/sdk/client/sse.js');
+				const url = new URL(def.command); // For SSE, command is the URL
+				transport = new SSEClientTransport(url);
+			}
+		} catch (importError) {
+			this.logService.warn(`[MCP] MCP SDK import failed for ${def.name}, using raw stdio: ${importError}`);
+			transport = null;
+		}
+
+		const { Client } = await import('@modelcontextprotocol/sdk/client/index.js').catch(() => ({ Client: null }));
+		const client = Client ? new Client({ name: 'construct-ide', version: '1.0.0' }) : null;
+
+		const entry: IConnectionEntry = {
+			client,
+			transport,
+			definition: def,
+			state: MCPConnectionState.Connecting,
+			lastPing: Date.now(),
+			errorCount: 0,
+			retryCount: 0,
+			disposables: []
+		};
+
+		this.connections.set(def.name, entry);
+		this.emitConnectionEvent(def.name, MCPConnectionState.Connecting);
+
+		try {
+			if (client && transport) {
+				await client.connect(transport);
+			} else if (def.transport === MCPTransportType.Stdio) {
+				// Fallback raw stdio mode when SDK unavailable
+				await this.connectRawStdio(entry);
+			} else {
+				throw new Error(`Cannot connect to ${def.name}: MCP SDK unavailable and no fallback for ${def.transport}`);
+			}
+
+			entry.state = MCPConnectionState.Connected;
+			entry.connectedAt = Date.now();
+			entry.retryCount = 0;
+			this.emitConnectionEvent(def.name, MCPConnectionState.Connected);
+			this.emitHealthUpdate(def.name, MCPHealthStatus.Healthy);
+
+			this.logService.info(`[MCP] Connected to ${def.name}`);
+		} catch (error) {
+			entry.state = MCPConnectionState.Error;
+			entry.errorCount++;
+			this.emitConnectionEvent(def.name, MCPConnectionState.Error, error instanceof Error ? error.message : String(error));
+			this.emitHealthUpdate(def.name, MCPHealthStatus.Unhealthy, undefined, error instanceof Error ? error.message : String(error));
+
+			this.logService.error(`[MCP] Failed to connect to ${def.name}:`, error);
+			throw error;
+		}
+
+		return client;
+	}
+
+	/**
+	 * Raw stdio fallback when MCP SDK is unavailable.
+	 * Spawns the process and creates a minimal JSON-RPC client.
+	 */
+	private async connectRawStdio(entry: IConnectionEntry): Promise<void> {
+		const { spawn, ChildProcess } = await import('child_process');
+		const def = entry.definition;
+
+		const childProcess: any = spawn(def.command, def.args, {
+			env: { ...process.env as Record<string, string>, ...def.env },
+			stdio: ['pipe', 'pipe', 'pipe']
+		});
+
+		entry.disposables.push({
+			dispose: () => {
+				if (childProcess && !childProcess.killed) {
+					childProcess.kill('SIGTERM');
+					setTimeout(() => {
+						if (!childProcess.killed) { childProcess.kill('SIGKILL'); }
+					}, 5000);
+				}
+			}
+		});
+
+		// Create a minimal client wrapper
+		let messageId = 0;
+		const pending = new Map<number, { resolve: (v: any) => void; reject: (e: any) => void }>();
+		let buffer = '';
+
+		if (childProcess.stdout) {
+			childProcess.stdout.on('data', (data: Buffer) => {
+				buffer += data.toString();
+				const lines = buffer.split('\n');
+				buffer = lines.pop() ?? '';
+				for (const line of lines) {
+					if (!line.trim()) { continue; }
+					try {
+						const msg = JSON.parse(line);
+						const p = pending.get(msg.id);
+						if (p) {
+							pending.delete(msg.id);
+							if (msg.error) { p.reject(new Error(msg.error.message ?? 'Unknown error')); }
+							else { p.resolve(msg.result); }
+						}
+					} catch { /* ignore non-JSON */ }
+				}
+			});
+		}
+
+		if (childProcess.stderr) {
+			childProcess.stderr.on('data', (data: Buffer) => {
+				this.logService.trace(`[MCP] stderr[${def.name}]: ${data.toString().trim()}`);
+			});
+		}
+
+		entry.client = {
+			callTool: (params: any) => new Promise((resolve, reject) => {
+				const id = ++messageId;
+				pending.set(id, { resolve, reject });
+				childProcess.stdin?.write(JSON.stringify({ jsonrpc: '2.0', id, method: 'tools/call', params }) + '\n');
+				setTimeout(() => { if (pending.has(id)) { pending.delete(id); reject(new Error('Request timed out')); } }, 60_000);
+			}),
+			listTools: () => new Promise((resolve, reject) => {
+				const id = ++messageId;
+				pending.set(id, { resolve, reject });
+				childProcess.stdin?.write(JSON.stringify({ jsonrpc: '2.0', id, method: 'tools/list', params: {} }) + '\n');
+				setTimeout(() => { if (pending.has(id)) { pending.delete(id); reject(new Error('Request timed out')); } }, 30_000);
+			}),
+			listResources: () => new Promise((resolve, reject) => {
+				const id = ++messageId;
+				pending.set(id, { resolve, reject });
+				childProcess.stdin?.write(JSON.stringify({ jsonrpc: '2.0', id, method: 'resources/list', params: {} }) + '\n');
+				setTimeout(() => { if (pending.has(id)) { pending.delete(id); reject(new Error('Request timed out')); } }, 30_000);
+			}),
+			readResource: (params: any) => new Promise((resolve, reject) => {
+				const id = ++messageId;
+				pending.set(id, { resolve, reject });
+				childProcess.stdin?.write(JSON.stringify({ jsonrpc: '2.0', id, method: 'resources/read', params }) + '\n');
+				setTimeout(() => { if (pending.has(id)) { pending.delete(id); reject(new Error('Request timed out')); } }, 30_000);
+			}),
+			listPrompts: () => new Promise((resolve, reject) => {
+				const id = ++messageId;
+				pending.set(id, { resolve, reject });
+				childProcess.stdin?.write(JSON.stringify({ jsonrpc: '2.0', id, method: 'prompts/list', params: {} }) + '\n');
+				setTimeout(() => { if (pending.has(id)) { pending.delete(id); reject(new Error('Request timed out')); } }, 30_000);
+			}),
+			getPrompt: (params: any) => new Promise((resolve, reject) => {
+				const id = ++messageId;
+				pending.set(id, { resolve, reject });
+				childProcess.stdin?.write(JSON.stringify({ jsonrpc: '2.0', id, method: 'prompts/get', params }) + '\n');
+				setTimeout(() => { if (pending.has(id)) { pending.delete(id); reject(new Error('Request timed out')); } }, 30_000);
+			}),
+			close: async () => { pending.clear(); if (!childProcess.killed) { childProcess.kill('SIGTERM'); } },
+			connect: async () => { /* already connected */ }
+		};
+		entry.transport = null;
+	}
+
+	async disconnect(serverName: string): Promise<void> {
+		const entry = this.connections.get(serverName);
+		if (!entry) { return; }
+
+		this.logService.info(`[MCP] Disconnecting ${serverName}`);
+
+		entry.disposables.forEach(d => d.dispose());
+
+		try { await entry.client?.close?.(); } catch (e) { this.logService.warn(`[MCP] Error closing client for ${serverName}:`, e); }
+		try { await entry.transport?.close?.(); } catch (e) { this.logService.warn(`[MCP] Error closing transport for ${serverName}:`, e); }
+
+		this.connections.delete(serverName);
+		this.emitConnectionEvent(serverName, MCPConnectionState.Disconnected);
+	}
+
+	// ─── Tool Execution with Retry ────────────────────────────────────────
+
+	async executeWithRetry<T>(
+		serverName: string,
+		operation: (client: any) => Promise<T>,
+		timeoutMs: number = this.defaultTimeoutMs
+	): Promise<T> {
+		const entry = this.connections.get(serverName);
+		if (!entry || entry.state !== MCPConnectionState.Connected) {
+			throw new Error(`Server ${serverName} is not connected`);
+		}
+
+		const timeoutPromise = new Promise<never>((_, reject) => {
+			setTimeout(() => reject(new Error(`Operation timed out after ${timeoutMs}ms`)), timeoutMs);
+		});
+
+		try {
+			const result = await Promise.race([operation(entry.client), timeoutPromise]);
+			entry.lastPing = Date.now();
+			entry.errorCount = Math.max(0, entry.errorCount - 1);
+			return result;
+		} catch (error) {
+			entry.errorCount++;
+
+			// Auto-restart with exponential backoff if connection dropped
+			if (this.isConnectionError(error) && entry.retryCount < 5) {
+				entry.retryCount++;
+				const delay = Math.min(
+					MCP_RESTART_BACKOFF_BASE_MS * Math.pow(2, entry.retryCount - 1),
+					this.maxRetryDelayMs
+				);
+
+				this.logService.warn(`[MCP] Retrying ${serverName} in ${delay}ms (attempt ${entry.retryCount})`);
+				await this.delay(delay);
+
+				await this.reconnect(serverName);
+				return this.executeWithRetry(serverName, operation, timeoutMs);
+			}
+
+			throw error;
+		}
+	}
+
+	private async reconnect(serverName: string): Promise<void> {
+		const entry = this.connections.get(serverName);
+		if (!entry) { return; }
+
+		this.emitConnectionEvent(serverName, MCPConnectionState.Reconnecting);
+
+		try { await entry.client?.close?.(); } catch { /* ignore */ }
+		try { await entry.transport?.close?.(); } catch { /* ignore */ }
+
+		// Recreate transport
+		const def = entry.definition;
+		let transport: any;
+
+		if (def.transport === MCPTransportType.Stdio) {
+			const { StdioClientTransport } = await import('@modelcontextprotocol/sdk/client/stdio.js');
+			transport = new StdioClientTransport({
+				command: def.command,
+				args: def.args,
+				env: { ...process.env as Record<string, string>, ...def.env }
+			});
+		} else {
+			const { SSEClientTransport } = await import('@modelcontextprotocol/sdk/client/sse.js');
+			transport = new SSEClientTransport(new URL(def.command));
+		}
+
+		entry.transport = transport;
+
+		try {
+			await entry.client.connect(transport);
+			entry.state = MCPConnectionState.Connected;
+			entry.connectedAt = Date.now();
+			this.emitConnectionEvent(serverName, MCPConnectionState.Connected);
+			this.emitHealthUpdate(serverName, MCPHealthStatus.Healthy);
+		} catch (error) {
+			entry.state = MCPConnectionState.Error;
+			this.emitConnectionEvent(serverName, MCPConnectionState.Error, error instanceof Error ? error.message : String(error));
+			throw error;
+		}
+	}
+
+	private isConnectionError(error: any): boolean {
+		const message = error instanceof Error ? error.message : String(error);
+		return message.includes('ECONNREFUSED') ||
+			message.includes('ENOTFOUND') ||
+			message.includes('timeout') ||
+			message.includes('closed') ||
+			message.includes('disconnected');
+	}
+
+	private delay(ms: number): Promise<void> {
+		return new Promise(resolve => setTimeout(resolve, ms));
+	}
+
+	// ─── Accessors ────────────────────────────────────────────────────────
+
+	getClient(serverName: string): any | undefined {
+		return this.connections.get(serverName)?.client;
+	}
+
+	getConnectionState(serverName: string): MCPConnectionState {
+		return this.connections.get(serverName)?.state ?? MCPConnectionState.Disconnected;
+	}
+
+	getAllConnected(): string[] {
+		return Array.from(this.connections.entries())
+			.filter(([_, entry]) => entry.state === MCPConnectionState.Connected)
+			.map(([name, _]) => name);
+	}
+
+	getConnectionCount(): number {
+		return this.connections.size;
+	}
+
+	// ─── Event Helpers ────────────────────────────────────────────────────
+
+	private emitConnectionEvent(name: string, state: MCPConnectionState, error?: string): void {
+		this._onConnectionChange.fire({
+			serverName: name,
+			state,
+			timestamp: Date.now(),
+			error
+		});
+	}
+
+	private emitHealthUpdate(name: string, status: MCPHealthStatus, latency?: number, message?: string): void {
+		const entry = this.connections.get(name);
+		this._onHealthUpdate.fire({
+			serverName: name,
+			status,
+			lastPing: entry?.lastPing ?? Date.now(),
+			errorCount: entry?.errorCount ?? 0,
+			latencyMs: latency ?? 0,
+			message
+		});
+	}
+
+	// ─── Lifecycle ────────────────────────────────────────────────────────
+
+	override dispose(): void {
+		this.healthCheckTimer?.dispose();
+		const disconnectPromises = Array.from(this.connections.keys()).map(name => this.disconnect(name));
+		Promise.all(disconnectPromises).catch(e => this.logService.error('[MCP] Error during bulk disconnect:', e));
+		super.dispose();
+	}
 }

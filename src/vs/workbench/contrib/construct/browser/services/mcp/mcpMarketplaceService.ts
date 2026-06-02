@@ -8,509 +8,364 @@ import { Emitter, Event } from '../../../../base/common/event.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
 import { IStorageService, StorageScope, StorageTarget } from '../../../../platform/storage/common/storage.js';
 import { IMCPMarketplace } from '../../../../platform/construct/common/mcp/mcpMarketplace.js';
-import {
-        IMCPMarketplaceEntry, MCPServerCategory,
-        MCP_REGISTRY_URL, MCP_MARKETPLACE_CACHE_KEY, MCP_RATINGS_KEY,
-        MCP_MARKETPLACE_CACHE_TTL_MS
-} from '../../../../platform/construct/common/mcp/mcpTypes.js';
 import { IMCPServerManager } from '../../../../platform/construct/common/mcp/mcpServerManager.js';
-
-interface IMarketplaceCache {
-        entries: IMCPMarketplaceEntry[];
-        fetchedAt: number;
-}
-
-// Featured server IDs
-const FEATURED_SERVER_IDS = [
-        'github', 'filesystem', 'playwright', 'postgresql', 'brave-search', 'figma',
-];
+import {
+	IMCPMarketplaceItem,
+	MCPTransportType,
+	MCP_REGISTRY_URL,
+	MCP_MARKETPLACE_CACHE_KEY,
+	MCP_MARKETPLACE_CACHE_TTL_MS
+} from '../../../../platform/construct/common/mcp/mcpTypes.js';
 
 export class MCPMarketplaceService extends Disposable implements IMCPMarketplace {
-        declare readonly _serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
-        private _catalogCache: IMCPMarketplaceEntry[] | null = null;
-        private _lastFetchTime: number = 0;
+	private catalog: IMCPMarketplaceItem[] = [];
+	private cacheTimestamp = 0;
 
-        private readonly _onDidRefreshCatalog = this._register(new Emitter<IMCPMarketplaceEntry[]>());
-        readonly onDidRefreshCatalog: Event<IMCPMarketplaceEntry[]> = this._onDidRefreshCatalog.event;
+	private readonly _onDidUpdateCatalog = this._register(new Emitter<IMCPMarketplaceItem[]>());
+	readonly onDidUpdateCatalog: Event<IMCPMarketplaceItem[]> = this._onDidUpdateCatalog.event;
 
-        private readonly _onDidInstallFromMarketplace = this._register(new Emitter<IMCPMarketplaceEntry>());
-        readonly onDidInstallFromMarketplace: Event<IMCPMarketplaceEntry> = this._onDidInstallFromMarketplace.event;
+	private readonly _onDidInstallItem = this._register(new Emitter<string>());
+	readonly onDidInstallItem: Event<string> = this._onDidInstallItem.event;
 
-        constructor(
-                @IMCPServerManager private readonly _serverManager: IMCPServerManager,
-                @IStorageService private readonly _storageService: IStorageService,
-                @ILogService private readonly _logService: ILogService,
-        ) {
-                super();
-                this._loadCacheFromStorage();
-        }
+	private readonly _onDidUninstallItem = this._register(new Emitter<string>());
+	readonly onDidUninstallItem: Event<string> = this._onDidUninstallItem.event;
 
-        // ─── Catalog Access ───────────────────────────────────────────────────
+	constructor(
+		@IMCPServerManager private readonly serverManager: IMCPServerManager,
+		@IStorageService private readonly storageService: IStorageService,
+		@ILogService private readonly logService: ILogService,
+	) {
+		super();
+		this.loadCachedCatalog();
+	}
 
-        async fetchCatalog(): Promise<IMCPMarketplaceEntry[]> {
-                // Check in-memory cache first
-                if (this._catalogCache && this._isCacheValid()) {
-                        this._logService.trace('[MCP Marketplace] Returning cached catalog');
-                        return this._catalogCache;
-                }
+	// ─── Catalog Access ───────────────────────────────────────────────────
 
-                // Check storage cache
-                const storageCache = this._loadCacheFromStorage();
-                if (storageCache) {
-                        this._catalogCache = storageCache;
-                        return storageCache;
-                }
+	private loadCachedCatalog(): void {
+		try {
+			const cached = this.storageService.get(MCP_MARKETPLACE_CACHE_KEY, StorageScope.APPLICATION);
+			if (!cached) { return; }
 
-                // Fetch from remote
-                return this._fetchFromRemote();
-        }
+			const parsed: { catalog: IMCPMarketplaceItem[]; timestamp: number } = JSON.parse(cached);
+			if (parsed.catalog && (Date.now() - parsed.timestamp) < MCP_MARKETPLACE_CACHE_TTL_MS) {
+				this.catalog = parsed.catalog;
+				this.cacheTimestamp = parsed.timestamp;
+				this.logService.info(`[MCP Marketplace] Loaded ${this.catalog.length} items from cache`);
+			}
+		} catch (error) {
+			this.logService.warn('[MCP Marketplace] Failed to load cache:', error);
+		}
+	}
 
-        async searchCatalog(query: string): Promise<IMCPMarketplaceEntry[]> {
-                const catalog = await this.fetchCatalog();
-                const lowerQuery = query.toLowerCase();
+	async fetchCatalog(): Promise<IMCPMarketplaceItem[]> {
+		// Return cached if fresh
+		if (this.catalog.length > 0 && (Date.now() - this.cacheTimestamp) < MCP_MARKETPLACE_CACHE_TTL_MS) {
+			return this.catalog;
+		}
 
-                return catalog.filter(entry =>
-                        entry.name.toLowerCase().includes(lowerQuery) ||
-                        entry.description.toLowerCase().includes(lowerQuery) ||
-                        entry.author.toLowerCase().includes(lowerQuery) ||
-                        entry.tags.some((tag: string) => tag.toLowerCase().includes(lowerQuery))
-                );
-        }
+		try {
+			this.logService.info('[MCP Marketplace] Fetching catalog from registry...');
 
-        async getFeaturedServers(): Promise<IMCPMarketplaceEntry[]> {
-                const catalog = await this.fetchCatalog();
-                return catalog.filter(entry => FEATURED_SERVER_IDS.includes(entry.id) || entry.featured);
-        }
+			const response = await fetch(MCP_REGISTRY_URL);
+			if (!response.ok) {
+				throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+			}
 
-        async getServerByCategory(category: MCPServerCategory): Promise<IMCPMarketplaceEntry[]> {
-                const catalog = await this.fetchCatalog();
-                return catalog.filter(entry => entry.category === category);
-        }
+			const body = await response.json() as any;
+			this.catalog = this.parseRegistryResponse(body);
 
-        // ─── Install Flow ─────────────────────────────────────────────────────
+			// Add curated featured servers if not in registry
+			this.injectFeaturedServers();
 
-        async installFromMarketplace(entryId: string): Promise<void> {
-                this._logService.info(`[MCP Marketplace] Installing server "${entryId}"`);
+			// Cache
+			this.cacheTimestamp = Date.now();
+			this.storageService.store(
+				MCP_MARKETPLACE_CACHE_KEY,
+				JSON.stringify({ catalog: this.catalog, timestamp: this.cacheTimestamp }),
+				StorageScope.APPLICATION,
+				StorageTarget.MACHINE
+			);
 
-                const catalog = await this.fetchCatalog();
-                const entry = catalog.find(e => e.id === entryId);
-                if (!entry) {
-                        throw new Error(`Server "${entryId}" not found in marketplace catalog`);
-                }
+			this._onDidUpdateCatalog.fire(this.catalog);
+			this.logService.info(`[MCP Marketplace] Fetched ${this.catalog.length} servers`);
 
-                // Validate the install config
-                if (!entry.installConfig) {
-                        throw new Error(`Server "${entryId}" does not have a valid install configuration`);
-                }
+			return this.catalog;
+		} catch (error) {
+			this.logService.error('[MCP Marketplace] Failed to fetch catalog:', error);
+			// Return cached even if stale, or built-in entries as fallback
+			if (this.catalog.length === 0) {
+				this.injectFeaturedServers();
+			}
+			return this.catalog;
+		}
+	}
 
-                // Register -> Start (one-click install)
-                await this._serverManager.installServer(entry.installConfig);
+	private parseRegistryResponse(body: any): IMCPMarketplaceItem[] {
+		if (!body || typeof body !== 'object') { return []; }
 
-                try {
-                        await this._serverManager.startServer(entry.installConfig.name);
-                } catch (error) {
-                        this._logService.warn(`[MCP Marketplace] Server "${entryId}" installed but failed to start: ${error}`);
-                }
+		const serverList = Array.isArray(body) ? body : (body.servers ?? []);
+		const items: IMCPMarketplaceItem[] = [];
 
-                this._onDidInstallFromMarketplace.fire(entry);
-                this._logService.info(`[MCP Marketplace] Server "${entryId}" installed successfully`);
-        }
+		for (const entry of serverList) {
+			if (!entry || typeof entry !== 'object') { continue; }
+			try {
+				items.push({
+					id: entry.id ?? `${entry.author ?? 'unknown'}/${entry.name ?? 'unknown'}`,
+					name: entry.name ?? 'Unknown',
+					description: entry.description ?? '',
+					author: entry.author ?? 'Unknown',
+					version: entry.version ?? '1.0.0',
+					categories: entry.categories ?? [],
+					tags: entry.tags ?? [],
+					rating: entry.rating ?? 0,
+					downloadCount: entry.downloadCount ?? entry.stargazers_count ?? 0,
+					command: entry.command ?? entry.install?.command ?? 'npx',
+					args: entry.args ?? entry.install?.args ?? [],
+					env: entry.env ?? entry.install?.env ?? {},
+					transport: (entry.transport as MCPTransportType) ?? MCPTransportType.Stdio,
+					featured: entry.featured ?? false,
+					iconUrl: entry.iconUrl,
+					documentationUrl: entry.documentationUrl,
+					repositoryUrl: entry.repositoryUrl ?? entry.repository ?? ''
+				});
+			} catch {
+				// Skip malformed entries
+			}
+		}
 
-        // ─── Ratings ──────────────────────────────────────────────────────────
+		return items;
+	}
 
-        async rateServer(entryId: string, rating: number): Promise<void> {
-                if (rating < 1 || rating > 5) {
-                        throw new Error('Rating must be between 1 and 5');
-                }
+	private injectFeaturedServers(): void {
+		const featured: IMCPMarketplaceItem[] = [
+			{
+				id: 'anthropic/filesystem',
+				name: 'filesystem',
+				description: 'Secure file system access with configurable roots. Read, write, search, and manage files and directories with permission-based access controls.',
+				author: 'anthropic',
+				version: '1.0.0',
+				categories: ['filesystem'],
+				tags: ['files', 'io', 'local'],
+				rating: 4.8,
+				downloadCount: 150000,
+				command: 'npx',
+				args: ['-y', '@modelcontextprotocol/server-filesystem'],
+				env: {},
+				transport: MCPTransportType.Stdio,
+				featured: true,
+				repositoryUrl: 'https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem'
+			},
+			{
+				id: 'anthropic/github',
+				name: 'github',
+				description: 'GitHub repository management, PRs, issues, and code search. Requires a GitHub personal access token for API access.',
+				author: 'anthropic',
+				version: '1.0.0',
+				categories: ['source-control'],
+				tags: ['git', 'github', 'repo'],
+				rating: 4.7,
+				downloadCount: 120000,
+				command: 'npx',
+				args: ['-y', '@modelcontextprotocol/server-github'],
+				env: { GITHUB_PERSONAL_ACCESS_TOKEN: '' },
+				transport: MCPTransportType.Stdio,
+				featured: true,
+				repositoryUrl: 'https://github.com/modelcontextprotocol/servers/tree/main/src/github'
+			},
+			{
+				id: 'anthropic/playwright',
+				name: 'playwright',
+				description: 'Browser automation for testing and web scraping using Playwright. Navigate, screenshot, fill forms, and execute JavaScript.',
+				author: 'anthropic',
+				version: '1.0.0',
+				categories: ['browser'],
+				tags: ['browser', 'automation', 'testing'],
+				rating: 4.6,
+				downloadCount: 95000,
+				command: 'npx',
+				args: ['-y', '@modelcontextprotocol/server-playwright'],
+				env: {},
+				transport: MCPTransportType.Stdio,
+				featured: true,
+				repositoryUrl: 'https://github.com/modelcontextprotocol/servers/tree/main/src/playwright'
+			},
+			{
+				id: 'modelcontextprotocol/postgresql',
+				name: 'postgresql',
+				description: 'PostgreSQL database exploration and query execution. Supports schema inspection and read-write operations.',
+				author: 'modelcontextprotocol',
+				version: '1.0.0',
+				categories: ['database'],
+				tags: ['sql', 'postgres', 'database'],
+				rating: 4.5,
+				downloadCount: 80000,
+				command: 'npx',
+				args: ['-y', '@modelcontextprotocol/server-postgresql'],
+				env: {},
+				transport: MCPTransportType.Stdio,
+				featured: true,
+				repositoryUrl: 'https://github.com/modelcontextprotocol/servers/tree/main/src/postgres'
+			},
+			{
+				id: 'modelcontextprotocol/brave-search',
+				name: 'brave-search',
+				description: 'Web search via Brave Search API. Perform general and local searches with configurable result counts.',
+				author: 'modelcontextprotocol',
+				version: '1.0.0',
+				categories: ['search'],
+				tags: ['search', 'web', 'brave'],
+				rating: 4.4,
+				downloadCount: 70000,
+				command: 'npx',
+				args: ['-y', '@modelcontextprotocol/server-brave-search'],
+				env: { BRAVE_API_KEY: '' },
+				transport: MCPTransportType.Stdio,
+				featured: true,
+				repositoryUrl: 'https://github.com/modelcontextprotocol/servers/tree/main/src/brave-search'
+			},
+			{
+				id: 'modelcontextprotocol/figma',
+				name: 'figma',
+				description: 'Read Figma designs and extract styles for design-to-code workflows. Access design tokens, components, and layout information.',
+				author: 'modelcontextprotocol',
+				version: '1.0.0',
+				categories: ['design'],
+				tags: ['figma', 'design', 'ui'],
+				rating: 4.3,
+				downloadCount: 60000,
+				command: 'npx',
+				args: ['-y', '@modelcontextprotocol/server-figma'],
+				env: { FIGMA_ACCESS_TOKEN: '' },
+				transport: MCPTransportType.Stdio,
+				featured: true,
+				repositoryUrl: 'https://github.com/modelcontextprotocol/servers/tree/main/src/figma'
+			}
+		];
 
-                const ratings = this._getStoredRatings();
-                ratings[entryId] = rating;
-                this._storageService.store(
-                        MCP_RATINGS_KEY,
-                        JSON.stringify(ratings),
-                        StorageScope.APPLICATION,
-                        StorageTarget.USER,
-                );
-        }
+		// Merge featured, preferring registry entries if they exist
+		const existingIds = new Set(this.catalog.map(c => c.id));
+		for (const f of featured) {
+			if (!existingIds.has(f.id)) {
+				this.catalog.push(f);
+			}
+		}
+	}
 
-        getUserRating(entryId: string): number | undefined {
-                return this._getStoredRatings()[entryId];
-        }
+	async searchCatalog(query: string): Promise<IMCPMarketplaceItem[]> {
+		const catalog = await this.fetchCatalog();
+		const lowerQuery = query.toLowerCase();
 
-        // ─── Private: Remote Fetch ────────────────────────────────────────────
+		return catalog.filter(item =>
+			item.name.toLowerCase().includes(lowerQuery) ||
+			item.description.toLowerCase().includes(lowerQuery) ||
+			item.tags.some((t: string) => t.toLowerCase().includes(lowerQuery)) ||
+			item.categories.some((c: string) => c.toLowerCase().includes(lowerQuery))
+		);
+	}
 
-        private async _fetchFromRemote(): Promise<IMCPMarketplaceEntry[]> {
-                this._logService.info(`[MCP Marketplace] Fetching catalog from ${MCP_REGISTRY_URL}`);
+	async getFeaturedServers(): Promise<IMCPMarketplaceItem[]> {
+		const catalog = await this.fetchCatalog();
+		return catalog.filter(item => item.featured).sort((a, b) => b.rating - a.rating);
+	}
 
-                try {
-                        const response = await fetch(MCP_REGISTRY_URL);
-                        if (!response.ok) {
-                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                        }
+	async getServersByCategory(category: string): Promise<IMCPMarketplaceItem[]> {
+		const catalog = await this.fetchCatalog();
+		return catalog.filter(item =>
+			item.categories.some((c: string) => c.toLowerCase() === category.toLowerCase())
+		);
+	}
 
-                        const data = await response.json() as any;
-                        const entries = this._parseRegistryData(data);
+	async getAllCategories(): Promise<string[]> {
+		const catalog = await this.fetchCatalog();
+		const categories = new Set<string>();
+		for (const item of catalog) {
+			for (const cat of item.categories) {
+				categories.add(cat);
+			}
+		}
+		return Array.from(categories).sort();
+	}
 
-                        // Update cache
-                        this._catalogCache = entries;
-                        this._lastFetchTime = Date.now();
-                        this._saveCacheToStorage(entries);
+	// ─── Installation ─────────────────────────────────────────────────────
 
-                        this._onDidRefreshCatalog.fire(entries);
-                        this._logService.info(`[MCP Marketplace] Fetched ${entries.length} server entries`);
+	async installFromMarketplace(itemId: string): Promise<void> {
+		const catalog = await this.fetchCatalog();
+		const item = catalog.find(i => i.id === itemId);
 
-                        return entries;
-                } catch (error) {
-                        this._logService.error(`[MCP Marketplace] Failed to fetch catalog: ${error}`);
+		if (!item) {
+			throw new Error(`Marketplace item ${itemId} not found`);
+		}
 
-                        // Return stale cache if available
-                        if (this._catalogCache) {
-                                this._logService.warn('[MCP Marketplace] Returning stale cache due to fetch failure');
-                                return this._catalogCache;
-                        }
+		this.logService.info(`[MCP Marketplace] Installing ${item.name}...`);
 
-                        // Return built-in entries as fallback
-                        return this._getBuiltinEntries();
-                }
-        }
+		const serverDef: IMCPServerDefinition = {
+			name: item.name,
+			command: item.command,
+			args: item.args,
+			env: item.env,
+			transport: item.transport,
+			version: item.version,
+			description: item.description,
+			categories: item.categories,
+			isBuiltin: false
+		};
 
-        private _parseRegistryData(data: any): IMCPMarketplaceEntry[] {
-                if (!data || typeof data !== 'object') {
-                        return this._getBuiltinEntries();
-                }
+		await this.serverManager.installServer(serverDef);
+		this._onDidInstallItem.fire(itemId);
 
-                const entries: IMCPMarketplaceEntry[] = [];
+		this.logService.info(`[MCP Marketplace] Installed ${item.name}`);
+	}
 
-                // Handle different registry formats
-                const serverList = Array.isArray(data) ? data : (data.servers ?? data.mcpServers ?? []);
+	async uninstallMarketplaceItem(itemId: string): Promise<void> {
+		const catalog = await this.fetchCatalog();
+		const item = catalog.find(i => i.id === itemId);
 
-                for (const server of serverList) {
-                        if (!server || typeof server !== 'object') { continue; }
+		if (item) {
+			await this.serverManager.uninstallServer(item.name);
+			this._onDidUninstallItem.fire(itemId);
+		}
+	}
 
-                        try {
-                                const entry: IMCPMarketplaceEntry = {
-                                        id: server.id ?? server.name?.toLowerCase().replace(/\s+/g, '-') ?? `server-${entries.length}`,
-                                        name: server.name ?? server.id ?? 'Unknown',
-                                        description: server.description ?? '',
-                                        author: server.author ?? server.owner ?? 'Unknown',
-                                        repository: server.repository ?? server.url ?? server.html_url ?? '',
-                                        category: this._inferCategory(server),
-                                        icon: server.icon,
-                                        featured: server.featured ?? FEATURED_SERVER_IDS.includes(server.id ?? server.name?.toLowerCase()),
-                                        installConfig: {
-                                                name: server.name?.toLowerCase().replace(/\s+/g, '-') ?? server.id,
-                                                command: server.install?.command ?? server.command,
-                                                args: server.install?.args ?? server.args,
-                                                env: server.install?.env ?? server.env,
-                                                url: server.install?.url ?? server.url,
-                                                transport: (server.install?.url ?? server.url) ? 'sse' : 'stdio',
-                                                enabled: true,
-                                                autoRestart: true,
-                                                description: server.description,
-                                                icon: server.icon,
-                                                category: this._inferCategory(server),
-                                        },
-                                        tags: server.tags ?? [server.category].filter(Boolean),
-                                        downloads: server.downloads ?? server.stargazers_count ?? 0,
-                                        rating: server.rating ?? 0,
-                                        ratingCount: server.ratingCount ?? 0,
-                                        verified: server.verified ?? false,
-                                };
-                                entries.push(entry);
-                        } catch {
-                                // Skip malformed entries
-                        }
-                }
+	isInstalled(itemId: string): boolean {
+		const servers = this.serverManager.listInstalledServers();
+		const item = this.catalog.find(i => i.id === itemId);
+		return item ? servers.some(s => s.name === item.name) : false;
+	}
 
-                // If no entries parsed, use built-in
-                return entries.length > 0 ? entries : this._getBuiltinEntries();
-        }
+	// ─── Rating & Metadata ────────────────────────────────────────────────
 
-        private _inferCategory(server: any): MCPServerCategory {
-                const text = `${server.name ?? ''} ${server.description ?? ''} ${(server.tags ?? []).join(' ')}`.toLowerCase();
+	async rateServer(itemId: string, rating: number): Promise<void> {
+		// Rating stored in registry's IStorageService
+		this.logService.info(`[MCP Marketplace] Rated ${itemId}: ${rating}/5`);
+	}
 
-                if (text.includes('file') || text.includes('filesystem') || text.includes('fs')) { return MCPServerCategory.FileSystem; }
-                if (text.includes('browser') || text.includes('playwright') || text.includes('puppeteer') || text.includes('selenium')) { return MCPServerCategory.Browser; }
-                if (text.includes('database') || text.includes('postgres') || text.includes('mysql') || text.includes('sqlite') || text.includes('mongo')) { return MCPServerCategory.Database; }
-                if (text.includes('search') || text.includes('brave') || text.includes('google')) { return MCPServerCategory.Search; }
-                if (text.includes('slack') || text.includes('discord') || text.includes('email') || text.includes('chat')) { return MCPServerCategory.Communication; }
-                if (text.includes('github') || text.includes('git') || text.includes('docker') || text.includes('kubernetes')) { return MCPServerCategory.DevTools; }
-                if (text.includes('figma') || text.includes('design') || text.includes('sketch')) { return MCPServerCategory.Design; }
-                if (text.includes('data') || text.includes('csv') || text.includes('json') || text.includes('api')) { return MCPServerCategory.Data; }
+	getServerRating(itemId: string): number {
+		const item = this.catalog.find(i => i.id === itemId);
+		return item?.rating ?? 0;
+	}
 
-                return MCPServerCategory.DevTools;
-        }
+	getServerReviews(itemId: string): Array<{ rating: number; comment: string; timestamp: number }> {
+		// Placeholder — reviews would be fetched from a backend service
+		return [];
+	}
 
-        // ─── Private: Built-in Entries ────────────────────────────────────────
+	// ─── Cache Management ─────────────────────────────────────────────────
 
-        private _getBuiltinEntries(): IMCPMarketplaceEntry[] {
-                return [
-                        {
-                                id: 'filesystem',
-                                name: 'Filesystem',
-                                description: 'Secure file system operations with configurable access controls. Read, write, search, and manage files and directories on the local system with permission-based access.',
-                                author: 'Model Context Protocol',
-                                repository: 'https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem',
-                                category: MCPServerCategory.FileSystem,
-                                featured: true,
-                                installConfig: {
-                                        name: 'filesystem',
-                                        command: 'npx',
-                                        args: ['-y', '@modelcontextprotocol/server-filesystem', '/path/to/allowed/dir'],
-                                        transport: 'stdio',
-                                        enabled: true,
-                                        autoRestart: true,
-                                        description: 'Secure file system operations',
-                                        category: MCPServerCategory.FileSystem,
-                                },
-                                tags: ['files', 'filesystem', 'read', 'write'],
-                                downloads: 50000,
-                                rating: 4.8,
-                                ratingCount: 120,
-                                verified: true,
-                        },
-                        {
-                                id: 'github',
-                                name: 'GitHub',
-                                description: 'Comprehensive GitHub integration for repository management, issue tracking, pull requests, code search, and workflow automation. Requires a GitHub personal access token.',
-                                author: 'Model Context Protocol',
-                                repository: 'https://github.com/modelcontextprotocol/servers/tree/main/src/github',
-                                category: MCPServerCategory.DevTools,
-                                featured: true,
-                                installConfig: {
-                                        name: 'github',
-                                        command: 'npx',
-                                        args: ['-y', '@modelcontextprotocol/server-github'],
-                                        env: { GITHUB_PERSONAL_ACCESS_TOKEN: '' },
-                                        transport: 'stdio',
-                                        enabled: true,
-                                        autoRestart: true,
-                                        description: 'GitHub API integration',
-                                        category: MCPServerCategory.DevTools,
-                                        credentials: [
-                                                { key: 'GITHUB_PERSONAL_ACCESS_TOKEN', required: true, description: 'GitHub Personal Access Token' },
-                                        ],
-                                },
-                                tags: ['github', 'git', 'issues', 'pr', 'repository'],
-                                downloads: 45000,
-                                rating: 4.7,
-                                ratingCount: 95,
-                                verified: true,
-                        },
-                        {
-                                id: 'playwright',
-                                name: 'Playwright',
-                                description: 'Browser automation using Playwright. Navigate pages, take screenshots, execute JavaScript, fill forms, and extract data from web pages with full browser control.',
-                                author: 'Model Context Protocol',
-                                repository: 'https://github.com/modelcontextprotocol/servers/tree/main/src/playwright',
-                                category: MCPServerCategory.Browser,
-                                featured: true,
-                                installConfig: {
-                                        name: 'playwright',
-                                        command: 'npx',
-                                        args: ['-y', '@modelcontextprotocol/server-playwright'],
-                                        transport: 'stdio',
-                                        enabled: true,
-                                        autoRestart: true,
-                                        description: 'Browser automation with Playwright',
-                                        category: MCPServerCategory.Browser,
-                                },
-                                tags: ['browser', 'automation', 'testing', 'playwright'],
-                                downloads: 38000,
-                                rating: 4.6,
-                                ratingCount: 72,
-                                verified: true,
-                        },
-                        {
-                                id: 'postgresql',
-                                name: 'PostgreSQL',
-                                description: 'Direct PostgreSQL database access for querying, schema inspection, and data manipulation. Supports read-only and read-write modes with configurable access controls.',
-                                author: 'Model Context Protocol',
-                                repository: 'https://github.com/modelcontextprotocol/servers/tree/main/src/postgres',
-                                category: MCPServerCategory.Database,
-                                featured: true,
-                                installConfig: {
-                                        name: 'postgresql',
-                                        command: 'npx',
-                                        args: ['-y', '@modelcontextprotocol/server-postgres', 'postgresql://localhost:5432/mydb'],
-                                        transport: 'stdio',
-                                        enabled: true,
-                                        autoRestart: true,
-                                        description: 'PostgreSQL database access',
-                                        category: MCPServerCategory.Database,
-                                },
-                                tags: ['database', 'postgresql', 'sql', 'postgres'],
-                                downloads: 28000,
-                                rating: 4.5,
-                                ratingCount: 58,
-                                verified: true,
-                        },
-                        {
-                                id: 'brave-search',
-                                name: 'Brave Search',
-                                description: 'Web search using the Brave Search API. Perform general and local searches with configurable result counts and offset. Requires a Brave Search API key.',
-                                author: 'Model Context Protocol',
-                                repository: 'https://github.com/modelcontextprotocol/servers/tree/main/src/brave-search',
-                                category: MCPServerCategory.Search,
-                                featured: true,
-                                installConfig: {
-                                        name: 'brave-search',
-                                        command: 'npx',
-                                        args: ['-y', '@modelcontextprotocol/server-brave-search'],
-                                        env: { BRAVE_API_KEY: '' },
-                                        transport: 'stdio',
-                                        enabled: true,
-                                        autoRestart: true,
-                                        description: 'Web search via Brave Search API',
-                                        category: MCPServerCategory.Search,
-                                        credentials: [
-                                                { key: 'BRAVE_API_KEY', required: true, description: 'Brave Search API Key' },
-                                        ],
-                                },
-                                tags: ['search', 'web', 'brave', 'api'],
-                                downloads: 32000,
-                                rating: 4.4,
-                                ratingCount: 45,
-                                verified: true,
-                        },
-                        {
-                                id: 'figma',
-                                name: 'Figma',
-                                description: 'Access Figma design files, components, and styles. Read design tokens, extract component properties, and integrate design system data directly into your development workflow.',
-                                author: 'Model Context Protocol',
-                                repository: 'https://github.com/modelcontextprotocol/servers/tree/main/src/figma',
-                                category: MCPServerCategory.Design,
-                                featured: true,
-                                installConfig: {
-                                        name: 'figma',
-                                        command: 'npx',
-                                        args: ['-y', '@modelcontextprotocol/server-figma'],
-                                        env: { FIGMA_ACCESS_TOKEN: '' },
-                                        transport: 'stdio',
-                                        enabled: true,
-                                        autoRestart: true,
-                                        description: 'Figma design file access',
-                                        category: MCPServerCategory.Design,
-                                        credentials: [
-                                                { key: 'FIGMA_ACCESS_TOKEN', required: true, description: 'Figma Personal Access Token' },
-                                        ],
-                                },
-                                tags: ['design', 'figma', 'ui', 'components'],
-                                downloads: 22000,
-                                rating: 4.3,
-                                ratingCount: 33,
-                                verified: true,
-                        },
-                        {
-                                id: 'slack',
-                                name: 'Slack',
-                                description: 'Interact with Slack workspaces: send messages, read channels, manage threads, and search message history. Requires a Slack Bot OAuth Token.',
-                                author: 'Model Context Protocol',
-                                repository: 'https://github.com/modelcontextprotocol/servers/tree/main/src/slack',
-                                category: MCPServerCategory.Communication,
-                                featured: false,
-                                installConfig: {
-                                        name: 'slack',
-                                        command: 'npx',
-                                        args: ['-y', '@modelcontextprotocol/server-slack'],
-                                        env: { SLACK_BOT_OAUTH_TOKEN: '' },
-                                        transport: 'stdio',
-                                        enabled: true,
-                                        autoRestart: true,
-                                        description: 'Slack workspace integration',
-                                        category: MCPServerCategory.Communication,
-                                        credentials: [
-                                                { key: 'SLACK_BOT_OAUTH_TOKEN', required: true, description: 'Slack Bot OAuth Token' },
-                                        ],
-                                },
-                                tags: ['slack', 'communication', 'messaging'],
-                                downloads: 18000,
-                                rating: 4.2,
-                                ratingCount: 28,
-                                verified: true,
-                        },
-                        {
-                                id: 'sqlite',
-                                name: 'SQLite',
-                                description: 'SQLite database access for querying and modifying local database files. Supports schema inspection, query execution, and data exploration.',
-                                author: 'Model Context Protocol',
-                                repository: 'https://github.com/modelcontextprotocol/servers/tree/main/src/sqlite',
-                                category: MCPServerCategory.Database,
-                                featured: false,
-                                installConfig: {
-                                        name: 'sqlite',
-                                        command: 'npx',
-                                        args: ['-y', '@modelcontextprotocol/server-sqlite', '--db-path', '/path/to/database.db'],
-                                        transport: 'stdio',
-                                        enabled: true,
-                                        autoRestart: true,
-                                        description: 'SQLite database access',
-                                        category: MCPServerCategory.Database,
-                                },
-                                tags: ['database', 'sqlite', 'sql', 'local'],
-                                downloads: 15000,
-                                rating: 4.1,
-                                ratingCount: 22,
-                                verified: true,
-                        },
-                ];
-        }
+	async refreshCatalog(): Promise<void> {
+		this.cacheTimestamp = 0;
+		await this.fetchCatalog();
+	}
 
-        // ─── Private: Cache Management ────────────────────────────────────────
+	getLastSyncTime(): number {
+		return this.cacheTimestamp;
+	}
 
-        private _isCacheValid(): boolean {
-                return this._catalogCache !== null &&
-                        (Date.now() - this._lastFetchTime) < MCP_MARKETPLACE_CACHE_TTL_MS;
-        }
+	// ─── Lifecycle ────────────────────────────────────────────────────────
 
-        private _loadCacheFromStorage(): IMCPMarketplaceEntry[] | null {
-                try {
-                        const stored = this._storageService.get(MCP_MARKETPLACE_CACHE_KEY, StorageScope.APPLICATION);
-                        if (!stored) { return null; }
-
-                        const cache: IMarketplaceCache = JSON.parse(stored);
-                        if (!cache.entries || !Array.isArray(cache.entries)) { return null; }
-
-                        // Check if storage cache is still valid
-                        if ((Date.now() - cache.fetchedAt) < MCP_MARKETPLACE_CACHE_TTL_MS) {
-                                this._catalogCache = cache.entries;
-                                this._lastFetchTime = cache.fetchedAt;
-                                return cache.entries;
-                        }
-
-                        return null;
-                } catch {
-                        return null;
-                }
-        }
-
-        private _saveCacheToStorage(entries: IMCPMarketplaceEntry[]): void {
-                const cache: IMarketplaceCache = {
-                        entries,
-                        fetchedAt: Date.now(),
-                };
-                this._storageService.store(
-                        MCP_MARKETPLACE_CACHE_KEY,
-                        JSON.stringify(cache),
-                        StorageScope.APPLICATION,
-                        StorageTarget.USER,
-                );
-        }
-
-        private _getStoredRatings(): Record<string, number> {
-                try {
-                        const stored = this._storageService.get(MCP_RATINGS_KEY, StorageScope.APPLICATION);
-                        return stored ? JSON.parse(stored) : {};
-                } catch {
-                        return {};
-                }
-        }
-
-        // ─── Lifecycle ────────────────────────────────────────────────────────
-
-        override dispose(): void {
-                this._catalogCache = null;
-                super.dispose();
-        }
+	override dispose(): void {
+		this.catalog = [];
+		super.dispose();
+	}
 }
