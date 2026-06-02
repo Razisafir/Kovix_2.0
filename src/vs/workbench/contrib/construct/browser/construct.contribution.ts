@@ -27,6 +27,18 @@ import { IBrowserAutomationService } from '../../../../platform/construct/common
 import { MCPServerManagerService } from './services/mcp/mcpServerManagerService.js';
 import { MCPMarketplaceService } from './services/mcp/mcpMarketplaceService.js';
 import { BrowserAutomationService } from './services/mcp/browserAutomationService.js';
+import { IWorkingMemoryService } from '../../../../platform/construct/common/memory/workingMemory.js';
+import { IEpisodicMemoryService } from '../../../../platform/construct/common/memory/episodicMemory.js';
+import { ISemanticMemoryService } from '../../../../platform/construct/common/memory/semanticMemory.js';
+import { IProceduralMemoryService } from '../../../../platform/construct/common/memory/proceduralMemory.js';
+import { IMemoryOrchestrator } from '../../../../platform/construct/common/memory/memoryOrchestrator.js';
+import { IEmbeddingService } from '../../../../platform/construct/common/memory/embeddingService.js';
+import { WorkingMemoryService } from './services/memory/workingMemoryService.js';
+import { EpisodicMemoryService } from './services/memory/episodicMemoryService.js';
+import { SemanticMemoryService } from './services/memory/semanticMemoryService.js';
+import { ProceduralMemoryService } from './services/memory/proceduralMemoryService.js';
+import { MemoryOrchestratorService } from './services/memory/memoryOrchestratorService.js';
+import { EmbeddingService } from './services/memory/embeddingService.js';
 
 const constructViewIcon = registerIcon('construct-view-icon', Codicon.robot, localize('constructViewIcon', 'View icon of the Construct Agent view.'));
 
@@ -152,3 +164,11 @@ registerSingleton(IMCPMarketplace, MCPMarketplaceService, InstantiationType.Dela
 
 // --- Browser Automation Singleton (Phase 18) -----------------------------------
 registerSingleton(IBrowserAutomationService, BrowserAutomationService, InstantiationType.Delayed);
+
+// --- Memory Architecture Singletons (Phase 19) ---------------------------------
+registerSingleton(IWorkingMemoryService, WorkingMemoryService, InstantiationType.Eager);
+registerSingleton(IEpisodicMemoryService, EpisodicMemoryService, InstantiationType.Eager);
+registerSingleton(IEmbeddingService, EmbeddingService, InstantiationType.Eager);
+registerSingleton(ISemanticMemoryService, SemanticMemoryService, InstantiationType.Eager);
+registerSingleton(IProceduralMemoryService, ProceduralMemoryService, InstantiationType.Eager);
+registerSingleton(IMemoryOrchestrator, MemoryOrchestratorService, InstantiationType.Eager);

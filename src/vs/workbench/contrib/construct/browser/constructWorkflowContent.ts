@@ -7,13 +7,19 @@ import { Disposable } from '../../../../base/common/lifecycle.js';
 import { IMCPServerManager } from '../../../../platform/construct/common/mcp/mcpServerManager.js';
 import { IMCPMarketplace } from '../../../../platform/construct/common/mcp/mcpMarketplace.js';
 import { IBrowserAutomationService } from '../../../../platform/construct/common/mcp/browserAutomation.js';
+import { IWorkingMemoryService } from '../../../../platform/construct/common/memory/workingMemory.js';
+import { IEpisodicMemoryService } from '../../../../platform/construct/common/memory/episodicMemory.js';
+import { ISemanticMemoryService } from '../../../../platform/construct/common/memory/semanticMemory.js';
+import { IProceduralMemoryService } from '../../../../platform/construct/common/memory/proceduralMemory.js';
+import { IMemoryOrchestrator } from '../../../../platform/construct/common/memory/memoryOrchestrator.js';
+import { IEmbeddingService } from '../../../../platform/construct/common/memory/embeddingService.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
 
 /**
  * Handles postMessage communication between the Construct webview
- * and the MCP server manager / marketplace / browser automation services.
+ * and the MCP server manager / marketplace / browser automation / memory services.
  *
- * Registered handler types (27 total):
+ * Registered handler types (34 total):
  *   MCP (17): mcp:listServers, mcp:installServer, mcp:executeTool, mcp:getHealth,
  *     mcp:startServer, mcp:stopServer, mcp:fetchCatalog, mcp:getFeatured,
  *     mcp:rateServer, mcp:uninstallServer, mcp:restartServer, mcp:listTools,
@@ -22,6 +28,8 @@ import { ILogService } from '../../../../platform/log/common/log.js';
  *   Browser (10): browser:createSession, browser:navigate, browser:screenshot,
  *     browser:getTree, browser:getSessions, browser:closeSession, browser:click,
  *     browser:fill, browser:evaluate, browser:compare, browser:getContext
+ *   Memory (7): memory:search, memory:stats, memory:consolidate, memory:forget,
+ *     memory:injectContext, memory:recordEvent, memory:storeKnowledge
  */
 export class ConstructWorkflowContent extends Disposable {
 
@@ -31,6 +39,12 @@ export class ConstructWorkflowContent extends Disposable {
                 @IMCPServerManager private readonly mcpServerManager: IMCPServerManager,
                 @IMCPMarketplace private readonly mcpMarketplace: IMCPMarketplace,
                 @IBrowserAutomationService private readonly browserService: IBrowserAutomationService,
+                @IWorkingMemoryService private readonly workingMemory: IWorkingMemoryService,
+                @IEpisodicMemoryService private readonly episodicMemory: IEpisodicMemoryService,
+                @ISemanticMemoryService private readonly semanticMemory: ISemanticMemoryService,
+                @IProceduralMemoryService private readonly proceduralMemory: IProceduralMemoryService,
+                @IMemoryOrchestrator private readonly memoryOrchestrator: IMemoryOrchestrator,
+                @IEmbeddingService private readonly embeddingService: IEmbeddingService,
                 @ILogService private readonly logService: ILogService,
         ) {
                 super();
@@ -236,6 +250,70 @@ export class ConstructWorkflowContent extends Disposable {
                 this._handlers.set('browser:getContext', async (payload: { sessionId: string }) => {
                         const context = await this.browserService.getContextForAgent(payload.sessionId);
                         return { type: 'browser:contextResult', context };
+                });
+
+                // --- Memory Architecture Handlers (Phase 19) --------------------
+
+                this._handlers.set('memory:search', async (payload: { projectId: string; query: string; layer?: string; topK?: number }) => {
+                        const result = await this.memoryOrchestrator.query({
+                                projectId: payload.projectId,
+                                semanticQuery: payload.query,
+                                topK: payload.topK ?? 5
+                        });
+                        return { type: 'memory:searchResult', result };
+                });
+
+                this._handlers.set('memory:stats', async (payload: { projectId: string }) => {
+                        const stats = this.memoryOrchestrator.getMemoryStats(payload.projectId);
+                        return { type: 'memory:statsResult', stats };
+                });
+
+                this._handlers.set('memory:consolidate', async (payload: { projectId: string }) => {
+                        await this.memoryOrchestrator.consolidate(payload.projectId);
+                        const stats = this.memoryOrchestrator.getMemoryStats(payload.projectId);
+                        return { type: 'memory:consolidated', stats };
+                });
+
+                this._handlers.set('memory:forget', async (payload: { projectId: string }) => {
+                        await this.memoryOrchestrator.forget(payload.projectId);
+                        return { type: 'memory:forgotten', projectId: payload.projectId };
+                });
+
+                this._handlers.set('memory:injectContext', async (payload: { prompt: string; projectId: string; maxTokens?: number }) => {
+                        const enrichedPrompt = await this.memoryOrchestrator.injectContextIntoPrompt(
+                                payload.prompt,
+                                payload.projectId,
+                                payload.maxTokens
+                        );
+                        return { type: 'memory:contextInjected', prompt: enrichedPrompt };
+                });
+
+                this._handlers.set('memory:recordEvent', async (payload: { projectId: string; action: string; outcome: string; durationMs?: number; filesAffected?: string[]; success?: boolean; agentType?: string; taskId?: string; content?: string }) => {
+                        this.episodicMemory.recordEvent({
+                                projectId: payload.projectId,
+                                action: payload.action,
+                                outcome: payload.outcome,
+                                durationMs: payload.durationMs ?? 0,
+                                filesAffected: payload.filesAffected ?? [],
+                                success: payload.success ?? true,
+                                agentType: payload.agentType,
+                                taskId: payload.taskId,
+                                content: payload.content ?? ''
+                        });
+                        return { type: 'memory:eventRecorded' };
+                });
+
+                this._handlers.set('memory:storeKnowledge', async (payload: { projectId: string; content: string; tags?: string[]; sourceFile?: string; sourceLine?: number; chunkType?: string }) => {
+                        await this.semanticMemory.storeKnowledge({
+                                projectId: payload.projectId,
+                                content: payload.content,
+                                tags: payload.tags ?? [],
+                                sourceFile: payload.sourceFile,
+                                sourceLine: payload.sourceLine,
+                                chunkType: payload.chunkType as any,
+                                embedding: []
+                        });
+                        return { type: 'memory:knowledgeStored' };
                 });
         }
 
