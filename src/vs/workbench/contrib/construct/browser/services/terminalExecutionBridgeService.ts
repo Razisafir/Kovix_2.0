@@ -36,9 +36,9 @@
  *  captured to a file. The file IS read incrementally via StreamingOutput.
  *  This is NOT simulated execution.
  *
- *  Adapted from Real-vibecode for Construct IDE.
+ *  Adapted from Real-construct for Construct IDE.
  *  Key adaptations:
- *    - Branding: vibecode → construct, VibeCode → Construct IDE
+ *    - Branding: construct → construct, Construct IDE → Construct IDE
  *    - Import paths updated for CONSTRUCT-VSCODE directory structure
  *    - Storage keys: aiExecution. → construct.aiExecution.
  *    - Exit markers: AI_EXIT → CONSTRUCT_EXIT

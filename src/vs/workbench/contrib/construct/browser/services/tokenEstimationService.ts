@@ -6,9 +6,9 @@
  *  Real token counts come from provider API responses; this service provides
  *  pre-flight estimates for planning and budgeting purposes.
  *
- *  Adapted from Real-vibecode for Construct IDE.
+ *  Adapted from Real-construct for Construct IDE.
  *  Key adaptations:
- *    - Branding: vibecode → construct, VibeCode → Construct IDE
+ *    - Branding: construct → construct, Construct IDE → Construct IDE
  *    - Import paths updated for CONSTRUCT-VSCODE directory structure
  *    - createDecorator: tokenEstimationService → construct.tokenEstimationService
  *    - Fixed IStorageService.store() to use 4-arg signature (VS Code 1.96.0)

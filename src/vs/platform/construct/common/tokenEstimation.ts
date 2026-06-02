@@ -4,8 +4,8 @@
  *  REAL token estimation with provider-specific pricing.
  *  All estimates are explicitly marked as approximate.
  *
- *  Adapted from Real-vibecode for Construct IDE.
- *  Branding: vibecode → construct, VibeCode → Construct IDE
+ *  Adapted from Real-construct for Construct IDE.
+ *  Branding: construct → construct, Construct IDE → Construct IDE
  *--------------------------------------------------------------------------------------------*/
 
 import { createDecorator } from '../../instantiation/common/instantiation.js';

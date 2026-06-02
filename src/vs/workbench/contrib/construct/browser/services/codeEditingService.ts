@@ -18,9 +18,9 @@
  *    - Conflict detection compares current file content against the most
  *      recent backup snapshot, not against version control state.
  *
- *  Adapted from Real-vibecode for Construct IDE.
+ *  Adapted from Real-construct for Construct IDE.
  *  Key adaptations:
- *    - Branding: vibecode → construct, VibeCode → Construct IDE
+ *    - Branding: construct → construct, Construct IDE → Construct IDE
  *    - Import paths updated for CONSTRUCT-VSCODE directory structure
  *    - Log prefixes: [CodeEditingService] → [Construct CodeEditingService]
  *--------------------------------------------------------------------------------------------*/

@@ -5,8 +5,8 @@
  *  Phase 2: Authoritative gateway — all controlled edits route through this service.
  *  Includes mutation source tagging, recursion safety, and structured history.
  *
- *  Adapted from Real-vibecode for Construct IDE.
- *  Branding: vibecode → construct, VibeCode → Construct IDE
+ *  Adapted from Real-construct for Construct IDE.
+ *  Branding: construct → construct, Construct IDE → Construct IDE
  *--------------------------------------------------------------------------------------------*/
 
 import { IDisposable } from '../../../base/common/lifecycle.js';

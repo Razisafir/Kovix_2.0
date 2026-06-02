@@ -5,8 +5,8 @@
  *  Decoupled from AIExecutionService — the graph is an independent subsystem
  *  that any service can feed nodes into and query from.
  *
- *  Adapted from Real-vibecode for Construct IDE.
- *  Branding: vibecode → construct, VibeCode → Construct IDE
+ *  Adapted from Real-construct for Construct IDE.
+ *  Branding: construct → construct, Construct IDE → Construct IDE
  *--------------------------------------------------------------------------------------------*/
 
 import { URI } from '../../../base/common/uri.js';

@@ -21,9 +21,9 @@
  *   - Verification runs real tests/lint, but test coverage gaps mean passing != correct
  *   - State persistence uses IStorageService; a crash mid-step may lose that step
  *
- * Adapted from Real-vibecode for Construct IDE.
+ * Adapted from Real-construct for Construct IDE.
  * Key adaptations:
- *   - Branding: vibecode → construct, VibeCode → Construct IDE
+ *   - Branding: construct → construct, Construct IDE → Construct IDE
  *   - Import paths updated for CONSTRUCT-VSCODE directory structure
  *   - Storage keys: aiExecution. → construct.aiExecution.
  *   - Log prefixes: [AutonomousExecution] → [Construct AutonomousExecution]

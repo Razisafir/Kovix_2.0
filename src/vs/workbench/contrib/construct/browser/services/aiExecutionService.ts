@@ -4,11 +4,11 @@
  *  AIExecutionService — Concrete implementation of IAIExecutionService.
  *  Phase 2: Authoritative gateway for AI-driven workspace mutations.
  *
- *  Adapted from Real-vibecode for Construct IDE.
+ *  Adapted from Real-construct for Construct IDE.
  *  Key adaptations:
- *    - Branding: vibecode → construct, VibeCode → Construct IDE
+ *    - Branding: construct → construct, Construct IDE → Construct IDE
  *    - Import paths updated for CONSTRUCT-VSCODE directory structure
- *    - createDecorator symbols: vibecode.aiExecution → construct.aiExecution
+ *    - createDecorator symbols: construct.aiExecution → construct.aiExecution
  *    - IAIUnifiedStateService and IObservabilityService dependencies stubbed out
  *      (will be wired in when those services are ported in future phases)
  *    - Core logic preserved: policy validation, graph node tracking,

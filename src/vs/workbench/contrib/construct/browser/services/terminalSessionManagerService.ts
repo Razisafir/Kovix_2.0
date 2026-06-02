@@ -6,9 +6,9 @@
  *  for terminal command execution, including stuck detection, abandoned file
  *  detection, health metrics, and crash recovery via IStorageService.
  *
- *  Adapted from Real-vibecode for Construct IDE.
+ *  Adapted from Real-construct for Construct IDE.
  *  Key adaptations:
- *    - Branding: vibecode → construct, VibeCode → Construct IDE
+ *    - Branding: construct → construct, Construct IDE → Construct IDE
  *    - Import paths updated for CONSTRUCT-VSCODE directory structure
  *    - Storage keys: aiExecution. → construct.aiExecution.
  *    - Log prefixes: [TerminalSessionManagerService] → [Construct TerminalSessionManagerService]

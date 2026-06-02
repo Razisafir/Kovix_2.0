@@ -6,9 +6,9 @@
  *  Provides command validation, shell injection prevention, and risk assessment
  *  for all commands before they are executed by the AI execution kernel.
  *
- *  Adapted from Real-vibecode for Construct IDE.
+ *  Adapted from Real-construct for Construct IDE.
  *  Key adaptations:
- *    - Branding: vibecode → construct, VibeCode → Construct IDE
+ *    - Branding: construct → construct, Construct IDE → Construct IDE
  *    - Import paths updated for CONSTRUCT-VSCODE directory structure
  *    - Log prefixes: [CommandSafety] → [Construct CommandSafety]
  *--------------------------------------------------------------------------------------------*/

@@ -5,8 +5,8 @@
  *  These events flow from services to the UI, enabling live observation
  *  of command execution, verification, repair, and milestone progress.
  *
- *  Adapted from Real-vibecode for Construct IDE.
- *  Branding: vibecode → construct, VibeCode → Construct IDE
+ *  Adapted from Real-construct for Construct IDE.
+ *  Branding: construct → construct, Construct IDE → Construct IDE
  *--------------------------------------------------------------------------------------------*/
 
 // -- Event Types -- -----------------------------------------------------------

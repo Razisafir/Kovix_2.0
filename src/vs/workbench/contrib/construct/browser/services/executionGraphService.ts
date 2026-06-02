@@ -4,9 +4,9 @@
  *  ExecutionGraphService — Concrete implementation of IExecutionGraphService.
  *  Hybrid memory/persisted model with async-safe writes.
  *
- *  Adapted from Real-vibecode for Construct IDE.
+ *  Adapted from Real-construct for Construct IDE.
  *  Key adaptations:
- *    - Branding: vibecode → construct, VibeCode → Construct IDE
+ *    - Branding: construct → construct, Construct IDE → Construct IDE
  *    - Import paths updated for CONSTRUCT-VSCODE directory structure
  *    - createDecorator: executionGraphService → construct.executionGraphService
  *    - BFS cycle prevention logic preserved exactly as-is
@@ -499,7 +499,7 @@ export class ExecutionGraphService extends Disposable implements IExecutionGraph
 	// ─── Private: Cycle Detection ───────────────────────────────────────────────
 
 	/**
-	 * BFS cycle prevention — preserved exactly from Real-vibecode.
+	 * BFS cycle prevention — preserved exactly from Real-construct.
 	 * Check if adding an edge from sourceId → targetId would create a cycle.
 	 * A cycle would exist if targetId is already an ancestor of sourceId.
 	 * We do a BFS from sourceId following incoming Parent/CausedBy/Triggered/DerivedFrom edges.
