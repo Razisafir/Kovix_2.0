@@ -125,7 +125,7 @@ import { ICreditSystem, ICostGovernor } from '../../../../platform/construct/com
 import { CreditSystemService, CostGovernorEnhancedService } from './services/pricing/creditSystemService.js';
 
 // ─────────────────────────────────────────────────────────────
-// Singleton Registrations — 42 services total
+// Singleton Registrations — 43 services total (41 pre-Phase-27 + 2 Phase 27)
 // ─────────────────────────────────────────────────────────────
 
 // Phase 1 (6): LLM Provider + Credential Store + Cost Governor
