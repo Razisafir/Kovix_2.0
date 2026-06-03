@@ -50,9 +50,9 @@ jobs:
 
       - name: Compile TypeScript (noEmit)
         run: |
-          npx tsc -p src/tsconfig.json --noEmit 2>&1 | tee compile.log
+          npx tsc -p src/tsconfig.json --noEmit 2>&1 | tee compile.log || true
           # Filter out known pre-existing VS Code core errors (TS6133 in theme files)
-          NEW_ERRORS=$(grep "error TS" compile.log | grep -v "workbenchThemeService.ts" | grep -v "themeConfiguration.ts" | grep -v "TS6133.*isWeb")
+          NEW_ERRORS=$(grep "error TS" compile.log | grep -v "workbenchThemeService.ts" | grep -v "themeConfiguration.ts")
           if [ -n "$NEW_ERRORS" ]; then
             echo "::error::New TypeScript compilation errors found:"
             echo "$NEW_ERRORS"
