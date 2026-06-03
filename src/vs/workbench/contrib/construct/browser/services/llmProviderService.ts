@@ -34,6 +34,10 @@ import {
 } from '../../../../../platform/construct/common/llmProvider.js';
 import { ICostGovernorService } from '../../../../../platform/construct/common/costGovernor.js';
 
+// Phase 27: Credit integration
+import { ICreditSystem } from '../../../../../platform/construct/common/pricing/creditSystem.js';
+import { getMessageActionType, getModelMultiplier } from '../../../../../platform/construct/common/pricing/pricingTypes.js';
+
 // =====================================================================
 // BudgetExceededError -- Specific error for budget-exceeded fallback
 // Phase 31: Distinguishes budget exhaustion from generic provider failures
@@ -85,6 +89,7 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
                 @ICredentialStoreService private readonly credentialStore: ICredentialStoreService,
                 @IProviderHealthService private readonly healthService: IProviderHealthService,
                 @ICostGovernorService private readonly costGovernor: ICostGovernorService,
+                @ICreditSystem private readonly creditSystem: ICreditSystem,
         ) {
                 super();
 
@@ -183,6 +188,21 @@ export class LLMProviderService extends Disposable implements ILLMProviderServic
                                 timestamp: Date.now(),
                                 durationMs: latencyMs,
                         });
+
+                        // Phase 27: Consume credits for LLM message
+                        try {
+                                const actionType = getMessageActionType(request.model);
+                                const multiplier = getModelMultiplier(request.model);
+                                const baseCredits = actionType === 'message_premium' ? 1 : 1;
+                                const credits = baseCredits * multiplier;
+                                this.creditSystem.consumeCredits(credits, actionType, {
+                                        model: request.model,
+                                        sessionId: request.requestId,
+                                        description: `LLM request to ${providerId}/${request.model}`,
+                                });
+                        } catch {
+                                // Credit failures don't break LLM requests
+                        }
 
                         this.healthService.recordSuccess(providerId, latencyMs);
 

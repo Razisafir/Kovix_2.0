@@ -120,8 +120,12 @@ import { AutonomousRepairService } from './services/autonomousRepairService.js';
 import { IMultiAgentExecutionService } from '../../../../platform/construct/common/multiAgentExecution.js';
 import { MultiAgentExecutionService } from './services/multiAgentExecutionService.js';
 
+// Phase 27: Credit-Based Pricing & Cost Governor
+import { ICreditSystem, ICostGovernor } from '../../../../platform/construct/common/pricing/creditSystem.js';
+import { CreditSystemService, CostGovernorEnhancedService } from './services/pricing/creditSystemService.js';
+
 // ─────────────────────────────────────────────────────────────
-// Singleton Registrations — 40 services total
+// Singleton Registrations — 42 services total
 // ─────────────────────────────────────────────────────────────
 
 // Phase 1 (6): LLM Provider + Credential Store + Cost Governor
@@ -197,117 +201,121 @@ registerSingleton(IRealUIIntegrationService, RealUIIntegrationService, Instantia
 registerSingleton(IAutonomousRepairService, AutonomousRepairService, InstantiationType.Delayed);
 registerSingleton(IMultiAgentExecutionService, MultiAgentExecutionService, InstantiationType.Delayed);
 
+// Phase 27 (2): Credit System + Enhanced Cost Governor
+registerSingleton(ICreditSystem, CreditSystemService, InstantiationType.Eager);
+registerSingleton(ICostGovernor, CostGovernorEnhancedService, InstantiationType.Eager);
+
 const constructViewIcon = registerIcon('construct-view-icon', Codicon.robot, localize('constructViewIcon', 'View icon of the Construct Agent view.'));
 
 // Register the Construct view container in the sidebar
 const constructViewContainer = Registry.as<IViewContainersRegistry>(ViewExtensions.ViewContainersRegistry).registerViewContainer({
-	id: 'construct',
-	title: localize2('construct', "Construct Agent"),
-	ctorDescriptor: new SyncDescriptor(ViewPaneContainer, ['construct', { mergeViewWithContainerWhenSingleView: true }]),
-	icon: constructViewIcon,
-	order: 100,
+        id: 'construct',
+        title: localize2('construct', "Construct Agent"),
+        ctorDescriptor: new SyncDescriptor(ViewPaneContainer, ['construct', { mergeViewWithContainerWhenSingleView: true }]),
+        icon: constructViewIcon,
+        order: 100,
 }, ViewContainerLocation.Sidebar, { doNotRegisterOpenCommand: false });
 
 // Register the agent panel view inside the container
 Registry.as<IViewsRegistry>(ViewExtensions.ViewsRegistry).registerViews([{
-	id: 'construct.agentPanel',
-	name: localize2('agentPanel', "Agent"),
-	containerIcon: constructViewIcon,
-	ctorDescriptor: new SyncDescriptor(ConstructAgentViewPane),
-	canToggleVisibility: true,
-	canMoveView: true,
-	order: 1,
+        id: 'construct.agentPanel',
+        name: localize2('agentPanel', "Agent"),
+        containerIcon: constructViewIcon,
+        ctorDescriptor: new SyncDescriptor(ConstructAgentViewPane),
+        canToggleVisibility: true,
+        canMoveView: true,
+        order: 1,
 }], constructViewContainer);
 
 // Status Bar Integration
 class ConstructStatusBarContribution extends Disposable implements IWorkbenchContribution {
-	static readonly ID = 'workbench.contrib.constructStatusBar';
+        static readonly ID = 'workbench.contrib.constructStatusBar';
 
-	private _agentStatusEntry: IStatusbarEntryAccessor | undefined;
-	private _modelEntry: IStatusbarEntryAccessor | undefined;
-	private _changesEntry: IStatusbarEntryAccessor | undefined;
+        private _agentStatusEntry: IStatusbarEntryAccessor | undefined;
+        private _modelEntry: IStatusbarEntryAccessor | undefined;
+        private _changesEntry: IStatusbarEntryAccessor | undefined;
 
-	constructor(
-		@IStatusbarService private readonly statusbarService: IStatusbarService,
-	) {
-		super();
+        constructor(
+                @IStatusbarService private readonly statusbarService: IStatusbarService,
+        ) {
+                super();
 
-		this._agentStatusEntry = this._register(this.statusbarService.addEntry({
-			name: localize('constructAgentStatus', "Construct Agent Status"),
-			text: '$(robot) Ready',
-			ariaLabel: localize('constructAgentStatusAria', "Construct Agent: Ready"),
-			tooltip: localize('constructAgentStatusTooltip', "Construct Agent: Idle — click to open panel"),
-			command: 'construct.focusPanel',
-		}, 'construct.agentStatus', StatusbarAlignment.LEFT, 50));
+                this._agentStatusEntry = this._register(this.statusbarService.addEntry({
+                        name: localize('constructAgentStatus', "Construct Agent Status"),
+                        text: '$(robot) Ready',
+                        ariaLabel: localize('constructAgentStatusAria', "Construct Agent: Ready"),
+                        tooltip: localize('constructAgentStatusTooltip', "Construct Agent: Idle — click to open panel"),
+                        command: 'construct.focusPanel',
+                }, 'construct.agentStatus', StatusbarAlignment.LEFT, 50));
 
-		this._modelEntry = this._register(this.statusbarService.addEntry({
-			name: localize('constructModel', "Construct Model"),
-			text: '$(sparkle) Claude Sonnet',
-			ariaLabel: localize('constructModelAria', "Active LLM: Claude 3.5 Sonnet"),
-			tooltip: localize('constructModelTooltip', "Active LLM: Claude 3.5 Sonnet"),
-		}, 'construct.model', StatusbarAlignment.LEFT, 51));
+                this._modelEntry = this._register(this.statusbarService.addEntry({
+                        name: localize('constructModel', "Construct Model"),
+                        text: '$(sparkle) Claude Sonnet',
+                        ariaLabel: localize('constructModelAria', "Active LLM: Claude 3.5 Sonnet"),
+                        tooltip: localize('constructModelTooltip', "Active LLM: Claude 3.5 Sonnet"),
+                }, 'construct.model', StatusbarAlignment.LEFT, 51));
 
-		this._changesEntry = this._register(this.statusbarService.addEntry({
-			name: localize('constructChanges', "Construct Changes"),
-			text: '$(diff-added) 0 pending',
-			ariaLabel: localize('constructChangesAria', "No changes awaiting approval"),
-			tooltip: localize('constructChangesTooltip', "No changes awaiting approval"),
-		}, 'construct.changes', StatusbarAlignment.RIGHT, 50));
-		// Status bar entries are stored for future updates
-		void this._agentStatusEntry; void this._modelEntry; void this._changesEntry;
-	}
+                this._changesEntry = this._register(this.statusbarService.addEntry({
+                        name: localize('constructChanges', "Construct Changes"),
+                        text: '$(diff-added) 0 pending',
+                        ariaLabel: localize('constructChangesAria', "No changes awaiting approval"),
+                        tooltip: localize('constructChangesTooltip', "No changes awaiting approval"),
+                }, 'construct.changes', StatusbarAlignment.RIGHT, 50));
+                // Status bar entries are stored for future updates
+                void this._agentStatusEntry; void this._modelEntry; void this._changesEntry;
+        }
 }
 
 Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(ConstructStatusBarContribution, LifecyclePhase.Restored);
 
 // Register Construct commands
 registerAction2(class FocusConstructPanelAction extends Action2 {
-	constructor() {
-		super({
-			id: 'construct.focusPanel',
-			title: localize2('focusConstructPanel', "Show Construct Agent"),
-			keybinding: {
-				primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyC,
-				weight: KeybindingWeight.WorkbenchContrib,
-			},
-			f1: true,
-			category: localize2('constructCategory', "Construct"),
-		});
-	}
+        constructor() {
+                super({
+                        id: 'construct.focusPanel',
+                        title: localize2('focusConstructPanel', "Show Construct Agent"),
+                        keybinding: {
+                                primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyC,
+                                weight: KeybindingWeight.WorkbenchContrib,
+                        },
+                        f1: true,
+                        category: localize2('constructCategory', "Construct"),
+                });
+        }
 
-	run(accessor: ServicesAccessor): void {
-		accessor.get(IViewsService).openView('construct.agentPanel', true);
-	}
+        run(accessor: ServicesAccessor): void {
+                accessor.get(IViewsService).openView('construct.agentPanel', true);
+        }
 });
 
 registerAction2(class NewConstructChatAction extends Action2 {
-	constructor() {
-		super({
-			id: 'construct.newChat',
-			title: localize2('newConstructChat', "New Construct Chat"),
-			f1: true,
-			category: localize2('constructCategory2', "Construct"),
-		});
-	}
-	run(accessor: ServicesAccessor): void {
-		accessor.get(IViewsService).openView('construct.agentPanel', true);
-	}
+        constructor() {
+                super({
+                        id: 'construct.newChat',
+                        title: localize2('newConstructChat', "New Construct Chat"),
+                        f1: true,
+                        category: localize2('constructCategory2', "Construct"),
+                });
+        }
+        run(accessor: ServicesAccessor): void {
+                accessor.get(IViewsService).openView('construct.agentPanel', true);
+        }
 });
 
 registerAction2(class ShowInlineAgentAction extends Action2 {
-	constructor() {
-		super({
-			id: 'construct.showInlineAgent',
-			title: localize2('showInlineAgent', "Show Inline Agent"),
-			keybinding: {
-				primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyI,
-				weight: KeybindingWeight.WorkbenchContrib,
-			},
-			f1: true,
-			category: localize2('constructCategory3', "Construct"),
-		});
-	}
-	run(accessor: ServicesAccessor): void {
-		accessor.get(IViewsService).openView('construct.agentPanel', true);
-	}
+        constructor() {
+                super({
+                        id: 'construct.showInlineAgent',
+                        title: localize2('showInlineAgent', "Show Inline Agent"),
+                        keybinding: {
+                                primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyI,
+                                weight: KeybindingWeight.WorkbenchContrib,
+                        },
+                        f1: true,
+                        category: localize2('constructCategory3', "Construct"),
+                });
+        }
+        run(accessor: ServicesAccessor): void {
+                accessor.get(IViewsService).openView('construct.agentPanel', true);
+        }
 });
