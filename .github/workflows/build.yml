@@ -139,6 +139,7 @@ jobs:
         run: npx gulp vscode-linux-x64
         env:
           npm_config_arch: x64
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Build DEB package
         run: npx gulp vscode-linux-x64-build-deb
@@ -204,6 +205,8 @@ jobs:
       - name: Package VS Code (Win32 x64)
         run: npx gulp vscode-win32-x64
         shell: pwsh
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Package with electron-builder
         run: |
@@ -259,6 +262,8 @@ jobs:
 
       - name: Package VS Code (Darwin x64)
         run: npx gulp vscode-darwin-x64
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Package with electron-builder
         run: |
@@ -311,6 +316,8 @@ jobs:
 
       - name: Package VS Code (Darwin arm64)
         run: npx gulp vscode-darwin-arm64
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Package with electron-builder
         run: |
