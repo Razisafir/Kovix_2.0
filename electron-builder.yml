@@ -80,7 +80,6 @@ fileAssociations:
     description: Construct IDE Project File
     mimeType: application/x-construct
     role: Editor
-    icon: resources/win32/code.ico
 
 # ---------------------------------------------------------------------------
 # Protocol handlers — construct://
@@ -230,14 +229,15 @@ linux:
   maintainer: "Construct IDE Project <https://github.com/Razisafir/Real-construct>"
   vendor: "Construct IDE Project"
   desktop:
-    Name: "Construct IDE"
-    Comment: "AI-Native Code Editing. Redefined."
-    GenericName: "Text Editor"
-    StartupWMClass: "Construct IDE"
-    Categories: "TextEditor;Development;IDE;"
-    MimeType: "application/x-construct;application/x-construct-workspace;"
-    Keywords: "construct;ai;editor;code;"
-    StartupNotify: "true"
+    entry:
+      Name: "Construct IDE"
+      Comment: "AI-Native Code Editing. Redefined."
+      GenericName: "Text Editor"
+      StartupWMClass: "Construct IDE"
+      Categories: "TextEditor;Development;IDE;"
+      MimeType: "application/x-construct;application/x-construct-workspace;"
+      Keywords: "construct;ai;editor;code;"
+      StartupNotify: "true"
   target:
     - target: AppImage
       arch:
@@ -268,7 +268,7 @@ deb:
     - libasound2
     - libatk-bridge2.0-0
     - libgtk-3-0
-  soft Depends:
+  recommends:
     - libcurl4 | libcurl3
   category: devel
   priority: optional
@@ -311,7 +311,7 @@ snap:
 # ---------------------------------------------------------------------------
 # Compression & performance
 # ---------------------------------------------------------------------------
-compression: xz
+compression: maximum
 
 # ---------------------------------------------------------------------------
 # Node.js / Electron version overrides (set during CI)
