@@ -15,6 +15,7 @@ import { IConfigurationService } from '../../../../../../platform/configuration/
 import { generateUuid } from '../../../../../../base/common/uuid.js';
 import { IOpenerService } from '../../../../../../platform/opener/common/opener.js';
 import { URI } from '../../../../../../base/common/uri.js';
+import { ITelemetryService } from '../../../../../../platform/telemetry/common/telemetry.js';
 
 import {
         ICreditSystem,
@@ -97,6 +98,7 @@ export class CreditSystemService extends Disposable implements ICreditSystem {
                 @IStorageService private readonly storageService: IStorageService,
                 @IConfigurationService private readonly configurationService: IConfigurationService,
                 @IOpenerService private readonly openerService: IOpenerService,
+                @ITelemetryService private readonly telemetryService: ITelemetryService,
         ) {
                 super();
 
@@ -111,12 +113,18 @@ export class CreditSystemService extends Disposable implements ICreditSystem {
                 // Check if billing period needs reset
                 this._checkPeriodReset();
 
+                // Phase 27: Telemetry tier sync — Free tier = telemetry active, paid = off
+                this._syncTelemetryWithTier();
+
                 // Register disposables
                 this._register(this._onCreditsChanged);
                 this._register(this._onBudgetWarning);
                 this._register(this._onEmergencyStop);
                 this._register(this._onTierChanged);
                 this._register(this._onUsageRecorded);
+
+                // Track telemetry service reference for tier-sync
+                void this.telemetryService;
 
                 this.logService.info(`[CreditSystem] Initialized: tier=${this._subscription.tier}, credits=${this._subscription.creditsRemaining}/${this._subscription.creditsTotal}`);
         }
@@ -206,7 +214,6 @@ export class CreditSystemService extends Disposable implements ICreditSystem {
                 description?: string;
         }): boolean {
                 const remaining = this.getCreditsRemaining();
-                const total = this.getCreditsTotal();
 
                 // Check if credits are sufficient
                 if (remaining < amount) {
@@ -469,6 +476,9 @@ export class CreditSystemService extends Disposable implements ICreditSystem {
                         consumed: 0,
                 });
 
+                // Phase 27: Sync telemetry with new tier
+                this._syncTelemetryWithTier();
+
                 this.logService.info(`[CreditSystem] Simulated tier change: ${oldTier} -> ${tier}`);
                 return true;
         }
@@ -476,6 +486,26 @@ export class CreditSystemService extends Disposable implements ICreditSystem {
         // ══════════════════════════════════════════════════════════
         // Private Helpers
         // ══════════════════════════════════════════════════════════
+
+        /**
+         * Phase 27: Sync telemetry with subscription tier.
+         * Free tier = telemetry active (anonymized data contribution in exchange for free usage).
+         * Paid tier = telemetry off (no data collection, privacy-first).
+         */
+        private _syncTelemetryWithTier(): void {
+                const tier = this._subscription.tier;
+                const isFree = tier === SubscriptionTier.Free;
+
+                // Set telemetry opt-in based on tier
+                try {
+                        this.configurationService.updateValue('construct.telemetry.enabled', isFree);
+                        this.configurationService.updateValue('construct.telemetry.mode', isFree ? 'anonymized' : 'disabled');
+                } catch {
+                        // Configuration update may fail in some contexts
+                }
+
+                this.logService.info(`[CreditSystem] Telemetry sync: tier=${tier}, telemetry=${isFree ? 'active (anonymized)' : 'disabled'}`);
+        }
 
         private _checkPeriodReset(): void {
                 const now = new Date();
@@ -587,7 +617,7 @@ export class CreditSystemService extends Disposable implements ICreditSystem {
 
         private _loadSubscription(): ISubscription {
                 try {
-                        const saved = this.storageService.get(STORAGE_KEY_SUBSCRIPTION, StorageScope.GLOBAL, undefined);
+                        const saved = this.storageService.get(STORAGE_KEY_SUBSCRIPTION, StorageScope.PROFILE, undefined);
                         if (saved) {
                                 return JSON.parse(saved) as ISubscription;
                         }
@@ -615,7 +645,7 @@ export class CreditSystemService extends Disposable implements ICreditSystem {
 
         private _loadUsage(): ICreditUsage[] {
                 try {
-                        const saved = this.storageService.get(STORAGE_KEY_USAGE, StorageScope.GLOBAL, undefined);
+                        const saved = this.storageService.get(STORAGE_KEY_USAGE, StorageScope.PROFILE, undefined);
                         if (saved) {
                                 return JSON.parse(saved) as ICreditUsage[];
                         }
@@ -627,7 +657,7 @@ export class CreditSystemService extends Disposable implements ICreditSystem {
 
         private _loadBudget(): ICreditBudget {
                 try {
-                        const saved = this.storageService.get(STORAGE_KEY_BUDGET, StorageScope.GLOBAL, undefined);
+                        const saved = this.storageService.get(STORAGE_KEY_BUDGET, StorageScope.PROFILE, undefined);
                         if (saved) {
                                 return JSON.parse(saved) as ICreditBudget;
                         }
@@ -639,7 +669,7 @@ export class CreditSystemService extends Disposable implements ICreditSystem {
 
         private _loadPurchasedCredits(): number {
                 try {
-                        const saved = this.storageService.get(STORAGE_KEY_PURCHASED, StorageScope.GLOBAL, '0');
+                        const saved = this.storageService.get(STORAGE_KEY_PURCHASED, StorageScope.PROFILE, '0');
                         return parseInt(saved, 10) || 0;
                 } catch {
                         return 0;
@@ -648,7 +678,7 @@ export class CreditSystemService extends Disposable implements ICreditSystem {
 
         private _loadAlerts(): IPricingAlert[] {
                 try {
-                        const saved = this.storageService.get(STORAGE_KEY_ALERTS, StorageScope.GLOBAL, undefined);
+                        const saved = this.storageService.get(STORAGE_KEY_ALERTS, StorageScope.PROFILE, undefined);
                         if (saved) {
                                 return JSON.parse(saved) as IPricingAlert[];
                         }
@@ -660,11 +690,11 @@ export class CreditSystemService extends Disposable implements ICreditSystem {
 
         private _persistState(): void {
                 try {
-                        this.storageService.store(STORAGE_KEY_SUBSCRIPTION, JSON.stringify(this._subscription), StorageScope.GLOBAL, StorageTarget.MACHINE);
-                        this.storageService.store(STORAGE_KEY_USAGE, JSON.stringify(this._usage), StorageScope.GLOBAL, StorageTarget.MACHINE);
-                        this.storageService.store(STORAGE_KEY_BUDGET, JSON.stringify(this._budget), StorageScope.GLOBAL, StorageTarget.MACHINE);
-                        this.storageService.store(STORAGE_KEY_PURCHASED, String(this._purchasedCredits), StorageScope.GLOBAL, StorageTarget.MACHINE);
-                        this.storageService.store(STORAGE_KEY_ALERTS, JSON.stringify(this._alerts), StorageScope.GLOBAL, StorageTarget.MACHINE);
+                        this.storageService.store(STORAGE_KEY_SUBSCRIPTION, JSON.stringify(this._subscription), StorageScope.PROFILE, StorageTarget.MACHINE);
+                        this.storageService.store(STORAGE_KEY_USAGE, JSON.stringify(this._usage), StorageScope.PROFILE, StorageTarget.MACHINE);
+                        this.storageService.store(STORAGE_KEY_BUDGET, JSON.stringify(this._budget), StorageScope.PROFILE, StorageTarget.MACHINE);
+                        this.storageService.store(STORAGE_KEY_PURCHASED, String(this._purchasedCredits), StorageScope.PROFILE, StorageTarget.MACHINE);
+                        this.storageService.store(STORAGE_KEY_ALERTS, JSON.stringify(this._alerts), StorageScope.PROFILE, StorageTarget.MACHINE);
                 } catch (err) {
                         this.logService.error('[CreditSystem] Failed to persist state:', err);
                 }

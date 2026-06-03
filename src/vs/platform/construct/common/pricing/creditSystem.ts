@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { createDecorator } from '../../../instantiation/common/instantiation.js';
-import { IEvent } from '../../../base/common/event.js';
+import { Event } from '../../../../base/common/event.js';
 import {
         SubscriptionTier,
         CreditActionType,
@@ -128,19 +128,19 @@ export interface ICreditSystem {
         // ── Events ──────────────────────────────────────────────
 
         /** Fired when credits are consumed or replenished. */
-        readonly onCreditsChanged: IEvent<{ remaining: number; total: number; consumed: number }>;
+        readonly onCreditsChanged: Event<{ remaining: number; total: number; consumed: number }>;
 
         /** Fired when a budget warning threshold is crossed. */
-        readonly onBudgetWarning: IEvent<IPricingAlert>;
+        readonly onBudgetWarning: Event<IPricingAlert>;
 
         /** Fired when emergency stop is triggered (< 10 credits). */
-        readonly onEmergencyStop: IEvent<{ creditsRemaining: number }>;
+        readonly onEmergencyStop: Event<{ creditsRemaining: number }>;
 
         /** Fired when subscription tier changes. */
-        readonly onTierChanged: IEvent<{ from: SubscriptionTier; to: SubscriptionTier }>;
+        readonly onTierChanged: Event<{ from: SubscriptionTier; to: SubscriptionTier }>;
 
         /** Fired when a usage record is created. */
-        readonly onUsageRecorded: IEvent<ICreditUsage>;
+        readonly onUsageRecorded: Event<ICreditUsage>;
 }
 
 export const ICostGovernor = createDecorator<ICostGovernor>('costGovernorEnhancedService');
