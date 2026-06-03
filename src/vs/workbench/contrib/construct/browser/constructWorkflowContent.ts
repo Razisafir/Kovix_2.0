@@ -1,406 +1,212 @@
 /*---------------------------------------------------------------------------------------------
- *  Construct IDE - Workflow Content / Webview Handler Registration
- *  Phase 28: All webview handlers (Pricing + Launch + GOD Mode + Welcome + Integration)
+ *  Construct IDE — MVP Webview Handler Registration
+ *  5 engine handlers + event forwarders. No pricing, no GOD mode.
  *
- *  This module wires ICreditSystem, ICostGovernor, IGodModeActivator,
- *  and ILaunchChecklist into the Construct agent panel via webview
- *  message handlers. Phase 27 added 14 pricing handlers; Phase 28 adds
- *  16 launch/GOD mode/welcome/integration handlers.
+ *  MVP: Agent run/cancel, MCP server management, terminal execution,
+ *  file operations, and settings. All handlers wire directly to engine services.
  *--------------------------------------------------------------------------------------------*/
 
-import { ICreditSystem, ICostGovernor } from '../../../../platform/construct/common/pricing/creditSystem.js';
-import { IGodModeActivator, ILaunchChecklist } from '../../../../platform/construct/common/integration/godModeActivator.js';
-import {
-        CreditActionType,
-        SubscriptionTier,
-        ICreditBudget,
-        IPricingAlert,
-        ICreditUsage,
-} from '../../../../platform/construct/common/pricing/pricingTypes.js';
-import {
-        GodModeState,
-        IGodModeConfig,
-        WelcomeDemoType,
-} from '../../../../platform/construct/common/integration/launchTypes.js';
+import { IAnthropicProviderService } from '../../../../platform/construct/common/anthropicProvider.js';
+import { IMCPProcessService } from '../../../../platform/construct/common/mcpProcess.js';
+import { IAgentLoopService } from '../../../../platform/construct/common/agentLoop.js';
+import { ITerminalExecutorService } from '../../../../platform/construct/common/terminalExecutor.js';
+import { IDiffApplierService } from '../../../../platform/construct/common/diffApplier.js';
 
 /**
- * Register all webview message handlers for the Construct IDE.
+ * Register all webview message handlers for the Construct IDE MVP.
  *
- * Call this from the ConstructAgentViewPane (or equivalent webview host)
- * after the webview is ready. Each handler receives a message payload
- * and returns a serialisable result that is posted back to the webview.
+ * Call this from the ConstructAgentViewPane after the webview is ready.
+ * Each handler receives a message payload and returns a serialisable result
+ * that is posted back to the webview.
  */
 export function registerAllHandlers(
-        creditSystem: ICreditSystem,
-        costGovernor: ICostGovernor,
-        godModeActivator: IGodModeActivator,
-        launchChecklist: ILaunchChecklist,
-        postMessage: (channel: string, data: unknown) => void,
+	anthropicProvider: IAnthropicProviderService,
+	mcpProcess: IMCPProcessService,
+	agentLoop: IAgentLoopService,
+	terminalExecutor: ITerminalExecutorService,
+	diffApplier: IDiffApplierService,
+	postMessage: (channel: string, data: unknown) => void,
 ): Map<string, (payload: any) => Promise<unknown> | unknown> {
-        const handlers = new Map<string, (payload: any) => Promise<unknown> | unknown>();
+	const handlers = new Map<string, (payload: any) => Promise<unknown> | unknown>();
 
-        // ══════════════════════════════════════════════════════════
-        // Phase 27: Pricing Handlers (14)
-        // ══════════════════════════════════════════════════════════
+	// ══════════════════════════════════════════════════════════
+	// Chat / Agent Handlers
+	// ══════════════════════════════════════════════════════════
 
-        // ── pricing:getStatus ──────────────────────────────────
-        handlers.set('pricing:getStatus', (_payload: any) => {
-                const subscription = creditSystem.getSubscription();
-                const remaining = creditSystem.getCreditsRemaining();
-                const total = creditSystem.getCreditsTotal();
-                const usedThisMonth = creditSystem.getUsageThisMonth();
-                const usedToday = creditSystem.getUsageToday();
-                const tier = creditSystem.getCurrentTier();
+	/** Send a chat message to the agent loop */
+	handlers.set('chat:sendMessage', async (payload: { message: string }) => {
+		return agentLoop.processMessage(payload.message);
+	});
 
-                return {
-                        tier,
-                        subscription,
-                        creditsRemaining: remaining,
-                        creditsTotal: total,
-                        usedThisMonth,
-                        usedToday,
-                        emergencyMode: costGovernor.isEmergencyMode(),
-                        autoSwitchRecommended: costGovernor.shouldAutoSwitchModel(),
-                };
-        });
+	/** Cancel the running agent loop */
+	handlers.set('chat:cancel', () => {
+		agentLoop.cancel();
+		return { cancelled: true };
+	});
 
-        // ── pricing:getHistory ─────────────────────────────────
-        handlers.set('pricing:getHistory', (payload: { limit?: number; startDate?: number; endDate?: number }) => {
-                return creditSystem.getUsageHistory(payload.limit, payload.startDate, payload.endDate);
-        });
+	/** Get current agent state */
+	handlers.set('chat:getState', () => {
+		return agentLoop.getState();
+	});
 
-        // ── pricing:getBreakdown ───────────────────────────────
-        handlers.set('pricing:getBreakdown', (_payload: any) => {
-                const breakdown = creditSystem.getUsageByActionType();
-                const result: Record<string, number> = {};
-                for (const [key, value] of breakdown) {
-                        result[key] = value;
-                }
-                return result;
-        });
+	/** Get conversation history */
+	handlers.set('chat:getHistory', () => {
+		return agentLoop.getConversationHistory();
+	});
 
-        // ── pricing:estimate ───────────────────────────────────
-        handlers.set('pricing:estimate', (payload: { prompt: string; model: string }) => {
-                return creditSystem.estimateCost(payload.prompt, payload.model);
-        });
+	/** Get agent state (alias) */
+	handlers.set('agent:getState', () => {
+		return agentLoop.getState();
+	});
 
-        // ── pricing:estimatePlan ───────────────────────────────
-        handlers.set('pricing:estimatePlan', (payload: { agentCount: number; estimatedSteps: number; model: string }) => {
-                const credits = creditSystem.estimatePlanCost(payload);
-                return { estimatedCredits: credits };
-        });
+	// ══════════════════════════════════════════════════════════
+	// MCP Server Handlers
+	// ══════════════════════════════════════════════════════════
 
-        // ── pricing:setBudget ──────────────────────────────────
-        handlers.set('pricing:setBudget', (payload: ICreditBudget) => {
-                creditSystem.setBudget(payload);
-                return { success: true };
-        });
+	/** List all MCP server statuses */
+	handlers.set('mcp:listServers', () => {
+		return mcpProcess.getAllServerStatuses();
+	});
 
-        // ── pricing:getBudget ──────────────────────────────────
-        handlers.set('pricing:getBudget', (_payload: any) => {
-                return creditSystem.getBudget();
-        });
+	/** Start an MCP server */
+	handlers.set('mcp:startServer', async (payload: { serverId: string }) => {
+		const config = mcpProcess.getServers().find(s => s.id === payload.serverId);
+		if (config) {
+			await mcpProcess.startServer(config);
+			return { success: true };
+		}
+		return { success: false, error: `Server config not found: ${payload.serverId}` };
+	});
 
-        // ── pricing:getAlerts ──────────────────────────────────
-        handlers.set('pricing:getAlerts', (_payload: any) => {
-                return creditSystem.getAlerts();
-        });
+	/** Stop an MCP server */
+	handlers.set('mcp:stopServer', async (payload: { serverId: string }) => {
+		await mcpProcess.stopServer(payload.serverId);
+		return { success: true };
+	});
 
-        // ── pricing:upgrade ────────────────────────────────────
-        handlers.set('pricing:upgrade', (_payload: any) => {
-                creditSystem.upgradeFlow();
-                return { success: true };
-        });
+	/** List all available MCP tools */
+	handlers.set('mcp:listTools', () => {
+		return mcpProcess.getAllTools();
+	});
 
-        // ── pricing:purchase ───────────────────────────────────
-        handlers.set('pricing:purchase', async (payload: { amount: number }) => {
-                const success = await creditSystem.purchaseCredits(payload.amount);
-                return { success };
-        });
+	// ══════════════════════════════════════════════════════════
+	// Terminal Handlers
+	// ══════════════════════════════════════════════════════════
 
-        // ── pricing:getPricingTable ────────────────────────────
-        handlers.set('pricing:getPricingTable', (_payload: any) => {
-                return creditSystem.getPricingTable();
-        });
+	/** Execute a terminal command */
+	handlers.set('terminal:execute', async (payload: { command: string; cwd?: string; timeout?: number }) => {
+		return terminalExecutor.execute(payload.command, payload.cwd, payload.timeout);
+	});
 
-        // ── pricing:consume ────────────────────────────────────
-        handlers.set('pricing:consume', (payload: { amount: number; actionType: CreditActionType; metadata?: { model?: string; sessionId?: string; agentType?: string; description?: string } }) => {
-                const success = creditSystem.consumeCredits(payload.amount, payload.actionType, payload.metadata);
-                return { success };
-        });
+	/** Check if a command is running */
+	handlers.set('terminal:isRunning', () => {
+		return terminalExecutor.isRunning();
+	});
 
-        // ── pricing:exportUsage ────────────────────────────────
-        handlers.set('pricing:exportUsage', (_payload: any) => {
-                const csv = creditSystem.exportUsageCSV();
-                return { csv };
-        });
+	// ══════════════════════════════════════════════════════════
+	// File / Diff Handlers
+	// ══════════════════════════════════════════════════════════
 
-        // ── pricing:simulateTier ───────────────────────────────
-        handlers.set('pricing:simulateTier', (payload: { tier: SubscriptionTier }) => {
-                creditSystem.simulateTier(payload.tier);
-                return { success: true };
-        });
+	/** Apply a diff to a file (old content → new content) */
+	handlers.set('file:applyDiff', async (payload: { filePath: string; oldContent: string; newContent: string }) => {
+		return diffApplier.applyDiff(payload.filePath, payload.oldContent, payload.newContent);
+	});
 
-        // ══════════════════════════════════════════════════════════
-        // Phase 28: Launch & GOD Mode Handlers (16)
-        // ══════════════════════════════════════════════════════════
+	/** Read a file */
+	handlers.set('file:read', async (payload: { filePath: string }) => {
+		try {
+			const content = await diffApplier.readFile(payload.filePath);
+			return { success: true, content };
+		} catch (error) {
+			return { success: false, error: (error as Error).message };
+		}
+	});
 
-        // ── launch:runChecklist ────────────────────────────────
-        // Runs the full launch checklist (15 checks).
-        handlers.set('launch:runChecklist', async (_payload: any) => {
-                const status = await launchChecklist.runAllChecks();
-                return status;
-        });
+	/** Write a file */
+	handlers.set('file:write', async (payload: { filePath: string; content: string }) => {
+		return diffApplier.writeFile(payload.filePath, payload.content);
+	});
 
-        // ── launch:getStatus ───────────────────────────────────
-        // Returns the most recent launch status without re-running.
-        handlers.set('launch:getStatus', (_payload: any) => {
-                return launchChecklist.getStatus();
-        });
+	/** Create a new file */
+	handlers.set('file:create', async (payload: { filePath: string; content: string }) => {
+		return diffApplier.createFile(payload.filePath, payload.content);
+	});
 
-        // ── godmode:activate ───────────────────────────────────
-        // Activates GOD Mode with the given configuration.
-        handlers.set('godmode:activate', async (payload: { goal: string; model?: string; autoOpenTimeline?: boolean; createCheckpoint?: boolean; maxCredits?: number }) => {
-                const config: IGodModeConfig = {
-                        goal: payload.goal,
-                        model: payload.model,
-                        autoOpenTimeline: payload.autoOpenTimeline,
-                        createCheckpoint: payload.createCheckpoint,
-                        maxCredits: payload.maxCredits,
-                };
-                const activated = await godModeActivator.activate(config);
-                return { activated };
-        });
+	/** Delete a file */
+	handlers.set('file:delete', async (payload: { filePath: string }) => {
+		return diffApplier.deleteFile(payload.filePath);
+	});
 
-        // ── godmode:pause ──────────────────────────────────────
-        // Pauses GOD Mode at the current milestone.
-        handlers.set('godmode:pause', (_payload: any) => {
-                const paused = godModeActivator.pause();
-                return { paused };
-        });
+	/** Rollback last change to a file */
+	handlers.set('file:rollback', async (payload: { filePath: string }) => {
+		const success = await diffApplier.rollback(payload.filePath);
+		return { success };
+	});
 
-        // ── godmode:resume ─────────────────────────────────────
-        // Resumes GOD Mode from a paused state.
-        handlers.set('godmode:resume', (_payload: any) => {
-                const resumed = godModeActivator.resume();
-                return { resumed };
-        });
+	/** Get pending changes */
+	handlers.set('file:getPendingChanges', () => {
+		const changes = diffApplier.getPendingChanges();
+		return Array.from(changes.entries()).map(([key, value]) => [key, value]);
+	});
 
-        // ── godmode:stop ───────────────────────────────────────
-        // Stops GOD Mode and returns a session summary.
-        handlers.set('godmode:stop', async (_payload: any) => {
-                const summary = await godModeActivator.stop();
-                return summary;
-        });
+	// ══════════════════════════════════════════════════════════
+	// Settings Handlers
+	// ══════════════════════════════════════════════════════════
 
-        // ── godmode:status ─────────────────────────────────────
-        // Returns the current GOD Mode status.
-        handlers.set('godmode:status', (_payload: any) => {
-                return godModeActivator.getStatus();
-        });
+	/** Get API key status */
+	handlers.set('settings:getApiKey', () => {
+		return anthropicProvider.getApiKeyStatus();
+	});
 
-        // ── welcome:show ───────────────────────────────────────
-        // Returns welcome screen data (version, feature steps, tier info).
-        handlers.set('welcome:show', (_payload: any) => {
-                const tier = creditSystem.getCurrentTier();
-                const remaining = creditSystem.getCreditsRemaining();
-                const total = creditSystem.getCreditsTotal();
-                const version = 'v1.0.0-god-mode';
+	/** Set API key */
+	handlers.set('settings:setApiKey', async (payload: { apiKey: string }) => {
+		await anthropicProvider.setApiKey(payload.apiKey);
+		return { success: true };
+	});
 
-                return {
-                        version,
-                        tier,
-                        creditsRemaining: remaining,
-                        creditsTotal: total,
-                };
-        });
+	/** Get active model */
+	handlers.set('settings:getModel', () => {
+		return { model: anthropicProvider.getActiveModel() };
+	});
 
-        // ── welcome:getRecentProjects ──────────────────────────
-        // Returns the list of recent projects.
-        handlers.set('welcome:getRecentProjects', (_payload: any) => {
-                // In production, this would use ConstructWelcome.getRecentProjects()
-                return [];
-        });
+	/** Set active model */
+	handlers.set('settings:setModel', (payload: { model: string }) => {
+		anthropicProvider.setActiveModel(payload.model);
+		return { success: true };
+	});
 
-        // ── welcome:startDemo ──────────────────────────────────
-        // Starts a welcome screen demo by type.
-        handlers.set('welcome:startDemo', (payload: { demoType: WelcomeDemoType }) => {
-                // In production, this would use ConstructWelcome.startDemo()
-                return {
-                        demoType: payload.demoType,
-                        started: true,
-                };
-        });
+	/** Get available models */
+	handlers.set('settings:getModels', () => {
+		return { models: anthropicProvider.getAvailableModels() };
+	});
 
-        // ── welcome:consentTelemetry ───────────────────────────
-        // Records telemetry consent choice.
-        handlers.set('welcome:consentTelemetry', (payload: { consented: boolean }) => {
-                // In production, this would use ConstructWelcome.consentTelemetry()
-                return { success: true, consented: payload.consented };
-        });
+	/** Test LLM connection */
+	handlers.set('settings:testConnection', async () => {
+		try {
+			const response = await anthropicProvider.sendMessage(
+				[{ role: 'user', content: 'Say "OK" and nothing else.' }],
+				{ maxTokens: 10 },
+			);
+			const text = response.content.find(b => b.type === 'text')?.text ?? 'Connected';
+			return { success: true, message: text };
+		} catch (error) {
+			return { success: false, error: (error as Error).message };
+		}
+	});
 
-        // ── integration:test1 ──────────────────────────────────
-        // Runs integration test 1: React + auth app.
-        handlers.set('integration:test1', async (_payload: any) => {
-                const result = await godModeActivator.runIntegrationTest('react-auth');
-                return result;
-        });
+	// ══════════════════════════════════════════════════════════
+	// Event Forwarders — Subscribe to service events, post to webview
+	// ══════════════════════════════════════════════════════════
 
-        // ── integration:test2 ──────────────────────────────────
-        // Runs integration test 2: 3D portfolio.
-        handlers.set('integration:test2', async (_payload: any) => {
-                const result = await godModeActivator.runIntegrationTest('3d-portfolio');
-                return result;
-        });
+	agentLoop.onStateChange((state) => postMessage('agent:stateChanged', { state }));
+	agentLoop.onMessage((msg) => postMessage('chat:message', msg));
+	agentLoop.onToolCall((tc) => postMessage('agent:toolCall', tc));
+	agentLoop.onToolResult((tr) => postMessage('agent:toolResult', tr));
+	mcpProcess.onDidChangeServerState((e) => postMessage('mcp:serverStateChanged', e));
+	mcpProcess.onDidServerError((e) => postMessage('mcp:serverError', e));
+	terminalExecutor.onOutput((e) => postMessage('terminal:output', e));
+	terminalExecutor.onComplete((e) => postMessage('terminal:complete', e));
+	diffApplier.onDidChangeFile((e) => postMessage('file:changed', e));
 
-        // ── integration:test3 ──────────────────────────────────
-        // Runs integration test 3: Fix bugs.
-        handlers.set('integration:test3', async (_payload: any) => {
-                const result = await godModeActivator.runIntegrationTest('fix-bugs');
-                return result;
-        });
-
-        // ── integration:test4 ──────────────────────────────────
-        // Runs integration test 4: Collaborative GOD mode.
-        handlers.set('integration:test4', async (_payload: any) => {
-                const result = await godModeActivator.runIntegrationTest('collaborative');
-                return result;
-        });
-
-        // ══════════════════════════════════════════════════════════
-        // Event Forwarders — Subscribe to service events and post to webview
-        // ══════════════════════════════════════════════════════════
-
-        // Phase 27: Credit events
-        creditSystem.onCreditsChanged((e: { remaining: number; total: number; consumed: number }) => {
-                postMessage('pricing:creditsChanged', e);
-        });
-
-        creditSystem.onBudgetWarning((alert: IPricingAlert) => {
-                postMessage('pricing:budgetWarning', alert);
-        });
-
-        creditSystem.onEmergencyStop((e: { creditsRemaining: number }) => {
-                postMessage('pricing:emergencyStop', e);
-        });
-
-        creditSystem.onTierChanged((e: { from: SubscriptionTier; to: SubscriptionTier }) => {
-                postMessage('pricing:tierChanged', e);
-        });
-
-        creditSystem.onUsageRecorded((usage: ICreditUsage) => {
-                postMessage('pricing:usageRecorded', usage);
-        });
-
-        // Phase 28: GOD Mode events
-        godModeActivator.onStateChanged((state: GodModeState) => {
-                postMessage('godmode:stateChanged', { state });
-        });
-
-        godModeActivator.onCountdown((count: number) => {
-                postMessage('godmode:countdown', { count });
-        });
-
-        godModeActivator.onStopped((summary) => {
-                postMessage('godmode:stopped', summary);
-        });
-
-        // Phase 28: Launch checklist events
-        launchChecklist.onCheckCompleted((result) => {
-                postMessage('launch:checkCompleted', result);
-        });
-
-        launchChecklist.onAllChecksCompleted((status) => {
-                postMessage('launch:allChecksCompleted', status);
-        });
-
-        return handlers;
-}
-
-/**
- * Register pricing-related webview message handlers.
- * Legacy function — delegates to registerAllHandlers.
- *
- * @deprecated Use registerAllHandlers() instead for full Phase 28 support.
- */
-export function registerPricingHandlers(
-        creditSystem: ICreditSystem,
-        costGovernor: ICostGovernor,
-        postMessage: (channel: string, data: unknown) => void,
-): Map<string, (payload: any) => Promise<unknown> | unknown> {
-        // Create stub activator and checklist for backward compatibility
-        // In production, use registerAllHandlers() with actual service instances
-        const handlers = new Map<string, (payload: any) => Promise<unknown> | unknown>();
-
-        // Pricing handlers only (same as before)
-        handlers.set('pricing:getStatus', () => ({
-                tier: creditSystem.getCurrentTier(),
-                subscription: creditSystem.getSubscription(),
-                creditsRemaining: creditSystem.getCreditsRemaining(),
-                creditsTotal: creditSystem.getCreditsTotal(),
-                usedThisMonth: creditSystem.getUsageThisMonth(),
-                usedToday: creditSystem.getUsageToday(),
-                emergencyMode: costGovernor.isEmergencyMode(),
-                autoSwitchRecommended: costGovernor.shouldAutoSwitchModel(),
-        }));
-
-        handlers.set('pricing:getHistory', (payload: { limit?: number; startDate?: number; endDate?: number }) => {
-                return creditSystem.getUsageHistory(payload.limit, payload.startDate, payload.endDate);
-        });
-
-        handlers.set('pricing:getBreakdown', () => {
-                const breakdown = creditSystem.getUsageByActionType();
-                const result: Record<string, number> = {};
-                for (const [key, value] of breakdown) {
-                        result[key] = value;
-                }
-                return result;
-        });
-
-        handlers.set('pricing:estimate', (payload: { prompt: string; model: string }) => {
-                return creditSystem.estimateCost(payload.prompt, payload.model);
-        });
-
-        handlers.set('pricing:estimatePlan', (payload: { agentCount: number; estimatedSteps: number; model: string }) => {
-                return { estimatedCredits: creditSystem.estimatePlanCost(payload) };
-        });
-
-        handlers.set('pricing:setBudget', (payload: ICreditBudget) => {
-                creditSystem.setBudget(payload);
-                return { success: true };
-        });
-
-        handlers.set('pricing:getBudget', () => creditSystem.getBudget());
-        handlers.set('pricing:getAlerts', () => creditSystem.getAlerts());
-
-        handlers.set('pricing:upgrade', () => {
-                creditSystem.upgradeFlow();
-                return { success: true };
-        });
-
-        handlers.set('pricing:purchase', async (payload: { amount: number }) => {
-                return { success: await creditSystem.purchaseCredits(payload.amount) };
-        });
-
-        handlers.set('pricing:getPricingTable', () => creditSystem.getPricingTable());
-
-        handlers.set('pricing:consume', (payload: { amount: number; actionType: CreditActionType; metadata?: any }) => {
-                return { success: creditSystem.consumeCredits(payload.amount, payload.actionType, payload.metadata) };
-        });
-
-        handlers.set('pricing:exportUsage', () => ({ csv: creditSystem.exportUsageCSV() }));
-
-        handlers.set('pricing:simulateTier', (payload: { tier: SubscriptionTier }) => {
-                creditSystem.simulateTier(payload.tier);
-                return { success: true };
-        });
-
-        // Event forwarders
-        creditSystem.onCreditsChanged((e) => postMessage('pricing:creditsChanged', e));
-        creditSystem.onBudgetWarning((alert) => postMessage('pricing:budgetWarning', alert));
-        creditSystem.onEmergencyStop((e) => postMessage('pricing:emergencyStop', e));
-        creditSystem.onTierChanged((e) => postMessage('pricing:tierChanged', e));
-        creditSystem.onUsageRecorded((usage) => postMessage('pricing:usageRecorded', usage));
-
-        return handlers;
+	return handlers;
 }
