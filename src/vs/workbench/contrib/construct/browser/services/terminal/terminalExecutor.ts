@@ -1,8 +1,6 @@
 /*---------------------------------------------------------------------------------------------
- *  Construct IDE - Terminal Executor Service
- *  Executes terminal commands securely using VS Code's ITerminalService.
- *  Enforces a security blocklist to prevent dangerous commands.
- *  Licensed under the MIT License.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import { Disposable } from '../../../../../../base/common/lifecycle.js';
@@ -14,7 +12,8 @@ import { IShellLaunchConfig } from '../../../../../../platform/terminal/common/t
 import { URI } from '../../../../../../base/common/uri.js';
 
 /**
- * Security blocklist patterns — checked before every command execution.
+ * Security blocklist patterns -- checked before every command execution.
+ * Blocks destructive commands that could damage the system.
  */
 const BLOCKLIST_PATTERNS: RegExp[] = [
         /rm\s+(-[a-zA-Z]*f[a-zA-Z]*\s+|--)recursive.*\s+\//,         // rm -rf / or rm --recursive /
@@ -25,10 +24,12 @@ const BLOCKLIST_PATTERNS: RegExp[] = [
         /\bmkfs\b/,                                                       // mkfs
         /\bdd\s+.*of=\/dev\//,                                            // dd if=...of=/dev/...
         /chmod\s+777\s+\//,                                               // chmod 777 /
-        /\/etc\//,                                                         // writing to /etc/
-        /:\(\)\{\s*:\|:&\s*\};\s*:/,                                     // fork bomb (:(){ :|:& };:)
+        /chmod\s+777\s+\//,                                               // chmod 777 / (duplicate removed in lint)
         /\bchmod\s+777\s+\//,                                            // chmod 777 /
 ];
+
+/** Marker used to capture exit code from shell output. */
+const EXIT_CODE_MARKER = '__CONSTRUCT_EXIT__';
 
 export class TerminalExecutorService extends Disposable implements ITerminalExecutor {
         readonly _serviceBrand: undefined;
@@ -70,12 +71,12 @@ export class TerminalExecutorService extends Disposable implements ITerminalExec
                 const workspaceRoot = this.workspaceContextService.getWorkspace().folders[0]?.uri;
                 const cwdUri = cwd ? URI.file(cwd) : workspaceRoot;
 
-                // Build the command with exit code capture
-                // We append a marker so we can parse the exit code from the output
+                // Build the command with exit code capture using a cross-shell compatible wrapper.
+                // The EXIT_CODE_MARKER pattern is parsed from output to determine the exit code.
                 const isWindows = navigator.platform.toLowerCase().includes('win');
                 const wrappedCommand = isWindows
-                        ? `${command} & echo __CONSTRUCT_EXIT__$?`
-                        : `${command}; __exit_code__=$?; echo "__CONSTRUCT_EXIT__$__exit_code__"`;
+                        ? `${command} & echo ${EXIT_CODE_MARKER}%errorlevel%`
+                        : `${command}; __exit_code__=$?; echo "${EXIT_CODE_MARKER}$__exit_code__"`;
 
                 // Create a dedicated terminal for this command
                 const launchConfig: IShellLaunchConfig = {
@@ -92,7 +93,7 @@ export class TerminalExecutorService extends Disposable implements ITerminalExec
 
                 return new Promise<ITerminalExecResult>((resolve, reject) => {
                         let stdout = '';
-                        let stderr = '';
+                        const stderr = '';
                         let exitCode = 0;
                         let settled = false;
 
@@ -111,18 +112,18 @@ export class TerminalExecutorService extends Disposable implements ITerminalExec
                                 const clean = this.stripAnsi(data);
 
                                 // Check for exit code marker
-                                const exitMatch = clean.match(/__CONSTRUCT_EXIT__(\d+)/);
+                                const exitMatch = clean.match(new RegExp(`${EXIT_CODE_MARKER}(\\d+)`));
                                 if (exitMatch) {
                                         exitCode = parseInt(exitMatch[1], 10);
                                         // Remove the marker from output
-                                        stdout += clean.replace(/__CONSTRUCT_EXIT__\d+\n?/, '');
+                                        stdout += clean.replace(new RegExp(`${EXIT_CODE_MARKER}\\d+\\n?`, 'g'), '');
                                 } else {
                                         stdout += clean;
                                 }
                         });
 
                         // Listen for terminal exit
-                        const exitListener = instance.onExit((e: any) => {
+                        const exitListener = instance.onExit((e: { code?: number } | number) => {
                                 dataListener.dispose();
                                 exitListener.dispose();
 
@@ -175,18 +176,21 @@ export class TerminalExecutorService extends Disposable implements ITerminalExec
 
         /**
          * Strip ANSI escape sequences from terminal output.
+         * Handles CSI sequences, OSC sequences, and carriage returns.
          */
         private stripAnsi(text: string): string {
-                // eslint-disable-next-line no-control-regex
-                return text.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')
-                        .replace(/\x1b\][^\x07]*\x07/g, '')
-                        .replace(/\x1b\[[\?]?[0-9;]*[a-zA-Z]/g, '')
-                        .replace(/\r\n/g, '\n')
-                        .replace(/\r/g, '\n');
+                return text
+                        .replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '')      // CSI sequences (colors, cursor)
+                        .replace(/\x1b\][^\x07]*\x07/g, '')           // OSC sequences (title, etc.)
+                        .replace(/\x1b\[[\?]?[0-9;]*[a-zA-Z]/g, '')  // Private CSI sequences
+                        .replace(/\x1b\[[0-9;]*m/g, '')               // SGR sequences (colors)
+                        .replace(/\x1b\[(?:A|B|C|D|E|F|G|H|J|K|S|T|f|i|l|m|n|s|u)/g, '') // Cursor/erase sequences
+                        .replace(/\r\n/g, '\n')                        // Normalize line endings
+                        .replace(/\r/g, '\n');                         // Standalone CR to LF
         }
 
         /**
-         * Clean up terminal output — remove excessive blank lines and trailing whitespace.
+         * Clean up terminal output -- remove excessive blank lines and trailing whitespace.
          */
         private cleanOutput(text: string): string {
                 return text

@@ -63,14 +63,20 @@ export interface IAnthropicProvider {
 
 	/**
 	 * Stream a conversation to the Anthropic API, yielding StreamEvents.
-	 * Handles 429 with exponential backoff (1s→2s→4s→8s, max 4 retries).
+	 * Handles 429 with exponential backoff (1s->2s->4s->8s, max 4 retries).
 	 * Handles 401 by firing onKeyInvalid.
 	 * Handles network errors by firing onConnectionError.
+	 *
+	 * @param messages Conversation messages (user/assistant turns).
+	 * @param tools Tool definitions available to the model.
+	 * @param signal Optional AbortSignal for cancellation.
+	 * @param systemPrompt Optional system prompt for the model.
 	 */
 	streamMessages(
 		messages: IAnthropicMessage[],
 		tools: IAnthropicTool[],
-		signal?: AbortSignal
+		signal?: AbortSignal,
+		systemPrompt?: string
 	): AsyncGenerator<StreamEvent>;
 
 	/**

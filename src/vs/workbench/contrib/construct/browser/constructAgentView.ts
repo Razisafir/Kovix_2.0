@@ -1,7 +1,6 @@
 /*---------------------------------------------------------------------------------------------
- *  Construct IDE - AI Coding Agent View
- *  Real LLM integration with Plan/Act approval flow, streaming, and tool visualization.
- *  Licensed under the MIT License.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import { IViewPaneOptions } from '../../../../workbench/browser/parts/views/viewPane.js';
@@ -71,7 +70,7 @@ export class ConstructAgentViewPane extends ViewPane {
 
 		const logo = dom.$('.construct-logo');
 		logo.style.cssText = `font-size: 32px; margin-bottom: 8px; color: #00E5FF;`;
-		logo.textContent = '⬡';
+		logo.textContent = '\u2B21'; // Hexagon
 
 		const title = dom.$('.construct-title');
 		title.style.cssText = `font-size: 14px; font-weight: 600; color: #E0E7FF; margin-bottom: 4px;`;
@@ -89,12 +88,12 @@ export class ConstructAgentViewPane extends ViewPane {
 		const memoryStatus = dom.$('.construct-memory-status');
 		memoryStatus.style.cssText = `font-size: 10px; color: ${this.constructMemory.isInitialized ? '#00E5FF' : '#4A5568'}; margin-bottom: 8px;`;
 		memoryStatus.textContent = this.constructMemory.isInitialized
-			? '🧠 Memory: Connected'
-			: '🧠 Memory: Local only';
+			? '[MEMORY] Connected'
+			: '[MEMORY] Local only';
 
 		const hint = dom.$('.construct-hint');
 		hint.style.cssText = `font-size: 11px; color: #4A5568; font-family: monospace; background: #0A0E1A; border-radius: 4px; padding: 6px 10px; display: inline-block;`;
-		hint.textContent = 'Ctrl+Shift+I  Inline edit  •  Ctrl+Shift+C  Focus panel';
+		hint.textContent = 'Ctrl+Shift+I  Inline edit  |  Ctrl+Shift+C  Focus panel';
 
 		welcome.appendChild(logo);
 		welcome.appendChild(title);
@@ -120,7 +119,7 @@ export class ConstructAgentViewPane extends ViewPane {
 		`;
 
 		this.sendBtn = dom.$('button.construct-send-btn') as HTMLButtonElement;
-		this.sendBtn.textContent = '→';
+		this.sendBtn.textContent = '\u2192'; // Right arrow
 		this.sendBtn.style.cssText = `
 			background: #00E5FF; color: #0A0E1A; border: none;
 			border-radius: 4px; padding: 6px 12px; cursor: pointer;
@@ -128,7 +127,7 @@ export class ConstructAgentViewPane extends ViewPane {
 		`;
 
 		this.stopBtn = dom.$('button.construct-stop-btn') as HTMLButtonElement;
-		this.stopBtn.textContent = '⏹';
+		this.stopBtn.textContent = '\u25A0'; // Stop square
 		this.stopBtn.style.cssText = `
 			background: #FF4444; color: white; border: none;
 			border-radius: 4px; padding: 6px 10px; cursor: pointer;
@@ -160,7 +159,7 @@ export class ConstructAgentViewPane extends ViewPane {
 			const apiKey = this.configurationService.getValue<string>('construct.anthropic.apiKey');
 			if (!apiKey) {
 				this.addAgentMessage(
-					'⚠️ Anthropic API key required. [Open Settings](command:construct.openApiSettings)',
+					'[WARN] Anthropic API key required. [Open Settings](command:construct.openApiSettings)',
 					'error'
 				);
 				this.notificationService.warn('Anthropic API key required. Configure it in Settings.');
@@ -199,16 +198,16 @@ export class ConstructAgentViewPane extends ViewPane {
 		this._register(this.constructMemory.onDidChangeInitialization((initialized) => {
 			memoryStatus.style.color = initialized ? '#00E5FF' : '#4A5568';
 			memoryStatus.textContent = initialized
-				? '🧠 Memory: Connected'
-				: '🧠 Memory: Local only';
+				? '[MEMORY] Connected'
+				: '[MEMORY] Local only';
 		}));
 
 		// Listen for provider errors
 		this._register(this.anthropicProvider.onKeyInvalid(() => {
-			this.addAgentMessage('🔑 API key invalid. [Open Settings](command:construct.openApiSettings)', 'error');
+			this.addAgentMessage('[KEY] API key invalid. [Open Settings](command:construct.openApiSettings)', 'error');
 		}));
 		this._register(this.anthropicProvider.onConnectionError((error) => {
-			this.addAgentMessage(`🌐 Connection failed: ${error.message}. [Retry](command:construct.focusPanel)`, 'error');
+			this.addAgentMessage(`[NET] Connection failed: ${error.message}. [Retry](command:construct.focusPanel)`, 'error');
 		}));
 	}
 
@@ -220,7 +219,7 @@ export class ConstructAgentViewPane extends ViewPane {
 		this.currentCancellationToken = new CancellationTokenSource();
 
 		// Add planning indicator
-		const planningMsg = this.addAgentMessage('📋 Planning...', 'info');
+		const planningMsg = this.addAgentMessage('[PLAN] Planning...', 'info');
 
 		try {
 			// Phase 1: Planning
@@ -228,7 +227,7 @@ export class ConstructAgentViewPane extends ViewPane {
 
 			if (this.currentCancellationToken.token.isCancellationRequested) {
 				this.setExecutionState('stopped');
-				this.updateMessageContent(planningMsg, '⏹ Stopped by user');
+				this.updateMessageContent(planningMsg, '[STOP] Stopped by user');
 				return;
 			}
 
@@ -240,7 +239,7 @@ export class ConstructAgentViewPane extends ViewPane {
 		} catch (error) {
 			this.setExecutionState('error');
 			const msg = error instanceof Error ? error.message : String(error);
-			this.updateMessageContent(planningMsg, `❌ Planning failed: ${msg}`);
+			this.updateMessageContent(planningMsg, `[FAIL] Planning failed: ${msg}`);
 			this.logService.error('[AgentView] Planning error:', msg);
 		}
 	}
@@ -261,7 +260,7 @@ export class ConstructAgentViewPane extends ViewPane {
 		// Plan header
 		const header = dom.$('.construct-plan-header');
 		header.style.cssText = `font-weight: 600; color: #E0E7FF; margin-bottom: 8px; font-size: 13px;`;
-		header.textContent = '📋 Execution Plan';
+		header.textContent = '[PLAN] Execution Plan';
 		this.planContainer.appendChild(header);
 
 		// Plan steps
@@ -274,7 +273,7 @@ export class ConstructAgentViewPane extends ViewPane {
 				this.planContainer.appendChild(stepEl);
 			}
 		} else {
-			// No structured steps — show the raw summary
+			// No structured steps -- show the raw summary
 			const summaryEl = dom.$('.construct-plan-summary');
 			summaryEl.style.cssText = `font-size: 12px; color: #C0C0C0; white-space: pre-wrap; max-height: 150px; overflow-y: auto;`;
 			summaryEl.textContent = plan.summary.substring(0, 500);
@@ -286,7 +285,7 @@ export class ConstructAgentViewPane extends ViewPane {
 		btnContainer.style.cssText = `display: flex; gap: 8px; margin-top: 10px;`;
 
 		const approveBtn = dom.$('button') as HTMLButtonElement;
-		approveBtn.textContent = '✅ Approve';
+		approveBtn.textContent = '[OK] Approve';
 		approveBtn.style.cssText = `
 			background: #00C853; color: white; border: none;
 			border-radius: 4px; padding: 6px 14px; cursor: pointer;
@@ -294,7 +293,7 @@ export class ConstructAgentViewPane extends ViewPane {
 		`;
 
 		const cancelBtn = dom.$('button') as HTMLButtonElement;
-		cancelBtn.textContent = '❌ Cancel';
+		cancelBtn.textContent = '[X] Cancel';
 		cancelBtn.style.cssText = `
 			background: #FF4444; color: white; border: none;
 			border-radius: 4px; padding: 6px 14px; cursor: pointer;
@@ -310,7 +309,7 @@ export class ConstructAgentViewPane extends ViewPane {
 		cancelBtn.onclick = () => {
 			this.planContainer?.remove();
 			this.planContainer = null;
-			this.addAgentMessage('❌ Task cancelled', 'info');
+			this.addAgentMessage('[CANCEL] Task cancelled', 'info');
 			this.setExecutionState('idle');
 		};
 
@@ -333,7 +332,6 @@ export class ConstructAgentViewPane extends ViewPane {
 		const execMsg = this.addAgentMessage('', 'streaming');
 
 		let fullText = '';
-		let currentToolName = '';
 		let stepCount = 0;
 
 		try {
@@ -342,7 +340,7 @@ export class ConstructAgentViewPane extends ViewPane {
 			for await (const event of stream) {
 				switch (event.type) {
 					case 'thinking':
-						fullText += `💭 ${event.text}`;
+						fullText += `[THINK] ${event.text}`;
 						break;
 
 					case 'token':
@@ -351,10 +349,9 @@ export class ConstructAgentViewPane extends ViewPane {
 
 					case 'tool_start':
 						stepCount++;
-						currentToolName = event.toolName;
-						fullText += `\n\n🔧 ${event.toolName}`;
+						fullText += `\n\n[TOOL] ${event.toolName}`;
 						if (event.toolInput && typeof event.toolInput === 'object') {
-							const input = event.toolInput as Record<string, any>;
+							const input = event.toolInput as Record<string, string>;
 							if (input.path) { fullText += `: ${input.path}`; }
 							else if (input.command) { fullText += `: ${input.command.substring(0, 60)}`; }
 						}
@@ -366,9 +363,9 @@ export class ConstructAgentViewPane extends ViewPane {
 
 					case 'tool_result':
 						if (event.success) {
-							fullText += `\n✅ ${event.toolName} completed`;
+							fullText += `\n[OK] ${event.toolName} completed`;
 						} else {
-							fullText += `\n❌ ${event.toolName} failed: ${event.result.substring(0, 200)}`;
+							fullText += `\n[FAIL] ${event.toolName} failed: ${event.result.substring(0, 200)}`;
 						}
 						fullText += `\n\nExecuting step ${stepCount}...`;
 						break;
@@ -379,20 +376,20 @@ export class ConstructAgentViewPane extends ViewPane {
 						break;
 
 					case 'complete':
-						fullText += `\n\n✅ Task complete`;
+						fullText += `\n\n[OK] Task complete`;
 						break;
 
 					case 'error':
 						if (event.text.includes('Rate limited')) {
-							fullText += `\n\n⏳ ${event.text}`;
+							fullText += `\n\n[WAIT] ${event.text}`;
 						} else if (event.text.includes('API key')) {
-							fullText += `\n\n🔑 ${event.text} [Open Settings](command:construct.openApiSettings)`;
+							fullText += `\n\n[KEY] ${event.text} [Open Settings](command:construct.openApiSettings)`;
 						} else if (event.text.includes('Connection')) {
-							fullText += `\n\n🌐 ${event.text} [Retry](command:construct.focusPanel)`;
-						} else if (event.text === '⏹ Stopped by user') {
-							fullText += `\n\n⏹ Stopped by user`;
+							fullText += `\n\n[NET] ${event.text} [Retry](command:construct.focusPanel)`;
+						} else if (event.text.includes('[STOP]')) {
+							fullText += `\n\n[STOP] Stopped by user`;
 						} else {
-							fullText += `\n\n❌ ${event.text}`;
+							fullText += `\n\n[FAIL] ${event.text}`;
 						}
 						break;
 				}
@@ -414,7 +411,7 @@ export class ConstructAgentViewPane extends ViewPane {
 		} catch (error) {
 			this.setExecutionState('error');
 			const msg = error instanceof Error ? error.message : String(error);
-			this.updateMessageContent(execMsg, `❌ Error: ${msg}`);
+			this.updateMessageContent(execMsg, `[FAIL] Error: ${msg}`);
 			this.logService.error('[AgentView] Execution error:', msg);
 		}
 	}
@@ -480,13 +477,13 @@ export class ConstructAgentViewPane extends ViewPane {
 
 	private updateStatusIndicator(): void {
 		const stateConfig: Record<ExecutionState, { text: string; color: string }> = {
-			idle: { text: '● Ready', color: '#00C853' },
-			planning: { text: '● Planning...', color: '#FFB300' },
-			awaiting_approval: { text: '● Awaiting Approval', color: '#FFB300' },
-			executing: { text: '● Executing...', color: '#00E5FF' },
-			complete: { text: '● Complete', color: '#00C853' },
-			error: { text: '● Error', color: '#FF4444' },
-			stopped: { text: '● Stopped', color: '#FF9800' },
+			idle: { text: '\u25CF Ready', color: '#00C853' },
+			planning: { text: '\u25CF Planning...', color: '#FFB300' },
+			awaiting_approval: { text: '\u25CF Awaiting Approval', color: '#FFB300' },
+			executing: { text: '\u25CF Executing...', color: '#00E5FF' },
+			complete: { text: '\u25CF Complete', color: '#00C853' },
+			error: { text: '\u25CF Error', color: '#FF4444' },
+			stopped: { text: '\u25CF Stopped', color: '#FF9800' },
 		};
 		const config = stateConfig[this.executionState] ?? stateConfig.idle;
 		this.statusIndicator.style.cssText = `font-size: 11px; color: ${config.color}; margin-bottom: 6px;`;
@@ -495,12 +492,12 @@ export class ConstructAgentViewPane extends ViewPane {
 
 	private getActionIcon(action: string): string {
 		const icons: Record<string, string> = {
-			Read: '📖',
-			Create: '📝',
-			Edit: '✏️',
-			Run: '▶️',
+			Read: '[READ]',
+			Create: '[CREATE]',
+			Edit: '[EDIT]',
+			Run: '[RUN]',
 		};
-		return icons[action] ?? '•';
+		return icons[action] ?? '\u2022';
 	}
 
 	private scrollToBottom(): void {
@@ -509,12 +506,21 @@ export class ConstructAgentViewPane extends ViewPane {
 
 	/**
 	 * Refresh the file explorer to show newly created/modified files.
+	 * Uses multiple fallback strategies for reliability.
 	 */
-	private refreshFileExplorer(): void {
+	private async refreshFileExplorer(): Promise<void> {
 		try {
-			this.commandService.executeCommand('workbench.files.action.refreshFilesExplorer');
+			await this.commandService.executeCommand('workbench.files.action.refreshFilesExplorer');
 		} catch {
-			// Non-critical — file explorer will refresh eventually
+			// Fallback: stat the workspace root to trigger file watcher
+			try {
+				const rootUri = this.workspaceContextService.getWorkspace().folders[0]?.uri;
+				if (rootUri) {
+					await this.fileService.stat(rootUri);
+				}
+			} catch {
+				// Non-critical -- file explorer will refresh eventually via watchers
+			}
 		}
 	}
 

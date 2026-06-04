@@ -41,21 +41,21 @@ export interface IPlanResult {
 }
 
 /**
- * Agent loop service — orchestrates LLM calls with tool execution.
+ * Agent loop service -- orchestrates LLM calls with tool execution.
  *
  * Flow:
  * 1. Accept a task from the user
  * 2. Run planning phase (read-only tools only)
  * 3. Return plan for user approval
  * 4. If approved, run execution phase (full tool access)
- * 5. Loop: LLM call → detect tool_use → execute tool → feed result back → repeat
+ * 5. Loop: LLM call -> detect tool_use -> execute tool -> feed result back -> repeat
  * 6. Stop when LLM returns end_turn or max rounds (15) reached
  */
 export interface IAgentLoop {
 	readonly _serviceBrand: undefined;
 
 	/**
-	 * Run the planning phase — uses read-only tools to understand the codebase
+	 * Run the planning phase -- uses read-only tools to understand the codebase
 	 * and generate a plan. Does NOT make any changes.
 	 *
 	 * @param task The user's task description.
