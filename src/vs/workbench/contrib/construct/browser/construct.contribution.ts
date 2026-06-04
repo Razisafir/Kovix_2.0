@@ -45,7 +45,20 @@ import { ConstructMemoryService } from './services/memory/constructMemoryService
 import { INotificationService } from '../../../../platform/notification/common/notification.js';
 import { IQuickInputService } from '../../../../platform/quickinput/common/quickInput.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
+import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
+import { ICommandService } from '../../../../platform/commands/common/commands.js';
+import { IAnthropicProvider } from '../../../../platform/construct/common/llm/anthropicProvider.js';
+import { IMCPProcess } from '../../../../platform/construct/common/mcp/mcpProcess.js';
+import { ITerminalExecutor } from '../../../../platform/construct/common/terminal/terminalExecutor.js';
+import { IDiffApplier } from '../../../../platform/construct/common/editor/diffApplier.js';
+import { IAgentLoop } from '../../../../platform/construct/common/agent/agentLoop.js';
+import { AnthropicProviderService } from './services/llm/anthropicProvider.js';
+import { MCPProcessService } from './services/mcp/mcpProcess.js';
+import { TerminalExecutorService } from './services/terminal/terminalExecutor.js';
+import { DiffApplierService } from './services/editor/diffApplier.js';
+import { AgentLoopService } from './services/agent/agentLoop.js';
 import './constructMemoryConfig.js';
+import './constructApiConfig.js';
 
 const constructViewIcon = registerIcon('construct-view-icon', Codicon.robot, localize('constructViewIcon', 'View icon of the Construct Agent view.'));
 const constructMemoryIcon = registerIcon('construct-memory-icon', Codicon.brain, localize('constructMemoryIcon', 'View icon of the Construct Memory view.'));
@@ -304,6 +317,66 @@ registerAction2(class TestLLMConnectionAction extends Action2 {
         }
 });
 
+// --- LLM Integration Commands (Phase 4) ---------------------------------------
+
+registerAction2(class OpenApiSettingsAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.openApiSettings',
+                        title: localize2('openApiSettings', "Open API Settings"),
+                        f1: true,
+                        category: localize2('constructCategoryApi', "Construct"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const configurationService = accessor.get(IConfigurationService);
+                const commandService = accessor.get(ICommandService);
+                // Open settings filtered to construct.anthropic
+                commandService.executeCommand('workbench.action.openSettings', 'construct.anthropic');
+        }
+});
+
+registerAction2(class TestAnthropicConnectionAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.testAnthropicConnection',
+                        title: localize2('testAnthropicConnection', "Test Anthropic Connection"),
+                        f1: true,
+                        category: localize2('constructCategoryAnthropic', "Construct"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const anthropicProvider = accessor.get(IAnthropicProvider);
+                const configurationService = accessor.get(IConfigurationService);
+                const notificationService = accessor.get(INotificationService);
+
+                const apiKey = configurationService.getValue<string>('construct.anthropic.apiKey');
+                if (!apiKey) {
+                        notificationService.warn('Anthropic API key not configured. Run "Construct: Open API Settings" to set it up.');
+                        return;
+                }
+
+                // Try a minimal API call to test the connection
+                try {
+                        const stream = anthropicProvider.streamMessages(
+                                [{ role: 'user', content: 'Reply with exactly: OK' }],
+                                [],
+                        );
+                        let response = '';
+                        for await (const event of stream) {
+                                if (event.type === 'token') { response += event.text; }
+                                if (event.type === 'error') {
+                                        notificationService.error(`Anthropic connection failed: ${event.text}`);
+                                        return;
+                                }
+                        }
+                        notificationService.info(`✅ Anthropic connection: Working (model: ${anthropicProvider.config.model})`);
+                } catch (error) {
+                        notificationService.error(`Anthropic connection failed: ${error instanceof Error ? error.message : String(error)}`);
+                }
+        }
+});
+
 // --- MCP Service Singletons (Phase 17) -----------------------------------------
 registerSingleton(IMCPServerManager, MCPServerManagerService, InstantiationType.Delayed);
 registerSingleton(IMCPMarketplace, MCPMarketplaceService, InstantiationType.Delayed);
@@ -321,3 +394,10 @@ registerSingleton(IMemoryOrchestrator, MemoryOrchestratorService, InstantiationT
 
 // --- Supermemory Integration Singleton (Phase 19+) ----------------------------
 registerSingleton(IConstructMemoryService, ConstructMemoryService, InstantiationType.Delayed);
+
+// --- LLM Integration Singletons (Phase 4) --------------------------------------
+registerSingleton(IAnthropicProvider, AnthropicProviderService, InstantiationType.Delayed);
+registerSingleton(IMCPProcess, MCPProcessService, InstantiationType.Delayed);
+registerSingleton(ITerminalExecutor, TerminalExecutorService, InstantiationType.Delayed);
+registerSingleton(IDiffApplier, DiffApplierService, InstantiationType.Delayed);
+registerSingleton(IAgentLoop, AgentLoopService, InstantiationType.Delayed);
