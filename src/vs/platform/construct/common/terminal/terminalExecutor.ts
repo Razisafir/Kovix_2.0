@@ -32,6 +32,9 @@ export interface ITerminalExecutor {
          * @param cwd Working directory (defaults to workspace root)
          * @param timeout Timeout in milliseconds (default: 60000)
          * @param signal Optional AbortSignal for cancellation
+         * @param onOutput Optional callback for streaming output chunks. Receives
+         *   cleaned (ANSI-stripped) output data as it arrives, enabling real-time
+         *   progress indicators for long-running commands like npm install.
          * @returns Result with stdout, stderr, and exit code
          * @throws Error if command is on the security blocklist
          */
@@ -39,7 +42,8 @@ export interface ITerminalExecutor {
                 command: string,
                 cwd?: string,
                 timeout?: number,
-                signal?: AbortSignal
+                signal?: AbortSignal,
+                onOutput?: (data: string) => void
         ): Promise<ITerminalExecResult>;
 
         /**

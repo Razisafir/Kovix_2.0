@@ -62,7 +62,8 @@ export class TerminalExecutorService extends Disposable implements ITerminalExec
                 command: string,
                 cwd?: string,
                 timeout?: number,
-                signal?: AbortSignal
+                signal?: AbortSignal,
+                onOutput?: (data: string) => void
         ): Promise<ITerminalExecResult> {
                 // Security check
                 if (this.isBlocked(command)) {
@@ -129,6 +130,11 @@ export class TerminalExecutorService extends Disposable implements ITerminalExec
                                         stdout += clean.replace(new RegExp(`${EXIT_CODE_MARKER}\\d+\\n?`, 'g'), '');
                                 } else {
                                         stdout += clean;
+                                }
+
+                                // Stream output to callback for real-time progress
+                                if (onOutput && clean.trim()) {
+                                        onOutput(clean);
                                 }
                         });
 
