@@ -454,5 +454,5 @@
 }
 
 .issue-reporter a {
-	color: var(--vscode-textLink-foreground);
+	color: var(--construct-textLink-foreground);
 }

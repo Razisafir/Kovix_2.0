@@ -18,7 +18,7 @@
 							}
 						},
 						"settings": {
-							"$ref": "vscode://schemas/settings/machine",
+							"$ref": "construct://schemas/settings/machine",
 							"description": "Machine specific settings that should be copied into the container. These are only copied when connecting to the container for the first time, rebuilding the container then triggers it again."
 						},
 						"devPort": {
@@ -41,7 +41,7 @@
 			"deprecationMessage": "Use 'customizations/vscode/extensions' instead"
 		},
 		"settings": {
-			"$ref": "vscode://schemas/settings/machine",
+			"$ref": "construct://schemas/settings/machine",
 			"description": "Machine specific settings that should be copied into the container. These are only copied when connecting to the container for the first time, rebuilding the container then triggers it again.",
 			"deprecated": true,
 			"deprecationMessage": "Use 'customizations/vscode/settings' instead"

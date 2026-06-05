@@ -55,7 +55,7 @@ body.web {
 	position: relative;
 	z-index: 1;
 	overflow: hidden;
-	color: var(--vscode-foreground);
+	color: var(--construct-foreground);
 }
 
 .monaco-workbench.web {
@@ -133,13 +133,13 @@ body.web {
 	font-size: inherit;
 }
 
-.monaco-workbench input::placeholder { color: var(--vscode-input-placeholderForeground); }
-.monaco-workbench input::-webkit-input-placeholder  { color: var(--vscode-input-placeholderForeground); }
-.monaco-workbench input::-moz-placeholder { color: var(--vscode-input-placeholderForeground); }
+.monaco-workbench input::placeholder { color: var(--construct-input-placeholderForeground); }
+.monaco-workbench input::-webkit-input-placeholder  { color: var(--construct-input-placeholderForeground); }
+.monaco-workbench input::-moz-placeholder { color: var(--construct-input-placeholderForeground); }
 
-.monaco-workbench textarea::placeholder { color: var(--vscode-input-placeholderForeground); }
-.monaco-workbench textarea::-webkit-input-placeholder { color: var(--vscode-input-placeholderForeground); }
-.monaco-workbench textarea::-moz-placeholder { color: var(--vscode-input-placeholderForeground); }
+.monaco-workbench textarea::placeholder { color: var(--construct-input-placeholderForeground); }
+.monaco-workbench textarea::-webkit-input-placeholder { color: var(--construct-input-placeholderForeground); }
+.monaco-workbench textarea::-moz-placeholder { color: var(--construct-input-placeholderForeground); }
 
 .monaco-workbench .pointer {
 	cursor: pointer;
@@ -167,7 +167,7 @@ body.web {
 }
 
 .monaco-workbench .codicon {
-	color: var(--vscode-icon-foreground);
+	color: var(--construct-icon-foreground);
 }
 
 .monaco-workbench .codicon[class*='codicon-'] {
@@ -208,8 +208,8 @@ body.web {
 }
 
 .monaco-workbench .select-container:after {
-	content: var(--vscode-icon-chevron-down-content);
-	font-family: var(--vscode-icon-chevron-down-font-family);
+	content: var(--construct-icon-chevron-down-content);
+	font-family: var(--construct-icon-chevron-down-font-family);
 	font-size: 16px;
 	width: 16px;
 	height: 16px;
@@ -237,7 +237,7 @@ body.web {
 	outline-width: 1px;
 	outline-style: solid;
 	outline-offset: -1px;
-	outline-color: var(--vscode-focusBorder);
+	outline-color: var(--construct-focusBorder);
 	opacity: 1;
 }
 
@@ -275,15 +275,15 @@ body.web {
 	outline-width: 1px;
 	outline-style: solid;
 	outline-offset: -1px;
-	outline-color: var(--vscode-focusBorder);
+	outline-color: var(--construct-focusBorder);
 }
 
 .monaco-workbench .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
-	color: var(--vscode-list-highlightForeground);
+	color: var(--construct-list-highlightForeground);
 }
 
 .monaco-workbench .monaco-list .monaco-list-row.focused .monaco-highlighted-label .highlight {
-	color: var(--vscode-list-focusHighlightForeground);
+	color: var(--construct-list-focusHighlightForeground);
 }
 
 .monaco-workbench .synthetic-focus :focus {
@@ -309,15 +309,15 @@ body.web {
 
 .monaco-workbench .monaco-action-bar:not(.vertical) .action-label:not(.disabled):hover,
 .monaco-workbench .monaco-action-bar:not(.vertical) .monaco-dropdown-with-primary:not(.disabled):hover {
-	background-color: var(--vscode-toolbar-hoverBackground);
+	background-color: var(--construct-toolbar-hoverBackground);
 }
 
 .monaco-workbench .monaco-action-bar:not(.vertical) .action-item.active .action-label:not(.disabled),
 .monaco-workbench .monaco-action-bar:not(.vertical) .monaco-dropdown.active .action-label:not(.disabled) {
-	background-color: var(--vscode-toolbar-activeBackground);
+	background-color: var(--construct-toolbar-activeBackground);
 }
 
 .monaco-workbench .monaco-action-bar:not(.vertical) .action-item .action-label:hover:not(.disabled) {
-	outline: 1px dashed var(--vscode-toolbar-hoverOutline);
+	outline: 1px dashed var(--construct-toolbar-hoverOutline);
 	outline-offset: -1px;
 }

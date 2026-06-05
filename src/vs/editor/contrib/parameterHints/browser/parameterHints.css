@@ -10,9 +10,9 @@
 	flex-direction: column;
 	line-height: 1.5em;
 	cursor: default;
-	color: var(--vscode-editorHoverWidget-foreground);
-	background-color: var(--vscode-editorHoverWidget-background);
-	border: 1px solid var(--vscode-editorHoverWidget-border);
+	color: var(--construct-editorHoverWidget-foreground);
+	background-color: var(--construct-editorHoverWidget-background);
+	border: 1px solid var(--construct-editorHoverWidget-border);
 }
 
 .hc-black .monaco-editor .parameter-hints-widget,
@@ -37,7 +37,7 @@
 	height: 100%;
 	position: absolute;
 	opacity: 0.5;
-	border-left: 1px solid var(--vscode-editorHoverWidget-border);
+	border-left: 1px solid var(--construct-editorHoverWidget-border);
 }
 
 .monaco-editor .parameter-hints-widget p,
@@ -66,11 +66,11 @@
 	width: 100%;
 	padding-top: 4px;
 	opacity: 0.5;
-	border-bottom: 1px solid var(--vscode-editorHoverWidget-border);
+	border-bottom: 1px solid var(--construct-editorHoverWidget-border);
 }
 
 .monaco-editor .parameter-hints-widget .code {
-	font-family: var(--vscode-parameterHintsWidget-editorFontFamily), var(--vscode-parameterHintsWidget-editorFontFamilyDefault);
+	font-family: var(--construct-parameterHintsWidget-editorFontFamily), var(--construct-parameterHintsWidget-editorFontFamilyDefault);
 }
 
 .monaco-editor .parameter-hints-widget .docs {
@@ -83,11 +83,11 @@
 }
 
 .monaco-editor .parameter-hints-widget .docs a {
-	color: var(--vscode-textLink-foreground);
+	color: var(--construct-textLink-foreground);
 }
 
 .monaco-editor .parameter-hints-widget .docs a:hover {
-	color: var(--vscode-textLink-activeForeground);
+	color: var(--construct-textLink-activeForeground);
 	cursor: pointer;
 }
 
@@ -99,7 +99,7 @@
 	font-family: var(--monaco-monospace-font);
 	border-radius: 3px;
 	padding: 0 0.4em;
-	background-color: var(--vscode-textCodeBlock-background);
+	background-color: var(--construct-textCodeBlock-background);
 }
 
 .monaco-editor .parameter-hints-widget .docs .monaco-tokenized-source,
@@ -139,7 +139,7 @@
 }
 
 .monaco-editor .parameter-hints-widget .signature .parameter.active {
-	color: var(--vscode-editorHoverWidget-highlightForeground);
+	color: var(--construct-editorHoverWidget-highlightForeground);
 	font-weight: bold;
 }
 

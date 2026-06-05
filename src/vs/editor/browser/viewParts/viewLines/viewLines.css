@@ -20,17 +20,17 @@
 }
 
 .mtkoverflow {
-	background-color: var(--vscode-button-background, var(--vscode-editor-background));
-	color: var(--vscode-button-foreground, var(--vscode-editor-foreground));
+	background-color: var(--construct-button-background, var(--construct-editor-background));
+	color: var(--construct-button-foreground, var(--construct-editor-foreground));
 	border-width: 1px;
 	border-style: solid;
-	border-color: var(--vscode-contrastBorder);
+	border-color: var(--construct-contrastBorder);
 	border-radius: 2px;
 	padding: 4px;
 	cursor: pointer;
 }
 .mtkoverflow:hover {
-	background-color: var(--vscode-button-hoverBackground);
+	background-color: var(--construct-button-hoverBackground);
 }
 
 .monaco-editor.no-user-select .lines-content,
@@ -71,12 +71,12 @@
 }
 
 .monaco-editor .mtkw {
-	color: var(--vscode-editorWhitespace-foreground) !important;
+	color: var(--construct-editorWhitespace-foreground) !important;
 }
 
 .monaco-editor .mtkz {
 	display: inline-block;
-	color: var(--vscode-editorWhitespace-foreground) !important;
+	color: var(--construct-editorWhitespace-foreground) !important;
 }
 
 /* TODO@tokenization bootstrap fix */

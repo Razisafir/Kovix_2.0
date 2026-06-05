@@ -326,11 +326,11 @@ export class BackLayerWebView<T extends ICommonCellInfo> extends Themable {
 				">` : ''}
 				<style nonce="${this.nonce}">
 					::highlight(find-highlight) {
-						background-color: var(--vscode-editor-findMatchBackground, ${findMatchHighlight});
+						background-color: var(--construct-editor-findMatchBackground, ${findMatchHighlight});
 					}
 
 					::highlight(current-find-highlight) {
-						background-color: var(--vscode-editor-findMatchHighlightBackground, ${currentHighlight});
+						background-color: var(--construct-editor-findMatchHighlightBackground, ${currentHighlight});
 					}
 
 					#container .cell_container {
@@ -410,7 +410,7 @@ export class BackLayerWebView<T extends ICommonCellInfo> extends Themable {
 					}
 
 					#container .nb-chatGenerationHighlight .output_container .output {
-						background-color: var(--vscode-notebook-selectedCellBackground);
+						background-color: var(--construct-notebook-selectedCellBackground);
 					}
 
 					#container > div.nb-cellDeleted .output_container {
@@ -426,7 +426,7 @@ export class BackLayerWebView<T extends ICommonCellInfo> extends Themable {
 					}
 
 					#container .no-renderer-error {
-						color: var(--vscode-editorError-foreground);
+						color: var(--construct-editorError-foreground);
 					}
 
 					body {
@@ -465,16 +465,16 @@ export class BackLayerWebView<T extends ICommonCellInfo> extends Themable {
 					}
 
 					.find-match {
-						background-color: var(--vscode-editor-findMatchHighlightBackground);
+						background-color: var(--construct-editor-findMatchHighlightBackground);
 					}
 
 					.current-find-match {
-						background-color: var(--vscode-editor-findMatchBackground);
+						background-color: var(--construct-editor-findMatchBackground);
 					}
 
 					#_defaultColorPalatte {
-						color: var(--vscode-editor-findMatchHighlightBackground);
-						background-color: var(--vscode-editor-findMatchBackground);
+						color: var(--construct-editor-findMatchHighlightBackground);
+						background-color: var(--construct-editor-findMatchBackground);
 					}
 				</style>
 			</head>

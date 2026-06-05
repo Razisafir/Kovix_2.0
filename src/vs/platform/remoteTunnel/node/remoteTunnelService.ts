@@ -176,8 +176,8 @@ export class RemoteTunnelService extends Disposable implements IRemoteTunnelServ
 				// bin = /Applications/CONSTRUCT IDE - Insiders.app/Contents/Resources/app/bin
 				binParentLocation = this.environmentService.appRoot;
 			} else {
-				// appRoot = C:\Users\<name>\AppData\Local\Programs\Microsoft CONSTRUCT IDE Insiders\resources\app
-				// bin = C:\Users\<name>\AppData\Local\Programs\Microsoft CONSTRUCT IDE Insiders\bin
+				// appRoot = C:\Users\<name>\AppData\Local\Programs\CONSTRUCT IDE\resources\app
+				// bin = C:\Users\<name>\AppData\Local\Programs\CONSTRUCT IDE\bin
 				// appRoot = /usr/share/code-insiders/resources/app
 				// bin = /usr/share/code-insiders/bin
 				binParentLocation = dirname(dirname(this.environmentService.appRoot));

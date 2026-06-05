@@ -1,5 +1,5 @@
 {
-	"$schema": "vscode://schemas/color-theme",
+	"$schema": "construct://schemas/color-theme",
 	"name": "Light High Contrast",
 	"tokenColors": [
 		{

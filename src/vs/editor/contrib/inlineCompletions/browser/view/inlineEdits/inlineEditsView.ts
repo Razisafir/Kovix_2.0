@@ -173,20 +173,20 @@ export class InlineEditsView extends Disposable {
 
 			const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 			path1.setAttribute('d', pathBuilder1.build());
-			path1.style.fill = 'var(--vscode-inlineEdit-originalBackground, transparent)';
-			path1.style.stroke = 'var(--vscode-inlineEdit-border)';
+			path1.style.fill = 'var(--construct-inlineEdit-originalBackground, transparent)';
+			path1.style.stroke = 'var(--construct-inlineEdit-border)';
 			path1.style.strokeWidth = '1px';
 
 
 			const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 			path2.setAttribute('d', pathBuilder2.build());
-			path2.style.fill = 'var(--vscode-inlineEdit-modifiedBackground, transparent)';
-			path2.style.stroke = 'var(--vscode-inlineEdit-border)';
+			path2.style.fill = 'var(--construct-inlineEdit-modifiedBackground, transparent)';
+			path2.style.stroke = 'var(--construct-inlineEdit-border)';
 			path2.style.strokeWidth = '1px';
 
 			const pathModifiedBackground = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 			pathModifiedBackground.setAttribute('d', pathBuilder2.build());
-			pathModifiedBackground.style.fill = 'var(--vscode-editor-background, transparent)';
+			pathModifiedBackground.style.fill = 'var(--construct-editor-background, transparent)';
 			pathModifiedBackground.style.strokeWidth = '1px';
 
 
@@ -201,11 +201,11 @@ export class InlineEditsView extends Disposable {
 
 				const stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
 				stop1.setAttribute('offset', '0%');
-				stop1.setAttribute('style', 'stop-color:var(--vscode-inlineEdit-border);stop-opacity:0');
+				stop1.setAttribute('style', 'stop-color:var(--construct-inlineEdit-border);stop-opacity:0');
 
 				const stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
 				stop2.setAttribute('offset', '100%');
-				stop2.setAttribute('style', 'stop-color:var(--vscode-inlineEdit-border);stop-opacity:1');
+				stop2.setAttribute('style', 'stop-color:var(--construct-inlineEdit-border);stop-opacity:1');
 
 				linearGradient.appendChild(stop1);
 				linearGradient.appendChild(stop2);
@@ -230,14 +230,14 @@ export class InlineEditsView extends Disposable {
 
 				const path3 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 				path3.setAttribute('d', pathBuilder3.build());
-				path3.style.stroke = 'var(--vscode-inlineEdit-border)';
+				path3.style.stroke = 'var(--construct-inlineEdit-border)';
 				path3.style.strokeWidth = '1px';
 				elements.push(path3);
 			}
 
 			const path4 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 			path4.setAttribute('d', pathBuilder4.build());
-			path4.style.fill = 'var(--vscode-editor-background, transparent)';
+			path4.style.fill = 'var(--construct-editor-background, transparent)';
 
 			this._elements.svg.replaceChildren(path4, pathModifiedBackground);
 			this._elements.svg2.replaceChildren(path1, path2, ...elements);

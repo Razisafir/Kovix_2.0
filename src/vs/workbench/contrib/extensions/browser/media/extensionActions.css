@@ -32,58 +32,58 @@
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.built-in-status {
-	border-color: var(--vscode-foreground);
+	border-color: var(--construct-foreground);
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.label,
 .monaco-action-bar .action-item.action-dropdown-item > .action-dropdown-item-separator {
-	background-color: var(--vscode-extensionButton-background) !important;
+	background-color: var(--construct-extensionButton-background) !important;
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.label {
-	color: var(--vscode-extensionButton-foreground) !important;
+	color: var(--construct-extensionButton-foreground) !important;
 }
 
 .monaco-action-bar .action-item:not(.disabled) .action-label.extension-action.label:hover {
-	background-color: var(--vscode-extensionButton-hoverBackground) !important;
+	background-color: var(--construct-extensionButton-hoverBackground) !important;
 }
 
 .monaco-action-bar .action-item.action-dropdown-item > .action-dropdown-item-separator > div {
-	background-color: var(--vscode-extensionButton-separator);
+	background-color: var(--construct-extensionButton-separator);
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.label.prominent,
 .monaco-action-bar .action-item.action-dropdown-item > .action-dropdown-item-separator.prominent {
-	background-color: var(--vscode-extensionButton-prominentBackground);
+	background-color: var(--construct-extensionButton-prominentBackground);
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.label.prominent {
-	color: var(--vscode-extensionButton-prominentForeground) !important;
+	color: var(--construct-extensionButton-prominentForeground) !important;
 }
 
 .monaco-action-bar .action-item.action-item:not(.disabled) .action-label.extension-action.label.prominent:hover {
-	background-color: var(--vscode-extensionButton-prominentHoverBackground);
+	background-color: var(--construct-extensionButton-prominentHoverBackground);
 }
 
 .monaco-action-bar .action-item .action-label.extension-action:not(.disabled) {
-	border: 1px solid var(--vscode-contrastBorder);
+	border: 1px solid var(--construct-contrastBorder);
 }
 
 .monaco-action-bar .action-item.action-dropdown-item > .action-dropdown-item-separator {
-	border-top: 1px solid var(--vscode-contrastBorder);
-	border-bottom: 1px solid var(--vscode-contrastBorder);
+	border-top: 1px solid var(--construct-contrastBorder);
+	border-bottom: 1px solid var(--construct-contrastBorder);
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.extension-status-error::before {
-	color: var(--vscode-editorError-foreground);
+	color: var(--construct-editorError-foreground);
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.extension-status-warning::before {
-	color: var(--vscode-editorWarning-foreground);
+	color: var(--construct-editorWarning-foreground);
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.extension-status-info::before {
-	color: var(--vscode-editorInfo-foreground);
+	color: var(--construct-editorInfo-foreground);
 }
 
 .monaco-action-bar .action-item:not(.disabled) .action-label.extension-action.text,

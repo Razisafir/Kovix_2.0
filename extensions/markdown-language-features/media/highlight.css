@@ -99,14 +99,14 @@ https://raw.githubusercontent.com/isagalaev/highlight.js/master/src/styles/vs201
 }
 
 .hljs-addition {
-	background-color: var(--vscode-diffEditor-insertedTextBackground, rgba(155, 185, 85, 0.2));
+	background-color: var(--construct-diffEditor-insertedTextBackground, rgba(155, 185, 85, 0.2));
 	color: rgb(155, 185, 85);
 	display: inline-block;
 	width: 100%;
 }
 
 .hljs-deletion {
-	background: var(--vscode-diffEditor-removedTextBackground, rgba(255, 0, 0, 0.2));
+	background: var(--construct-diffEditor-removedTextBackground, rgba(255, 0, 0, 0.2));
 	color: rgb(255, 0, 0);
 	display: inline-block;
 	width: 100%;

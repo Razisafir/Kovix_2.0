@@ -30,7 +30,7 @@ export class InlineChatZoneWidget extends ZoneWidget {
 	private static readonly _options: IOptions = {
 		showFrame: true,
 		frameWidth: 1,
-		// frameColor: 'var(--vscode-inlineChat-border)',
+		// frameColor: 'var(--construct-inlineChat-border)',
 		isResizeable: true,
 		showArrow: false,
 		isAccessible: true,
@@ -145,7 +145,7 @@ export class InlineChatZoneWidget extends ZoneWidget {
 
 	protected override _fillContainer(container: HTMLElement): void {
 
-		container.style.setProperty('--vscode-inlineChat-background', 'var(--vscode-editor-background)');
+		container.style.setProperty('--construct-inlineChat-background', 'var(--construct-editor-background)');
 
 		container.appendChild(this.widget.domNode);
 	}

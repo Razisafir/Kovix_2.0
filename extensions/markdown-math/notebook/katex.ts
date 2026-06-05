@@ -31,7 +31,7 @@ export async function activate(ctx: RendererContext<void>) {
 	const style = document.createElement('style');
 	style.textContent = `
 		.katex-error {
-			color: var(--vscode-editorError-foreground);
+			color: var(--construct-editorError-foreground);
 		}
 		.katex-block {
 			counter-reset: katexEqnNo mmlEqnNo;

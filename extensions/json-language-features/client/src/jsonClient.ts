@@ -714,7 +714,7 @@ function getSchemaId(schema: JSONSchemaSettings, settingsLocation?: Uri): string
 	let url = schema.url;
 	if (!url) {
 		if (schema.schema) {
-			url = schema.schema.id || `vscode://schemas/custom/${encodeURIComponent(hash(schema.schema).toString(16))}`;
+			url = schema.schema.id || `construct://schemas/custom/${encodeURIComponent(hash(schema.schema).toString(16))}`;
 		}
 	} else if (settingsLocation && (url[0] === '.' || url[0] === '/')) {
 		url = Uri.joinPath(settingsLocation, url).toString(false);

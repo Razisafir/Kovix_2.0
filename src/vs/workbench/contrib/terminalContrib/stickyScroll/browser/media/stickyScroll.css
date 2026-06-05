@@ -9,16 +9,16 @@
 	left: 0;
 	right: 14px; /* Don't overlap terminal scroll bar */
 	z-index: 32; /* Must be higher than decorations */
-	background: var(--vscode-terminalStickyScroll-background, var(--vscode-terminal-background, var(--vscode-panel-background)));
-	box-shadow: var(--vscode-scrollbar-shadow) 0 3px 2px -2px;
-	border-bottom: 1px solid var(--vscode-terminalStickyScroll-border, transparent);
+	background: var(--construct-terminalStickyScroll-background, var(--construct-terminal-background, var(--construct-panel-background)));
+	box-shadow: var(--construct-scrollbar-shadow) 0 3px 2px -2px;
+	border-bottom: 1px solid var(--construct-terminalStickyScroll-border, transparent);
 }
 .part.sidebar .terminal-sticky-scroll,
 .part.auxiliarybar .terminal-sticky-scroll {
-	background: var(--vscode-terminalStickyScroll-background, var(--vscode-terminal-background, var(--vscode-sideBar-background)));
+	background: var(--construct-terminalStickyScroll-background, var(--construct-terminal-background, var(--construct-sideBar-background)));
 }
 .editor-instance .terminal-sticky-scroll {
-	background: var(--vscode-terminalStickyScroll-background, var(--vscode-terminal-background, var(--vscode-editor-background)));
+	background: var(--construct-terminalStickyScroll-background, var(--construct-terminal-background, var(--construct-editor-background)));
 }
 
 .terminal-sticky-scroll.visible {
@@ -45,5 +45,5 @@
 }
 
 .terminal-sticky-scroll .hover-overlay:hover {
-	background-color: var(--vscode-terminalStickyScrollHover-background, transparent);
+	background-color: var(--construct-terminalStickyScrollHover-background, transparent);
 }

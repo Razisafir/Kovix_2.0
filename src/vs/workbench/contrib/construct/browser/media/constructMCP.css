@@ -84,8 +84,8 @@
 }
 
 .construct-mcp-card {
-	background: var(--vscode-editor-background);
-	border: 1px solid var(--vscode-panel-border);
+	background: var(--construct-editor-background);
+	border: 1px solid var(--construct-panel-border);
 	border-radius: 8px;
 	padding: 16px;
 	transition: all 0.2s ease;
@@ -94,7 +94,7 @@
 }
 
 .construct-mcp-card:hover {
-	border-color: var(--vscode-focusBorder);
+	border-color: var(--construct-focusBorder);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 	transform: translateY(-2px);
 }
@@ -124,7 +124,7 @@
 	width: 40px;
 	height: 40px;
 	border-radius: 8px;
-	background: var(--vscode-button-secondaryBackground);
+	background: var(--construct-button-secondaryBackground);
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -134,19 +134,19 @@
 .construct-mcp-card-title {
 	font-size: 16px;
 	font-weight: 600;
-	color: var(--vscode-foreground);
+	color: var(--construct-foreground);
 	margin: 0;
 }
 
 .construct-mcp-card-meta {
 	font-size: 12px;
-	color: var(--vscode-descriptionForeground);
+	color: var(--construct-descriptionForeground);
 	margin-top: 2px;
 }
 
 .construct-mcp-card-description {
 	font-size: 13px;
-	color: var(--vscode-foreground);
+	color: var(--construct-foreground);
 	line-height: 1.5;
 	margin-bottom: 12px;
 }
@@ -162,8 +162,8 @@
 	font-size: 11px;
 	padding: 2px 8px;
 	border-radius: 12px;
-	background: var(--vscode-badge-background);
-	color: var(--vscode-badge-foreground);
+	background: var(--construct-badge-background);
+	color: var(--construct-badge-foreground);
 }
 
 .construct-mcp-card-footer {
@@ -178,7 +178,7 @@
 	align-items: center;
 	gap: 4px;
 	font-size: 13px;
-	color: var(--vscode-foreground);
+	color: var(--construct-foreground);
 }
 
 .construct-mcp-rating-stars {
@@ -188,8 +188,8 @@
 /* ─── Install Button ──────────────────────────────────────────────────────── */
 
 .construct-mcp-install-btn {
-	background: linear-gradient(135deg, var(--vscode-button-background), var(--vscode-button-hoverBackground));
-	color: var(--vscode-button-foreground);
+	background: linear-gradient(135deg, var(--construct-button-background), var(--construct-button-hoverBackground));
+	color: var(--construct-button-foreground);
 	border: none;
 	padding: 6px 16px;
 	border-radius: 6px;
@@ -205,8 +205,8 @@
 }
 
 .construct-mcp-install-btn.installed {
-	background: var(--vscode-button-secondaryBackground);
-	color: var(--vscode-button-secondaryForeground);
+	background: var(--construct-button-secondaryBackground);
+	color: var(--construct-button-secondaryForeground);
 }
 
 .construct-mcp-install-btn.installing {
@@ -242,12 +242,12 @@
 }
 
 .construct-mcp-server-item:hover {
-	background: var(--vscode-list-hoverBackground);
+	background: var(--construct-list-hoverBackground);
 }
 
 .construct-mcp-server-item.active {
-	background: var(--vscode-list-activeSelectionBackground);
-	color: var(--vscode-list-activeSelectionForeground);
+	background: var(--construct-list-activeSelectionBackground);
+	color: var(--construct-list-activeSelectionForeground);
 }
 
 .construct-mcp-server-info {
@@ -262,7 +262,7 @@
 
 .construct-mcp-server-detail {
 	font-size: 11px;
-	color: var(--vscode-descriptionForeground);
+	color: var(--construct-descriptionForeground);
 	margin-top: 2px;
 }
 
@@ -279,18 +279,18 @@
 
 .construct-mcp-server-action-btn {
 	background: transparent;
-	border: 1px solid var(--vscode-panel-border);
+	border: 1px solid var(--construct-panel-border);
 	border-radius: 3px;
 	padding: 3px 8px;
-	color: var(--vscode-foreground);
+	color: var(--construct-foreground);
 	font-size: 10px;
 	cursor: pointer;
 	transition: all 0.1s ease;
 }
 
 .construct-mcp-server-action-btn:hover {
-	border-color: var(--vscode-focusBorder);
-	color: var(--vscode-focusBorder);
+	border-color: var(--construct-focusBorder);
+	color: var(--construct-focusBorder);
 }
 
 .construct-mcp-server-action-btn.stop {
@@ -322,7 +322,7 @@
 	border-radius: 2px;
 	margin-top: 6px;
 	overflow: hidden;
-	background: var(--vscode-progressBar-background);
+	background: var(--construct-progressBar-background);
 }
 
 .construct-mcp-health-bar-fill {
@@ -358,7 +358,7 @@
 	display: flex;
 	gap: 8px;
 	padding: 12px 16px;
-	border-bottom: 1px solid var(--vscode-panel-border);
+	border-bottom: 1px solid var(--construct-panel-border);
 	overflow-x: auto;
 }
 
@@ -366,22 +366,22 @@
 	white-space: nowrap;
 	padding: 4px 12px;
 	border-radius: 16px;
-	border: 1px solid var(--vscode-panel-border);
+	border: 1px solid var(--construct-panel-border);
 	background: transparent;
-	color: var(--vscode-foreground);
+	color: var(--construct-foreground);
 	font-size: 12px;
 	cursor: pointer;
 	transition: all 0.15s ease;
 }
 
 .construct-mcp-category-btn:hover {
-	background: var(--vscode-list-hoverBackground);
+	background: var(--construct-list-hoverBackground);
 }
 
 .construct-mcp-category-btn.active {
-	background: var(--vscode-button-background);
-	color: var(--vscode-button-foreground);
-	border-color: var(--vscode-button-background);
+	background: var(--construct-button-background);
+	color: var(--construct-button-foreground);
+	border-color: var(--construct-button-background);
 }
 
 /* ─── Search Input ──────────────────────────────────────────────────────── */
@@ -395,15 +395,15 @@
 	width: 100%;
 	padding: 8px 12px 8px 36px;
 	border-radius: 6px;
-	border: 1px solid var(--vscode-panel-border);
-	background: var(--vscode-input-background);
-	color: var(--vscode-input-foreground);
+	border: 1px solid var(--construct-panel-border);
+	background: var(--construct-input-background);
+	color: var(--construct-input-foreground);
 	font-size: 13px;
 	outline: none;
 }
 
 .construct-mcp-search input:focus {
-	border-color: var(--vscode-focusBorder);
+	border-color: var(--construct-focusBorder);
 }
 
 .construct-mcp-search-icon {
@@ -411,7 +411,7 @@
 	left: 24px;
 	top: 50%;
 	transform: translateY(-50%);
-	color: var(--vscode-descriptionForeground);
+	color: var(--construct-descriptionForeground);
 }
 
 /* ─── Tool Execution Result ──────────────────────────────────────────────── */
@@ -420,13 +420,13 @@
 	padding: 8px 10px;
 	border-radius: 4px;
 	font-size: 12px;
-	font-family: var(--vscode-editor-font-family, monospace);
+	font-family: var(--construct-editor-font-family, monospace);
 }
 
 .construct-mcp-tool-result.success {
 	background: #4ade8010;
 	border-left: 2px solid #4ade80;
-	color: var(--vscode-foreground);
+	color: var(--construct-foreground);
 }
 
 .construct-mcp-tool-result.error {
@@ -483,12 +483,12 @@
 .construct-mcp-empty-title {
 	font-size: 16px;
 	font-weight: 600;
-	color: var(--vscode-foreground);
+	color: var(--construct-foreground);
 	margin-bottom: 8px;
 }
 
 .construct-mcp-empty-desc {
 	font-size: 13px;
-	color: var(--vscode-descriptionForeground);
+	color: var(--construct-descriptionForeground);
 	max-width: 300px;
 }

@@ -11,7 +11,7 @@
         display: flex;
         flex-direction: column;
         height: 100%;
-        background: var(--vscode-editor-background);
+        background: var(--construct-editor-background);
 }
 
 /* ===========================================================================
@@ -22,8 +22,8 @@
         display: flex;
         gap: 4px;
         padding: 4px 12px;
-        border-bottom: 1px solid var(--vscode-panel-border);
-        background: var(--vscode-tab-inactiveBackground);
+        border-bottom: 1px solid var(--construct-panel-border);
+        background: var(--construct-tab-inactiveBackground);
         overflow-x: auto;
 }
 
@@ -32,8 +32,8 @@
         border-radius: 4px 4px 0 0;
         font-size: 12px;
         cursor: pointer;
-        background: var(--vscode-tab-inactiveBackground);
-        color: var(--vscode-tab-inactiveForeground);
+        background: var(--construct-tab-inactiveBackground);
+        color: var(--construct-tab-inactiveForeground);
         border: 1px solid transparent;
         border-bottom: none;
         display: flex;
@@ -44,13 +44,13 @@
 }
 
 .construct-browser-session-tab:hover {
-        background: var(--vscode-tab-activeBackground);
+        background: var(--construct-tab-activeBackground);
 }
 
 .construct-browser-session-tab.active {
-        background: var(--vscode-tab-activeBackground);
-        color: var(--vscode-tab-activeForeground);
-        border-color: var(--vscode-panel-border);
+        background: var(--construct-tab-activeBackground);
+        color: var(--construct-tab-activeForeground);
+        border-color: var(--construct-panel-border);
 }
 
 .construct-browser-session-tab .close {
@@ -66,7 +66,7 @@
 }
 
 .construct-browser-session-tab .close:hover {
-        color: var(--vscode-errorForeground);
+        color: var(--construct-errorForeground);
 }
 
 /* ===========================================================================
@@ -78,8 +78,8 @@
         align-items: center;
         gap: 8px;
         padding: 8px 12px;
-        border-bottom: 1px solid var(--vscode-panel-border);
-        background: var(--vscode-editor-background);
+        border-bottom: 1px solid var(--construct-panel-border);
+        background: var(--construct-editor-background);
         min-height: 40px;
 }
 
@@ -99,20 +99,20 @@
         width: 100%;
         padding: 4px 12px;
         border-radius: 4px;
-        border: 1px solid var(--vscode-panel-border);
-        background: var(--vscode-input-background);
-        color: var(--vscode-input-foreground);
+        border: 1px solid var(--construct-panel-border);
+        background: var(--construct-input-background);
+        color: var(--construct-input-foreground);
         font-size: 13px;
         outline: none;
         transition: border-color 0.15s ease;
 }
 
 .construct-browser-url-input:focus {
-        border-color: var(--vscode-focusBorder);
+        border-color: var(--construct-focusBorder);
 }
 
 .construct-browser-url-input::placeholder {
-        color: var(--vscode-input-placeholderForeground);
+        color: var(--construct-input-placeholderForeground);
 }
 
 .construct-browser-action-buttons {
@@ -124,9 +124,9 @@
 .construct-browser-btn {
         padding: 4px 10px;
         border-radius: 4px;
-        border: 1px solid var(--vscode-button-secondaryBackground);
-        background: var(--vscode-button-secondaryBackground);
-        color: var(--vscode-button-secondaryForeground);
+        border: 1px solid var(--construct-button-secondaryBackground);
+        background: var(--construct-button-secondaryBackground);
+        color: var(--construct-button-secondaryForeground);
         font-size: 13px;
         cursor: pointer;
         transition: all 0.15s ease;
@@ -136,8 +136,8 @@
 }
 
 .construct-browser-btn:hover {
-        background: var(--vscode-button-hoverBackground);
-        border-color: var(--vscode-focusBorder);
+        background: var(--construct-button-hoverBackground);
+        border-color: var(--construct-focusBorder);
 }
 
 .construct-browser-btn:active {
@@ -163,7 +163,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--vscode-editor-background);
+        background: var(--construct-editor-background);
         padding: 16px;
         overflow: auto;
 }
@@ -183,8 +183,8 @@
 .construct-browser-gallery {
         width: 120px;
         flex-shrink: 0;
-        border-left: 1px solid var(--vscode-panel-border);
-        background: var(--vscode-sideBar-background);
+        border-left: 1px solid var(--construct-panel-border);
+        background: var(--construct-sideBar-background);
         padding: 8px;
         overflow-y: auto;
         display: flex;
@@ -202,7 +202,7 @@
 }
 
 .construct-browser-thumb:hover {
-        border-color: var(--vscode-focusBorder);
+        border-color: var(--construct-focusBorder);
 }
 
 .construct-browser-thumb img {
@@ -229,15 +229,15 @@
 
 .construct-browser-tree {
         flex: 0.4;
-        border-left: 1px solid var(--vscode-panel-border);
-        background: var(--vscode-editor-background);
+        border-left: 1px solid var(--construct-panel-border);
+        background: var(--construct-editor-background);
         padding: 12px;
-        font-family: var(--vscode-editor-font-family, 'monospace');
+        font-family: var(--construct-editor-font-family, 'monospace');
         font-size: 12px;
         line-height: 1.5;
         white-space: pre-wrap;
         overflow: auto;
-        color: var(--vscode-foreground);
+        color: var(--construct-foreground);
 }
 
 /* ===========================================================================
@@ -247,8 +247,8 @@
 .construct-browser-status {
         padding: 4px 12px;
         font-size: 11px;
-        color: var(--vscode-descriptionForeground);
-        border-top: 1px solid var(--vscode-panel-border);
+        color: var(--construct-descriptionForeground);
+        border-top: 1px solid var(--construct-panel-border);
         display: flex;
         align-items: center;
         gap: 6px;
@@ -296,7 +296,7 @@
         justify-content: center;
         height: 100%;
         gap: 16px;
-        color: var(--vscode-descriptionForeground);
+        color: var(--construct-descriptionForeground);
 }
 
 .construct-browser-empty-icon {
@@ -325,8 +325,8 @@
 .construct-browser-spinner {
         width: 32px;
         height: 32px;
-        border: 3px solid var(--vscode-panel-border);
-        border-top-color: var(--vscode-progressBar-background);
+        border: 3px solid var(--construct-panel-border);
+        border-top-color: var(--construct-progressBar-background);
         border-radius: 50%;
         animation: construct-browser-spin 0.8s linear infinite;
 }

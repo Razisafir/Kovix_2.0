@@ -243,24 +243,24 @@ export class InteractiveEditor extends EditorPane implements IEditorPaneWithScro
 		if (focusIndicator === 'gutter') {
 			styleSheets.push(`
 				.interactive-editor .input-cell-container:focus-within .input-focus-indicator::before {
-					border-color: var(--vscode-notebook-focusedCellBorder) !important;
+					border-color: var(--construct-notebook-focusedCellBorder) !important;
 				}
 				.interactive-editor .input-focus-indicator::before {
-					border-color: var(--vscode-notebook-inactiveFocusedCellBorder) !important;
+					border-color: var(--construct-notebook-inactiveFocusedCellBorder) !important;
 				}
 				.interactive-editor .input-cell-container .input-focus-indicator {
 					display: block;
 					top: ${INPUT_CELL_VERTICAL_PADDING}px;
 				}
 				.interactive-editor .input-cell-container {
-					border-top: 1px solid var(--vscode-notebook-inactiveFocusedCellBorder);
+					border-top: 1px solid var(--construct-notebook-inactiveFocusedCellBorder);
 				}
 			`);
 		} else {
 			// border
 			styleSheets.push(`
 				.interactive-editor .input-cell-container {
-					border-top: 1px solid var(--vscode-notebook-inactiveFocusedCellBorder);
+					border-top: 1px solid var(--construct-notebook-inactiveFocusedCellBorder);
 				}
 				.interactive-editor .input-cell-container .input-focus-indicator {
 					display: none;

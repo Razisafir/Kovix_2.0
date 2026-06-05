@@ -212,7 +212,7 @@ blockquote {
 }
 
 code {
-	font-family: var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace);
+	font-family: var(--construct-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace);
 	font-size: 1em;
 	line-height: 1.357em;
 }
@@ -230,7 +230,7 @@ pre.hljs code > div {
 
 pre code {
 	display: inline-block;
-	color: var(--vscode-editor-foreground);
+	color: var(--construct-editor-foreground);
 	tab-size: 4;
 	background: none;
 }
@@ -238,8 +238,8 @@ pre code {
 /** Theming */
 
 pre {
-	background-color: var(--vscode-textCodeBlock-background);
-	border: 1px solid var(--vscode-widget-border);
+	background-color: var(--construct-textCodeBlock-background);
+	border: 1px solid var(--construct-widget-border);
 }
 
 .vscode-high-contrast h1 {

@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-component.multiDiffEditor {
-	background: var(--vscode-multiDiffEditor-background);
+	background: var(--construct-multiDiffEditor-background);
 
 	position: relative;
 
@@ -35,7 +35,7 @@
 	}
 
 	.active {
-		--vscode-multiDiffEditor-border: var(--vscode-focusBorder);
+		--construct-multiDiffEditor-border: var(--construct-focusBorder);
 	}
 
 	.multiDiffEntry {
@@ -56,26 +56,26 @@
 
 		.header {
 			z-index: 1000;
-			background: var(--vscode-editor-background);
+			background: var(--construct-editor-background);
 
 			&:not(.collapsed) .header-content {
-				border-bottom: 1px solid var(--vscode-sideBarSectionHeader-border);
+				border-bottom: 1px solid var(--construct-sideBarSectionHeader-border);
 			}
 
 			.header-content {
 				margin: 8px 0px 0px 0px;
 				padding: 4px 5px;
 
-				border-top: 1px solid var(--vscode-multiDiffEditor-border);
+				border-top: 1px solid var(--construct-multiDiffEditor-border);
 
 				display: flex;
 				align-items: center;
 
-				color: var(--vscode-foreground);
-				background: var(--vscode-multiDiffEditor-headerBackground);
+				color: var(--construct-foreground);
+				background: var(--construct-multiDiffEditor-headerBackground);
 
 				&.shadow {
-					box-shadow: var(--vscode-scrollbar-shadow) 0px 6px 6px -6px;
+					box-shadow: var(--construct-scrollbar-shadow) 0px 6px 6px -6px;
 				}
 
 				.file-path {
@@ -103,15 +103,15 @@
 						/*
 							TODO@hediet: move colors from git extension to core!
 						&.renamed {
-							color: v ar(--vscode-gitDecoration-renamedResourceForeground);
+							color: v ar(--construct-gitDecoration-renamedResourceForeground);
 						}
 
 						&.deleted {
-							color: v ar(--vscode-gitDecoration-deletedResourceForeground);
+							color: v ar(--construct-gitDecoration-deletedResourceForeground);
 						}
 
 						&.added {
-							color: v ar(--vscode-gitDecoration-addedResourceForeground);
+							color: v ar(--construct-gitDecoration-addedResourceForeground);
 						}
 						*/
 					}
@@ -130,7 +130,7 @@
 			display: flex;
 			flex-direction: column;
 
-			border-bottom: 1px solid var(--vscode-multiDiffEditor-border);
+			border-bottom: 1px solid var(--construct-multiDiffEditor-border);
 			overflow: hidden;
 		}
 

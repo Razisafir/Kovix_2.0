@@ -102,11 +102,11 @@ pre {
 }
 
 pre code {
-	font-family: var(--vscode-editor-font-family);
-	font-weight: var(--vscode-editor-font-weight);
-	font-size: var(--vscode-editor-font-size);
+	font-family: var(--construct-editor-font-family);
+	font-weight: var(--construct-editor-font-weight);
+	font-size: var(--construct-editor-font-size);
 	line-height: 1.5;
-	color: var(--vscode-editor-foreground);
+	color: var(--construct-editor-foreground);
 	tab-size: 4;
 }
 
@@ -117,7 +117,7 @@ pre code {
 /** Theming */
 
 .pre {
-	background-color: var(--vscode-textCodeBlock-background);
+	background-color: var(--construct-textCodeBlock-background);
 }
 
 .vscode-high-contrast h1 {

@@ -343,7 +343,7 @@ export function startServer(connection: Connection, runtime: RuntimeEnvironment)
 			jsonConfigurationSettings.forEach((schema, index) => {
 				let uri = schema.url;
 				if (!uri && schema.schema) {
-					uri = schema.schema.id || `vscode://schemas/custom/${index}`;
+					uri = schema.schema.id || `construct://schemas/custom/${index}`;
 				}
 				if (uri) {
 					languageSettings.schemas.push({ uri, fileMatch: schema.fileMatch, schema: schema.schema, folderUri: schema.folderUri });

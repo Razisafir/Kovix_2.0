@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 .chat-codeblock-pill-widget {
-	border: 1px solid var(--vscode-chat-requestBorder, var(--vscode-input-background, transparent));
+	border: 1px solid var(--construct-chat-requestBorder, var(--construct-input-background, transparent));
 	border-radius: 4px;
 	text-wrap: nowrap;
 	width: fit-content;
@@ -25,7 +25,7 @@
 }
 
 .chat-codeblock-pill-widget:hover {
-	background-color: var(--vscode-list-hoverBackground);
+	background-color: var(--construct-list-hoverBackground);
 }
 
 .chat-codeblock-pill-widget .icon {
@@ -48,17 +48,17 @@
 span.label-detail {
 	padding-left: 4px;
 	font-style: italic;
-	color: var(--vscode-descriptionForeground);
+	color: var(--construct-descriptionForeground);
 }
 
 span.label-added {
 	font-weight: bold;
 	padding-left: 4px;
-	color: var(--vscode-editorGutter-addedBackground);
+	color: var(--construct-editorGutter-addedBackground);
 }
 
 span.label-removed {
 	font-weight: bold;
 	padding-left: 4px;
-	color: var(--vscode-editorGutter-deletedBackground);
+	color: var(--construct-editorGutter-deletedBackground);
 }

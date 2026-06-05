@@ -8,8 +8,8 @@
 	color: inherit;
 	padding: 6px;
 	border-radius: 6px;
-	border: 1px solid var(--vscode-inlineChat-border);
-	background: var(--vscode-inlineChat-background);
+	border: 1px solid var(--construct-inlineChat-border);
+	background: var(--construct-inlineChat-background);
 }
 .monaco-workbench .notebookOverlay .cell-chat-part .cell-chat-container {
 	padding: 8px 8px 0px 8px;
@@ -28,13 +28,13 @@
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .body .content {
 	display: flex;
 	box-sizing: border-box;
-	outline: 1px solid var(--vscode-inlineChatInput-border);
+	outline: 1px solid var(--construct-inlineChatInput-border);
 	outline-offset: -1px;
 	border-radius: 2px;
 }
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .body .content.synthetic-focus {
-	outline: 1px solid var(--vscode-inlineChatInput-focusBorder);
+	outline: 1px solid var(--construct-inlineChatInput-focusBorder);
 }
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .body .content .input {
@@ -42,18 +42,18 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: 2px 2px 2px 6px;
-	background-color: var(--vscode-inlineChatInput-background);
+	background-color: var(--construct-inlineChatInput-background);
 	cursor: text;
 }
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .body .content .input .monaco-editor-background {
-	background-color: var(--vscode-inlineChatInput-background);
+	background-color: var(--construct-inlineChatInput-background);
 }
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .body .content .input .editor-placeholder {
 	position: absolute;
 	z-index: 1;
-	color: var(--vscode-inlineChatInput-placeholderForeground);
+	color: var(--construct-inlineChatInput-placeholderForeground);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -73,7 +73,7 @@
 	padding-right: 4px;
 	border-top-right-radius: 2px;
 	border-bottom-right-radius: 2px;
-	background: var(--vscode-inlineChatInput-background);
+	background: var(--construct-inlineChatInput-background);
 }
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .body .toolbar .actions-container {
@@ -118,7 +118,7 @@
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .status .label {
 	overflow: hidden;
-	color: var(--vscode-descriptionForeground);
+	color: var(--construct-descriptionForeground);
 	font-size: 11px;
 	align-self: baseline;
 	display: flex;
@@ -149,8 +149,8 @@
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .status .label .slash-command-pill CODE {
 	border-radius: 3px;
 	padding: 0 1px;
-	background-color: var(--vscode-chat-slashCommandBackground);
-	color: var(--vscode-chat-slashCommandForeground);
+	background-color: var(--construct-chat-slashCommandBackground);
+	color: var(--construct-chat-slashCommandForeground);
 }
 
 
@@ -169,8 +169,8 @@
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .markdownMessage .message code {
 	font-family: var(--monaco-monospace-font);
 	font-size: 12px;
-	color: var(--vscode-textPreformat-foreground);
-	background-color: var(--vscode-textPreformat-background);
+	color: var(--construct-textPreformat-foreground);
+	background-color: var(--construct-textPreformat-background);
 	padding: 1px 3px;
 	border-radius: 4px;
 }
@@ -189,16 +189,16 @@
 }
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .status .label A {
-	color: var(--vscode-textLink-foreground);
+	color: var(--construct-textLink-foreground);
 	cursor: pointer;
 }
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .status .label.error {
-	color: var(--vscode-errorForeground);
+	color: var(--construct-errorForeground);
 }
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .status .label.warn {
-	color: var(--vscode-editorWarning-foreground);
+	color: var(--construct-editorWarning-foreground);
 }
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .status .actions  {
@@ -235,14 +235,14 @@
 
 /* TODO@jrieken not needed? */
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .status .monaco-toolbar .action-label.checked {
-	color: var(--vscode-inputOption-activeForeground);
-	background-color: var(--vscode-inputOption-activeBackground);
-	outline: 1px solid var(--vscode-inputOption-activeBorder);
+	color: var(--construct-inputOption-activeForeground);
+	background-color: var(--construct-inputOption-activeBackground);
+	outline: 1px solid var(--construct-inputOption-activeBorder);
 }
 
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .status .monaco-toolbar .action-item.button-item .action-label:is(:hover, :focus) {
-	background-color: var(--vscode-button-hoverBackground);
+	background-color: var(--construct-button-hoverBackground);
 }
 
 /* preview */
@@ -254,7 +254,7 @@
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .previewDiff {
 	display: inherit;
 	padding: 6px;
-	border: 1px solid var(--vscode-inlineChat-border);
+	border: 1px solid var(--construct-inlineChat-border);
 	border-top: none;
 	border-bottom-left-radius: 2px;
 	border-bottom-right-radius: 2px;
@@ -268,7 +268,7 @@
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat .previewCreate {
 	display: inherit;
 	padding: 6px;
-	border: 1px solid var(--vscode-inlineChat-border);
+	border: 1px solid var(--construct-inlineChat-border);
 	border-radius: 2px;
 	margin: 0 2px 6px 2px;
 }
@@ -283,15 +283,15 @@
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat-lines-deleted-range-inline {
 	text-decoration: line-through;
-	background-color: var(--vscode-diffEditor-removedTextBackground);
+	background-color: var(--construct-diffEditor-removedTextBackground);
 	opacity: 0.6;
 }
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat-lines-inserted-range {
-	background-color: var(--vscode-diffEditor-insertedTextBackground);
+	background-color: var(--construct-diffEditor-insertedTextBackground);
 }
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat-block-selection {
-	background-color: var(--vscode-inlineChat-regionHighlight);
+	background-color: var(--construct-inlineChat-regionHighlight);
 }
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat-slash-command {
@@ -306,14 +306,14 @@
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat-diff-widget .monaco-diff-editor .monaco-editor-background,
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat-diff-widget .monaco-diff-editor .monaco-editor .margin-view-overlays {
-	background-color: var(--vscode-inlineChat-regionHighlight);
+	background-color: var(--construct-inlineChat-regionHighlight);
 }
 
 /* create zone */
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat-newfile-widget {
 	padding: 3px 0 6px 0;
-	background-color: var(--vscode-inlineChat-regionHighlight);
+	background-color: var(--construct-inlineChat-regionHighlight);
 }
 
 .monaco-workbench .notebookOverlay .cell-chat-part .inline-chat-newfile-widget .title {

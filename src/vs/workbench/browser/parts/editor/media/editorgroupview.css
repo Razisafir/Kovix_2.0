@@ -20,7 +20,7 @@
 
 .monaco-workbench .part.editor > .content:not(.empty) .editor-group-container.empty.active:focus {
 	outline-offset: -2px;
-	outline: 1px solid var(--vscode-editorGroup-focusedEmptyBorder);
+	outline: 1px solid var(--construct-editorGroup-focusedEmptyBorder);
 }
 
 .monaco-workbench .part.editor > .content.empty .editor-group-container.empty.active:focus {
@@ -87,7 +87,7 @@
 	display: table-row;
 	opacity: .8;
 	cursor: default;
-	color: var(--vscode-editorWatermark-foreground);
+	color: var(--construct-editorWatermark-foreground);
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container > .editor-group-watermark > .shortcuts dt {

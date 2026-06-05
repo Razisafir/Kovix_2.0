@@ -17,10 +17,10 @@
 /** Copied until we unify these, for now its separate **/
 .notebook-chat-editor-overlay-widget {
 	padding: 0px;
-	color: var(--vscode-button-foreground);
-	background-color: var(--vscode-button-background);
+	color: var(--construct-button-foreground);
+	background-color: var(--construct-button-background);
 	border-radius: 5px;
-	border: 1px solid var(--vscode-contrastBorder);
+	border: 1px solid var(--construct-contrastBorder);
 	display: flex;
 	align-items: center;
 	z-index: 30;
@@ -51,13 +51,13 @@
 
 .notebook-chat-editor-overlay-widget.busy .chat-editor-overlay-progress .codicon,
 .notebook-chat-editor-overlay-widget .action-item > .action-label.codicon {
-	color: var(--vscode-button-foreground);
+	color: var(--construct-button-foreground);
 }
 
 .notebook-chat-editor-overlay-widget .action-item.disabled > .action-label.codicon::before,
 .notebook-chat-editor-overlay-widget .action-item.disabled > .action-label.codicon,
 .notebook-chat-editor-overlay-widget .action-item.disabled > .action-label,
 .notebook-chat-editor-overlay-widget .action-item.disabled > .action-label:hover {
-	color: var(--vscode-button-foreground);
+	color: var(--construct-button-foreground);
 	opacity: 0.7;
 }

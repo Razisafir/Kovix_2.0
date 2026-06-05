@@ -33,6 +33,6 @@
 }*/
 .monaco-editor .inputarea.ime-input {
 	z-index: 10;
-	caret-color: var(--vscode-editorCursor-foreground);
-	color: var(--vscode-editor-foreground);
+	caret-color: var(--construct-editorCursor-foreground);
+	color: var(--construct-editor-foreground);
 }

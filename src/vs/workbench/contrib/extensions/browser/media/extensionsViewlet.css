@@ -70,13 +70,13 @@
 .extensions-viewlet .notification-container .message-text-action {
 	cursor: pointer;
 	margin-left: 5px;
-	color: var(--vscode-textLink-foreground);
+	color: var(--construct-textLink-foreground);
 	text-decoration: underline;
 }
 
 .extensions-viewlet .notification-container .message-text-action:hover,
 .extensions-viewlet .notification-container .message-text-action:active {
-	color: var(--vscode-textLink-activeForeground);
+	color: var(--construct-textLink-activeForeground);
 }
 
 .extensions-viewlet .notification-container .message-action {
@@ -87,8 +87,8 @@
 }
 
 .extensions-viewlet .notification-container .message-action:hover {
-	background-color: var(--vscode-toolbar-hoverBackground);
-	outline: 1px dashed var(--vscode-toolbar-hoverOutline);
+	background-color: var(--construct-toolbar-hoverBackground);
+	outline: 1px dashed var(--construct-toolbar-hoverOutline);
 }
 
 .extensions-viewlet > .extensions {
@@ -189,13 +189,13 @@
 }
 
 .extensions-viewlet .codicon-error::before {
-	color: var(--vscode-editorError-foreground);
+	color: var(--construct-editorError-foreground);
 }
 
 .extensions-viewlet .codicon-warning::before {
-	color: var(--vscode-editorWarning-foreground);
+	color: var(--construct-editorWarning-foreground);
 }
 
 .extensions-viewlet .codicon-info::before {
-	color: var(--vscode-editorInfo-foreground);
+	color: var(--construct-editorInfo-foreground);
 }

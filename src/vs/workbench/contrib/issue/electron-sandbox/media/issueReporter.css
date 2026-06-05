@@ -321,7 +321,7 @@ body.issue-reporter-body {
 
 .issue-reporter-body .showInfo,
 .issue-reporter-body .input-group a {
-	color: var(--vscode-textLink-foreground);
+	color: var(--construct-textLink-foreground);
 }
 
 .issue-reporter-body .section .input-group .validation-error {

@@ -19,7 +19,7 @@
 	width: 32px;
 	height: 32px;
 	border-radius: 50%;
-	outline: 1px solid var(--vscode-chat-requestBorder);
+	outline: 1px solid var(--construct-chat-requestBorder);
 }
 
 .chat-agent-hover .chat-agent-hover-icon .codicon {
@@ -35,7 +35,7 @@
 }
 
 .chat-agent-hover .chat-agent-hover-publisher .codicon.codicon-extensions-verified-publisher {
-	color: var(--vscode-extensionIcon-verifiedForeground);
+	color: var(--construct-extensionIcon-verifiedForeground);
 }
 
 .chat-agent-hover .extension-verified-publisher {
@@ -49,7 +49,7 @@
 }
 
 .chat-agent-hover .chat-agent-hover-warning .codicon {
-	color: var(--vscode-notificationsWarningIcon-foreground) !important;
+	color: var(--construct-notificationsWarningIcon-foreground) !important;
 	margin-right: 3px;
 }
 
@@ -69,7 +69,7 @@
 .chat-agent-hover-extension {
 	display: flex;
 	gap: 6px;
-	color: var(--vscode-descriptionForeground);
+	color: var(--construct-descriptionForeground);
 }
 
 .chat-agent-hover.noExtensionName .chat-agent-hover-separator,

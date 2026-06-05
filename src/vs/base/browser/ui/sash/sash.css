@@ -4,8 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 :root {
-	--vscode-sash-size: 4px;
-	--vscode-sash-hover-size: 4px;
+	--construct-sash-size: 4px;
+	--construct-sash-hover-size: 4px;
 }
 
 .monaco-sash {
@@ -50,7 +50,7 @@
 .monaco-sash.vertical {
 	cursor: ew-resize;
 	top: 0;
-	width: var(--vscode-sash-size);
+	width: var(--construct-sash-size);
 	height: 100%;
 }
 
@@ -58,13 +58,13 @@
 	cursor: ns-resize;
 	left: 0;
 	width: 100%;
-	height: var(--vscode-sash-size);
+	height: var(--construct-sash-size);
 }
 
 .monaco-sash:not(.disabled) > .orthogonal-drag-handle {
 	content: " ";
-	height: calc(var(--vscode-sash-size) * 2);
-	width: calc(var(--vscode-sash-size) * 2);
+	height: calc(var(--construct-sash-size) * 2);
+	width: calc(var(--construct-sash-size) * 2);
 	z-index: 100;
 	display: block;
 	cursor: all-scroll;
@@ -86,20 +86,20 @@
 }
 
 .monaco-sash.vertical > .orthogonal-drag-handle.start {
-	left: calc(var(--vscode-sash-size) * -0.5);
-	top: calc(var(--vscode-sash-size) * -1);
+	left: calc(var(--construct-sash-size) * -0.5);
+	top: calc(var(--construct-sash-size) * -1);
 }
 .monaco-sash.vertical > .orthogonal-drag-handle.end {
-	left: calc(var(--vscode-sash-size) * -0.5);
-	bottom: calc(var(--vscode-sash-size) * -1);
+	left: calc(var(--construct-sash-size) * -0.5);
+	bottom: calc(var(--construct-sash-size) * -1);
 }
 .monaco-sash.horizontal > .orthogonal-drag-handle.start {
-	top: calc(var(--vscode-sash-size) * -0.5);
-	left: calc(var(--vscode-sash-size) * -1);
+	top: calc(var(--construct-sash-size) * -0.5);
+	left: calc(var(--construct-sash-size) * -1);
 }
 .monaco-sash.horizontal > .orthogonal-drag-handle.end {
-	top: calc(var(--vscode-sash-size) * -0.5);
-	right: calc(var(--vscode-sash-size) * -1);
+	top: calc(var(--construct-sash-size) * -0.5);
+	right: calc(var(--construct-sash-size) * -1);
 }
 
 .monaco-sash:before {
@@ -117,17 +117,17 @@
 
 .monaco-sash.hover:before,
 .monaco-sash.active:before {
-	background: var(--vscode-sash-hoverBorder);
+	background: var(--construct-sash-hoverBorder);
 }
 
 .monaco-sash.vertical:before {
-	width: var(--vscode-sash-hover-size);
-	left: calc(50% - (var(--vscode-sash-hover-size) / 2));
+	width: var(--construct-sash-hover-size);
+	left: calc(50% - (var(--construct-sash-hover-size) / 2));
 }
 
 .monaco-sash.horizontal:before {
-	height: var(--vscode-sash-hover-size);
-	top: calc(50% - (var(--vscode-sash-hover-size) / 2));
+	height: var(--construct-sash-hover-size);
+	top: calc(50% - (var(--construct-sash-hover-size) / 2));
 }
 
 .pointer-events-disabled {

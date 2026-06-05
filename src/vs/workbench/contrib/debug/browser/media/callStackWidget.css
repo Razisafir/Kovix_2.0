@@ -9,9 +9,9 @@
 
 		align-items: center;
 		height: 24px;
-		background: var(--vscode-multiDiffEditor-headerBackground);
-		border-top: 1px solid var(--vscode-multiDiffEditor-border);
-		color: var(--vscode-foreground);
+		background: var(--construct-multiDiffEditor-headerBackground);
+		border-top: 1px solid var(--construct-multiDiffEditor-border);
+		color: var(--construct-foreground);
 		padding: 0 5px;
 	}
 
@@ -32,7 +32,7 @@
 
 	&.collapsed {
 		.header {
-			border-bottom: 1px solid var(--vscode-multiDiffEditor-border);
+			border-bottom: 1px solid var(--construct-multiDiffEditor-border);
 		}
 
 		.editorParent {
@@ -67,5 +67,5 @@
 .monaco-editor .call-stack-go-to-file-link {
 	text-decoration: underline;
 	cursor: pointer;
-	color: var(--vscode-editorLink-activeForeground) !important;
+	color: var(--construct-editorLink-activeForeground) !important;
 }

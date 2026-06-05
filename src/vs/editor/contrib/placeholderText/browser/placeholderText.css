@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-editor {
-	--vscode-editor-placeholder-foreground: var(--vscode-editorGhostText-foreground);
+	--construct-editor-placeholder-foreground: var(--construct-editorGhostText-foreground);
 
 	.editorPlaceholder {
 		top: 0px;
@@ -14,6 +14,6 @@
 		text-wrap: nowrap;
 		pointer-events: none;
 
-		color: var(--vscode-editor-placeholder-foreground);
+		color: var(--construct-editor-placeholder-foreground);
 	}
 }

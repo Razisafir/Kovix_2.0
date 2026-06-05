@@ -40,8 +40,8 @@
 		opacity: 0.7;
 	}
 	&:not(.syntax-highlighted) {
-		color: var(--vscode-editorGhostText-foreground);
+		color: var(--construct-editorGhostText-foreground);
 	}
-	background-color: var(--vscode-editorGhostText-background);
-	border: 1px solid var(--vscode-editorGhostText-border);
+	background-color: var(--construct-editorGhostText-background);
+	border: 1px solid var(--construct-editorGhostText-border);
 }
