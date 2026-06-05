@@ -1,4 +1,4 @@
-# CONSTRUCT IDE E2E Verification — v0.1.0-beta.9
+# CONSTRUCT IDE E2E Verification — v0.1.0-beta.10
 
 Date: 2026-06-06
 Machine: Linux (Debian 13, x86_64, headless CI sandbox with Xvfb)
@@ -6,17 +6,26 @@ Installer: construct_1.0.0-god-mode_amd64.deb (151.2 MB)
 
 ## Executive Summary
 
-CONSTRUCT IDE v0.1.0-beta.9 launches successfully on Linux. The window title is confirmed as **"Construct IDE"** via X11 window property inspection (`_NET_WM_NAME`). CLI reports **"Construct IDE 1.0.0-god-mode"**. All static rebranding checks pass with zero "Visual Studio Code" references in user-facing workbench code.
+CONSTRUCT IDE v0.1.0-beta.10 launches successfully on Linux. The window title is confirmed as **"Construct IDE"** via X11 window property inspection (`_NET_WM_NAME`). CLI reports **"Construct IDE 1.0.0-god-mode"**. All static rebranding checks pass with zero "Visual Studio Code" references in user-facing workbench code. All Phase 16 rebranding gaps are confirmed fixed in this build.
+
+## Beta.10 Specific Fixes Verified
+
+| Fix | Beta.9 | Beta.10 | Status |
+|-----|--------|---------|--------|
+| LICENSE.txt copyright | "Microsoft Corporation" | "Razisafir" | ✅ Fixed |
+| CLI --telemetry description | "VS code collects" | "CONSTRUCT IDE collects" | ✅ Fixed |
+| CLI tunnel description | "vscode.dev" | "construct.dev" | ✅ Fixed |
+| Version commit hash | `034baabc` | `c6ebb185` (fix commit) | ✅ Correct |
 
 ## CLI Smoke Test
 
 | Check | Expected | Actual | Pass/Fail |
 |-------|----------|--------|-----------|
-| `construct --version` | Version string | `1.0.0-god-mode` + commit hash + `x64` | ✅ |
+| `construct --version` | Version string | `1.0.0-god-mode` + `c6ebb185...` + `x64` | ✅ |
 | `construct --help` header | "Construct IDE" | "Construct IDE 1.0.0-god-mode" | ✅ |
 | `construct --help` usage | "construct [options]" | "construct [options][paths...]" | ✅ |
-| `construct --help` telemetry | "CONSTRUCT IDE collects" | **"VS code collects"** (gap found, fixed) | ⚠️ → ✅ |
-| `construct --help` tunnel | "construct.dev" | **"vscode.dev"** (gap found, fixed) | ⚠️ → ✅ |
+| `construct --help` telemetry | "CONSTRUCT IDE collects" | **"CONSTRUCT IDE collects"** | ✅ |
+| `construct --help` tunnel | "construct.dev" | **"construct.dev"** | ✅ |
 
 ## GUI Launch Test (Xvfb)
 
@@ -49,6 +58,12 @@ CONSTRUCT IDE v0.1.0-beta.9 launches successfully on Linux. The window title is 
 | serverApplicationName | "construct-server" | "construct-server" | ✅ |
 | licenseUrl | Razisafir repo | github.com/Razisafir/CONSTRUCT-VSCODE | ✅ |
 | extensionsGallery | Open VSX | Open VSX | ✅ |
+
+### LICENSE.txt
+
+| Check | Expected | Actual | Pass/Fail |
+|-------|----------|--------|-----------|
+| Copyright line | "Razisafir" | "Copyright (c) 2024 - present Razisafir" | ✅ |
 
 ### DEB Package
 
@@ -95,24 +110,24 @@ CONSTRUCT IDE v0.1.0-beta.9 launches successfully on Linux. The window title is 
 ### Issue 1: LICENSE.txt still references Microsoft Corporation
 - **Severity**: High (shown in About dialog)
 - **Fix**: Changed "Copyright (c) 2015 - present Microsoft Corporation" → "Copyright (c) 2024 - present Razisafir"
-- **Status**: ✅ Fixed
+- **Status**: ✅ Fixed and verified in beta.10 build
 
 ### Issue 2: CLI help says "VS code" instead of "CONSTRUCT IDE"
 - **Severity**: Medium (user-visible in `--help` output)
 - **Affected files**: argv.ts, zsh/_code, code.ts, CodeTabExpansion.psm1
 - **Fix**: "VS code" → "CONSTRUCT IDE" in telemetry description
-- **Status**: ✅ Fixed
+- **Status**: ✅ Fixed and verified in beta.10 build
 
 ### Issue 3: CLI help says "vscode.dev" instead of "construct.dev"
 - **Severity**: Medium (user-visible in `--help` output)
 - **Affected files**: argv.ts, CodeTabExpansion.psm1, args.rs, constants.rs
 - **Fix**: "vscode.dev" → "construct.dev"
-- **Status**: ✅ Fixed
+- **Status**: ✅ Fixed and verified in beta.10 build
 
 ### Issue 4: Localization contribution description says "VS code"
 - **Severity**: Low (only visible to extension developers)
 - **Fix**: "VS code" → "CONSTRUCT IDE"
-- **Status**: ✅ Fixed
+- **Status**: ✅ Fixed and verified in beta.10 build
 
 ## Not Yet Verified (Requires Physical Display)
 
@@ -146,6 +161,15 @@ Several extension `package.nls.json` files still contain "VS Code" references (g
 - Only visible in the Extensions panel descriptions
 - Low priority compared to core product branding
 - Should be addressed in a future cleanup pass
+
+## CI Build Information
+
+- **Run ID**: 27032354397
+- **Commit**: c6ebb185
+- **Build duration**: ~90 minutes
+- **Linux build**: ✅ success (12/12 steps)
+- **Windows build**: ✅ success (14/14 steps)
+- **Monaco checks**: ✅ success
 
 ## Test Environment Notes
 
