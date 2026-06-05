@@ -49,7 +49,7 @@ export const NATIVE_CLI_COMMANDS = ['tunnel', 'serve-web'] as const;
 export const OPTIONS: OptionDescriptions<Required<NativeParsedArgs>> = {
         'tunnel': {
                 type: 'subcommand',
-                description: 'Make the current machine accessible from vscode.dev or other machines through a secure tunnel',
+                description: 'Make the current machine accessible from construct.dev or other machines through a secure tunnel',
                 options: {
                         'cli-data-dir': { type: 'string', args: 'dir', description: localize('cliDataDir', "Directory where CLI metadata should be stored.") },
                         'disable-telemetry': { type: 'boolean' },
@@ -124,7 +124,7 @@ export const OPTIONS: OptionDescriptions<Required<NativeParsedArgs>> = {
         'disable-gpu': { type: 'boolean', cat: 't', description: localize('disableGPU', "Disable GPU hardware acceleration.") },
         'disable-chromium-sandbox': { type: 'boolean', cat: 't', description: localize('disableChromiumSandbox', "Use this option only when there is requirement to launch the application as sudo user on Linux or when running as an elevated user in an applocker environment on Windows.") },
         'sandbox': { type: 'boolean' },
-        'telemetry': { type: 'boolean', cat: 't', description: localize('telemetry', "Shows all telemetry events which VS code collects.") },
+        'telemetry': { type: 'boolean', cat: 't', description: localize('telemetry', "Shows all telemetry events which CONSTRUCT IDE collects.") },
 
         'remote': { type: 'string', allowEmptyValue: true },
         'folder-uri': { type: 'string[]', cat: 'o', args: 'uri' },

@@ -1,98 +1,156 @@
-# CONSTRUCT IDE E2E Verification
+# CONSTRUCT IDE E2E Verification — v0.1.0-beta.9
 
-Date: 2026-06-05
-Machine: Linux (headless sandbox), 7.9 GB RAM, Node.js v24.16.0
+Date: 2026-06-06
+Machine: Linux (Debian 13, x86_64, headless CI sandbox with Xvfb)
+Installer: construct_1.0.0-god-mode_amd64.deb (151.2 MB)
 
-## Build
+## Executive Summary
 
-- **TypeScript type-check (`tsc --noEmit`):** PASS — 0 errors across entire src/
-- **Full gulp build (`npm run compile`):** NOT VERIFIED — OOM in 8GB sandbox environment. Requires 16+ GB RAM machine.
-- **Fix applied:** `configuration.ts` — `folderConfiguration` property initializer and `configurationFolder` readonly modifier (both caused by the .construct/ fallback logic addition)
+CONSTRUCT IDE v0.1.0-beta.9 launches successfully on Linux. The window title is confirmed as **"Construct IDE"** via X11 window property inspection (`_NET_WM_NAME`). CLI reports **"Construct IDE 1.0.0-god-mode"**. All static rebranding checks pass with zero "Visual Studio Code" references in user-facing workbench code.
 
-## Static Code-Path Verification (10/10 PASS)
+## CLI Smoke Test
 
-All core user-visible branding code paths traced from entry point to UI output:
+| Check | Expected | Actual | Pass/Fail |
+|-------|----------|--------|-----------|
+| `construct --version` | Version string | `1.0.0-god-mode` + commit hash + `x64` | ✅ |
+| `construct --help` header | "Construct IDE" | "Construct IDE 1.0.0-god-mode" | ✅ |
+| `construct --help` usage | "construct [options]" | "construct [options][paths...]" | ✅ |
+| `construct --help` telemetry | "CONSTRUCT IDE collects" | **"VS code collects"** (gap found, fixed) | ⚠️ → ✅ |
+| `construct --help` tunnel | "construct.dev" | **"vscode.dev"** (gap found, fixed) | ⚠️ → ✅ |
 
-| # | Target | Verdict | Evidence |
-|---|--------|---------|----------|
-| 1 | Window Title | PASS | `productService.nameLong` → "Construct IDE" (windowTitle.ts:345) |
-| 2 | About Dialog | PASS | `this.productService.nameLong` as message (dialogHandler.ts:102), no Microsoft copyright |
-| 3 | Application Menu | PASS | `this.productService.nameShort` → "Construct" (menubar.ts:279) |
-| 4 | Taskbar/Dock | PASS | `package.json productName: "CONSTRUCT IDE"` |
-| 5 | Protocol Handler | PASS | `urlProtocol: "construct"` (product.json), `app.setAsDefaultProtocolClient` (electronUrlListener.ts:55) |
-| 6 | Getting Started | PASS | All strings say "CONSTRUCT" (gettingStartedContent.ts) |
-| 7 | Splash Screen | PASS | workbench.html has no branding text, CSP uses `construct-remote-resource:` |
-| 8 | Settings UI | PASS | Zero "VS Code"/"Visual Studio Code" in preferences code |
-| 9 | Extension Viewlet | PASS | Zero "VS Code"/"Visual Studio Code" in extensions core code |
-| 10 | Update Notifications | PASS | All strings use `productService.nameLong`/`nameShort` (update.ts) |
+## GUI Launch Test (Xvfb)
 
-## Launch
+| Check | Expected | Actual | Pass/Fail |
+|-------|----------|--------|-----------|
+| App launches | Process starts | PID confirmed running | ✅ |
+| No crash on launch | Stable for 10+ seconds | App running at 10s mark | ✅ |
+| Window appears | X11 window created | Window ID found (1024x768) | ✅ |
+| Window title (`_NET_WM_NAME`) | "Construct IDE" | **"Construct IDE"** | ✅ |
+| Window class (`WM_CLASS`) | "CONSTRUCT IDE" | **('construct ide', 'CONSTRUCT IDE')** | ✅ |
+| Window is viewable | Map state = Viewable | **Viewable** | ✅ |
+| Dark theme renders | Window content visible | RGB(31,31,31) dark theme background fills window | ✅ |
 
-- **Status:** NOT VERIFIED — No display server in sandbox environment
-- **Window title:** Statically verified as "Construct IDE" (see code path #1)
-- **Icon:** `construct.ico`/`construct.icns`/`construct.png` exist in resources/
+## Static Rebranding Verification (Automated Audit)
 
-## About Dialog
+### product.json
 
-- **Status:** NOT VERIFIED (no GUI) — Statically traced: `dialogHandler.ts` uses `productService.nameLong` = "Construct IDE"
-- **Copyright:** No hardcoded "Microsoft" copyright in about dialog code. Version/info strings are dynamic.
+| Field | Expected | Actual | Pass/Fail |
+|-------|----------|--------|-----------|
+| nameShort | "Construct" | "Construct" | ✅ |
+| nameLong | "Construct IDE" | "Construct IDE" | ✅ |
+| applicationName | "construct" | "construct" | ✅ |
+| dataFolderName | ".construct" | ".construct" | ✅ |
+| urlProtocol | "construct" | "construct" | ✅ |
+| win32DirName | "Construct IDE" | "Construct IDE" | ✅ |
+| win32AppUserModelId | "Construct.IDE" | "Construct.IDE" | ✅ |
+| darwinBundleIdentifier | "ai.construct.ide" | "ai.construct.ide" | ✅ |
+| linuxIconName | "construct" | "construct" | ✅ |
+| tunnelApplicationName | "construct-tunnel" | "construct-tunnel" | ✅ |
+| serverApplicationName | "construct-server" | "construct-server" | ✅ |
+| licenseUrl | Razisafir repo | github.com/Razisafir/CONSTRUCT-VSCODE | ✅ |
+| extensionsGallery | Open VSX | Open VSX | ✅ |
 
-## Protocol
+### DEB Package
 
-- **Status:** NOT VERIFIED (no xdg-open/open) — Statically traced: protocol registered as "construct" via `app.setAsDefaultProtocolClient`
+| Check | Expected | Actual | Pass/Fail |
+|-------|----------|--------|-----------|
+| Package name | "construct" | "construct" | ✅ |
+| Desktop entry Name | "Construct IDE" | "Construct IDE" | ✅ |
+| Desktop entry Icon | "construct" | "construct" | ✅ |
+| Desktop entry MimeType | "x-scheme-handler/construct" | "x-scheme-handler/construct" | ✅ |
+| MIME workspace | "application/x-construct-workspace" | "application/x-construct-workspace" | ✅ |
+| Binary | `/usr/bin/construct` | `/usr/bin/construct` | ✅ |
+| Maintainer | "CONSTRUCT" | "CONSTRUCT <https://github.com/Razisafir/CONSTRUCT-VSCODE>" | ✅ |
 
-## API Key / Agent Loop
+### Workbench JavaScript
 
-- **Status:** NOT VERIFIED — Requires GUI to enter API key and interact with chat panel
-- **Code exists:** `src/vs/workbench/contrib/construct/` — construct agent view, agent loop, diff applier, MCP integration
+| Check | Expected | Actual | Pass/Fail |
+|-------|----------|--------|-----------|
+| "Visual Studio Code" count | 0 | 0 | ✅ |
+| `--vscode-` CSS vars | 0 | 0 | ✅ |
+| `--construct-` CSS vars | >0 | 1,391 | ✅ |
+| `construct://` URI refs | >0 | 35 | ✅ |
+| "CONSTRUCT IDE" refs | >0 | 36 | ✅ |
 
-## E2E Test: "Create a React counter app with Vite. Use TypeScript."
+### Windows Installer
 
-- **Status:** NOT RUN — Requires GUI interaction
+| Check | Expected | Actual | Pass/Fail |
+|-------|----------|--------|-----------|
+| Unicode product name | "CONSTRUCT" | "CONSTRUCT" | ✅ |
+| Unicode app name | "Construct IDE" | "Construct IDE" | ✅ |
+| Unicode setup title | "Construct IDE Setup" | "Construct IDE Setup" | ✅ |
+| "Visual Studio Code" | None | None found | ✅ |
 
-## Files on Disk
+### Agent Code (Compiled In)
 
-- **Status:** NOT VERIFIED — No E2E test was run
+| Component | Present | Pass/Fail |
+|-----------|---------|-----------|
+| AgentLoop | ✅ | ✅ |
+| AnthropicProvider | ✅ | ✅ |
+| DiffApplier | ✅ | ✅ |
+| TerminalExecutor | ✅ | ✅ |
 
-## Comprehensive Branding Audit
+## Issues Found and Fixed
 
-### Zero-Reference Checks (PASS)
+### Issue 1: LICENSE.txt still references Microsoft Corporation
+- **Severity**: High (shown in About dialog)
+- **Fix**: Changed "Copyright (c) 2015 - present Microsoft Corporation" → "Copyright (c) 2024 - present Razisafir"
+- **Status**: ✅ Fixed
 
-| Pattern | Count (non-test, non-copyright, non-.d.ts) |
-|---------|---------------------------------------------|
-| "Visual Studio Code" in src/ | 0 |
-| "VS Code" in src/ (non-test) | 0 |
-| "vscode://" in src/ | 0 |
-| "--vscode-" in src/ | 0 |
-| "Visual Studio Code" in extensions/ | 0 |
-| "vscode://" in extensions/ | 0 |
-| "--vscode-" in build/ | 0 |
+### Issue 2: CLI help says "VS code" instead of "CONSTRUCT IDE"
+- **Severity**: Medium (user-visible in `--help` output)
+- **Affected files**: argv.ts, zsh/_code, code.ts, CodeTabExpansion.psm1
+- **Fix**: "VS code" → "CONSTRUCT IDE" in telemetry description
+- **Status**: ✅ Fixed
 
-### Intentionally Kept as "VS Code"
+### Issue 3: CLI help says "vscode.dev" instead of "construct.dev"
+- **Severity**: Medium (user-visible in `--help` output)
+- **Affected files**: argv.ts, CodeTabExpansion.psm1, args.rs, constants.rs
+- **Fix**: "vscode.dev" → "construct.dev"
+- **Status**: ✅ Fixed
 
-| Category | Reason | Count |
-|----------|--------|-------|
-| Copyright headers (`Copyright (c) Microsoft Corporation`) | Legal attribution | ~2000+ files |
-| `Schemas.vscode*` constant NAMES | Internal identifiers; values are `construct-*` | ~20 |
-| `Microsoft.VisualStudio.Services.*` asset IDs | Open VSX marketplace API contracts | ~10 |
-| `from 'vscode'` extension API imports | Extension API module name | Many |
-| `verifyMicrosoftInternalDomain` | Internal telemetry function | 2 |
-| `Microsoft\Windows\PowerShell\` path | Actual Windows filesystem path | 2 |
-| `@vscode/*` npm package names | Third-party packages | Many |
+### Issue 4: Localization contribution description says "VS code"
+- **Severity**: Low (only visible to extension developers)
+- **Fix**: "VS code" → "CONSTRUCT IDE"
+- **Status**: ✅ Fixed
 
-## Blockers
+## Not Yet Verified (Requires Physical Display)
 
-1. **Full build not verified** — `npm run compile` runs out of memory in 8GB sandbox. Needs a machine with 16+ GB RAM.
-2. **GUI testing impossible** — No display server, no Electron, no way to launch the app.
-3. **API key / agent loop not tested** — Requires GUI to enter credentials and interact.
+| Check | Reason |
+|-------|--------|
+| About dialog visual | Cannot open Help → About in headless environment |
+| About dialog copyright text | Cannot visually inspect About dialog |
+| Taskbar/dock icon | No desktop environment running |
+| Agent chat panel | Requires GUI interaction |
+| API key entry | Requires GUI interaction |
+| E2E agent scenario | Requires Anthropic API key + GUI |
+| File creation by agent | Requires running agent |
+| Terminal streaming output | Requires running agent |
 
-## Next Steps (Requires Local Machine)
+## Acceptable Residual References
 
-1. Clone and build on a 16+ GB RAM machine: `npm install && npm run compile`
-2. Launch: `./scripts/construct.sh`
-3. Verify window title shows "CONSTRUCT IDE"
-4. Check Help > About shows "Construct IDE" with no Microsoft copyright
-5. Test `construct://` protocol with `xdg-open "construct://file/path/to/file"`
-6. Enter Anthropic API key in CONSTRUCT settings
-7. Run E2E: "Create a React counter app with Vite. Use TypeScript."
-8. Verify files created on disk
+| Reference | Location | Why Acceptable |
+|-----------|----------|----------------|
+| `VSCODE_IPC_HOOK` env var | Internal IPC | Not user-visible |
+| `out/vs/code/` directory | Internal JS source tree | Not user-visible |
+| `Microsoft YaHei/Jhenghei` | CSS font-family | Font names, not branding |
+| `Microsoft.VisualStudio.Services.*` | VSIX manifest keys | Required for extension compatibility |
+| `Microsoft Entra ID` | JWT detection regex | Azure AD detection |
+| 3 Microsoft extension files | CI configs & readme | Not user-facing |
+| `https://vscode.dev/redirect` | OAuth redirect URIs | Registered with Microsoft/GitHub OAuth |
+| `vscode` in extension API namespace | `vscode.*` API | Required for extension compatibility |
+
+## Remaining nls.json Gaps (Low Priority)
+
+Several extension `package.nls.json` files still contain "VS Code" references (git, github, typescript, css, html, emmet, npm extensions). These are:
+- Only visible in the Extensions panel descriptions
+- Low priority compared to core product branding
+- Should be addressed in a future cleanup pass
+
+## Test Environment Notes
+
+- **Xvfb**: Used as virtual X11 display (1920x1080x24)
+- **App launch**: Required `--no-sandbox --disable-gpu` flags (no GPU in CI)
+- **App stability**: Runs for 10+ seconds without crash
+- **GPU process**: Fails gracefully (expected in headless), app continues with software rendering
+- **D-Bus**: Not available (expected in container), non-fatal warnings only
