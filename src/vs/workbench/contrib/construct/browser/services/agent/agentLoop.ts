@@ -8,6 +8,7 @@ import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { IWorkspaceContextService } from '../../../../../../platform/workspace/common/workspace.js';
 import { IAgentLoop, AgentLoopEvent, IPlanResult, IPlanStep } from '../../../../../../platform/construct/common/agent/agentLoop.js';
+import { LoadingState, FileChangeEntry } from '../../../../../../platform/construct/common/agent/loadingState.js';
 import { IAnthropicProvider, IAnthropicMessage, IAnthropicContentBlock, IAnthropicTool } from '../../../../../../platform/construct/common/llm/anthropicProvider.js';
 import { IMCPProcess } from '../../../../../../platform/construct/common/mcp/mcpProcess';
 import { ITerminalExecutor } from '../../../../../../platform/construct/common/terminal/terminalExecutor.js';
@@ -123,6 +124,12 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
         readonly onDidComplete = this._onDidComplete.event;
         private readonly _onError = this._register(new Emitter<{ text: string; recoverable: boolean }>());
         readonly onError = this._onError.event;
+
+        private readonly _onLoadingStateChange = this._register(new Emitter<LoadingState>());
+        readonly onLoadingStateChange = this._onLoadingStateChange.event;
+
+        private readonly _onFileChange = this._register(new Emitter<FileChangeEntry>());
+        readonly onFileChange = this._onFileChange.event;
 
         /** Active snapshot ID for the current task (for undo support). */
         private _activeSnapshotId: string | null = null;

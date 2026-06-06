@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { localize } from '../../../../nls';
+import { localize, localize2 } from '../../../../nls';
 import { Registry } from '../../../../platform/registry/common/platform.js';
 import { IConfigurationRegistry, Extensions as ConfigurationExtensions, IConfigurationNode } from '../../../../platform/configuration/common/configurationRegistry.js';
 import { Action2, registerAction2 } from '../../../../platform/actions/common/actions.js';
@@ -140,7 +140,7 @@ registerAction2(class ManageApiKeysAction extends Action2 {
         constructor() {
                 super({
                         id: 'construct.manageApiKeys',
-                        title: localize('manageApiKeys', "Manage API Keys"),
+                        title: localize2('manageApiKeys', "Manage API Keys"),
                         f1: true,
                         category: localize('constructCategoryApiKeys', "Construct"),
                 });
@@ -176,7 +176,7 @@ registerAction2(class ManageApiKeysAction extends Action2 {
 
                 // For providers that don't need a key, just confirm and set active
                 if (!meta.requiresKey) {
-                        const maskedKey = await keyManager.getMaskedKey(selectedProvider);
+                        const _maskedKey = await keyManager.getMaskedKey(selectedProvider);
                         const actionPick = await quickInput.pick(
                                 [
                                         { label: '$(plug) Set as Active Provider', action: 'activate' as const },
@@ -309,7 +309,7 @@ registerAction2(class TestProviderConnectionAction extends Action2 {
         constructor() {
                 super({
                         id: 'construct.testProviderConnection',
-                        title: localize('testProviderConnection', "Test Provider Connection"),
+                        title: localize2('testProviderConnection', "Test Provider Connection"),
                         f1: true,
                         category: localize('constructCategoryTestConn', "Construct"),
                 });
@@ -362,7 +362,7 @@ registerAction2(class SwitchProviderAction extends Action2 {
         constructor() {
                 super({
                         id: 'construct.switchProvider',
-                        title: localize('switchProvider', "Switch Provider"),
+                        title: localize2('switchProvider', "Switch Provider"),
                         f1: true,
                         category: localize('constructCategorySwitch', "Construct"),
                 });
