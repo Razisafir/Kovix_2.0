@@ -70,6 +70,8 @@ import { IFileWatcherService } from '../../../../platform/construct/common/watch
 import { FileWatcherService } from './services/watcher/fileWatcherService.js';
 import { ISnapshotManager } from '../../../../platform/construct/common/snapshot/snapshotManager.js';
 import { SnapshotManagerService } from './services/snapshot/snapshotManager.js';
+import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
+import { ConstructOnboardingWizard } from './constructOnboarding.js';
 import './constructMemoryConfig';
 import './constructApiConfig';
 import './constructApiSettings';
@@ -633,5 +635,23 @@ registerAction2(class RejectAllDiffsAction extends Action2 {
                 } else {
                         notificationService.warn('No agent panel with pending diffs found.');
                 }
+        }
+});
+
+// --- Onboarding Wizard (First-Launch) ------------------------------------------
+
+registerAction2(class OpenOnboardingWizardAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.openOnboarding',
+                        title: localize2('openOnboarding', "Open Setup Wizard"),
+                        f1: true,
+                        category: localize2('constructCategoryOnboarding', "Construct"),
+                });
+        }
+        run(accessor: ServicesAccessor): void {
+                const instantiationService = accessor.get(IInstantiationService);
+                const wizard = instantiationService.createInstance(ConstructOnboardingWizard);
+                wizard.show();
         }
 });
