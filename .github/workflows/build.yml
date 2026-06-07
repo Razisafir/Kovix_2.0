@@ -98,6 +98,7 @@ jobs:
         timeout-minutes: 120
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Copy Inno Updater
         run: npx gulp vscode-win32-x64-inno-updater
@@ -173,6 +174,7 @@ jobs:
         timeout-minutes: 120
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Build Linux DEB
         run: |
@@ -250,6 +252,7 @@ jobs:
         timeout-minutes: 120
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Build macOS ZIP archive
         run: npx gulp vscode-darwin-x64-build-zip
