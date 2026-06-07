@@ -952,7 +952,7 @@ export class ConstructOnboardingWizard extends Disposable {
                                                 selectModel(data.models[0].id, detail.querySelector('.model-item'));
                                         }
                                 } else {
-                                        detail.innerHTML = '<div class="install-instructions">Ollama is running but no models are installed. Run <code>ollama pull llama3.1</code> to download a model.</div>';
+                                        detail.innerHTML = '<div class="install-instructions">Ollama is running but no models are installed. Run <code>ollama pull llama3.1</code> to download a model.<br>Also pull the embedding model: <code>ollama pull nomic-embed-text</code></div>';
                                 }
                         } else if (data.ollamaStatus === 'noModels') {
                                 icon.className = 'card-icon pending';
@@ -962,6 +962,8 @@ export class ConstructOnboardingWizard extends Disposable {
                                         <div class="install-instructions">
                                                 Download a model to get started:<br>
                                                 <code>ollama pull llama3.1</code><br><br>
+                                                Also pull the embedding model for codebase memory:<br>
+                                                <code>ollama pull nomic-embed-text</code><br><br>
                                                 Or try a smaller model:<br>
                                                 <code>ollama pull phi3:mini</code>
                                         </div>\`;
@@ -976,6 +978,7 @@ export class ConstructOnboardingWizard extends Disposable {
                                                 1. Download from <a href="https://ollama.ai">https://ollama.ai</a><br>
                                                 2. Install and start Ollama<br>
                                                 3. Run <code>ollama pull llama3.1</code> to download a model<br>
+                                                4. Run <code>ollama pull nomic-embed-text</code> for codebase memory<br>
                                                 4. Click "Retry" below<br><br>
                                                 <button class="btn btn-secondary" onclick="retryOllama()" style="margin-top:8px;">Retry</button>
                                         </div>\`;
