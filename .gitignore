@@ -1,8 +1,28 @@
 construct-user-data/
 node_modules/
 out/
+out-build/
 .build/
 *.log
-out-build/
-# SEC-5: Never commit the .construct directory (contains settings, audit logs, etc.)
+.DS_Store
+Thumbs.db
+
+# SEC-5: Never commit the .construct directory (contains settings, audit logs, API keys)
 .construct/
+
+# Packaged extensions
+*.vsix
+
+# Environment and secrets
+*.env
+.env*
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+*.secret
+
+# Build artifacts (not repo state)
+SECURITY_AUDIT.md
+BUILD_CHECKSUMS.txt
