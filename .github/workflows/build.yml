@@ -93,10 +93,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Rebuild native modules for Electron
-        run: npx electron-rebuild -f -w better-sqlite3,node-pty,native-keymap,tree-sitter
-        timeout-minutes: 15
-
       - name: Build Windows package
         run: npx gulp vscode-win32-x64
         timeout-minutes: 120
@@ -171,10 +167,6 @@ jobs:
         timeout-minutes: 30
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Rebuild native modules for Electron
-        run: npx electron-rebuild -f -w better-sqlite3,node-pty,native-keymap,tree-sitter
-        timeout-minutes: 15
 
       - name: Build Linux package
         run: npx gulp vscode-linux-x64
@@ -252,10 +244,6 @@ jobs:
         timeout-minutes: 30
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Rebuild native modules for Electron
-        run: npx electron-rebuild -f -w better-sqlite3,node-pty,native-keymap,tree-sitter
-        timeout-minutes: 15
 
       - name: Build macOS package
         run: npx gulp vscode-darwin-x64
