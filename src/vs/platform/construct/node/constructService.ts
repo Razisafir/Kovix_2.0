@@ -1,3 +1,5 @@
+// Copyright (c) 2025 Razisafir. All rights reserved.
+// CONSTRUCT IDE proprietary code. See CONSTRUCT_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -8,6 +10,10 @@ import { join } from '../../../base/common/path.js';
 import { IConstructService } from '../common/construct.js';
 import { IMCPProcessNodeService } from '../common/mcp/mcpProcessNode.js';
 import { MCPProcessNodeService } from './mcpProcessNode.js';
+import { IConstructVectorStore } from '../common/memory/vectorStore.js';
+import { ConstructVectorStoreService } from './constructVectorStore.js';
+import { IConstructChatHistory } from '../common/memory/vectorStore.js';
+import { ConstructChatHistoryService } from './constructChatHistory.js';
 import { registerSingleton, InstantiationType } from '../../instantiation/common/extensions';
 
 class ConstructService implements IConstructService {
@@ -39,3 +45,9 @@ registerSingleton(IConstructService, ConstructService, InstantiationType.Eager);
 // via IPC when running in desktop mode. In browser-only mode (vscode.dev),
 // it falls back to IFileService.
 registerSingleton(IMCPProcessNodeService, MCPProcessNodeService, InstantiationType.Delayed);
+
+// --- Phase 3: Memory & Context Services (Node layer) ---
+// Qdrant-backed vector store for workspace file chunk embeddings
+registerSingleton(IConstructVectorStore, ConstructVectorStoreService, InstantiationType.Delayed);
+// SQLite-backed chat history for persistent conversation storage
+registerSingleton(IConstructChatHistory, ConstructChatHistoryService, InstantiationType.Delayed);

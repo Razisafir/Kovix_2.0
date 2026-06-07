@@ -1,3 +1,5 @@
+// Copyright (c) 2025 Razisafir. All rights reserved.
+// CONSTRUCT IDE proprietary code. See CONSTRUCT_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -400,7 +402,14 @@ export class ConstructBrowserView extends ViewPane {
         // Webview postMessage Handlers
         // =======================================================================
 
+        // SEC-1: All webview communication goes through postMessage (contextBridge pattern).
+        // Never expose Node.js objects across the IPC bridge. Messages are validated by type.
         handleMessage(message: { type: string; data?: any }): void {
+                // SEC-1: Validate message structure — reject unexpected shapes
+                if (!message || typeof message.type !== 'string') {
+                        this.logService.warn('[BrowserView] Rejected malformed webview message');
+                        return;
+                }
                 switch (message.type) {
                         case 'browser:createSession':
                                 this.browserService.createSession(message.data?.url, message.data?.viewport);

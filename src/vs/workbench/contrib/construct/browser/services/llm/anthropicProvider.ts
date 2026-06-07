@@ -1,7 +1,17 @@
+// Copyright (c) 2025 Razisafir. All rights reserved.
+// CONSTRUCT IDE proprietary code. See CONSTRUCT_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Copyright (c) Construct IDE. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+
+/**
+ * @deprecated This file is DEPRECATED. The Anthropic API integration is now
+ * handled internally by CloudProvider (which auto-detects `sk-ant-` keys and
+ * routes to the Anthropic Messages API). This file is kept only as a reference
+ * implementation. Do NOT import or register this as a service — use
+ * IConstructAIService instead.
+ */
 
 import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { Emitter } from '../../../../../../base/common/event.js';

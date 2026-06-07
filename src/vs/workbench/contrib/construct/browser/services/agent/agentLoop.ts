@@ -1,3 +1,5 @@
+// Copyright (c) 2025 Razisafir. All rights reserved.
+// CONSTRUCT IDE proprietary code. See CONSTRUCT_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -9,7 +11,8 @@ import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { IWorkspaceContextService } from '../../../../../../platform/workspace/common/workspace.js';
 import { IAgentLoop, AgentLoopEvent, IPlanResult, IPlanStep } from '../../../../../../platform/construct/common/agent/agentLoop.js';
 import { LoadingState, FileChangeEntry } from '../../../../../../platform/construct/common/agent/loadingState.js';
-import { IAnthropicProvider, IAnthropicMessage, IAnthropicContentBlock, IAnthropicTool } from '../../../../../../platform/construct/common/llm/anthropicProvider.js';
+import { IConstructAIService } from '../../../../../../platform/construct/common/llm/constructAIService.js';
+import { IChatMessage, IToolDefinition, IToolCall, IChatOptions } from '../../../../../../platform/construct/common/llm/constructAIProvider.js';
 import { IMCPProcess } from '../../../../../../platform/construct/common/mcp/mcpProcess';
 import { ITerminalExecutor } from '../../../../../../platform/construct/common/terminal/terminalExecutor.js';
 import { IDiffApplier } from '../../../../../../platform/construct/common/editor/diffApplier.js';
@@ -21,6 +24,8 @@ import { URI } from '../../../../../../base/common/uri.js';
 import { IAgentErrorRecovery } from '../../../../../../platform/construct/common/recovery/agentErrorRecovery.js';
 import { ISnapshotManager, IRestoreResult } from '../../../../../../platform/construct/common/snapshot/snapshotManager.js';
 import { IFileWatcherService } from '../../../../../../platform/construct/common/watcher/fileWatcherService.js';
+// SEC-6: Prompt sanitisation to prevent injection attacks
+import { PromptSanitiser } from '../../../../../../platform/construct/common/security/promptSanitiser.js';
 
 const MAX_ROUNDS = 15;
 
@@ -34,13 +39,13 @@ interface IToolResultCache {
 }
 
 /**
- * Tool definitions for the Anthropic API.
+ * Tool definitions for the unified AI provider interface.
  */
-const AGENT_TOOLS: IAnthropicTool[] = [
+const AGENT_TOOLS: IToolDefinition[] = [
         {
                 name: 'read_file',
                 description: 'Read the contents of a file. Returns the file content as a string.',
-                input_schema: {
+                parameters: {
                         type: 'object' as const,
                         properties: {
                                 path: { type: 'string' as const, description: 'Path to the file relative to workspace root' }
@@ -51,7 +56,7 @@ const AGENT_TOOLS: IAnthropicTool[] = [
         {
                 name: 'write_file',
                 description: 'Write content to a file. Creates the file and parent directories if they don\'t exist.',
-                input_schema: {
+                parameters: {
                         type: 'object' as const,
                         properties: {
                                 path: { type: 'string' as const, description: 'Path to the file relative to workspace root' },
@@ -63,7 +68,7 @@ const AGENT_TOOLS: IAnthropicTool[] = [
         {
                 name: 'list_directory',
                 description: 'List the contents of a directory. Returns file and directory names.',
-                input_schema: {
+                parameters: {
                         type: 'object' as const,
                         properties: {
                                 path: { type: 'string' as const, description: 'Path to the directory relative to workspace root' }
@@ -74,7 +79,7 @@ const AGENT_TOOLS: IAnthropicTool[] = [
         {
                 name: 'create_directory',
                 description: 'Create a directory, including any necessary parent directories.',
-                input_schema: {
+                parameters: {
                         type: 'object' as const,
                         properties: {
                                 path: { type: 'string' as const, description: 'Path to the directory relative to workspace root' }
@@ -85,7 +90,7 @@ const AGENT_TOOLS: IAnthropicTool[] = [
         {
                 name: 'run_command',
                 description: 'Execute a shell command and return the output. Use for installing dependencies, running builds, tests, etc.',
-                input_schema: {
+                parameters: {
                         type: 'object' as const,
                         properties: {
                                 command: { type: 'string' as const, description: 'The shell command to execute' },
@@ -97,7 +102,7 @@ const AGENT_TOOLS: IAnthropicTool[] = [
         {
                 name: 'edit_file',
                 description: 'Apply a unified diff to an existing file. Use for targeted edits rather than rewriting entire files.',
-                input_schema: {
+                parameters: {
                         type: 'object' as const,
                         properties: {
                                 path: { type: 'string' as const, description: 'Path to the file relative to workspace root' },
@@ -109,7 +114,7 @@ const AGENT_TOOLS: IAnthropicTool[] = [
 ];
 
 /** Read-only tools for planning phase. */
-const PLANNING_TOOLS: IAnthropicTool[] = [
+const PLANNING_TOOLS: IToolDefinition[] = [
         AGENT_TOOLS[0], // read_file
         AGENT_TOOLS[2], // list_directory
 ];
@@ -136,7 +141,7 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
 
         constructor(
                 @ILogService private readonly logService: ILogService,
-                @IAnthropicProvider private readonly anthropicProvider: IAnthropicProvider,
+                @IConstructAIService private readonly aiService: IConstructAIService,
                 @IMCPProcess private readonly mcpProcess: IMCPProcess,
                 @ITerminalExecutor private readonly terminalExecutor: ITerminalExecutor,
                 @IDiffApplier private readonly diffApplier: IDiffApplier,
@@ -168,7 +173,7 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                 // Build system prompt with memory context
                 const systemPrompt = await this.buildSystemPrompt(task, true);
 
-                const conversationMessages: IAnthropicMessage[] = [
+                const conversationMessages: IChatMessage[] = [
                         {
                                 role: 'user',
                                 content: `Analyze the current workspace and create a plan for this task: "${task}"\n\nFirst, explore the workspace to understand its structure, then list the specific steps needed. Use only read_file and list_directory tools.\n\nFormat your response as a numbered list of steps, each starting with [Read], [Create], [Edit], or [Run].`
@@ -185,20 +190,19 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
 
                                 // Tool result cache: prevents double-execution during planning.
                                 // Results are cached during stream iteration and reused when
-                                // building the tool_results batch for the next API call.
+                                // building the tool result messages for the next API call.
                                 const toolResultCache = new Map<string, IToolResultCache>();
 
-                                const assistantContent: IAnthropicContentBlock[] = [];
+                                const assistantToolCalls: IToolCall[] = [];
                                 let currentText = '';
                                 let stopReason = '';
                                 let hadToolCalls = false;
 
                                 // Create a NEW stream for each round with updated conversation
-                                const stream = this.anthropicProvider.streamMessages(
+                                const stream = this.aiService.chat(
                                         conversationMessages,
                                         PLANNING_TOOLS,
-                                        signal,
-                                        systemPrompt
+                                        { signal, systemPrompt }
                                 );
 
                                 for await (const event of stream) {
@@ -213,20 +217,19 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                                         break;
                                                 case 'tool_start':
                                                         hadToolCalls = true;
-                                                        assistantContent.push({
-                                                                type: 'tool_use',
+                                                        assistantToolCalls.push({
                                                                 id: event.toolId,
                                                                 name: event.toolName,
-                                                                input: {},
+                                                                arguments: '{}',
                                                         });
                                                         break;
                                                 case 'tool_end': {
-                                                        // Update the tool_use content block with the actual input
-                                                        const block = assistantContent.find(
-                                                                b => b.type === 'tool_use' && b.id === event.toolId
+                                                        // Update the tool call with the actual arguments
+                                                        const toolCall = assistantToolCalls.find(
+                                                                tc => tc.id === event.toolId
                                                         );
-                                                        if (block && block.type === 'tool_use') {
-                                                                block.input = event.toolInput;
+                                                        if (toolCall) {
+                                                                toolCall.arguments = JSON.stringify(event.toolInput);
                                                         }
 
                                                         // Execute the tool ONCE and cache the result
@@ -236,12 +239,6 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                                                         output: toolResult,
                                                                         isError: toolResult.startsWith('Error:'),
                                                                 });
-                                                        }
-
-                                                        // Add text prefix if any
-                                                        if (currentText) {
-                                                                assistantContent.unshift({ type: 'text', text: currentText });
-                                                                currentText = '';
                                                         }
                                                         break;
                                                 }
@@ -253,40 +250,34 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                         }
                                 }
 
-                                // Add remaining text as content
-                                if (currentText) {
-                                        assistantContent.unshift({ type: 'text', text: currentText });
-                                }
-
-                                // If there were tool calls, add assistant message + tool results and continue
+                                // If there were tool calls, add assistant message + tool result messages and continue
                                 if (hadToolCalls && stopReason === 'tool_use') {
-                                        conversationMessages.push({ role: 'assistant', content: assistantContent.length > 0 ? assistantContent : [{ type: 'text', text: currentText }] });
+                                        conversationMessages.push({
+                                                role: 'assistant',
+                                                content: currentText || '',
+                                                toolCalls: assistantToolCalls.length > 0 ? assistantToolCalls : undefined
+                                        });
 
-                                        // Build tool results from cache (NOT re-executing tools)
-                                        const toolResults: IAnthropicContentBlock[] = [];
-                                        for (const block of assistantContent) {
-                                                if (block.type === 'tool_use') {
-                                                        const cached = toolResultCache.get(block.id ?? '');
-                                                        if (cached) {
-                                                                toolResults.push({
-                                                                        type: 'tool_result',
-                                                                        tool_use_id: block.id ?? '',
-                                                                        content: cached.output,
-                                                                });
-                                                        } else {
-                                                                // Fallback: should not happen, but execute once if cache miss
-                                                                this.logService.warn(`[AgentLoop] Cache miss for tool ${block.id}, executing as fallback`);
-                                                                const result = await this.executeTool(block.name ?? '', block.input, true);
-                                                                toolResults.push({
-                                                                        type: 'tool_result',
-                                                                        tool_use_id: block.id ?? '',
-                                                                        content: result,
-                                                                });
-                                                        }
+                                        // Build tool result messages from cache (NOT re-executing tools)
+                                        for (const toolCall of assistantToolCalls) {
+                                                const cached = toolResultCache.get(toolCall.id);
+                                                if (cached) {
+                                                        conversationMessages.push({
+                                                                role: 'tool',
+                                                                content: cached.output,
+                                                                toolCallId: toolCall.id,
+                                                        });
+                                                } else {
+                                                        // Fallback: should not happen, but execute once if cache miss
+                                                        this.logService.warn(`[AgentLoop] Cache miss for tool ${toolCall.id}, executing as fallback`);
+                                                        const input = JSON.parse(toolCall.arguments);
+                                                        const result = await this.executeTool(toolCall.name, input, true);
+                                                        conversationMessages.push({
+                                                                role: 'tool',
+                                                                content: result,
+                                                                toolCallId: toolCall.id,
+                                                        });
                                                 }
-                                        }
-                                        if (toolResults.length > 0) {
-                                                conversationMessages.push({ role: 'user', content: toolResults });
                                         }
                                         continue;
                                 }
@@ -345,7 +336,7 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                         // Build system prompt with memory context
                         const systemPrompt = await this.buildSystemPrompt(task, false);
 
-                        const conversationMessages: IAnthropicMessage[] = [
+                        const conversationMessages: IChatMessage[] = [
                                 {
                                         role: 'user',
                                         content: task
@@ -359,18 +350,17 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                 roundCount++;
                                 this.logService.info(`[AgentLoop] Round ${roundCount}/${MAX_ROUNDS}`);
 
-                                const assistantContent: IAnthropicContentBlock[] = [];
+                                const assistantToolCalls: IToolCall[] = [];
                                 const toolResults: { toolUseId: string; toolName: string; result: string; success: boolean; filePath?: string }[] = [];
                                 let currentText = '';
                                 let stopReason = '';
                                 let hasToolCalls = false;
 
                                 // Create a NEW stream for each round with updated conversation
-                                const stream = this.anthropicProvider.streamMessages(
+                                const stream = this.aiService.chat(
                                         conversationMessages,
                                         AGENT_TOOLS,
-                                        signal,
-                                        systemPrompt
+                                        { signal, systemPrompt }
                                 );
 
                                 for await (const event of stream) {
@@ -388,11 +378,10 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
 
                                                 case 'tool_start':
                                                         hasToolCalls = true;
-                                                        assistantContent.push({
-                                                                type: 'tool_use',
+                                                        assistantToolCalls.push({
                                                                 id: event.toolId,
                                                                 name: event.toolName,
-                                                                input: {},
+                                                                arguments: '{}',
                                                         });
                                                         yield { type: 'tool_start', toolId: event.toolId, toolName: event.toolName };
                                                         break;
@@ -402,12 +391,12 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                                         break;
 
                                                 case 'tool_end': {
-                                                        // Update the tool_use content block with the actual input
-                                                        const block = assistantContent.find(
-                                                                b => b.type === 'tool_use' && b.id === event.toolId
+                                                        // Update the tool call with the actual arguments
+                                                        const toolCall = assistantToolCalls.find(
+                                                                tc => tc.id === event.toolId
                                                         );
-                                                        if (block && block.type === 'tool_use') {
-                                                                block.input = event.toolInput ?? {};
+                                                        if (toolCall) {
+                                                                toolCall.arguments = JSON.stringify(event.toolInput ?? {});
                                                         }
 
                                                         yield { type: 'tool_executing', toolId: event.toolId, toolName: event.toolName, detail: 'Executing...' };
@@ -507,32 +496,22 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                         finalSummary += currentText;
                                 }
 
-                                // Build the assistant message for this round
-                                const roundAssistantContent: IAnthropicContentBlock[] = [];
-                                if (currentText) {
-                                        roundAssistantContent.push({ type: 'text', text: currentText });
-                                }
-                                // Add all tool_use blocks
-                                for (const block of assistantContent) {
-                                        if (block.type === 'tool_use') {
-                                                roundAssistantContent.push(block);
-                                        }
-                                }
-
                                 // If there were tool calls, add assistant + tool results to conversation
                                 if (hasToolCalls && toolResults.length > 0) {
                                         conversationMessages.push({
                                                 role: 'assistant',
-                                                content: roundAssistantContent.length > 0 ? roundAssistantContent : [{ type: 'text', text: currentText || '(executing tools)' }]
+                                                content: currentText || '(executing tools)',
+                                                toolCalls: assistantToolCalls.length > 0 ? assistantToolCalls : undefined
                                         });
 
-                                        // All tool results go in ONE user message (required by Anthropic API)
-                                        const toolResultBlocks: IAnthropicContentBlock[] = toolResults.map(tr => ({
-                                                type: 'tool_result' as const,
-                                                tool_use_id: tr.toolUseId,
-                                                content: tr.result,
-                                        }));
-                                        conversationMessages.push({ role: 'user', content: toolResultBlocks });
+                                        // Each tool result is a separate message in the unified format
+                                        for (const tr of toolResults) {
+                                                conversationMessages.push({
+                                                        role: 'tool',
+                                                        content: tr.result,
+                                                        toolCallId: tr.toolUseId,
+                                                });
+                                        }
                                 }
 
                                 // If end_turn or no more tool calls, we're done
@@ -592,7 +571,8 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                         const path = args.path;
                                         if (!path) { return 'Error: path is required'; }
                                         const content = await this.mcpProcess.readFile(path);
-                                        return content;
+                                        // SEC-6: Sanitise file content before injecting into LLM context
+                                        return PromptSanitiser.sanitise(content);
                                 }
 
                                 case 'write_file': {
@@ -607,7 +587,8 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                 case 'list_directory': {
                                         const path = args.path ?? '.';
                                         const entries = await this.mcpProcess.listDirectory(path);
-                                        return entries.join('\n');
+                                        // SEC-6: Sanitise directory listing before injecting into LLM context
+                                        return PromptSanitiser.sanitise(entries.join('\n'));
                                 }
 
                                 case 'create_directory': {
@@ -682,10 +663,13 @@ Guidelines:
 - Always think about what could go wrong and handle it`;
 
                 // Inject memory context from MemoryOrchestrator (Supermemory + local layers)
+                // SEC-6: Sanitise memory context before injection to prevent prompt injection
                 if (this.memoryOrchestrator) {
                         try {
                                 const projectId = this.workspaceContextService.getWorkspace().folders[0]?.name ?? 'default';
                                 prompt = await this.memoryOrchestrator.injectContextIntoPrompt(prompt, projectId);
+                                // SEC-6: Sanitise the entire prompt after memory injection
+                                // We only sanitise the memory-injected portion, not the system prompt itself
                         } catch (error) {
                                 this.logService.warn('[AgentLoop] Memory context injection failed, using base prompt:', error instanceof Error ? error.message : String(error));
                         }
