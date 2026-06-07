@@ -44,9 +44,6 @@ export class TerminalExecutorService extends Disposable implements ITerminalExec
         /** SEC-3: Rate limiter per agent session */
         private readonly rateLimiter = new TerminalRateLimiter();
 
-        /** SEC-3: Audit log file path */
-        private _auditLogPath: string | undefined;
-
         constructor(
                 @ILogService private readonly logService: ILogService,
                 @IWorkspaceContextService private readonly workspaceContextService: IWorkspaceContextService,
