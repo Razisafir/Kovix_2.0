@@ -8,7 +8,6 @@ import * as dom from '../../../../base/browser/dom.js';
 import { IMemoryOrchestrator } from '../../../../platform/construct/common/memory/memoryOrchestrator.js';
 import { IConstructMemoryService } from '../../../../platform/construct/common/memory/constructMemory.js';
 import { IAgentLoop, IPlanResult } from '../../../../platform/construct/common/agent/agentLoop.js';
-import { IAnthropicProvider } from '../../../../platform/construct/common/llm/anthropicProvider.js';
 import { IConstructAIService } from '../../../../platform/construct/common/llm/constructAIService.js';
 import { AIProviderType } from '../../../../platform/construct/common/llm/constructAIProvider.js';
 import { IDiffApplier } from '../../../../platform/construct/common/editor/diffApplier.js';
@@ -113,7 +112,6 @@ export class ConstructAgentViewPane extends ViewPane {
                 @IMemoryOrchestrator _memoryOrchestrator: IMemoryOrchestrator,
                 @IConstructMemoryService private readonly constructMemory: IConstructMemoryService,
                 @IAgentLoop private readonly agentLoop: IAgentLoop,
-                @IAnthropicProvider private readonly anthropicProvider: IAnthropicProvider,
                 @IConstructAIService private readonly aiService: IConstructAIService,
                 @IDiffApplier private readonly diffApplier: IDiffApplier,
                 @ICodeEditorService private readonly codeEditorService: ICodeEditorService,
@@ -270,14 +268,8 @@ export class ConstructAgentViewPane extends ViewPane {
                                 return;
                         }
 
-                        // Sync Anthropic config if API key is present (backward compatibility)
-                        if (apiKey) {
-                                this.anthropicProvider.updateConfig({
-                                        apiKey,
-                                        model: this.configurationService.getValue<string>('construct.anthropic.model') || 'claude-sonnet-4-20250514',
-                                        maxTokens: this.configurationService.getValue<number>('construct.anthropic.maxTokens') || 8192,
-                                });
-                        }
+                        // Cloud provider config is managed by IConstructAIService.
+                        // The unified service handles provider-specific configuration internally.
 
                         // Gather context based on scope selector
                         const contextText = this.gatherContext();
@@ -362,13 +354,9 @@ export class ConstructAgentViewPane extends ViewPane {
                                 : '[MEMORY] Local only';
                 }));
 
-                // Listen for provider errors
-                this._register(this.anthropicProvider.onKeyInvalid(() => {
-                        this.addAgentMessage('[KEY] API key invalid. [Open Settings](command:construct.openApiSettings)', 'error');
-                }));
-                this._register(this.anthropicProvider.onConnectionError((error) => {
-                        this.addAgentMessage(`[NET] Connection failed: ${error.message}. [Retry](command:construct.focusPanel)`, 'error');
-                }));
+                // Listen for provider errors via IConstructAIService
+                // When no provider is available, the service already shows a notification.
+                // The agent loop handles individual API errors and yields error events.
 
                 // Subscribe to agent loop loading state events
                 this._register(this.agentLoop.onLoadingStateChange((state: LoadingState) => {

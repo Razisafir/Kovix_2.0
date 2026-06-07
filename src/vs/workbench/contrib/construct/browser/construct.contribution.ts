@@ -47,7 +47,6 @@ import { IQuickInputService } from '../../../../platform/quickinput/common/quick
 import { ILogService } from '../../../../platform/log/common/log.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { ICommandService } from '../../../../platform/commands/common/commands';
-import { IAnthropicProvider } from '../../../../platform/construct/common/llm/anthropicProvider.js';
 import { IConstructAIService } from '../../../../platform/construct/common/llm/constructAIService.js';
 import { AIProviderType } from '../../../../platform/construct/common/llm/constructAIProvider.js';
 import { IConstructToolRegistry } from '../../../../platform/construct/common/tools/constructToolRegistry.js';
@@ -55,7 +54,6 @@ import { IMCPProcess } from '../../../../platform/construct/common/mcp/mcpProces
 import { ITerminalExecutor } from '../../../../platform/construct/common/terminal/terminalExecutor.js';
 import { IDiffApplier } from '../../../../platform/construct/common/editor/diffApplier.js';
 import { IAgentLoop } from '../../../../platform/construct/common/agent/agentLoop.js';
-import { AnthropicProviderService } from './services/llm/anthropicProvider.js';
 import { ConstructAIService } from './services/llm/constructAIService.js';
 import { ConstructToolRegistryService } from './services/tools/constructToolRegistryService.js';
 import { MCPProcessService } from './services/mcp/mcpProcess';
@@ -375,43 +373,46 @@ registerAction2(class OpenApiSettingsAction extends Action2 {
                 }
 });
 
-registerAction2(class TestAnthropicConnectionAction extends Action2 {
+registerAction2(class TestCloudConnectionAction extends Action2 {
                 constructor() {
                                 super({
-                                                id: 'construct.testAnthropicConnection',
-                                                title: localize2('testAnthropicConnection', "Test Anthropic Connection"),
+                                                id: 'construct.testCloudConnection',
+                                                title: localize2('testCloudConnection', "Test Cloud AI Connection"),
                                                 f1: true,
-                                                category: localize2('constructCategoryAnthropic', "Construct"),
+                                                category: localize2('constructCategoryCloud', "Construct"),
                                 });
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
-                                const anthropicProvider = accessor.get(IAnthropicProvider);
+                                const aiService = accessor.get(IConstructAIService);
                                 const configurationService = accessor.get(IConfigurationService);
                                 const notificationService = accessor.get(INotificationService);
 
-                                const apiKey = configurationService.getValue<string>('construct.anthropic.apiKey');
-                                if (!apiKey) {
-                                                notificationService.warn('Anthropic API key not configured. Run "Construct: Open API Settings" to set it up.');
+                                // Ensure a cloud provider is configured
+                                const provider = aiService.getProvider('cloud');
+                                if (!provider) {
+                                                notificationService.warn('Cloud provider not available. Configure it in Construct settings first.');
                                                 return;
                                 }
 
                                 // Try a minimal API call to test the connection
                                 try {
-                                                const stream = anthropicProvider.streamMessages(
+                                                const stream = aiService.chat(
                                                                 [{ role: 'user', content: 'Reply with exactly: OK' }],
                                                                 [],
+                                                                { systemPrompt: 'You are a test assistant. Reply concisely.' },
                                                 );
                                                 let response = '';
                                                 for await (const event of stream) {
                                                                 if (event.type === 'token') { response += event.text; }
                                                                 if (event.type === 'error') {
-                                                                                notificationService.error(`Anthropic connection failed: ${event.text}`);
+                                                                                notificationService.error(`Cloud AI connection failed: ${event.text}`);
                                                                                 return;
                                                                 }
                                                 }
-                                                notificationService.info(`[OK] Anthropic connection: Working (model: ${anthropicProvider.config.model})`);
+                                                const model = aiService.getActiveModel();
+                                                notificationService.info(`Cloud AI connection: Working (model: ${model?.displayName ?? 'unknown'})`);
                                 } catch (error) {
-                                                notificationService.error(`Anthropic connection failed: ${error instanceof Error ? error.message : String(error)}`);
+                                                notificationService.error(`Cloud AI connection failed: ${error instanceof Error ? error.message : String(error)}`);
                                 }
                 }
 });
@@ -435,7 +436,8 @@ registerSingleton(IMemoryOrchestrator, MemoryOrchestratorService, InstantiationT
 registerSingleton(IConstructMemoryService, ConstructMemoryService, InstantiationType.Delayed);
 
 // --- LLM Integration Singletons (Phase 4) --------------------------------------
-registerSingleton(IAnthropicProvider, AnthropicProviderService, InstantiationType.Delayed);
+// NOTE: IAnthropicProvider removed — Anthropic API is now a backend within
+// CloudProvider inside IConstructAIService, not a separate top-level service.
 registerSingleton(IMCPProcess, MCPProcessService, InstantiationType.Delayed);
 registerSingleton(ITerminalExecutor, TerminalExecutorService, InstantiationType.Delayed);
 registerSingleton(IDiffApplier, DiffApplierService, InstantiationType.Delayed);
