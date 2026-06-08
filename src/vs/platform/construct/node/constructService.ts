@@ -20,6 +20,13 @@ import { ISecureKeyManager } from '../common/security/secureKeyManager.js';
 import { SecureKeyNodeService } from './constructSecureKeyService.js';
 import { IConstructNotificationService } from '../common/notification/constructNotificationService.js';
 import { ConstructNotificationNodeService } from './constructNotificationService.js';
+import { IEmbeddingService } from '../common/memory/embeddingService.js';
+import { EmbeddingNodeService } from './constructEmbeddingService.js';
+import { IFileWatcherService } from '../common/watcher/fileWatcherService.js';
+import { FileWatcherNodeService } from './constructFileWatcherService.js';
+import { ITerminalExecutor } from '../common/terminal/terminalExecutor.js';
+import { TerminalNodeService } from './constructTerminalService.js';
+import { assertWithinWorkspace } from '../common/security/workspaceGuard.js';
 import { registerSingleton, InstantiationType } from '../../instantiation/common/extensions';
 
 class ConstructService implements IConstructService {
@@ -30,8 +37,12 @@ class ConstructService implements IConstructService {
         async start(): Promise<void> {
                 const isDev = process.env.VSCODE_DEV === '1';
                 if (isDev) {
+                        const agentBackendPath = join(__dirname, '..', '..', '..', '..', '..', 'agent-backend');
+                        // Validate resolved path to prevent directory traversal from env manipulation
+                        assertWithinWorkspace(agentBackendPath);
+
                         this._agentProcess = spawn('python', ['-m', 'uvicorn', 'app:app', '--host', '127.0.0.1', '--port', String(this._port)], {
-                                cwd: join(__dirname, '..', '..', '..', '..', '..', 'agent-backend'),
+                                cwd: agentBackendPath,
                                 env: { ...process.env as Record<string, string> }
                         });
                 }
@@ -66,3 +77,12 @@ registerSingleton(ISecureKeyManager, SecureKeyNodeService, InstantiationType.Del
 
 // --- Notification Service ---
 registerSingleton(IConstructNotificationService, ConstructNotificationNodeService, InstantiationType.Delayed);
+
+// --- Embedding Service (P1: text embeddings for semantic search) ---
+registerSingleton(IEmbeddingService, EmbeddingNodeService, InstantiationType.Delayed);
+
+// --- File Watcher Service (P2: reliable filesystem events) ---
+registerSingleton(IFileWatcherService, FileWatcherNodeService, InstantiationType.Delayed);
+
+// --- Terminal Execution Service (P0-4: replaces browser child_process) ---
+registerSingleton(ITerminalExecutor, TerminalNodeService, InstantiationType.Delayed);

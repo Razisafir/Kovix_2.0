@@ -130,6 +130,12 @@ import { ISecureKeyManager } from '../../platform/construct/common/security/secu
 import { SecureKeyNodeService } from '../../platform/construct/node/constructSecureKeyService.js';
 import { IConstructNotificationService } from '../../platform/construct/common/notification/constructNotificationService.js';
 import { ConstructNotificationNodeService } from '../../platform/construct/node/constructNotificationService.js';
+import { IEmbeddingService } from '../../platform/construct/common/memory/embeddingService.js';
+import { EmbeddingNodeService } from '../../platform/construct/node/constructEmbeddingService.js';
+import { IFileWatcherService } from '../../platform/construct/common/watcher/fileWatcherService.js';
+import { FileWatcherNodeService } from '../../platform/construct/node/constructFileWatcherService.js';
+import { ITerminalExecutor } from '../../platform/construct/common/terminal/terminalExecutor.js';
+import { TerminalNodeService } from '../../platform/construct/node/constructTerminalService.js';
 import { CONSTRUCT_CHANNELS } from '../../platform/construct/common/constructIpcChannels.js';
 
 /**
@@ -1147,6 +1153,15 @@ export class CodeApplication extends Disposable {
                 // Construct Notification Service (system notifications)
                 services.set(IConstructNotificationService, new SyncDescriptor(ConstructNotificationNodeService, undefined, true));
 
+                // Construct Embedding Service (text embeddings for semantic search)
+                services.set(IEmbeddingService, new SyncDescriptor(EmbeddingNodeService, undefined, true));
+
+                // Construct File Watcher Service (filesystem event streaming)
+                services.set(IFileWatcherService, new SyncDescriptor(FileWatcherNodeService, undefined, true));
+
+                // Construct Terminal Execution Service (replaces browser child_process)
+                services.set(ITerminalExecutor, new SyncDescriptor(TerminalNodeService, undefined, true));
+
                 // Init services that require it
                 await Promises.settled([
                         backupMainService.initialize(),
@@ -1289,6 +1304,18 @@ export class CodeApplication extends Disposable {
                 // Notification service — system notifications
                 const constructNotificationChannel = ProxyChannel.fromService(accessor.get(IConstructNotificationService), disposables);
                 mainProcessElectronServer.registerChannel(CONSTRUCT_CHANNELS.NOTIFICATION, constructNotificationChannel);
+
+                // Embedding service — text embeddings for semantic search
+                const constructEmbeddingChannel = ProxyChannel.fromService(accessor.get(IEmbeddingService), disposables);
+                mainProcessElectronServer.registerChannel(CONSTRUCT_CHANNELS.EMBEDDING, constructEmbeddingChannel);
+
+                // File watcher service — filesystem event streaming
+                const constructFileWatcherChannel = ProxyChannel.fromService(accessor.get(IFileWatcherService), disposables);
+                mainProcessElectronServer.registerChannel(CONSTRUCT_CHANNELS.FILE_WATCHER, constructFileWatcherChannel);
+
+                // Terminal execution service — replaces browser child_process
+                const constructTerminalChannel = ProxyChannel.fromService(accessor.get(ITerminalExecutor), disposables);
+                mainProcessElectronServer.registerChannel(CONSTRUCT_CHANNELS.TERMINAL, constructTerminalChannel);
         }
 
         private async openFirstWindow(accessor: ServicesAccessor, initialProtocolUrls: IInitialProtocolUrls | undefined): Promise<ICodeWindow[]> {

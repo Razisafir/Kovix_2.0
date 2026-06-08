@@ -9,6 +9,7 @@ import { spawn, ChildProcess } from 'child_process';
 import { ILogService } from '../../log/common/log.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
 import { IMCPProcessNodeService } from '../common/mcp/mcpProcessNode.js';
+import { assertWithinWorkspace, validateToolName, validateMcpMethod } from '../common/security/workspaceGuard.js';
 
 /**
  * JSON-RPC 2.0 request structure for MCP protocol.
@@ -69,6 +70,9 @@ export class MCPProcessNodeService extends Disposable implements IMCPProcessNode
          * Spawn the MCP filesystem server and perform the initialization handshake.
          */
         async start(rootPath: string): Promise<void> {
+                // Validate path to prevent directory traversal attacks
+                assertWithinWorkspace(rootPath);
+
                 this.rootPath = rootPath;
                 await this.spawnServer();
                 await this.initializeHandshake();
@@ -91,6 +95,11 @@ export class MCPProcessNodeService extends Disposable implements IMCPProcessNode
          * Send a JSON-RPC request and wait for the response.
          */
         async sendRequest(method: string, params?: Record<string, unknown>): Promise<unknown> {
+                // Validate MCP method against allowlist to prevent arbitrary RPC calls
+                if (!validateMcpMethod(method)) {
+                        throw new Error(`MCP method not allowed: "${method}"`);
+                }
+
                 const id = ++this.requestId;
                 const request: IJsonRpcRequest = {
                         jsonrpc: '2.0',
@@ -123,6 +132,11 @@ export class MCPProcessNodeService extends Disposable implements IMCPProcessNode
          * Call a tool on the MCP server.
          */
         async callTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+                // Validate tool name against allowlist to prevent arbitrary tool execution
+                if (!validateToolName(name)) {
+                        throw new Error(`MCP tool not allowed: "${name}"`);
+                }
+
                 return this.sendRequest('tools/call', {
                         name,
                         arguments: args,
