@@ -115,6 +115,7 @@
     "native-watchdog": "^1.4.1",
     "node-pty": "^1.1.0-beta22",
     "open": "^8.4.2",
+    "supermemory": "^4.24.12",
     "tas-client-umd": "0.2.0",
     "ternary-stream": "^3.0.0",
     "v8-inspect-profiler": "^0.1.1",
@@ -127,6 +128,7 @@
   "devDependencies": {
     "@playwright/test": "^1.46.1",
     "@stylistic/eslint-plugin-ts": "^2.8.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/cookie": "^0.3.3",
     "@types/debug": "^4.1.5",
     "@types/eslint": "^9.6.1",

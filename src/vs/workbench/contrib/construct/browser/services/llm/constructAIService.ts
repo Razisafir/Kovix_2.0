@@ -17,6 +17,7 @@ import {
         IToolDefinition, ProviderStatus
 } from '../../../../../../platform/construct/common/llm/constructAIProvider.js';
 import { IConstructAIService } from '../../../../../../platform/construct/common/llm/constructAIService.js';
+import { ISecureKeyManager } from '../../../../../../platform/construct/common/security/secureKeyManager.js';
 import { OllamaProvider } from './ollamaProvider.js';
 import { XenovaProvider } from './xenovaProvider.js';
 import { CloudProvider } from './cloudProvider.js';
@@ -60,13 +61,14 @@ export class ConstructAIService extends Disposable implements IConstructAIServic
                 @INotificationService private readonly notificationService: INotificationService,
                 @IConfigurationService configurationService: IConfigurationService,
                 @IStorageService private readonly storageService: IStorageService,
+                @ISecureKeyManager private readonly _keyManager: ISecureKeyManager,
         ) {
                 super();
 
                 // Instantiate all providers
                 const ollama = new OllamaProvider(logService, configurationService);
                 const xenova = new XenovaProvider(logService, configurationService);
-                const cloud = new CloudProvider(logService, configurationService, storageService);
+                const cloud = new CloudProvider(logService, configurationService, storageService, this._keyManager);
 
                 this._providers.set('ollama', ollama);
                 this._providers.set('xenova', xenova);

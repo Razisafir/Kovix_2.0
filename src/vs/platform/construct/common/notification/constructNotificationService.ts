@@ -7,7 +7,6 @@
 
 import { createDecorator } from '../../../instantiation/common/instantiation.js';
 import { Event } from '../../../../base/common/event.js';
-import { IDisposable } from '../../../../base/common/lifecycle.js';
 
 export const IConstructNotificationService = createDecorator<IConstructNotificationService>('construct.notificationService');
 
@@ -20,22 +19,22 @@ export type ConstructNotificationSeverity = 'info' | 'warning' | 'error' | 'succ
  * A notification entry in the notification center.
  */
 export interface IConstructNotification {
-	/** Unique identifier for this notification. */
-	readonly id: string;
-	/** Severity level. */
-	readonly severity: ConstructNotificationSeverity;
-	/** Short title/message. */
-	readonly title: string;
-	/** Detailed message body. */
-	readonly message?: string;
-	/** Source of the notification (e.g., 'Agent', 'MCP', 'Memory'). */
-	readonly source: string;
-	/** Timestamp when the notification was created. */
-	readonly timestamp: number;
-	/** Whether the notification has been read/dismissed. */
-	read: boolean;
-	/** Optional action labels for the notification. */
-	actions?: string[];
+        /** Unique identifier for this notification. */
+        readonly id: string;
+        /** Severity level. */
+        readonly severity: ConstructNotificationSeverity;
+        /** Short title/message. */
+        readonly title: string;
+        /** Detailed message body. */
+        readonly message?: string;
+        /** Source of the notification (e.g., 'Agent', 'MCP', 'Memory'). */
+        readonly source: string;
+        /** Timestamp when the notification was created. */
+        readonly timestamp: number;
+        /** Whether the notification has been read/dismissed. */
+        read: boolean;
+        /** Optional action labels for the notification. */
+        actions?: string[];
 }
 
 /**
@@ -49,52 +48,52 @@ export interface IConstructNotification {
  * - Integrates with VS Code's built-in notification system
  */
 export interface IConstructNotificationService {
-	readonly _serviceBrand: undefined;
+        readonly _serviceBrand: undefined;
 
-	/** Event fired when a new notification is added. */
-	readonly onDidAddNotification: Event<IConstructNotification>;
-	/** Event fired when a notification is read/dismissed. */
-	readonly onDidRemoveNotification: Event<string>;
-	/** Current notification history. */
-	readonly notifications: ReadonlyArray<IConstructNotification>;
+        /** Event fired when a new notification is added. */
+        readonly onDidAddNotification: Event<IConstructNotification>;
+        /** Event fired when a notification is read/dismissed. */
+        readonly onDidRemoveNotification: Event<string>;
+        /** Current notification history. */
+        readonly notifications: ReadonlyArray<IConstructNotification>;
 
-	/**
-	 * Show an info notification.
-	 */
-	info(title: string, message?: string, source?: string, actions?: string[]): void;
+        /**
+         * Show an info notification.
+         */
+        info(title: string, message?: string, source?: string, actions?: string[]): void;
 
-	/**
-	 * Show a warning notification.
-	 */
-	warning(title: string, message?: string, source?: string, actions?: string[]): void;
+        /**
+         * Show a warning notification.
+         */
+        warning(title: string, message?: string, source?: string, actions?: string[]): void;
 
-	/**
-	 * Show an error notification.
-	 */
-	error(title: string, message?: string, source?: string, actions?: string[]): void;
+        /**
+         * Show an error notification.
+         */
+        error(title: string, message?: string, source?: string, actions?: string[]): void;
 
-	/**
-	 * Show a success notification.
-	 */
-	success(title: string, message?: string, source?: string, actions?: string[]): void;
+        /**
+         * Show a success notification.
+         */
+        success(title: string, message?: string, source?: string, actions?: string[]): void;
 
-	/**
-	 * Mark a notification as read.
-	 */
-	markRead(id: string): void;
+        /**
+         * Mark a notification as read.
+         */
+        markRead(id: string): void;
 
-	/**
-	 * Dismiss/remove a notification.
-	 */
-	dismiss(id: string): void;
+        /**
+         * Dismiss/remove a notification.
+         */
+        dismiss(id: string): void;
 
-	/**
-	 * Clear all notifications.
-	 */
-	clearAll(): void;
+        /**
+         * Clear all notifications.
+         */
+        clearAll(): void;
 
-	/**
-	 * Get unread notification count.
-	 */
-	getUnreadCount(): number;
+        /**
+         * Get unread notification count.
+         */
+        getUnreadCount(): number;
 }

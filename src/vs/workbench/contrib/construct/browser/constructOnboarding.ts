@@ -997,11 +997,11 @@ export class ConstructOnboardingWizard extends Disposable {
 
                                                 const metaDiv = document.createElement('div');
                                                 metaDiv.className = 'model-meta';
-                                                metaDiv.textContent = `Context: ${m.contextWindowTokens.toLocaleString()} tokens${m.supportsTools ? ' | Tools: Yes' : ''}`;  // Safe: no HTML parsing
+                                                metaDiv.textContent = 'Context: ' + m.contextWindowTokens.toLocaleString() + ' tokens' + (m.supportsTools ? ' | Tools: Yes' : '');  // Safe: no HTML parsing
 
                                                 const checkDiv = document.createElement('div');
                                                 checkDiv.className = 'model-meta';
-                                                checkDiv.id = `model-check-${m.id}`;
+                                                checkDiv.id = 'model-check-' + m.id;
 
                                                 innerDiv.appendChild(nameDiv);
                                                 innerDiv.appendChild(metaDiv);

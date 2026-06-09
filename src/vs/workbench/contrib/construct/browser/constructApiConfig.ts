@@ -56,6 +56,12 @@ const ollamaConfiguration: IConfigurationNode = {
                                                 default: 'http://localhost:11434',
                                                 description: localize('construct.ollama.baseUrl', "Base URL for the Ollama API. Defaults to localhost:11434. Change this if you run Ollama on a different host or port."),
                                                 scope: 4 /* ConfigurationScope.WINDOW */
+                                },
+                                'construct.ollama.model': {
+                                                type: 'string',
+                                                default: 'llama3.2',
+                                                description: localize('construct.ollama.model', "Default Ollama model. If set, this model is used instead of auto-selecting from available models."),
+                                                scope: 4 /* ConfigurationScope.WINDOW */
                                 }
                 }
 };
@@ -109,3 +115,51 @@ const cloudConfiguration: IConfigurationNode = {
 Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).registerConfiguration(ollamaConfiguration);
 Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).registerConfiguration(xenovaConfiguration);
 Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).registerConfiguration(cloudConfiguration);
+
+// --- Phase 6: Security Tools Configuration ---
+
+const securityConfiguration: IConfigurationNode = {
+        id: 'construct.security',
+        order: 103,
+        title: localize('construct.security', "Construct -- Security Tools"),
+        type: 'object',
+        properties: {
+                'construct.enableSecurityTools': {
+                        type: 'boolean',
+                        default: true,
+                        description: localize('construct.enableSecurityTools', "Enable security scanning tools (nmap, Ghidra, Nuclei). When disabled, security tools are not registered."),
+                        scope: 4 /* ConfigurationScope.WINDOW */
+                }
+        }
+};
+
+Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).registerConfiguration(securityConfiguration);
+
+// --- Phase 7: MCP Server Configuration ---
+
+const mcpConfiguration: IConfigurationNode = {
+        id: 'construct.mcp',
+        order: 104,
+        title: localize('construct.mcp', "Construct -- MCP Servers"),
+        type: 'object',
+        properties: {
+                'construct.mcp.servers': {
+                        type: 'array',
+                        default: [],
+                        description: localize('construct.mcp.servers', "MCP server configurations."),
+                        scope: 4,
+                        items: {
+                                type: 'object',
+                                properties: {
+                                        name: { type: 'string', description: 'Server name' },
+                                        command: { type: 'string', description: 'Command to start the server' },
+                                        args: { type: 'array', items: { type: 'string', description: 'Argument' }, description: 'Command arguments' },
+                                        env: { type: 'object', description: 'Environment variables' }
+                                },
+                                required: ['name', 'command']
+                        }
+                }
+        }
+};
+
+Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).registerConfiguration(mcpConfiguration);

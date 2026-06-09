@@ -18,6 +18,9 @@ import {
         IConstructToolRegistry, IToolDefinition, IToolResult
 } from '../../../../../../platform/construct/common/tools/constructToolRegistry.js';
 import { ITerminalExecutor } from '../../../../../../platform/construct/common/terminal/terminalExecutor.js';
+import { nmapToolDefinition } from '../../tools/security/nmapTool.js';
+import { ghidraToolDefinition } from '../../tools/security/ghidraTool.js';
+import { nucleiToolDefinition } from '../../tools/security/nucleiTool.js';
 
 // SEC-4: Path traversal prevention
 import * as pathModule from '../../../../../../base/common/path.js';
@@ -100,6 +103,12 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
 
                 // Check for Kali WSL2 (async, non-blocking)
                 this.checkKaliWSL();
+
+                // Security tools — gated by construct.enableSecurityTools setting
+                const enableSecurityTools = this._configurationService.getValue<boolean>('construct.enableSecurityTools');
+                if (enableSecurityTools !== false) {
+                        this.registerSecurityTools();
+                }
 
                 this.logService.info('[ToolRegistry] Initialized with ' + this._tools.size + ' built-in tools');
         }
@@ -208,6 +217,12 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                                                 type: 'string',
                                                 description: 'The content to write to the file.',
                                         },
+                                        mode: {
+                                                type: 'string',
+                                                description: 'Write mode: "overwrite" replaces the file, "append" adds to the end, "create_only" fails if the file already exists.',
+                                                enum: ['overwrite', 'append', 'create_only'],
+                                                default: 'overwrite',
+                                        },
                                 },
                                 required: ['path', 'content'],
                         },
@@ -288,6 +303,29 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                         requiresNetwork: true,
                         category: 'network',
                 }, async (input) => this.executeWebSearch(input));
+
+                // list_directory — list directory contents
+                this.registerTool({
+                        name: 'list_directory',
+                        description: 'List the contents of a directory. Returns file and directory names within the specified path.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        path: {
+                                                type: 'string',
+                                                description: 'Absolute or workspace-relative path to the directory to list.',
+                                        },
+                                        recursive: {
+                                                type: 'boolean',
+                                                description: 'Whether to list contents recursively. Defaults to false.',
+                                        },
+                                },
+                                required: ['path'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: false,
+                        category: 'file',
+                }, async (input) => this.executeListDirectory(input));
         }
 
         // --- Tool Implementations ---
@@ -330,6 +368,7 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
         private async executeWriteFile(input: Record<string, unknown>): Promise<IToolResult> {
                 const path = input.path as string;
                 const content = input.content as string;
+                const mode = (input.mode as string) ?? 'overwrite';
 
                 if (!path || content === undefined) {
                         return { success: false, output: 'Missing required parameters: path and content', truncated: false };
@@ -346,14 +385,40 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                         }
 
                         const uri = this.resolveUri(path);
-                        const encoded = VSBuffer.wrap(new TextEncoder().encode(content));
+
+                        if (mode === 'create_only') {
+                                // Check if file exists first; if yes, return error
+                                const exists = await this.fileService.exists(uri);
+                                if (exists) {
+                                        return {
+                                                success: false,
+                                                output: `File already exists: ${path}. Use mode "overwrite" or "append" instead.`,
+                                                truncated: false,
+                                        };
+                                }
+                        }
+
+                        let contentToWrite = content;
+
+                        if (mode === 'append') {
+                                // Read existing content, append new content
+                                try {
+                                        const existing = await this.fileService.readFile(uri);
+                                        const existingText = existing.value.toString();
+                                        contentToWrite = existingText + content;
+                                } catch {
+                                        // File doesn't exist yet — just write the content as-is
+                                }
+                        }
+
+                        const encoded = VSBuffer.wrap(new TextEncoder().encode(contentToWrite));
                         await this.fileService.writeFile(uri, encoded);
 
                         return {
                                 success: true,
-                                output: `File written: ${path} (${content.length} bytes)`,
+                                output: `File written: ${path} (${contentToWrite.length} bytes, mode: ${mode})`,
                                 truncated: false,
-                                metadata: { bytesProcessed: content.length },
+                                metadata: { bytesProcessed: contentToWrite.length },
                         };
                 } catch (error) {
                         return {
@@ -531,6 +596,152 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                                 output: `Web search failed: ${error instanceof Error ? error.message : String(error)}`,
                                 truncated: false,
                         };
+                }
+        }
+
+        private async executeListDirectory(input: Record<string, unknown>): Promise<IToolResult> {
+                const path = input.path as string;
+                if (!path) {
+                        return { success: false, output: 'Missing required parameter: path', truncated: false };
+                }
+
+                try {
+                        // SEC-4: Path traversal prevention
+                        const workspaceRoot = this.workspaceContextService.getWorkspace().folders[0]?.uri.fsPath;
+                        if (workspaceRoot) {
+                                assertWithinWorkspace(path, workspaceRoot);
+                        }
+
+                        const uri = this.resolveUri(path);
+                        const stat = await this.fileService.resolve(uri);
+
+                        const entries: string[] = [];
+                        if (stat.children) {
+                                for (const child of stat.children) {
+                                        const prefix = child.isDirectory ? '[DIR]  ' : '[FILE] ';
+                                        entries.push(prefix + child.name);
+                                }
+                        }
+
+                        if (entries.length === 0) {
+                                return {
+                                        success: true,
+                                        output: 'Directory is empty or does not exist: ' + path,
+                                        truncated: false,
+                                };
+                        }
+
+                        const output = entries.join('\n');
+                        const truncated = output.length > MAX_OUTPUT_LENGTH;
+
+                        return {
+                                success: true,
+                                output: truncated ? output.substring(0, MAX_OUTPUT_LENGTH) + '\n... [truncated]' : output,
+                                truncated,
+                        };
+                } catch (error) {
+                        return {
+                                success: false,
+                                output: `Failed to list directory "${path}": ${error instanceof Error ? error.message : String(error)}`,
+                                truncated: false,
+                        };
+                }
+        }
+
+        // --- Security Tool Registration ---
+
+        private registerSecurityTools(): void {
+                // nmap_scan — network port scanner
+                this.registerTool(nmapToolDefinition, async (input) => this.executeNmapScan(input));
+
+                // ghidra_decompile — binary decompiler via Docker
+                this.registerTool(ghidraToolDefinition, async (input) => this.executeGhidraDecompile(input));
+
+                // nuclei_scan — vulnerability scanner
+                this.registerTool(nucleiToolDefinition, async (input) => this.executeNucleiScan(input));
+
+                this.logService.info('[ToolRegistry] Security tools registered (nmap, ghidra, nuclei)');
+        }
+
+        private async executeNmapScan(input: Record<string, unknown>): Promise<IToolResult> {
+                const target = input.target as string;
+                if (!target) { return { success: false, output: 'Error: target is required', truncated: false }; }
+
+                const flags = (input.flags as string[]) ?? [];
+                const portRange = input.port_range as string;
+                const flagStr = flags.join(' ');
+                const portArg = portRange ? `-p ${portRange}` : '';
+                const command = `nmap ${flagStr} ${portArg} -oX - ${target}`.replace(/\s+/g, ' ').trim();
+
+                try {
+                        const result = await this.terminalExecutor.execute(command);
+                        if (result.exitCode !== 0 && !result.stdout) {
+                                return { success: false, output: `nmap scan failed: ${result.stderr || 'exit code ' + result.exitCode}. Install: apt-get install nmap`, truncated: false };
+                        }
+                        return { success: true, output: result.stdout || result.stderr, truncated: false };
+                } catch (err: unknown) {
+                        const msg = err instanceof Error ? err.message : String(err);
+                        if (msg.includes('not found') || msg.includes('ENOENT')) {
+                                return { success: false, output: 'nmap not found — install with: apt-get install nmap (Linux) or brew install nmap (macOS)', truncated: false };
+                        }
+                        return { success: false, output: `nmap error: ${msg}`, truncated: false };
+                }
+        }
+
+        private async executeGhidraDecompile(input: Record<string, unknown>): Promise<IToolResult> {
+                const binaryPath = input.binary_path as string;
+                if (!binaryPath) { return { success: false, output: 'Error: binary_path is required', truncated: false }; }
+
+                const functionName = (input.function_name as string) ?? '';
+
+                // Check if Docker is available first
+                try {
+                        const dockerCheck = await this.terminalExecutor.execute('docker --version');
+                        if (dockerCheck.exitCode !== 0) {
+                                return { success: false, output: 'Docker not found — Ghidra decompilation requires Docker for isolation. Install Docker first.', truncated: false };
+                        }
+                } catch (err: unknown) {
+                        const msg = err instanceof Error ? err.message : String(err);
+                        return { success: false, output: `Docker check failed: ${msg}. Ghidra decompilation requires Docker.`, truncated: false };
+                }
+
+                const funcArg = functionName ? `-e DECOMPILE_FUNCTION=${functionName}` : '';
+                const command = `docker run --rm -v "${binaryPath}:${binaryPath}" ghidra/ghidra ${funcArg} ${binaryPath}`.replace(/\s+/g, ' ').trim();
+
+                try {
+                        const result = await this.terminalExecutor.execute(command);
+                        if (result.exitCode !== 0 && !result.stdout) {
+                                return { success: false, output: `Ghidra decompile failed: ${result.stderr || 'exit code ' + result.exitCode}`, truncated: false };
+                        }
+                        return { success: true, output: result.stdout || result.stderr, truncated: false };
+                } catch (err: unknown) {
+                        const msg = err instanceof Error ? err.message : String(err);
+                        return { success: false, output: `Ghidra error: ${msg}`, truncated: false };
+                }
+        }
+
+        private async executeNucleiScan(input: Record<string, unknown>): Promise<IToolResult> {
+                const target = input.target as string;
+                if (!target) { return { success: false, output: 'Error: target is required', truncated: false }; }
+
+                const templateTags = (input.template_tags as string[]) ?? [];
+                const severity = (input.severity as string[]) ?? [];
+                const tagsArg = templateTags.length > 0 ? `-tags ${templateTags.join(',')}` : '';
+                const severityArg = severity.length > 0 ? `-severity ${severity.join(',')}` : '';
+                const command = `nuclei -u ${target} ${tagsArg} ${severityArg} -json`.replace(/\s+/g, ' ').trim();
+
+                try {
+                        const result = await this.terminalExecutor.execute(command);
+                        if (result.exitCode !== 0 && !result.stdout) {
+                                return { success: false, output: `Nuclei scan failed: ${result.stderr || 'exit code ' + result.exitCode}. Install: apt-get install nuclei or download from https://github.com/projectdiscovery/nuclei`, truncated: false };
+                        }
+                        return { success: true, output: result.stdout || result.stderr, truncated: false };
+                } catch (err: unknown) {
+                        const msg = err instanceof Error ? err.message : String(err);
+                        if (msg.includes('not found') || msg.includes('ENOENT')) {
+                                return { success: false, output: 'nuclei not found — install from: https://github.com/projectdiscovery/nuclei', truncated: false };
+                        }
+                        return { success: false, output: `nuclei error: ${msg}`, truncated: false };
                 }
         }
 

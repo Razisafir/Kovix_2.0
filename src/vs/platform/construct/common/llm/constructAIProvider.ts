@@ -8,6 +8,34 @@
 import { createDecorator } from '../../../instantiation/common/instantiation.js';
 import { Event } from '../../../../base/common/event.js';
 
+export class ConstructAuthError extends Error {
+        constructor(message: string) {
+                super(message);
+                this.name = 'ConstructAuthError';
+        }
+}
+
+export class ConstructRateLimitError extends Error {
+        constructor(message: string, public readonly retryAfter?: number) {
+                super(message);
+                this.name = 'ConstructRateLimitError';
+        }
+}
+
+export class ConstructNetworkError extends Error {
+        constructor(message: string) {
+                super(message);
+                this.name = 'ConstructNetworkError';
+        }
+}
+
+export class ConstructOverloadedError extends Error {
+        constructor(message: string) {
+                super(message);
+                this.name = 'ConstructOverloadedError';
+        }
+}
+
 export const IConstructAIProvider = createDecorator<IConstructAIProvider>('construct.aiProvider');
 
 /**

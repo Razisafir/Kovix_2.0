@@ -7,18 +7,18 @@
 
 import { IFileWatcherService, IFileChangeEvent, IFileChangeBatch, IFileWatcherConfig, FileChangeType } from '../common/watcher/fileWatcherService.js';
 import { ILogService } from '../../log/common/log.js';
-import { Emitter } from '../../../../base/common/event.js';
-import { Disposable } from '../../../../base/common/lifecycle.js';
-import { URI } from '../../../../base/common/uri.js';
+import { Emitter } from 'vs/base/common/event.js';
+import { Disposable } from 'vs/base/common/lifecycle.js';
+import { URI } from 'vs/base/common/uri.js';
 
 /**
  * Default file watcher configuration.
  */
 const DEFAULT_CONFIG: IFileWatcherConfig = {
-	debounceMs: 100,
-	animateAppearance: true,
-	animationDurationMs: 200,
-	ignorePatterns: ['**/node_modules/**', '**/.git/**', '**/.construct/**'],
+        debounceMs: 100,
+        animateAppearance: true,
+        animationDurationMs: 200,
+        ignorePatterns: ['**/node_modules/**', '**/.git/**', '**/.construct/**'],
 };
 
 /**
@@ -28,99 +28,99 @@ const DEFAULT_CONFIG: IFileWatcherConfig = {
  * currently uses VS Code's built-in file watcher.
  */
 export class FileWatcherNodeService extends Disposable implements IFileWatcherService {
-	declare readonly _serviceBrand: undefined;
+        declare readonly _serviceBrand: undefined;
 
-	private _isWatching = false;
-	private readonly _watchers = new Map<string, { close(): void }>();
-	private _config: IFileWatcherConfig = { ...DEFAULT_CONFIG };
+        private _isWatching = false;
+        private readonly _watchers = new Map<string, { close(): void }>();
+        private _config: IFileWatcherConfig = { ...DEFAULT_CONFIG };
 
-	// Debounce state
-	private _pendingChanges: IFileChangeEvent[] = [];
-	private _debounceTimer: ReturnType<typeof setTimeout> | null = null;
-	private _coalescedCount = 0;
+        // Debounce state
+        private _pendingChanges: IFileChangeEvent[] = [];
+        private _debounceTimer: ReturnType<typeof setTimeout> | null = null;
+        private _coalescedCount = 0;
 
-	private readonly _onDidChangeFiles = this._register(new Emitter<IFileChangeBatch>());
-	readonly onDidChangeFiles = this._onDidChangeFiles.event;
+        private readonly _onDidChangeFiles = this._register(new Emitter<IFileChangeBatch>());
+        readonly onDidChangeFiles = this._onDidChangeFiles.event;
 
-	constructor(
-		@ILogService private readonly logService: ILogService,
-	) {
-		super();
-		this.logService.info('[FileWatcherNode] Service created');
-	}
+        constructor(
+                @ILogService private readonly logService: ILogService,
+        ) {
+                super();
+                this.logService.info('[FileWatcherNode] Service created');
+        }
 
-	get isWatching(): boolean { return this._isWatching; }
+        get isWatching(): boolean { return this._isWatching; }
 
-	get config(): IFileWatcherConfig { return this._config; }
+        get config(): IFileWatcherConfig { return this._config; }
 
-	updateConfig(config: Partial<IFileWatcherConfig>): void {
-		this._config = { ...this._config, ...config };
-		this.logService.info(`[FileWatcherNode] Config updated: debounceMs=${this._config.debounceMs}`);
-	}
+        updateConfig(config: Partial<IFileWatcherConfig>): void {
+                this._config = { ...this._config, ...config };
+                this.logService.info(`[FileWatcherNode] Config updated: debounceMs=${this._config.debounceMs}`);
+        }
 
-	startWatching(workspaceRoot: URI): void {
-		if (this._isWatching) { return; }
-		this._isWatching = true;
-		this.logService.info(`[FileWatcherNode] Started watching: ${workspaceRoot.fsPath}`);
-		// Full implementation would use fs.watch with debouncing
-	}
+        startWatching(workspaceRoot: URI): void {
+                if (this._isWatching) { return; }
+                this._isWatching = true;
+                this.logService.info(`[FileWatcherNode] Started watching: ${workspaceRoot.fsPath}`);
+                // Full implementation would use fs.watch with debouncing
+        }
 
-	stopWatching(): void {
-		for (const [, watcher] of this._watchers) {
-			try { watcher.close(); } catch { /* ignore */ }
-		}
-		this._watchers.clear();
-		this._isWatching = false;
-		if (this._debounceTimer) {
-			clearTimeout(this._debounceTimer);
-			this._debounceTimer = null;
-		}
-		this._pendingChanges = [];
-	}
+        stopWatching(): void {
+                for (const [, watcher] of this._watchers) {
+                        try { watcher.close(); } catch { /* ignore */ }
+                }
+                this._watchers.clear();
+                this._isWatching = false;
+                if (this._debounceTimer) {
+                        clearTimeout(this._debounceTimer);
+                        this._debounceTimer = null;
+                }
+                this._pendingChanges = [];
+        }
 
-	notifyAgentFileCreated(uri: URI): void {
-		this._addChange(uri, 'created');
-	}
+        notifyAgentFileCreated(uri: URI): void {
+                this._addChange(uri, 'created');
+        }
 
-	notifyAgentFileModified(uri: URI): void {
-		this._addChange(uri, 'modified');
-	}
+        notifyAgentFileModified(uri: URI): void {
+                this._addChange(uri, 'modified');
+        }
 
-	notifyAgentFileDeleted(uri: URI): void {
-		this._addChange(uri, 'deleted');
-	}
+        notifyAgentFileDeleted(uri: URI): void {
+                this._addChange(uri, 'deleted');
+        }
 
-	private _addChange(uri: URI, type: FileChangeType): void {
-		this._pendingChanges.push({ uri, type, timestamp: Date.now() });
-		this._coalescedCount++;
+        private _addChange(uri: URI, type: FileChangeType): void {
+                this._pendingChanges.push({ uri, type, timestamp: Date.now() });
+                this._coalescedCount++;
 
-		// Debounce: reset timer
-		if (this._debounceTimer) {
-			clearTimeout(this._debounceTimer);
-		}
-		this._debounceTimer = setTimeout(() => {
-			this._flushChanges();
-		}, this._config.debounceMs);
-	}
+                // Debounce: reset timer
+                if (this._debounceTimer) {
+                        clearTimeout(this._debounceTimer);
+                }
+                this._debounceTimer = setTimeout(() => {
+                        this._flushChanges();
+                }, this._config.debounceMs);
+        }
 
-	private _flushChanges(): void {
-		if (this._pendingChanges.length === 0) { return; }
+        private _flushChanges(): void {
+                if (this._pendingChanges.length === 0) { return; }
 
-		const batch: IFileChangeBatch = {
-			changes: [...this._pendingChanges],
-			timestamp: Date.now(),
-			coalescedCount: this._coalescedCount,
-		};
+                const batch: IFileChangeBatch = {
+                        changes: [...this._pendingChanges],
+                        timestamp: Date.now(),
+                        coalescedCount: this._coalescedCount,
+                };
 
-		this._pendingChanges = [];
-		this._coalescedCount = 0;
-		this._debounceTimer = null;
+                this._pendingChanges = [];
+                this._coalescedCount = 0;
+                this._debounceTimer = null;
 
-		this._onDidChangeFiles.fire(batch);
-	}
+                this._onDidChangeFiles.fire(batch);
+        }
 
-	override dispose(): void {
-		this.stopWatching();
-		super.dispose();
-	}
+        override dispose(): void {
+                this.stopWatching();
+                super.dispose();
+        }
 }

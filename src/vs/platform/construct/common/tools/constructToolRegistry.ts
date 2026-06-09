@@ -66,7 +66,7 @@ export interface IToolDefinition {
         /** Whether this tool requires network access */
         requiresNetwork: boolean;
         /** Category for UI grouping */
-        category: 'file' | 'terminal' | 'search' | 'network' | 'system';
+        category: 'file' | 'terminal' | 'search' | 'network' | 'system' | 'security';
 }
 
 /**

@@ -59,7 +59,8 @@ interface ToolLogEntry {
 export class ConstructAgentViewPane extends ViewPane {
 
         private messageContainer!: HTMLElement;
-        private inputBox!: HTMLInputElement;
+        private inputBox!: HTMLTextAreaElement;
+        private clearBtn!: HTMLButtonElement;
         private sendBtn!: HTMLButtonElement;
         private stopBtn!: HTMLButtonElement;
         private statusIndicator!: HTMLElement;
@@ -160,7 +161,21 @@ export class ConstructAgentViewPane extends ViewPane {
                 providerLabel.style.cssText = `font-size: 10px; color: #4A5568;`;
                 providerLabel.textContent = this.currentModelInfo.isLocal ? 'local' : 'cloud';
 
+                // --- Phase 4: Settings gear icon ---
+                const settingsBtn = dom.$('button.construct-settings-btn') as HTMLButtonElement;
+                settingsBtn.textContent = '\u2699'; // ⚙
+                settingsBtn.style.cssText = `
+                        background: transparent; border: none; color: #4A5568;
+                        cursor: pointer; font-size: 14px; padding: 2px 4px;
+                        border-radius: 3px;
+                `;
+                settingsBtn.title = 'API Settings';
+                settingsBtn.onclick = () => {
+                        this.commandService.executeCommand('construct.openApiSettings');
+                };
+
                 modelPickerBar.appendChild(this.modelPickerBtn);
+                modelPickerBar.appendChild(settingsBtn);
                 modelPickerBar.appendChild(providerLabel);
                 container.appendChild(modelPickerBar);
 
@@ -215,14 +230,21 @@ export class ConstructAgentViewPane extends ViewPane {
                 const inputArea = dom.$('.construct-input-area');
                 inputArea.style.cssText = `padding: 8px; border-top: 1px solid #1A1F2E; display: flex; gap: 6px; align-items: center;`;
 
-                this.inputBox = dom.$('input.construct-chat-input') as HTMLInputElement;
-                this.inputBox.type = 'text';
+                this.inputBox = document.createElement('textarea');
+                this.inputBox.className = 'construct-chat-input';
+                this.inputBox.rows = 1;
                 this.inputBox.placeholder = 'Ask Construct anything...';
                 this.inputBox.style.cssText = `
                         flex: 1; background: #0A0E1A; border: 1px solid #1A1F2E;
                         border-radius: 4px; padding: 8px 10px; color: #E0E7FF;
-                        font-size: 13px; outline: none;
+                        font-size: 13px; outline: none; resize: none;
+                        min-height: 36px; max-height: 200px;
+                        font-family: inherit; line-height: 1.4;
                 `;
+                this.inputBox.addEventListener('input', () => {
+                        this.inputBox.style.height = 'auto';
+                        this.inputBox.style.height = Math.min(this.inputBox.scrollHeight, 200) + 'px';
+                });
 
                 this.sendBtn = dom.$('button.construct-send-btn') as HTMLButtonElement;
                 this.sendBtn.textContent = '\u2192'; // Right arrow
@@ -251,6 +273,8 @@ export class ConstructAgentViewPane extends ViewPane {
                         // Add user message bubble
                         this.addUserMessage(text);
                         this.inputBox.value = '';
+                        this.inputBox.style.height = '36px';
+                        this.updateClearBtnVisibility();
 
                         // Auto-learn from user message
                         if (this.constructMemory.config.enabled && this.constructMemory.config.autoLearn) {
@@ -288,9 +312,20 @@ export class ConstructAgentViewPane extends ViewPane {
                         await this.runPlanActFlow(taskWithContext);
                 };
 
+                // --- Phase 4: Clear button ---
+                this.clearBtn = dom.$('button.construct-clear-btn') as HTMLButtonElement;
+                this.clearBtn.textContent = '\uD83D\uDDB1'; // 🗑
+                this.clearBtn.style.cssText = `
+                        background: transparent; color: #4A5568; border: none;
+                        cursor: pointer; font-size: 14px; padding: 4px 6px;
+                        display: none; border-radius: 3px;
+                `;
+                this.clearBtn.title = 'Clear chat';
+                this.clearBtn.onclick = () => { this.clearMessages(); };
+
                 this.sendBtn.onclick = sendMessage;
                 this.inputBox.onkeydown = (e) => {
-                        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey || !e.shiftKey)) {
+                        if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault();
                                 sendMessage();
                         }
@@ -304,6 +339,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 };
 
                 inputArea.appendChild(this.inputBox);
+                inputArea.appendChild(this.clearBtn);
                 inputArea.appendChild(this.stopBtn);
                 inputArea.appendChild(this.sendBtn);
                 container.appendChild(inputArea);
@@ -384,6 +420,13 @@ export class ConstructAgentViewPane extends ViewPane {
 
                 // Initial model info load
                 this.refreshModelPickerInfo();
+
+                // --- Phase 4: Wire construct.newChat to clear ---
+                this._register(this.commandService.onWillExecuteCommand(e => {
+                        if (e.commandId === 'construct.newChat') {
+                                this.clearMessages();
+                        }
+                }));
         }
 
         /**
@@ -814,6 +857,79 @@ export class ConstructAgentViewPane extends ViewPane {
 
         private scrollToBottom(): void {
                 this.messageContainer.scrollTop = this.messageContainer.scrollHeight;
+        }
+
+        /**
+         * Phase 4: Clear all messages and reset to welcome state.
+         */
+        private clearMessages(): void {
+                this.messageContainer.replaceChildren();
+                this.messageCount = 0;
+                this.currentTaskId = null;
+                this.pendingDiffs = [];
+                this.diffCounter = 0;
+                this.toolLogEntries = [];
+                this.toolLogContainer = null;
+
+                // Re-render welcome message
+                const welcome = dom.$('.construct-welcome');
+                welcome.style.cssText = `padding: 16px; text-align: center;`;
+
+                const logo = dom.$('.construct-logo');
+                logo.style.cssText = `font-size: 32px; margin-bottom: 8px; color: #00E5FF;`;
+                logo.textContent = '\u2B21';
+
+                const title = dom.$('.construct-title');
+                title.style.cssText = `font-size: 14px; font-weight: 600; color: #E0E7FF; margin-bottom: 4px;`;
+                title.textContent = 'Construct Agent';
+
+                const subtitle = dom.$('.construct-subtitle');
+                subtitle.style.cssText = `font-size: 12px; color: #4A5568; margin-bottom: 12px;`;
+                subtitle.textContent = 'AI-powered coding assistant';
+
+                const statusEl = dom.$('.construct-status');
+                const stateConfig: Record<ExecutionState, { text: string; color: string }> = {
+                        idle: { text: '\u25CF Ready', color: '#00C853' },
+                        planning: { text: '\u25CF Planning...', color: '#FFB300' },
+                        awaiting_approval: { text: '\u25CF Awaiting Approval', color: '#FFB300' },
+                        executing: { text: '\u25CF Executing...', color: '#00E5FF' },
+                        complete: { text: '\u25CF Complete', color: '#00C853' },
+                        error: { text: '\u25CF Error', color: '#FF4444' },
+                        stopped: { text: '\u25CF Stopped', color: '#FF9800' },
+                };
+                const cfg = stateConfig.idle;
+                statusEl.style.cssText = `font-size: 11px; color: ${cfg.color}; margin-bottom: 6px;`;
+                statusEl.textContent = cfg.text;
+
+                const memoryStatus = dom.$('.construct-memory-status');
+                memoryStatus.style.cssText = `font-size: 10px; color: ${this.constructMemory.isInitialized ? '#00E5FF' : '#4A5568'}; margin-bottom: 8px;`;
+                memoryStatus.textContent = this.constructMemory.isInitialized
+                        ? '[MEMORY] Connected'
+                        : '[MEMORY] Local only';
+
+                const hint = dom.$('.construct-hint');
+                hint.style.cssText = `font-size: 11px; color: #4A5568; font-family: monospace; background: #0A0E1A; border-radius: 4px; padding: 6px 10px; display: inline-block;`;
+                hint.textContent = 'Ctrl+Shift+I  Inline edit  |  Ctrl+Shift+C  Focus panel';
+
+                welcome.appendChild(logo);
+                welcome.appendChild(title);
+                welcome.appendChild(subtitle);
+                welcome.appendChild(statusEl);
+                welcome.appendChild(memoryStatus);
+                welcome.appendChild(hint);
+                this.messageContainer.appendChild(welcome);
+
+                this.setExecutionState('idle');
+                this.updateClearBtnVisibility();
+        }
+
+        /**
+         * Phase 4: Show clear button only when messages exist beyond the welcome.
+         */
+        private updateClearBtnVisibility(): void {
+                if (!this.clearBtn) { return; }
+                const hasMessages = this.messageContainer.querySelectorAll('.construct-user-msg, .construct-agent-msg').length > 0;
+                this.clearBtn.style.display = hasMessages ? 'inline-block' : 'none';
         }
 
         /**

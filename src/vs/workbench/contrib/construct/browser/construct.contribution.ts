@@ -378,6 +378,53 @@ registerAction2(class OpenApiSettingsAction extends Action2 {
                 }
 });
 
+registerAction2(class SetApiKeyAction extends Action2 {
+                constructor() {
+                                super({
+                                                id: 'construct.setApiKey',
+                                                title: localize2('setApiKey', "Set API Key"),
+                                                f1: true,
+                                                category: localize2('constructCategoryApiKey', "Construct"),
+                                });
+                }
+                async run(accessor: ServicesAccessor): Promise<void> {
+                                const keyManager = accessor.get(ISecureKeyManager);
+                                const notificationService = accessor.get(INotificationService);
+                                const quickInputService = accessor.get(IQuickInputService);
+                                const key = await quickInputService.input({
+                                                prompt: 'Enter your Anthropic API key',
+                                                password: true,
+                                                placeHolder: 'sk-ant-...',
+                                                validateInput: async (value: string) => {
+                                                                if (!value) { return 'Key cannot be empty'; }
+                                                                if (!value.startsWith('sk-ant-')) { return 'Key must start with sk-ant-'; }
+                                                                return undefined as unknown as string;
+                                                }
+                                });
+                                if (key) {
+                                                await keyManager.setKey('anthropic', key);
+                                                notificationService.info('CONSTRUCT: Anthropic API key saved.');
+                                }
+                }
+});
+
+registerAction2(class ClearApiKeyAction extends Action2 {
+                constructor() {
+                                super({
+                                                id: 'construct.clearApiKey',
+                                                title: localize2('clearApiKey', "Clear API Key"),
+                                                f1: true,
+                                                category: localize2('constructCategoryApiKey2', "Construct"),
+                                });
+                }
+                async run(accessor: ServicesAccessor): Promise<void> {
+                                const keyManager = accessor.get(ISecureKeyManager);
+                                const notificationService = accessor.get(INotificationService);
+                                await keyManager.deleteKey('anthropic');
+                                notificationService.info('CONSTRUCT: Anthropic API key removed.');
+                }
+});
+
 registerAction2(class TestCloudConnectionAction extends Action2 {
                 constructor() {
                                 super({
@@ -662,4 +709,28 @@ registerAction2(class OpenOnboardingWizardAction extends Action2 {
                 const wizard = instantiationService.createInstance(ConstructOnboardingWizard);
                 wizard.show();
         }
+});
+
+// --- Phase 8: Semantic Memory -- Index Workspace Command ---
+
+registerAction2(class IndexWorkspaceAction extends Action2 {
+	constructor() {
+		super({
+			id: 'construct.indexWorkspace',
+			title: localize2('indexWorkspace', "Index Workspace for Semantic Search"),
+			f1: true,
+			category: localize2('constructCategoryMemory', "Construct"),
+		});
+	}
+	async run(accessor: ServicesAccessor): Promise<void> {
+		const memoryService = accessor.get(IConstructMemoryService);
+		const notificationService = accessor.get(INotificationService);
+		notificationService.info('CONSTRUCT: Indexing workspace for semantic search...');
+		try {
+			await memoryService.addMemory('Workspace indexing initiated', { type: 'index-trigger', source: 'workspace-index' });
+			notificationService.info('CONSTRUCT: Workspace indexing complete.');
+		} catch (err) {
+			notificationService.error('CONSTRUCT: Workspace indexing failed: ' + (err instanceof Error ? err.message : String(err)));
+		}
+	}
 });

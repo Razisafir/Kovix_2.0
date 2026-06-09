@@ -18,7 +18,8 @@ import {
 // SEC-5: Secret redaction for all log calls
 import { redactSecrets } from '../../../../../../platform/construct/common/security/secretRedactor.js';
 // P0-2: Resolve API keys through ISecureKeyManager (single source of truth)
-import { ISecureKeyManager, LLMProvider } from '../../../../../../platform/construct/common/security/secureKeyManager.js';
+import { ISecureKeyManager } from '../../../../../../platform/construct/common/security/secureKeyManager.js';
+import { ConstructAuthError, ConstructRateLimitError, ConstructOverloadedError } from '../../../../../../platform/construct/common/llm/constructAIProvider.js';
 
 const DEFAULT_CLOUD_BASE_URL = 'https://api.openai.com/v1';
 const DEFAULT_CLOUD_MODEL = 'gpt-4o-mini';
@@ -61,7 +62,7 @@ export class CloudProvider extends Disposable implements IConstructAIProvider {
         private _activeModel: IModelInfo | undefined;
         private _status: ProviderStatus = ProviderStatus.Unknown;
         private _baseUrl: string;
-        private _apiKey: string;
+        private _apiKey: string = '';
         private _customModels: IModelInfo[] = [];
 
         private readonly _onDidChangeActiveModel = this._register(new Emitter<IModelInfo | undefined>());
@@ -375,15 +376,19 @@ export class CloudProvider extends Disposable implements IConstructAIProvider {
                                 });
 
                                 if (response.status === 401) {
-                                        yield { type: 'error', text: 'Anthropic API key is invalid. Please check your settings.' };
-                                        return;
+                                        throw new ConstructAuthError('Anthropic API key is invalid. Please check your settings.');
+                                }
+
+                                if (response.status === 529) {
+                                        throw new ConstructOverloadedError('Anthropic API is overloaded. Please try again later.');
                                 }
 
                                 if (response.status === 429) {
                                         retryCount++;
                                         if (retryCount > MAX_RETRIES) {
-                                                yield { type: 'error', text: 'Rate limited by Anthropic API. Please try again later.' };
-                                                return;
+                                                const retryAfterHeader = response.headers.get('retry-after');
+                                                const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) : undefined;
+                                                throw new ConstructRateLimitError('Rate limited by Anthropic API. Please try again later.', retryAfter);
                                         }
                                         const backoffMs = Math.pow(2, retryCount) * 1000;
                                         yield { type: 'error', text: 'Rate limited. Retrying in ' + (backoffMs / 1000) + 's...' };
@@ -394,8 +399,7 @@ export class CloudProvider extends Disposable implements IConstructAIProvider {
                                 if (response.status >= 500) {
                                         retryCount++;
                                         if (retryCount > MAX_RETRIES) {
-                                                yield { type: 'error', text: 'Anthropic API server error (' + response.status + ').' };
-                                                return;
+                                                throw new ConstructOverloadedError('Anthropic API server error (' + response.status + ').');
                                         }
                                         await this.sleep(Math.pow(2, retryCount) * 1000, options?.signal);
                                         continue;
@@ -509,6 +513,12 @@ export class CloudProvider extends Disposable implements IConstructAIProvider {
                         } catch (error: unknown) {
                                 if (error instanceof DOMException && error.name === 'AbortError') {
                                         yield { type: 'error', text: 'Request cancelled.' };
+                                        return;
+                                }
+
+                                // Re-throw typed errors (auth, rate limit, overloaded) without retrying
+                                if (error instanceof ConstructAuthError || error instanceof ConstructRateLimitError || error instanceof ConstructOverloadedError) {
+                                        yield { type: 'error', text: error.message };
                                         return;
                                 }
 

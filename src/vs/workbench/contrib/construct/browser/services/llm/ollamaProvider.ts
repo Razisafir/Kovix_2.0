@@ -51,10 +51,10 @@ export class OllamaProvider extends Disposable implements IConstructAIProvider {
 
         constructor(
                 @ILogService private readonly logService: ILogService,
-                @IConfigurationService configurationService: IConfigurationService,
+                @IConfigurationService private readonly _configurationService: IConfigurationService,
         ) {
                 super();
-                this._baseUrl = configurationService.getValue<string>('construct.ollama.baseUrl') || OLLAMA_BASE_URL;
+                this._baseUrl = _configurationService.getValue<string>('construct.ollama.baseUrl') || OLLAMA_BASE_URL;
                 this.logService.info('[OllamaProvider] Initialized (baseUrl: ' + this._baseUrl + ')');
         }
 
@@ -84,11 +84,21 @@ export class OllamaProvider extends Disposable implements IConstructAIProvider {
 
                         this._setStatus(ProviderStatus.Available);
 
-                        // Auto-select first model if none is active
+                        // Auto-select model: prefer configured model, fall back to first available
                         if (!this._activeModel) {
                                 const models = await this.listModels();
                                 if (models.length > 0) {
-                                        await this.setActiveModel(models[0].id);
+                                        const configuredModel = this._configurationService.getValue<string>('construct.ollama.model');
+                                        if (configuredModel) {
+                                                const found = models.find(m => m.id === configuredModel || m.id.startsWith(configuredModel + ':'));
+                                                if (found) {
+                                                        await this.setActiveModel(found.id);
+                                                } else {
+                                                        await this.setActiveModel(models[0].id);
+                                                }
+                                        } else {
+                                                await this.setActiveModel(models[0].id);
+                                        }
                                 }
                         }
 

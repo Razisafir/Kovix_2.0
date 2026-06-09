@@ -14,6 +14,7 @@ import { LoadingState, FileChangeEntry } from '../../../../../../platform/constr
 import { IConstructAIService } from '../../../../../../platform/construct/common/llm/constructAIService.js';
 import { IChatMessage, IToolDefinition, IToolCall } from '../../../../../../platform/construct/common/llm/constructAIProvider.js';
 import { IMCPProcess } from '../../../../../../platform/construct/common/mcp/mcpProcess';
+import { IMCPServerManager } from '../../../../../../platform/construct/common/mcp/mcpServerManager.js';
 import { ITerminalExecutor } from '../../../../../../platform/construct/common/terminal/terminalExecutor.js';
 import { IDiffApplier } from '../../../../../../platform/construct/common/editor/diffApplier.js';
 import { IMemoryOrchestrator } from '../../../../../../platform/construct/common/memory/memoryOrchestrator.js';
@@ -180,6 +181,7 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                 @ISnapshotManager private readonly snapshotManager: ISnapshotManager,
                 @IFileWatcherService private readonly fileWatcher: IFileWatcherService,
                 @IPendingChangesService private readonly pendingChanges: IPendingChangesService,
+                @IMCPServerManager private readonly mcpServerManager: IMCPServerManager,
         ) {
                 super();
                 this.logService.info('[AgentLoop] Service created with error recovery, snapshots, file watcher, and pending changes');
@@ -226,14 +228,23 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                 let hadToolCalls = false;
 
                                 // Create a NEW stream for each round with updated conversation
+                                // Create a timeout controller (60s per LLM call)
+                                const timeoutController = new AbortController();
+                                const timeoutId = setTimeout(() => timeoutController.abort(), 60_000);
+                                // Chain user's abort signal with the timeout
+                                if (signal) {
+                                        signal.addEventListener('abort', () => timeoutController.abort());
+                                }
+
                                 const stream = this.aiService.chat(
                                         conversationMessages,
                                         PLANNING_TOOLS,
-                                        { signal, systemPrompt }
+                                        { signal: timeoutController.signal, systemPrompt }
                                 );
 
                                 for await (const event of stream) {
                                         if (signal?.aborted) {
+                                                clearTimeout(timeoutId);
                                                 return { steps: [], summary: 'Cancelled', rawResponse: '' };
                                         }
 
@@ -276,6 +287,8 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                                         throw new Error(event.text);
                                         }
                                 }
+
+                                clearTimeout(timeoutId);
 
                                 // If there were tool calls, add assistant message + tool result messages and continue
                                 if (hadToolCalls && stopReason === 'tool_use') {
@@ -384,14 +397,23 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                 let hasToolCalls = false;
 
                                 // Create a NEW stream for each round with updated conversation
+                                // Create a timeout controller (60s per LLM call)
+                                const timeoutController = new AbortController();
+                                const timeoutId = setTimeout(() => timeoutController.abort(), 60_000);
+                                // Chain user's abort signal with the timeout
+                                if (signal) {
+                                        signal.addEventListener('abort', () => timeoutController.abort());
+                                }
+
                                 const stream = this.aiService.chat(
                                         conversationMessages,
                                         AGENT_TOOLS,
-                                        { signal, systemPrompt }
+                                        { signal: timeoutController.signal, systemPrompt }
                                 );
 
                                 for await (const event of stream) {
                                         if (signal?.aborted) {
+                                                clearTimeout(timeoutId);
                                                 yield { type: 'error', text: '[STOP] Stopped by user', recoverable: false };
                                                 this._isRunning = false;
                                                 return;
@@ -517,6 +539,8 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                                         break;
                                         }
                                 }
+
+                                clearTimeout(timeoutId);
 
                                 // Add remaining text to final summary
                                 if (currentText) {
@@ -659,7 +683,6 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                         if (!query) { return 'Error: query is required'; }
                                         // Delegate to the tool registry which has vector store access
                                         try {
-                                                const { IConstructToolRegistry } = await import('../../../../../../platform/construct/common/tools/constructToolRegistry.js');
                                                 // Use command service to execute via the registry
                                                 const toolResult = await this.commandService.executeCommand('construct.executeTool', 'search_codebase', { query, topK: args.topK ?? 8 });
                                                 return typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult);
@@ -680,8 +703,20 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                         }
                                 }
 
-                                default:
-                                        return `Error: Unknown tool "${name}"`;
+                                default: {
+                                        // Check if this is an MCP tool call (format: serverName__toolName)
+                                        const parts = name.split('__');
+                                        if (parts.length === 2) {
+                                                const [serverName, toolName] = parts;
+                                                try {
+                                                        const result = await this.mcpServerManager.executeTool(serverName, toolName, args);
+                                                        return typeof result === 'string' ? result : JSON.stringify(result);
+                                                } catch (err: unknown) {
+                                                        return 'Error: MCP tool ' + name + ' failed: ' + (err instanceof Error ? err.message : String(err));
+                                                }
+                                        }
+                                        return 'Error: Unknown tool: ' + name;
+                                }
                         }
                 } catch (error) {
                         const msg = error instanceof Error ? error.message : String(error);
