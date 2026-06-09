@@ -3,6 +3,55 @@
 All notable changes to CONSTRUCT IDE are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com)
 
+## [1.0.0-beta] — 2025
+
+### Added (Phase 2)
+
+- LLM Provider Layer: Anthropic (SSE streaming) and Ollama (NDJSON streaming) providers
+- Typed error classes: ConstructAuthError, ConstructRateLimitError, ConstructOverloadedError, ConstructNetworkError
+- API key management via VS Code SecretStorage (construct.setApiKey / construct.clearApiKey commands)
+- Configuration settings: construct.provider, construct.anthropic.model, construct.ollama.baseUrl, construct.ollama.model, construct.maxTokens
+
+### Added (Phase 3)
+
+- Agent loop with full plan/act cycle: message → system prompt → LLM → parse tool calls → execute → loop
+- Core tools: file_read (with 100KB truncation, path traversal protection), file_write (overwrite/append/create_only modes), run_terminal_command (with allowlist + approval gate), list_directory (recursive, .gitignore aware)
+- Tool registry with auto-generated system prompt tools section
+- Max iteration limit (15 rounds), per-call timeout (60s), error propagation, cancellation support
+
+### Added (Phase 4)
+
+- CONSTRUCT sidebar panel with Activity Bar icon
+- Chat view: scrollable message list, textarea input (Shift+Enter for newlines), send/stop/clear buttons
+- Status bar integration: provider/model indicator, pending changes counter
+- Streaming response rendering with auto-scroll
+- Provider status and configuration UI (gear icon, test connection)
+
+### Added (Phase 6)
+
+- Security tools: nmap_scan (XML output parsing, confirmation gate), ghidra_decompile (Docker headless), nuclei_scan (JSON output parsing, severity filtering)
+- construct.enableSecurityTools configuration setting
+- All security tools gated behind user confirmation dialogs
+
+### Added (Phase 7)
+
+- MCP server management: spawn, communicate (JSON-RPC over stdio), auto-restart (3 retries with exponential backoff)
+- MCP tool dispatch: serverName__toolName routing in agent loop
+- construct.mcp.servers configuration for server definitions
+
+### Added (Phase 8)
+
+- Semantic memory: Ollama embedding service (/api/embed with nomic-embed-text, pseudo-embedding fallback)
+- Workspace indexing command (construct.indexWorkspace)
+- Memory integration: top-5 relevant context chunks prepended to system prompt
+
+### Packaging (Phase 9)
+
+- Documented packaging approaches and system requirements (PACKAGING.md)
+- VSIX packaging confirmed N/A (fork architecture, not an extension)
+- Gulp pipeline verified: vscode-linux-x64, deb, rpm, snap targets available
+- Full build requires 16+ GB RAM (OOM on 8 GB system)
+
 ## [0.1.0-beta] — 2025
 
 ### Added

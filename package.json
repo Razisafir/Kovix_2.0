@@ -8,7 +8,7 @@
     "name": "Razisafir"
   },
   "homepage": "https://github.com/Razisafir/CONSTRUCT-VSCODE",
-  "license": "MIT",
+  "license": "SEE LICENSE IN CONSTRUCT_LICENSE.txt",
   "main": "./out/main.js",
   "type": "module",
   "private": true,

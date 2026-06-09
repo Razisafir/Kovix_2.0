@@ -4,7 +4,7 @@
 
 **An offline-first AI coding environment. Autonomous agents. Local LLMs. No cloud required.**
 
-[![Version](https://img.shields.io/badge/version-0.1.0--beta-orange.svg)](https://github.com/Razisafir/CONSTRUCT-VSCODE)
+[![Version](https://img.shields.io/badge/version-1.0.0--beta-orange.svg)](https://github.com/Razisafir/CONSTRUCT-VSCODE)
 [![License](https://img.shields.io/badge/license-dual--MIT%2Fproprietary-blue.svg)](./CONSTRUCT_LICENSE.txt)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/Razisafir/CONSTRUCT-VSCODE)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/Razisafir/CONSTRUCT-VSCODE/actions)
@@ -23,6 +23,8 @@ CONSTRUCT IDE is a fork of VS Code rebuilt for AI-native development. It runs la
 - **Offline-first: runs on Ollama, LM Studio, or local ONNX models** — GPU-accelerated inference with automatic fallback to in-process ONNX (Xenova) or cloud APIs
 - **Built-in Kali Linux terminal on Windows via WSL2** — Detects Kali WSL2 automatically and adds a dedicated terminal profile for security testing workflows
 - **Codebase memory: semantic search over your entire workspace** — Indexes your workspace into vector embeddings (Ollama `nomic-embed-text` + Qdrant) and injects relevant context into every agent conversation; falls back to BM25 keyword search when embeddings aren't available
+- **Security tooling: nmap, Ghidra, Nuclei** — Integrated network scanning, binary decompilation, and vulnerability scanning with safety gates requiring explicit user confirmation
+- **MCP server support** — Connect any Model Context Protocol server to extend agent capabilities with custom tools
 - **Multi-model: switch between local and cloud models in one click** — Status bar model picker lets you swap providers instantly
 - **No telemetry, no Microsoft account, no subscription** — All Microsoft telemetry (1DS, Application Insights) removed; Open VSX gallery replaces the proprietary marketplace
 
@@ -38,6 +40,9 @@ CONSTRUCT IDE is a fork of VS Code rebuilt for AI-native development. It runs la
 - **Git**
 - For local AI: [Ollama](https://ollama.ai) (recommended) or [LM Studio](https://lmstudio.ai)
 - For Kali terminal (Windows only): WSL2 + Kali Linux from Microsoft Store
+- For Ghidra decompilation: [Docker](https://www.docker.com) + `ghidra-headless` image
+
+See [INSTALL.md](./INSTALL.md) for detailed platform-specific installation instructions.
 
 ## Install & Build from Source
 
@@ -49,6 +54,8 @@ NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 ./scripts/code.sh        # Linux/macOS
 .\scripts\code.bat       # Windows
 ```
+
+For pre-built binaries, see the [GitHub Releases](https://github.com/Razisafir/CONSTRUCT-VSCODE/releases) page and [INSTALL.md](./INSTALL.md) for platform-specific instructions.
 
 ## First Launch
 
@@ -62,7 +69,7 @@ When you start CONSTRUCT for the first time, the setup wizard opens automaticall
 Pull the recommended models before launching:
 
 ```bash
-ollama pull mistral
+ollama pull llama3.2
 ollama pull nomic-embed-text
 ```
 
@@ -72,10 +79,33 @@ You can re-open the wizard anytime via the Command Palette: `Construct: Open Set
 
 | Shortcut | Action |
 |---|---|
-| `Ctrl+Shift+K` | Open CONSTRUCT chat |
+| `Ctrl+Shift+K` | Open CONSTRUCT Agent panel |
+| `Ctrl+Shift+I` | Show inline agent |
 | `Ctrl+Enter` | Send message |
 | `Ctrl+Shift+Enter` | Accept all pending diffs |
 | `Ctrl+Shift+Escape` | Reject all pending diffs |
+
+## Commands
+
+All CONSTRUCT commands are available from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`):
+
+| Command | Description |
+|---|---|
+| `construct.focusPanel` | Open the Construct Agent panel (`Ctrl+Shift+K`) |
+| `construct.newChat` | Start a new chat session |
+| `construct.setApiKey` | Set Anthropic API key (stored in OS keychain) |
+| `construct.clearApiKey` | Remove stored API key |
+| `construct.switchProvider` | Switch between Ollama / Xenova / Cloud providers |
+| `construct.selectModel` | Select the active AI model |
+| `construct.indexWorkspace` | Index workspace for semantic search |
+| `construct.openMemoryPanel` | Open the Memory panel |
+| `construct.searchMemories` | Search stored memories |
+| `construct.addMemory` | Add a manual memory entry |
+| `construct.testCloudConnection` | Test cloud AI connection |
+| `construct.testMemoryConnection` | Test memory service connection |
+| `construct.openApiSettings` | Open Construct API settings |
+| `construct.undoTask` | Undo last agent task |
+| `construct.showInlineAgent` | Show inline agent (`Ctrl+Shift+I`) |
 
 ## Configuration
 
@@ -83,21 +113,136 @@ CONSTRUCT stores workspace settings in `.construct/settings.json`:
 
 ```json
 {
-  "defaultModel": "mistral",
+  "defaultModel": "llama3.2",
   "ollamaEndpoint": "http://localhost:11434",
   "kaliEnabled": false,
   "providerType": "ollama",
-  "embeddingModel": "nomic-embed-text"
+  "embeddingModel": "nomic-embed-text",
+  "enableSecurityTools": true
 }
 ```
 
 | Field | Description |
 |---|---|
-| `defaultModel` | Model ID used for agent conversations (e.g. `mistral`, `llama3`) |
+| `defaultModel` | Model ID used for agent conversations (e.g. `llama3.2`, `mistral`) |
 | `ollamaEndpoint` | Ollama API base URL (default: `http://localhost:11434`) |
 | `kaliEnabled` | Enable the Kali Linux terminal profile (Windows + WSL2 only) |
 | `providerType` | AI provider backend: `ollama`, `xenova`, or `cloud` |
 | `embeddingModel` | Embedding model for semantic search (default: `nomic-embed-text`) |
+| `enableSecurityTools` | Enable security tools (nmap, Ghidra, Nuclei) in agent |
+
+## Security Tooling
+
+CONSTRUCT IDE integrates professional security tools directly into the agent loop. Every security tool has a **safety gate** — the agent must receive explicit user confirmation before execution.
+
+### nmap_scan — Network Scanner
+
+Target scanning with XML output parsing. The agent can scan hosts, detect open ports, and identify running services.
+
+```
+User: Scan 192.168.1.100 for open ports
+Agent: I'd like to run nmap to scan that target. Approve? [Yes/No]
+→ Parses XML output, summarizes open ports and services
+```
+
+Requires: `nmap` installed on the system (`sudo apt-get install nmap` / `brew install nmap`)
+
+### ghidra_decompile — Binary Decompilation
+
+Binary decompilation via Docker headless Ghidra. Upload a binary and get decompiled C-like source code.
+
+```
+User: Decompile the function at 0x00401000 in malware.exe
+Agent: Running Ghidra headless decompilation. Approve? [Yes/No]
+→ Returns decompiled pseudocode from the specified address
+```
+
+Requires: Docker + `ghidra-headless` image (`docker pull ghidra-headless`)
+
+### nuclei_scan — Vulnerability Scanner
+
+Template-based vulnerability scanning with severity filtering and JSON output parsing.
+
+```
+User: Scan https://example.com for CVEs
+Agent: Running Nuclei vulnerability scan. Approve? [Yes/No]
+→ Parses JSON output, lists findings by severity (critical/high/medium/low)
+```
+
+Requires: `nuclei` installed (`go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest`)
+
+## MCP Servers
+
+CONSTRUCT IDE supports the **Model Context Protocol (MCP)**, allowing you to connect external tool servers that extend the agent's capabilities. MCP servers provide additional tools the agent can call during conversations.
+
+### Configuration
+
+MCP servers are configured via the `construct.mcp.servers` setting (array of objects):
+
+```json
+{
+  "construct.mcp.servers": [
+    {
+      "name": "my-server",
+      "command": "node",
+      "args": ["path/to/mcp-server.js"],
+      "env": {
+        "API_KEY": "your-key-here"
+      }
+    }
+  ]
+}
+```
+
+| Field | Description |
+|---|---|
+| `name` | Unique identifier for the MCP server (used in tool dispatch) |
+| `command` | Executable to launch the server |
+| `args` | Arguments passed to the command |
+| `env` | Environment variables for the server process |
+
+### Tool Dispatch Format
+
+Tools from MCP servers are dispatched using the format: `mcpServerName__toolName`
+
+For example, a server named `my-server` exposing a tool `query_database` would be invoked as `my-server__query_database`.
+
+### Managing MCP Servers
+
+- Add servers via Settings → search `construct.mcp.servers`
+- Restart CONSTRUCT IDE after adding or removing servers
+- The agent automatically discovers available MCP tools and includes them in its tool registry
+- MCP tools respect the same safety blocklist as built-in tools
+
+## Semantic Memory
+
+CONSTRUCT IDE indexes your entire workspace for semantic search, enabling the agent to retrieve relevant context without you having to specify file paths.
+
+### How It Works
+
+1. **Indexing** — Run `Construct: Index Workspace` (or it triggers automatically). Files are chunked and embedded using Ollama's `nomic-embed-text` model (or falls back to pseudo-embeddings).
+2. **Storage** — Embeddings are stored in a local Qdrant vector database running in-process. BM25 keyword indexing runs as a fallback.
+3. **Retrieval** — When you ask the agent a question, relevant code chunks are injected into the conversation context automatically.
+
+### Commands
+
+| Command | Description |
+|---|---|
+| `construct.indexWorkspace` | Build or rebuild the workspace index |
+| `construct.openMemoryPanel` | View and manage indexed memories |
+| `construct.searchMemories` | Search stored memories by query |
+| `construct.addMemory` | Add a manual memory entry |
+
+### Configuration
+
+```json
+{
+  "embeddingModel": "nomic-embed-text",
+  "ollamaEndpoint": "http://localhost:11434"
+}
+```
+
+If Ollama is unavailable, the system falls back to BM25 keyword search — no embeddings required.
 
 ## Architecture
 
@@ -105,26 +250,34 @@ CONSTRUCT IDE is built on the [VS Code open-source project](https://github.com/m
 
 - **VS Code fork** — Full editor with all upstream features intact
 - **`IConstructAIService`** — Unified AI provider interface for Ollama, Xenova ONNX, and cloud backends
-- **Agent loop** — Plan/act cycle with 5 built-in tools (read, write, run, search, memory)
-- **MCP tool registry** — Extensible tool execution engine with command safety blocklist
+- **Agent loop** — Plan/act cycle with built-in tools (read, write, run, search, memory) plus security tools and MCP extensions
+- **MCP tool registry** — Extensible tool execution engine with command safety blocklist; dispatches MCP tools via `serverName__toolName` format
+- **Security tools** — nmap_scan, ghidra_decompile, nuclei_scan with user-approval safety gates
 - **Qdrant + BM25 memory** — Hybrid retrieval: vector embeddings with keyword fallback
 
 ```
-┌─────────────────────────────────────────────┐
-│               CONSTRUCT IDE                  │
-├──────────┬──────────┬───────────────────────┤
-│  Editor  │  Agent   │   Terminal            │
-│  (VS Code│  Panel   │   (Kali/WSL2)         │
-│   fork)  │          │                       │
-├──────────┴──────────┴───────────────────────┤
-│           IConstructAIService                │
-├──────────┬──────────┬───────────────────────┤
-│ Ollama   │ Xenova   │   Cloud API           │
-│ Provider │ Provider │   Provider            │
-├──────────┴──────────┴───────────────────────┤
-│        MCP Tool Registry + Memory           │
-│     (Qdrant vector · BM25 keyword)          │
-└─────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│                    CONSTRUCT IDE                       │
+├──────────┬──────────┬──────────┬─────────────────────┤
+│  Editor  │  Agent   │ Terminal │  Memory Panel       │
+│ (VS Code │  Panel   │(Kali/    │  (Qdrant/BM25)      │
+│  fork)   │          │ WSL2)    │                     │
+├──────────┴──────────┴──────────┴─────────────────────┤
+│              IConstructAIService                       │
+├──────────┬──────────┬────────────────────────────────┤
+│ Ollama   │ Xenova   │   Cloud API (Anthropic)        │
+│ Provider │ Provider │   Provider                     │
+├──────────┴──────────┴────────────────────────────────┤
+│         Tool Registry (Built-in + MCP + Security)     │
+├─────────────┬───────────────┬────────────────────────┤
+│ Agent Tools │ Security Tools│  MCP Server Tools      │
+│ read/write/ │ nmap_scan /   │  server__tool          │
+│ run/search/ │ ghidra /      │  (user-configured)     │
+│ memory      │ nuclei_scan   │                        │
+├─────────────┴───────────────┴────────────────────────┤
+│           Semantic Memory (Qdrant · BM25)             │
+│          nomic-embed-text embeddings                  │
+└──────────────────────────────────────────────────────┘
 ```
 
 ## Contributing
@@ -139,4 +292,4 @@ We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for:
 
 CONSTRUCT IDE is built on the [VS Code open-source project](https://github.com/microsoft/vscode) which is MIT licensed.
 
-The CONSTRUCT IDE features, agent loop, AI provider system, and all original additions are proprietary. See [CONSTRUCT_LICENSE.txt](./CONSTRUCT_LICENSE.txt) for details.
+The CONSTRUCT IDE features, agent loop, AI provider system, security tools, MCP integration, semantic memory, and all original additions are proprietary. See [CONSTRUCT_LICENSE.txt](./CONSTRUCT_LICENSE.txt) for details.
