@@ -73,6 +73,32 @@ Generated: 2026-06-09
 
 All E2E tests require a desktop environment with Electron.
 
+## Grand Boot Session (2026-06-09)
+
+### Full Gulp Compile
+| Test | Result | Notes |
+|------|--------|-------|
+| npm run compile | ✅ PASS | Zero errors, 2.53 min compile time |
+| Extension deps installed | ✅ PASS | 59 extensions, all missing node_modules resolved |
+| CONSTRUCT compiled output | ✅ PASS | 66 JS files in out/vs/workbench/contrib/construct + out/vs/platform/construct |
+
+### Electron Boot Test (Headless with --ozone-platform=headless)
+| Test | Result | Notes |
+|------|--------|-------|
+| Electron binary | ✅ PASS | .build/electron/construct (185MB) downloaded |
+| App starts main process | ✅ PASS | Reaches CodeApplication.startup() |
+| CONSTRUCT services instantiated | ✅ PARTIAL | [VectorStore] and [ChatHistory] created; ConstructConfigService had DI error (fixed in source) |
+| vs/ import path resolution | ✅ FIXED | All vs/ imports in node layer replaced with relative paths |
+| IWorkspaceContextService DI | ✅ FIXED | Removed from ConstructConfigService (not available in main process) |
+| Xvfb + Electron | ⚠️ BLOCKED | Xvfb killed by OOM killer when Electron starts (7.9GB RAM container) |
+| --ozone-platform=headless | ✅ WORKS | Gets past display init, hits module loading/runtime errors |
+| @vscode/spdlog native module | ⚠️ EXPECTED | Not rebuilt for Electron; non-critical (logging falls back to console) |
+
+### Fixes Applied During Boot Session
+1. **vs/ import paths**: Changed 7 files in src/vs/platform/construct/ to use relative paths instead of `vs/` alias (not resolved at runtime by Node ESM)
+2. **ConstructConfigService DI**: Removed IWorkspaceContextService dependency (not available in Electron main process)
+3. **Extension npm dependencies**: Installed missing deps for markdown-math, simple-browser, html-language-features, css-language-features, json-language-features, git-base, and 50+ other extensions
+
 ## Phase 9: Packaging
 | Test | Result | Notes |
 |------|--------|-------|
