@@ -6,7 +6,7 @@ Installer: construct_1.0.0-god-mode_amd64.deb (151.2 MB)
 
 ## Executive Summary
 
-CONSTRUCT IDE v0.1.0-beta.10 launches successfully on Linux. The window title is confirmed as **"Construct IDE"** via X11 window property inspection (`_NET_WM_NAME`). CLI reports **"Construct IDE 1.0.0-god-mode"**. All static rebranding checks pass with zero "Visual Studio Code" references in user-facing workbench code. All Phase 16 rebranding gaps are confirmed fixed in this build.
+CONSTRUCT IDE v0.1.0-beta.10 launches successfully on Linux. The window title is confirmed as **"Kovix"** via X11 window property inspection (`_NET_WM_NAME`). CLI reports **"Kovix 1.0.0-god-mode"**. All static rebranding checks pass with zero "Visual Studio Code" references in user-facing workbench code. All Phase 16 rebranding gaps are confirmed fixed in this build.
 
 ## Beta.10 Specific Fixes Verified
 
@@ -22,7 +22,7 @@ CONSTRUCT IDE v0.1.0-beta.10 launches successfully on Linux. The window title is
 | Check | Expected | Actual | Pass/Fail |
 |-------|----------|--------|-----------|
 | `construct --version` | Version string | `1.0.0-god-mode` + `c6ebb185...` + `x64` | ✅ |
-| `construct --help` header | "Construct IDE" | "Construct IDE 1.0.0-god-mode" | ✅ |
+| `construct --help` header | "Kovix" | "Kovix 1.0.0-god-mode" | ✅ |
 | `construct --help` usage | "construct [options]" | "construct [options][paths...]" | ✅ |
 | `construct --help` telemetry | "CONSTRUCT IDE collects" | **"CONSTRUCT IDE collects"** | ✅ |
 | `construct --help` tunnel | "construct.dev" | **"construct.dev"** | ✅ |
@@ -34,7 +34,7 @@ CONSTRUCT IDE v0.1.0-beta.10 launches successfully on Linux. The window title is
 | App launches | Process starts | PID confirmed running | ✅ |
 | No crash on launch | Stable for 10+ seconds | App running at 10s mark | ✅ |
 | Window appears | X11 window created | Window ID found (1024x768) | ✅ |
-| Window title (`_NET_WM_NAME`) | "Construct IDE" | **"Construct IDE"** | ✅ |
+| Window title (`_NET_WM_NAME`) | "Kovix" | **"Kovix"** | ✅ |
 | Window class (`WM_CLASS`) | "CONSTRUCT IDE" | **('construct ide', 'CONSTRUCT IDE')** | ✅ |
 | Window is viewable | Map state = Viewable | **Viewable** | ✅ |
 | Dark theme renders | Window content visible | RGB(31,31,31) dark theme background fills window | ✅ |
@@ -46,17 +46,17 @@ CONSTRUCT IDE v0.1.0-beta.10 launches successfully on Linux. The window title is
 | Field | Expected | Actual | Pass/Fail |
 |-------|----------|--------|-----------|
 | nameShort | "Construct" | "Construct" | ✅ |
-| nameLong | "Construct IDE" | "Construct IDE" | ✅ |
+| nameLong | "Kovix" | "Kovix" | ✅ |
 | applicationName | "construct" | "construct" | ✅ |
 | dataFolderName | ".construct" | ".construct" | ✅ |
 | urlProtocol | "construct" | "construct" | ✅ |
-| win32DirName | "Construct IDE" | "Construct IDE" | ✅ |
+| win32DirName | "Kovix" | "Kovix" | ✅ |
 | win32AppUserModelId | "Construct.IDE" | "Construct.IDE" | ✅ |
-| darwinBundleIdentifier | "ai.construct.ide" | "ai.construct.ide" | ✅ |
+| darwinBundleIdentifier | "ai.kovix.ide" | "ai.kovix.ide" | ✅ |
 | linuxIconName | "construct" | "construct" | ✅ |
 | tunnelApplicationName | "construct-tunnel" | "construct-tunnel" | ✅ |
 | serverApplicationName | "construct-server" | "construct-server" | ✅ |
-| licenseUrl | Razisafir repo | github.com/Razisafir/CONSTRUCT-VSCODE | ✅ |
+| licenseUrl | Razisafir repo | github.com/Razisafir/KOVIX | ✅ |
 | extensionsGallery | Open VSX | Open VSX | ✅ |
 
 ### LICENSE.txt
@@ -70,12 +70,12 @@ CONSTRUCT IDE v0.1.0-beta.10 launches successfully on Linux. The window title is
 | Check | Expected | Actual | Pass/Fail |
 |-------|----------|--------|-----------|
 | Package name | "construct" | "construct" | ✅ |
-| Desktop entry Name | "Construct IDE" | "Construct IDE" | ✅ |
+| Desktop entry Name | "Kovix" | "Kovix" | ✅ |
 | Desktop entry Icon | "construct" | "construct" | ✅ |
 | Desktop entry MimeType | "x-scheme-handler/construct" | "x-scheme-handler/construct" | ✅ |
 | MIME workspace | "application/x-construct-workspace" | "application/x-construct-workspace" | ✅ |
 | Binary | `/usr/bin/construct` | `/usr/bin/construct` | ✅ |
-| Maintainer | "CONSTRUCT" | "CONSTRUCT <https://github.com/Razisafir/CONSTRUCT-VSCODE>" | ✅ |
+| Maintainer | "CONSTRUCT" | "CONSTRUCT <https://github.com/Razisafir/KOVIX>" | ✅ |
 
 ### Workbench JavaScript
 
@@ -92,8 +92,8 @@ CONSTRUCT IDE v0.1.0-beta.10 launches successfully on Linux. The window title is
 | Check | Expected | Actual | Pass/Fail |
 |-------|----------|--------|-----------|
 | Unicode product name | "CONSTRUCT" | "CONSTRUCT" | ✅ |
-| Unicode app name | "Construct IDE" | "Construct IDE" | ✅ |
-| Unicode setup title | "Construct IDE Setup" | "Construct IDE Setup" | ✅ |
+| Unicode app name | "Kovix" | "Kovix" | ✅ |
+| Unicode setup title | "Kovix Setup" | "Kovix Setup" | ✅ |
 | "Visual Studio Code" | None | None found | ✅ |
 
 ### Agent Code (Compiled In)

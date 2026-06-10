@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0] - 2026-06-10
+
+### Renamed
+- Product renamed from "Construct IDE" to "Kovix"
+- New domain: kovix.dev
+- Bundle ID updated to ai.kovix.ide
+
 ## [1.0.0] - 2026-06-09
 
 ### Added
@@ -8,10 +15,10 @@
 - Local ML inference via Transformers.js (@xenova/transformers)
 - Persistent memory layer via Supermemory
 - Redis-backed session management via ioredis
-- Construct IDE branding and identity
+- Kovix branding and identity
 
 ### Changed
-- Rebranded from Code-OSS to Construct IDE
+- Rebranded from Code-OSS to Kovix
 - Extension gallery pointed to Open VSX Registry (open-source marketplace)
 
 ### Based On

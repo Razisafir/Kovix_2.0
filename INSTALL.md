@@ -18,10 +18,10 @@
 
 #### Pre-built Binary (Recommended)
 
-1. Download `construct-ide-linux-x64.tar.gz` from the [GitHub Releases](https://github.com/Razisafir/CONSTRUCT-VSCODE/releases) page
+1. Download `kovix-linux-x64.tar.gz` from the [GitHub Releases](https://github.com/Razisafir/KOVIX/releases) page
 2. Extract the archive:
    ```bash
-   tar -xzf construct-ide-linux-x64.tar.gz
+   tar -xzf kovix-linux-x64.tar.gz
    ```
 3. Run the application:
    ```bash
@@ -29,7 +29,7 @@
    ```
 4. *(Optional)* Create a desktop entry for easy launching:
 
-   Create a file at `~/.local/share/applications/construct-ide.desktop` with the following content:
+   Create a file at `~/.local/share/applications/kovix.desktop` with the following content:
 
    ```ini
    [Desktop Entry]
@@ -65,8 +65,8 @@ sudo apt-get install -y libxkbfile-dev libsecret-1-0 libgtk-3-0 libgbm1 libnss3
 # sudo dnf install -y libxkbfile-devel libsecret-devel gtk3 mesa-libgbm nss
 
 # Clone the repository
-git clone https://github.com/Razisafir/CONSTRUCT-VSCODE
-cd CONSTRUCT-VSCODE
+git clone https://github.com/Razisafir/KOVIX
+cd KOVIX
 
 # Install Node.js dependencies
 npm install
@@ -90,9 +90,9 @@ NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 
 #### Pre-built Binary
 
-1. Download the appropriate archive from [GitHub Releases](https://github.com/Razisafir/CONSTRUCT-VSCODE/releases):
-   - **Intel Macs**: `construct-ide-darwin-x64.zip`
-   - **Apple Silicon (M1/M2/M3/M4)**: `construct-ide-darwin-arm64.zip`
+1. Download the appropriate archive from [GitHub Releases](https://github.com/Razisafir/KOVIX/releases):
+   - **Intel Macs**: `kovix-darwin-x64.zip`
+   - **Apple Silicon (M1/M2/M3/M4)**: `kovix-darwin-arm64.zip`
 2. Open the DMG and drag **CONSTRUCT IDE** to your **Applications** folder
 3. On first launch, macOS Gatekeeper may block the app because it is not signed with an Apple Developer certificate. To bypass:
    - **Right-click** (or Control-click) the app → select **Open**
@@ -116,8 +116,8 @@ NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 xcode-select --install
 
 # Clone the repository
-git clone https://github.com/Razisafir/CONSTRUCT-VSCODE
-cd CONSTRUCT-VSCODE
+git clone https://github.com/Razisafir/KOVIX
+cd KOVIX
 
 # Install dependencies
 npm install
@@ -141,13 +141,13 @@ NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 
 #### Pre-built Binary
 
-1. Download `construct-ide-win32-x64.zip` from [GitHub Releases](https://github.com/Razisafir/CONSTRUCT-VSCODE/releases)
-2. Extract the ZIP to your preferred location (e.g., `C:\Construct IDE\`)
-3. Run `Construct IDE.exe`
+1. Download `kovix-win32-x64.zip` from [GitHub Releases](https://github.com/Razisafir/KOVIX/releases)
+2. Extract the ZIP to your preferred location (e.g., `C:\Kovix\`)
+3. Run `Kovix.exe`
 4. **Windows SmartScreen** may warn on first launch because the app is not code-signed. Click **"More info"** → **"Run anyway"**
 5. *(Optional)* Add to PATH for terminal access:
    - Open **System Properties → Advanced → Environment Variables**
-   - Add `C:\Construct IDE\bin` to your **Path** variable
+   - Add `C:\Kovix\bin` to your **Path** variable
 6. *(Optional)* Pin to taskbar: Right-click the running app → **Pin to taskbar**
 
 **Windows Defender Note:**
@@ -158,8 +158,8 @@ NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 
 ```powershell
 # Clone the repository
-git clone https://github.com/Razisafir/CONSTRUCT-VSCODE
-cd CONSTRUCT-VSCODE
+git clone https://github.com/Razisafir/KOVIX
+cd KOVIX
 
 # Install dependencies
 npm install

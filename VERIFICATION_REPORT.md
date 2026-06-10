@@ -194,7 +194,7 @@ Phase 1 Core Maturity delivers 5 features. All features have been **statically v
 |----------|-------|
 | Tag | `v0.1.0-beta.12` |
 | Commit | `37772a70` |
-| Release URL | https://github.com/Razisafir/CONSTRUCT-VSCODE/releases/tag/v0.1.0-beta.12 |
+| Release URL | https://github.com/Razisafir/KOVIX/releases/tag/v0.1.0-beta.12 |
 | Windows Installer | `ConstructIDESetup.exe` (171 MB) |
 | Linux DEB | `construct_1.0.0-god-mode_amd64.deb` (151 MB) |
 

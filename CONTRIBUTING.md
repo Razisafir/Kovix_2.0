@@ -5,8 +5,8 @@ Thank you for your interest in contributing! This guide covers the essentials fo
 ## Development Setup
 
 ```bash
-git clone https://github.com/Razisafir/CONSTRUCT-VSCODE
-cd CONSTRUCT-VSCODE
+git clone https://github.com/Razisafir/KOVIX
+cd KOVIX
 npm install
 NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 ./scripts/code.sh        # Linux/macOS
@@ -50,7 +50,7 @@ Open a GitHub issue with:
 
 **Do NOT open a public issue for security vulnerabilities.**
 
-Instead, email **security@construct-ide.dev** with:
+Instead, email **security@kovix.dev** with:
 
 - Description of the vulnerability
 - Steps to reproduce

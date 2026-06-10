@@ -1,4 +1,4 @@
-# Building Construct IDE Locally
+# Building Kovix Locally
 
 ## Prerequisites
 - Node.js 20.x (use nvm: `nvm use`)
@@ -13,8 +13,8 @@
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/Razisafir/CONSTRUCT-VSCODE.git
-   cd CONSTRUCT-VSCODE
+   git clone https://github.com/Razisafir/KOVIX.git
+   cd KOVIX
    ```
 
 2. Install dependencies:

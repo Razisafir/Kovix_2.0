@@ -4,7 +4,7 @@
 
 ## Features
 
-This extension supports running [Gulp](https://gulpjs.com/) tasks defined in a `gulpfile.{js,ts}` file as [VS Code tasks](https://github.com/Razisafir/CONSTRUCT-VSCODEdocs/editor/tasks). Gulp tasks with the name 'build', 'compile', or 'watch' are treated as build tasks.
+This extension supports running [Gulp](https://gulpjs.com/) tasks defined in a `gulpfile.{js,ts}` file as [VS Code tasks](https://github.com/Razisafir/KOVIXdocs/editor/tasks). Gulp tasks with the name 'build', 'compile', or 'watch' are treated as build tasks.
 
 To run Gulp tasks, use the **Tasks** menu.
 

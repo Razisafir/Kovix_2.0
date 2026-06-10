@@ -1,0 +1,19 @@
+{
+  "name": "theme-kovix",
+  "displayName": "Kovix Dark Theme",
+  "description": "Official Kovix dark theme with cyan accents",
+  "version": "0.1.0",
+  "publisher": "kovix",
+  "engines": { "vscode": "*" },
+  "categories": ["Themes"],
+  "contributes": {
+    "themes": [
+      {
+        "id": "kovix-dark",
+        "label": "Kovix Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/construct-dark-color-theme.json"
+      }
+    ]
+  }
+}

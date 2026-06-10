@@ -4,4 +4,4 @@
 
 ## Features
 
-See [Merge Conflicts in VS Code](https://github.com/Razisafir/CONSTRUCT-VSCODEdocs/editor/versioncontrol#_merge-conflicts) to learn about features of this extension.
+See [Merge Conflicts in VS Code](https://github.com/Razisafir/KOVIXdocs/editor/versioncontrol#_merge-conflicts) to learn about features of this extension.

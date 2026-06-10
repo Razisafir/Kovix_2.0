@@ -1,4 +1,4 @@
-# Construct IDE v1.0.0 Launch Checklist
+# Kovix v1.0.0 Launch Checklist
 
 ## Must Complete Before Launch
 - [ ] README.md updated (no longer says "Microsoft")

@@ -60,14 +60,14 @@ else {
                 Object.assign(product, {
                         version: '1.96.0-dev',
                         nameShort: 'Construct Dev',
-                        nameLong: 'Construct IDE Dev',
+                        nameLong: 'Kovix Dev',
                         applicationName: 'construct',
                         dataFolderName: '.construct',
                         urlProtocol: 'construct',
-                        reportIssueUrl: 'https://github.com/Razisafir/CONSTRUCT-VSCODE/issues/new',
+                        reportIssueUrl: 'https://github.com/Razisafir/KOVIX/issues/new',
                         licenseName: 'MIT',
-                        licenseUrl: 'https://github.com/Razisafir/CONSTRUCT-VSCODE/blob/main/LICENSE.txt',
-                        serverLicenseUrl: 'https://github.com/Razisafir/CONSTRUCT-VSCODE/blob/main/LICENSE.txt'
+                        licenseUrl: 'https://github.com/Razisafir/KOVIX/blob/main/LICENSE.txt',
+                        serverLicenseUrl: 'https://github.com/Razisafir/KOVIX/blob/main/LICENSE.txt'
                 });
         }
 }

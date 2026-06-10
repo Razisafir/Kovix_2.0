@@ -43,7 +43,7 @@ export class BrowserHostColorSchemeService extends Disposable implements IHostCo
                 } else if (mainWindow.matchMedia(`(prefers-color-scheme: dark)`).matches) {
                         return true;
                 }
-                // Construct IDE: Default to dark when no system preference is detected
+                // Kovix: Default to dark when no system preference is detected
                 return true;
         }
 

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// CONSTRUCT IDE proprietary code. See CONSTRUCT_LICENSE.txt.
+// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -294,7 +294,7 @@ export class SecureKeyNodeService extends Disposable implements ISecureKeyManage
                                         keyMaterial = crypto.randomBytes(32).toString('hex');
                                 }
                                 // Derive a 32-byte key using SHA-256
-                                encKey = crypto.createHash('sha256').update('construct-ide:' + keyMaterial).digest();
+                                encKey = crypto.createHash('sha256').update('kovix:' + keyMaterial).digest();
                                 writeFileSync(keyFilePath, encKey.toString('hex'), { mode: 0o600 });
                         }
 

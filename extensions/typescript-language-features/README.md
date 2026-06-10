@@ -4,4 +4,4 @@
 
 ## Features
 
-See [TypeScript in CONSTRUCT IDE](https://github.com/Razisafir/CONSTRUCT-VSCODEdocs/languages/typescript) and [JavaScript in CONSTRUCT IDE](https://github.com/Razisafir/CONSTRUCT-VSCODEdocs/languages/javascript) to learn about the features of this extension.
+See [TypeScript in CONSTRUCT IDE](https://github.com/Razisafir/KOVIXdocs/languages/typescript) and [JavaScript in CONSTRUCT IDE](https://github.com/Razisafir/KOVIXdocs/languages/javascript) to learn about the features of this extension.

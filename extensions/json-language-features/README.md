@@ -4,4 +4,4 @@
 
 ## Features
 
-See [JSON in CONSTRUCT IDE](https://github.com/Razisafir/CONSTRUCT-VSCODEdocs/languages/json) to learn about the features of this extension.
+See [JSON in CONSTRUCT IDE](https://github.com/Razisafir/KOVIXdocs/languages/json) to learn about the features of this extension.

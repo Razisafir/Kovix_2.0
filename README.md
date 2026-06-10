@@ -1,27 +1,27 @@
 <div align="center">
 
-# CONSTRUCT IDE
+# Kovix
 
 **AI-native development environment with autonomous coding agents**
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/Razisafir/CONSTRUCT-VSCODE)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/Razisafir/KOVIX)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/Razisafir/CONSTRUCT-VSCODE)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/Razisafir/CONSTRUCT-VSCODE/actions)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/Razisafir/KOVIX)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/Razisafir/KOVIX/actions)
 
 </div>
 
 ---
 
-## What is Construct IDE?
+## What is Kovix?
 
-Construct IDE is an AI-native development environment built on the [VS Code open-source (Code-OSS)](https://github.com/microsoft/vscode) foundation. It integrates autonomous coding agents directly into the editor, enabling a workflow where AI reads your codebase, writes code, runs terminal commands, and searches your project — all with human approval before applying changes. Unlike cloud-dependent tools like Cursor or GitHub Copilot, Construct IDE is designed to work with **local LLMs** via Ollama or LM Studio, ensuring your code and API keys never leave your machine. No telemetry, no Microsoft account, and no subscription required.
+Kovix is an AI-native development environment built on the [VS Code open-source (Code-OSS)](https://github.com/microsoft/vscode) foundation. It integrates autonomous coding agents directly into the editor, enabling a workflow where AI reads your codebase, writes code, runs terminal commands, and searches your project — all with human approval before applying changes. Unlike cloud-dependent tools like Cursor or GitHub Copilot, Kovix is designed to work with **local LLMs** via Ollama or LM Studio, ensuring your code and API keys never leave your machine. No telemetry, no Microsoft account, and no subscription required.
 
 The agent system uses a plan/act loop: you describe what you want, the agent reasons through the steps, calls tools (file read/write, terminal execution, code search), and presents changes for your review. Multiple AI backends are supported — switch between Ollama for fully offline inference, Xenova Transformers.js for in-process ONNX models, or cloud APIs like Anthropic for maximum capability.
 
 ## Built on Code-OSS
 
-Construct IDE is built on [Microsoft's Code-OSS]((https://github.com/microsoft/vscode)), the open-source foundation of VS Code, used under the [MIT License](https://opensource.org/licenses/MIT). We are grateful to Microsoft and the VS Code team for their incredible work on the editor platform that makes Construct IDE possible. All VS Code editor features, the extension system, terminal, debugging, and the entire workbench are inherited from Code-OSS.
+Kovix is built on [Microsoft's Code-OSS]((https://github.com/microsoft/vscode)), the open-source foundation of VS Code, used under the [MIT License](https://opensource.org/licenses/MIT). We are grateful to Microsoft and the VS Code team for their incredible work on the editor platform that makes Kovix possible. All VS Code editor features, the extension system, terminal, debugging, and the entire workbench are inherited from Code-OSS.
 
 ## Features
 
@@ -56,13 +56,13 @@ See [INSTALL.md](./INSTALL.md) for detailed platform-specific installation instr
 
 ### Download from Releases
 
-Pre-built binaries for Windows, macOS, and Linux are available on the [GitHub Releases](https://github.com/Razisafir/CONSTRUCT-VSCODE/releases) page.
+Pre-built binaries for Windows, macOS, and Linux are available on the [GitHub Releases](https://github.com/Razisafir/KOVIX/releases) page.
 
 ### Build from Source
 
 ```bash
-git clone https://github.com/Razisafir/CONSTRUCT-VSCODE
-cd CONSTRUCT-VSCODE
+git clone https://github.com/Razisafir/KOVIX
+cd KOVIX
 npm install
 NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 ./scripts/code.sh        # Linux/macOS
@@ -147,7 +147,7 @@ CONSTRUCT stores workspace settings in `.construct/settings.json`:
 
 ## Security Tooling
 
-CONSTRUCT IDE integrates professional security tools directly into the agent loop. Every security tool has a **safety gate** — the agent must receive explicit user confirmation before execution.
+Kovix integrates professional security tools directly into the agent loop. Every security tool has a **safety gate** — the agent must receive explicit user confirmation before execution.
 
 ### nmap_scan — Network Scanner
 
@@ -187,7 +187,7 @@ Requires: `nuclei` installed (`go install -v github.com/projectdiscovery/nuclei/
 
 ## MCP Servers
 
-CONSTRUCT IDE supports the **Model Context Protocol (MCP)**, allowing you to connect external tool servers that extend the agent's capabilities. MCP servers provide additional tools the agent can call during conversations.
+Kovix supports the **Model Context Protocol (MCP)**, allowing you to connect external tool servers that extend the agent's capabilities. MCP servers provide additional tools the agent can call during conversations.
 
 ### Configuration
 
@@ -224,13 +224,13 @@ For example, a server named `my-server` exposing a tool `query_database` would b
 ### Managing MCP Servers
 
 - Add servers via Settings → search `construct.mcp.servers`
-- Restart CONSTRUCT IDE after adding or removing servers
+- Restart Kovix after adding or removing servers
 - The agent automatically discovers available MCP tools and includes them in its tool registry
 - MCP tools respect the same safety blocklist as built-in tools
 
 ## Semantic Memory
 
-CONSTRUCT IDE indexes your entire workspace for semantic search, enabling the agent to retrieve relevant context without you having to specify file paths.
+Kovix indexes your entire workspace for semantic search, enabling the agent to retrieve relevant context without you having to specify file paths.
 
 ### How It Works
 
@@ -260,10 +260,10 @@ If Ollama is unavailable, the system falls back to BM25 keyword search — no em
 
 ## Architecture
 
-CONSTRUCT IDE is built on the [VS Code open-source project](https://github.com/microsoft/vscode) with the following additions:
+Kovix is built on the [VS Code open-source project](https://github.com/microsoft/vscode) with the following additions:
 
 - **VS Code fork** — Full editor with all upstream features intact
-- **`IConstructAIService`** — Unified AI provider interface for Ollama, Xenova ONNX, and cloud backends
+- **`IKovixAIService`** — Unified AI provider interface for Ollama, Xenova ONNX, and cloud backends
 - **Agent loop** — Plan/act cycle with built-in tools (read, write, run, search, memory) plus security tools and MCP extensions
 - **MCP tool registry** — Extensible tool execution engine with command safety blocklist; dispatches MCP tools via `serverName__toolName` format
 - **Security tools** — nmap_scan, ghidra_decompile, nuclei_scan with user-approval safety gates
@@ -271,13 +271,13 @@ CONSTRUCT IDE is built on the [VS Code open-source project](https://github.com/m
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│                    CONSTRUCT IDE                       │
+│                    Kovix                       │
 ├──────────┬──────────┬──────────┬─────────────────────┤
 │  Editor  │  Agent   │ Terminal │  Memory Panel       │
 │ (VS Code │  Panel   │(Kali/    │  (Qdrant/BM25)      │
 │  fork)   │          │ WSL2)    │                     │
 ├──────────┴──────────┴──────────┴─────────────────────┤
-│              IConstructAIService                       │
+│              IKovixAIService                       │
 ├──────────┬──────────┬────────────────────────────────┤
 │ Ollama   │ Xenova   │   Cloud API (Anthropic)        │
 │ Provider │ Provider │   Provider                     │
@@ -308,4 +308,4 @@ This project is licensed under the [MIT License](./LICENSE).
 
 ## Fork Attribution
 
-Construct IDE is a fork of [Code-OSS](https://github.com/microsoft/vscode) by Microsoft, used under the [MIT License](https://opensource.org/licenses/MIT). The original VS Code open-source project is available at https://github.com/microsoft/vscode.
+Kovix is a fork of [Code-OSS](https://github.com/microsoft/vscode) by Microsoft, used under the [MIT License](https://opensource.org/licenses/MIT). The original VS Code open-source project is available at https://github.com/microsoft/vscode.

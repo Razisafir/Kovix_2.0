@@ -88,7 +88,7 @@ Based on the failed build attempt and VS Code's official build requirements:
 source ~/.nvm/nvm.sh && nvm use 20
 
 # Ensure dependencies are installed
-cd /home/z/my-project/CONSTRUCT-VSCODE
+cd /home/z/my-project/KOVIX
 npm install
 ```
 

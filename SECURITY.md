@@ -2,11 +2,11 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in Construct IDE, please report it by:
+If you discover a security vulnerability in Kovix, please report it by:
 
 1. **Do NOT open a public GitHub issue** for security vulnerabilities
-2. Email: security@construct-ide.dev
-3. Or use GitHub's private vulnerability reporting: https://github.com/Razisafir/CONSTRUCT-VSCODE/security/advisories/new
+2. Email: security@kovix.dev
+3. Or use GitHub's private vulnerability reporting: https://github.com/Razisafir/KOVIX/security/advisories/new
 
 We will respond within 72 hours.
 
@@ -18,7 +18,7 @@ We will respond within 72 hours.
 
 ## Security Considerations for AI Features
 
-Construct IDE includes AI capabilities. Users should be aware:
+Kovix includes AI capabilities. Users should be aware:
 
 - **Cloud AI providers**: AI features that connect to external APIs (Anthropic, OpenAI, etc.) will transmit code and context to those services. This only happens if you explicitly configure an API key and select a cloud provider. No cloud providers are configured by default.
 - **Local AI**: Local ML models (via Transformers.js / Xenova) and Ollama run entirely on-device. No data leaves your machine when using local providers.
@@ -48,7 +48,7 @@ The following components are in scope for our security policy:
 
 ## Reporting Process
 
-1. Email **security@construct-ide.dev** with a description of the vulnerability
+1. Email **security@kovix.dev** with a description of the vulnerability
 2. Include steps to reproduce, affected versions, and potential impact
 3. We will respond within **72 hours** with an initial assessment
 4. We will work with you to coordinate disclosure once a fix is available

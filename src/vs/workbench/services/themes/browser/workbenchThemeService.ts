@@ -158,7 +158,7 @@ export class WorkbenchThemeService extends Disposable implements IWorkbenchTheme
                         }
                 }
                 if (!themeData) {
-                        // Construct IDE: Always default to dark theme (ColorScheme.DARK)
+                        // Kovix: Always default to dark theme (ColorScheme.DARK)
                         themeData = ColorThemeData.createUnloadedThemeForThemeType(ColorScheme.DARK, defaultColorMap);
                 }
                 themeData.setCustomizations(this.settings);
@@ -209,11 +209,11 @@ export class WorkbenchThemeService extends Disposable implements IWorkbenchTheme
                                 // If the current theme is not available, first make sure setting sync is complete
                                 await this.userDataInitializationService.whenInitializationFinished();
                                 // try to get the theme again, now with a fallback to the default themes
-                                // Construct IDE: Always fallback to Construct Dark
+                                // Kovix: Always fallback to Kovix Dark
                                 const fallbackTheme = ThemeSettingDefaults.COLOR_THEME_DARK;
                                 theme = this.colorThemeRegistry.findThemeBySettingsId(this.settings.colorTheme, fallbackTheme);
                         }
-                        // Construct IDE: If still no theme found, force Construct Dark
+                        // Kovix: If still no theme found, force Kovix Dark
                         if (!theme) {
                                 theme = this.colorThemeRegistry.findThemeBySettingsId(ThemeSettingDefaults.COLOR_THEME_DARK);
                         }

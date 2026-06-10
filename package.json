@@ -1,13 +1,13 @@
 {
-  "name": "construct-ide",
+  "name": "kovix",
   "version": "1.0.0-god-mode",
-  "productName": "CONSTRUCT IDE",
-  "description": "AI-native integrated development environment with autonomous coding agents",
+  "productName": "KOVIX",
+  "description": "AI-native integrated development environment — Kovix",
   "distro": "c883c91dadf5f063b26c86ffe01851acee3747c6",
   "author": {
     "name": "Razisafir"
   },
-  "homepage": "https://github.com/Razisafir/CONSTRUCT-VSCODE",
+  "homepage": "https://github.com/Razisafir/KOVIX",
   "license": "SEE LICENSE IN CONSTRUCT_LICENSE.txt",
   "main": "./out/main.js",
   "type": "module",
@@ -245,10 +245,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Razisafir/CONSTRUCT-VSCODE.git"
+    "url": "https://github.com/Razisafir/KOVIX.git"
   },
   "bugs": {
-    "url": "https://github.com/Razisafir/CONSTRUCT-VSCODE/issues"
+    "url": "https://github.com/Razisafir/KOVIX/issues"
   },
   "optionalDependencies": {
     "windows-foreground-love": "0.5.0"

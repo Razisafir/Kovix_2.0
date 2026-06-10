@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// CONSTRUCT IDE proprietary code. See CONSTRUCT_LICENSE.txt.
+// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -208,7 +208,7 @@ export class MCPProcessNodeService extends Disposable implements IMCPProcessNode
                                 protocolVersion: '2024-11-05',
                                 capabilities: {},
                                 clientInfo: {
-                                        name: 'construct-ide',
+                                        name: 'kovix',
                                         version: '1.0.0',
                                 },
                         });

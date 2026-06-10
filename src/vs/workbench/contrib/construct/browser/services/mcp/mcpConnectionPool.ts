@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// CONSTRUCT IDE proprietary code. See CONSTRUCT_LICENSE.txt.
+// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -134,7 +134,7 @@ export class MCPConnectionPool extends Disposable {
                 }
 
                 const { Client } = await import('@modelcontextprotocol/sdk/client/index.js').catch(() => ({ Client: null }));
-                const client = Client ? new Client({ name: 'construct-ide', version: '1.0.0' }) : null;
+                const client = Client ? new Client({ name: 'kovix', version: '1.0.0' }) : null;
 
                 const entry: IConnectionEntry = {
                         client,

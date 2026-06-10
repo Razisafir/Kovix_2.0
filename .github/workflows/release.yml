@@ -31,7 +31,7 @@ jobs:
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: construct-ide-windows
+          name: kovix-windows
           path: .build/win32-x64/**/*.exe
 
   build-macos:
@@ -58,7 +58,7 @@ jobs:
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: construct-ide-macos
+          name: kovix-macos
           path: .build/darwin-x64/**/*.dmg
 
   build-linux:
@@ -90,7 +90,7 @@ jobs:
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
-          name: construct-ide-linux
+          name: kovix-linux
           path: .build/linux-x64/**/*.tar.gz
 
   create-release:
@@ -105,11 +105,11 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            construct-ide-windows/**
-            construct-ide-macos/**
-            construct-ide-linux/**
+            kovix-windows/**
+            kovix-macos/**
+            kovix-linux/**
           body: |
-            ## Construct IDE Release
+            ## Kovix Release
 
             AI-native development environment built on VS Code open source.
 
@@ -119,6 +119,6 @@ jobs:
             - **Linux**: Download the `.tar.gz` archive
 
             ### What's New
-            See [CHANGELOG.md](https://github.com/Razisafir/CONSTRUCT-VSCODE/blob/main/CHANGELOG.md)
+            See [CHANGELOG.md](https://github.com/Razisafir/KOVIX/blob/main/CHANGELOG.md)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

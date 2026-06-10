@@ -6,12 +6,12 @@
 
 ### Task Running
 
-This extension supports running npm scripts defined in the `package.json` as [tasks](https://github.com/Razisafir/CONSTRUCT-VSCODEdocs/editor/tasks). Scripts with the name 'build', 'compile', or 'watch'
+This extension supports running npm scripts defined in the `package.json` as [tasks](https://github.com/Razisafir/KOVIXdocs/editor/tasks). Scripts with the name 'build', 'compile', or 'watch'
 are treated as build tasks.
 
 To run scripts as tasks, use the **Tasks** menu.
 
-For more information about auto detection of Tasks, see the [documentation](https://github.com/Razisafir/CONSTRUCT-VSCODEDocs/editor/tasks#_task-autodetection).
+For more information about auto detection of Tasks, see the [documentation](https://github.com/Razisafir/KOVIXDocs/editor/tasks#_task-autodetection).
 
 ### Script Explorer
 

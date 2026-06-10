@@ -4,4 +4,4 @@
 
 ## Features
 
-See [Markdown in CONSTRUCT IDE](https://github.com/Razisafir/CONSTRUCT-VSCODEdocs/languages/markdown) to learn about the features of this extension.
+See [Markdown in CONSTRUCT IDE](https://github.com/Razisafir/KOVIXdocs/languages/markdown) to learn about the features of this extension.

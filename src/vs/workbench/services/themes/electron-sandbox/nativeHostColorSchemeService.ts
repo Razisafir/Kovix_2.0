@@ -36,7 +36,7 @@ export class NativeHostColorSchemeService extends Disposable implements IHostCol
                 this._register(this.nativeHostService.onDidChangeColorScheme(scheme => this.update(scheme)));
 
                 const initial = this.getStoredValue() ?? environmentService.window.colorScheme;
-                // Construct IDE: Default to dark mode when no stored preference exists
+                // Kovix: Default to dark mode when no stored preference exists
                 this.dark = initial.dark !== undefined ? initial.dark : true;
                 this.highContrast = initial.highContrast;
 
