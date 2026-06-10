@@ -1,89 +1,82 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_ADDITIONAL_TERMS.txt.
+// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-/**
- * Execution state for the milestone-based agent loop.
- */
-export enum ExecutionState {
-	Idle = 'idle',
-	Planning = 'planning',
-	AwaitingApproval = 'awaiting_approval',
-	Executing = 'executing',
-	PausedAtMilestone = 'paused_at_milestone',
-	Complete = 'complete',
-	Error = 'error',
-}
+import { ExecutionMode, IExecutionModeConfig } from './executionMode.js';
 
 /**
- * A milestone in the execution plan.
- * Milestones are natural stopping points where the agent can pause
- * for user review before continuing.
+ * KOVIX — Milestone State Machine Types
+ *
+ * Defines the milestone-aware execution state machine for the agent loop.
+ * This replaces the fire-and-forget async generator with a pausable
+ * state machine that can stop at milestones and resume later.
  */
+
 export interface IMilestone {
-	/** Unique identifier. */
-	readonly id: string;
-	/** Display name. */
-	readonly name: string;
-	/** Description of what this milestone accomplishes. */
-	readonly description: string;
-	/** Index in the plan (0-based). */
-	readonly index: number;
-	/** Whether this milestone is a major one (e.g., core feature complete). */
-	readonly isMajor: boolean;
-	/** Plan step indices included in this milestone. */
-	readonly stepIndices: number[];
-	/** Whether this milestone has been completed. */
-	readonly completed: boolean;
+	/** Unique identifier */
+	id: string;
+	/** Human-readable milestone name (e.g. "Database schema complete") */
+	label: string;
+	/** Which step indices comprise this milestone */
+	stepIndices: number[];
+	/** Whether this is a major milestone (pauses in MAJOR_MILESTONE mode) */
+	isMajor: boolean;
+	/** Current status of this milestone */
+	status: 'pending' | 'running' | 'completed' | 'skipped';
+	/** When this milestone was completed (unix timestamp ms) */
+	completedAt?: number;
+	/** LLM-generated summary of what was done */
+	summary?: string;
+}
+
+export type ExecutionState =
+	| { type: 'idle' }
+	| { type: 'running'; currentStepIndex: number; currentMilestoneId: string }
+	| { type: 'paused_at_milestone'; milestoneId: string; milestone: IMilestone; summary: string }
+	| { type: 'completed'; totalSteps: number; milestonesCompleted: number }
+	| { type: 'aborted'; reason: string }
+	| { type: 'error'; message: string; stepIndex: number };
+
+export interface IExecutionContext {
+	projectId: string;
+	approvedPlan: IApprovedPlan;
+	modeConfig: IExecutionModeConfig;
+	conversationHistory: import('./agentLoop.js').IChatMessage[];
+	completedStepIndices: number[];
+	currentMilestoneId: string;
+	snapshotId?: string;
 }
 
 /**
- * State machine for milestone tracking.
+ * Extended plan step with selection state and milestone marking.
+ * Extends the base IPlanStep from agentLoop.ts.
  */
-export interface MilestoneState {
-	/** Current execution state. */
-	readonly state: ExecutionState;
-	/** All milestones in the plan. */
-	readonly milestones: IMilestone[];
-	/** Index of the current milestone being executed. */
-	readonly currentMilestoneIndex: number;
-	/** IDs of completed milestones. */
-	readonly completedMilestoneIds: string[];
-}
-
-/**
- * A selectable plan step (for task deselection).
- */
-export interface ISelectablePlanStep {
-	/** Step index. */
-	readonly index: number;
-	/** Step action. */
-	readonly action: 'Read' | 'Create' | 'Edit' | 'Run';
-	/** Step target. */
-	readonly target: string;
-	/** Step description. */
-	readonly description: string;
-	/** Whether this step is selected for execution. */
+export interface IKovixPlanStep {
+	index: number;
+	action: 'Read' | 'Create' | 'Edit' | 'Run';
+	target: string;
+	description: string;
+	/** Whether this step is selected for execution (default: true) */
 	selected: boolean;
+	/** Whether this step is a milestone checkpoint */
+	isMilestone: boolean;
+	/** Human-readable milestone name (set when isMilestone is true) */
+	milestoneLabel?: string;
 }
 
 /**
- * An approved plan with optional step deselection and execution mode.
+ * An approved plan with selected steps and execution mode.
+ * Created after the user reviews and approves a plan with task deselection.
  */
 export interface IApprovedPlan {
-	/** The task description. */
-	readonly task: string;
-	/** Steps with selection state. */
-	readonly steps: ISelectablePlanStep[];
-	/** Selected execution mode. */
-	readonly executionMode: string;
-	/** Milestones extracted from the plan. */
-	readonly milestones: IMilestone[];
-	/** Whether the plan was approved by the user. */
-	readonly approved: boolean;
-	/** Timestamp of approval. */
-	readonly approvedAt: number;
+	projectId: string;
+	allSteps: IKovixPlanStep[];
+	selectedSteps: IKovixPlanStep[];
+	excludedSteps: IKovixPlanStep[];
+	milestones: IMilestone[];
+	approvedAt: number;
+	executionModeConfig?: IExecutionModeConfig;
 }

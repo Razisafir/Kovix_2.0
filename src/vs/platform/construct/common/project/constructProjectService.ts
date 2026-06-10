@@ -1,72 +1,83 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_ADDITIONAL_TERMS.txt.
+// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import { createDecorator } from '../../../instantiation/common/instantiation.js';
-import { Event } from '../../../../base/common/event.js';
-import { IKovixProject, IProjectCreationInput, IProjectSummary, ProjectStatus } from './constructProjectTypes.js';
+import { IKovixProject, IProjectCreationInput } from './constructProjectTypes.js';
 
-export const IConstructProjectService = createDecorator<IConstructProjectService>('construct.projectService');
+export const IConstructProjectService = createDecorator<IConstructProjectService>('constructProjectService');
 
 /**
- * Service for managing KOVIX projects in the Construct agent system.
- * Handles CRUD for projects, scaffolding from templates, and global project registry.
+ * Service for managing Kovix projects.
+ *
+ * A project is the central organizing unit in Kovix. It ties together
+ * the workspace folder, conversation sessions, refined ideas, plans,
+ * and execution state into a single persistent record.
+ *
+ * The project record is stored in .construct/project.json in the workspace
+ * root. A global registry at ~/.kovix/projects.json enables cross-project
+ * discovery without reading every workspace.
  */
 export interface IConstructProjectService {
 	readonly _serviceBrand: undefined;
 
-	/** Event fired when a project is created. */
-	readonly onDidCreateProject: Event<IKovixProject>;
-	/** Event fired when a project is deleted. */
-	readonly onDidDeleteProject: Event<string>;
-	/** Event fired when a project's status changes. */
-	readonly onDidChangeProjectStatus: Event<{ id: string; status: ProjectStatus }>;
-
-	/** The currently active project, if any. */
-	readonly activeProject: IKovixProject | null;
-
-	/** All projects in the global registry. */
-	readonly projects: ReadonlyArray<IProjectSummary>;
+	/**
+	 * Create a new project in the current workspace.
+	 * Writes .construct/project.json and updates the global registry.
+	 */
+	createProject(input: IProjectCreationInput, workspacePath: string): Promise<IKovixProject>;
 
 	/**
-	 * Create a new project from the given input.
-	 * Scaffolds the workspace directory structure based on the template,
-	 * writes a `.construct/project.json` manifest, and registers the project.
+	 * Load the project from .construct/project.json in the given workspace.
+	 * Returns null if no project exists.
 	 */
-	createProject(input: IProjectCreationInput): Promise<IKovixProject>;
+	loadProject(workspacePath: string): Promise<IKovixProject | null>;
 
 	/**
-	 * Delete a project by ID.
-	 * Optionally removes the workspace files.
+	 * Save/update the project record to .construct/project.json
+	 * and refresh the global registry entry.
 	 */
-	deleteProject(id: string, removeFiles?: boolean): Promise<void>;
+	saveProject(project: IKovixProject): Promise<void>;
 
 	/**
-	 * Load an existing project into the active session.
+	 * Get the active project (loaded from the current workspace).
+	 * Returns null if no project is loaded yet.
 	 */
-	loadProject(id: string): Promise<IKovixProject>;
+	getActiveProject(): IKovixProject | null;
 
 	/**
-	 * Update a project's status.
+	 * List all known projects from the global registry (~/.kovix/projects.json).
+	 * Does NOT read individual workspace project files — only the registry.
 	 */
-	updateProjectStatus(id: string, status: ProjectStatus): Promise<void>;
+	listAllProjects(): Promise<IKovixProject[]>;
 
 	/**
-	 * Get a project by its ID.
+	 * Update a project's lifecycle status.
 	 */
-	getProject(id: string): IKovixProject | undefined;
+	updateProjectStatus(projectId: string, status: IKovixProject['status']): Promise<void>;
 
 	/**
-	 * Set the active project for the current workspace.
+	 * Store the refined idea text after idea refinement completes.
+	 * Updates .construct/project.json with the refined idea.
 	 */
-	setActiveProject(id: string): void;
+	storeRefinedIdea(projectId: string, refinedIdea: string): Promise<void>;
 
 	/**
-	 * Detect if the current workspace has a .construct/project.json
-	 * and auto-load it as the active project.
+	 * Store the approved plan as JSON after planning completes.
+	 * Updates .construct/project.json with the plan.
 	 */
-	detectAndLoadProject(workspaceRoot: string): Promise<IKovixProject | null>;
+	storePlan(projectId: string, planJson: string): Promise<void>;
+
+	/**
+	 * Event fired when a project is created.
+	 */
+	readonly onDidCreateProject: import('../../../../base/common/event.js').Event<IKovixProject>;
+
+	/**
+	 * Event fired when the active project changes (loaded, created, or switched).
+	 */
+	readonly onDidChangeActiveProject: import('../../../../base/common/event.js').Event<IKovixProject | null>;
 }

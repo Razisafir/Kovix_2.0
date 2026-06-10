@@ -74,9 +74,9 @@ import { PendingChangesService } from './services/diff/pendingChangesService.js'
 import { IConstructNotificationService } from '../../../../platform/construct/common/notification/constructNotificationService.js';
 import { ConstructNotificationBrowserService } from './services/notification/constructNotificationService.js';
 import { IConstructProjectService } from '../../../../platform/construct/common/project/constructProjectService.js';
-import { ConstructProjectServiceImpl } from './services/project/constructProjectServiceImpl.js';
+import { ConstructProjectService } from './services/project/constructProjectServiceImpl.js';
 import { IIdeaRefinementService } from '../../../../platform/construct/common/agent/ideaRefinementService.js';
-import { IdeaRefinementServiceImpl } from './services/agent/ideaRefinementServiceImpl.js';
+import { IdeaRefinementService } from './services/agent/ideaRefinementServiceImpl.js';
 import { IUniversalMemoryService } from '../../../../platform/construct/common/memory/universalMemoryService.js';
 import { UniversalMemoryService } from './services/memory/universalMemoryService.js';
 import { IConstructSessionService } from '../../../../platform/construct/common/session/constructSessionService.js';
@@ -626,8 +626,8 @@ registerSingleton(IPendingChangesService, PendingChangesService, InstantiationTy
 registerSingleton(IConstructNotificationService, ConstructNotificationBrowserService, InstantiationType.Delayed);
 
 // --- Feature Build: Project, Idea Refinement, Universal Memory, Session -----------
-registerSingleton(IConstructProjectService, ConstructProjectServiceImpl, InstantiationType.Delayed);
-registerSingleton(IIdeaRefinementService, IdeaRefinementServiceImpl, InstantiationType.Delayed);
+registerSingleton(IConstructProjectService, ConstructProjectService, InstantiationType.Delayed);
+registerSingleton(IIdeaRefinementService, IdeaRefinementService, InstantiationType.Delayed);
 registerSingleton(IUniversalMemoryService, UniversalMemoryService, InstantiationType.Delayed);
 registerSingleton(IConstructSessionService, ConstructSessionServiceImpl, InstantiationType.Delayed);
 
@@ -792,6 +792,40 @@ registerAction2(class RejectAllDiffsAction extends Action2 {
                 } else {
                         notificationService.warn('No agent panel with pending diffs found.');
                 }
+        }
+});
+
+// --- Phase 1 (Kovix): Project Commands ------------------------------------------
+
+registerAction2(class NewKovixProjectAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'kovix.newProject',
+                        title: localize2('newKovixProject', "New KOVIX Project"),
+                        f1: true,
+                        category: localize2('kovixCategory', "KOVIX"),
+                });
+        }
+        run(accessor: ServicesAccessor): void {
+                const viewsService = accessor.get(IViewsService);
+                viewsService.openView('construct.agentPanel', true);
+                // The agent view will detect no active project and show the wizard
+                accessor.get(ICommandService).executeCommand('kovix.openProjectWizard');
+        }
+});
+
+registerAction2(class OpenProjectWizardAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'kovix.openProjectWizard',
+                        title: localize2('openProjectWizard', "Open Project Wizard"),
+                        f1: true,
+                        category: localize2('kovixCategory2', "KOVIX"),
+                });
+        }
+        run(accessor: ServicesAccessor): void {
+                const viewsService = accessor.get(IViewsService);
+                viewsService.openView('construct.agentPanel', true);
         }
 });
 

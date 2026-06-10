@@ -37,8 +37,12 @@ import { LoadingState, FileChangeEntry, TaskMetrics } from '../../../../platform
 import { IRefinedIdea, IRefinementQuestion, IRefinementAnswer } from '../../../../platform/construct/common/agent/ideaRefinementTypes.js';
 import { IIdeaRefinementService } from '../../../../platform/construct/common/agent/ideaRefinementService.js';
 import { IConstructSessionService } from '../../../../platform/construct/common/session/constructSessionService.js';
-import { ISelectablePlanStep, IApprovedPlan, IMilestone } from '../../../../platform/construct/common/agent/milestoneStateMachine.js';
-import { showStopModePicker } from './constructStopModePicker.js';
+import { IConstructProjectService } from '../../../../platform/construct/common/project/constructProjectService.js';
+import { IKovixPlanStep, IApprovedPlan, IMilestone, ExecutionState as KovixExecutionState } from '../../../../platform/construct/common/agent/milestoneStateMachine.js';
+import { ExecutionMode, IExecutionModeConfig } from '../../../../platform/construct/common/agent/executionMode.js';
+import { ConstructStopModePicker } from './constructStopModePicker.js';
+import { ConstructProjectWizard } from './constructProjectWizard.js';
+import { IUniversalMemoryService } from '../../../../platform/construct/common/memory/universalMemoryService.js';
 import { IQuickInputService } from '../../../../platform/quickinput/common/quickInput.js';
 
 type ExecutionState = 'idle' | 'planning' | 'refining' | 'awaiting_approval' | 'executing' | 'paused_at_milestone' | 'complete' | 'error' | 'stopped';
@@ -114,6 +118,21 @@ export class ConstructAgentViewPane extends ViewPane {
         private pendingDiffs: PendingDiff[] = [];
         private diffCounter = 0;
 
+        // Phase 2 (Kovix): Idea refinement state
+        private ideaRefinementProjectId: string | null = null;
+        private refinedIdea: IRefinedIdea | null = null;
+        private skipRefinement = false;
+
+        // Phase 3-4 (Kovix): Plan with checkboxes + stop mode
+        private approvedPlan: IApprovedPlan | null = null;
+        private stopModePicker: ConstructStopModePicker | null = null;
+        private planCheckboxes: HTMLInputElement[] = [];
+        private planMilestones: IMilestone[] = [];
+
+        // Phase 5 (Kovix): Milestone pause state
+        private executionPaused = false;
+        private resumeResolver: (() => void) | null = null;
+
         constructor(
                 options: IViewPaneOptions,
                 @IKeybindingService keybindingService: IKeybindingService,
@@ -141,6 +160,8 @@ export class ConstructAgentViewPane extends ViewPane {
                 @IIdeaRefinementService private readonly ideaRefinementService: IIdeaRefinementService,
                 @IConstructSessionService private readonly sessionService: IConstructSessionService,
                 @IQuickInputService private readonly quickInputService: IQuickInputService,
+                @IConstructProjectService private readonly projectService: IConstructProjectService,
+                @IUniversalMemoryService private readonly universalMemoryService: IUniversalMemoryService,
         ) {
                 super(options, keybindingService, contextMenuService, configurationService, contextKeyService, viewDescriptorService, instantiationService, openerService, themeService, telemetryService, hoverService);
         }
@@ -462,6 +483,14 @@ export class ConstructAgentViewPane extends ViewPane {
                 // Initial model info load
                 this.refreshModelPickerInfo();
 
+                // --- Phase 1 (Kovix): Project detection on load ---
+                this._register(this.projectService.onDidChangeActiveProject((project) => {
+                        if (project) {
+                                const statusEl = this.messageContainer.querySelector('.construct-project-status');
+                                if (statusEl) { statusEl.textContent = `Project: ${project.name}`; }
+                        }
+                }));
+
                 // --- Phase 4: Wire construct.newChat to clear ---
                 this._register(this.commandService.onWillExecuteCommand(e => {
                         if (e.commandId === 'construct.newChat') {
@@ -595,21 +624,10 @@ export class ConstructAgentViewPane extends ViewPane {
         }
 
         /**
-         * Render the plan with Approve/Cancel buttons.
+         * Render the plan with checkboxes, milestones, and stop mode picker integration.
          */
-        private selectableSteps: ISelectablePlanStep[] = [];
         private renderPlan(plan: IPlanResult, task: string): void {
-                // Remove any existing plan container
                 this.planContainer?.remove();
-
-                // Create selectable steps from the plan
-                this.selectableSteps = plan.steps.map((step, idx) => ({
-                        index: idx,
-                        action: step.action,
-                        target: step.target,
-                        description: step.description,
-                        selected: true,
-                }));
 
                 this.planContainer = dom.$('.construct-plan');
                 this.planContainer.style.cssText = `
@@ -617,123 +635,148 @@ export class ConstructAgentViewPane extends ViewPane {
                         border-radius: 6px; padding: 12px; margin: 8px 0;
                 `;
 
+                // Convert IPlanStep[] to IKovixPlanStep[] with milestone marking
+                const kovixSteps: IKovixPlanStep[] = plan.steps.map((step, i) => {
+                        const isMilestone = (i > 0 && i < plan.steps.length - 1 && (i + 1) % 3 === 0) || i === plan.steps.length - 1;
+                        return {
+                                ...step,
+                                selected: true,
+                                isMilestone,
+                                milestoneLabel: isMilestone ? this._generateMilestoneLabel(step) : undefined,
+                        };
+                });
+
+                // Extract milestones
+                this.planMilestones = kovixSteps
+                        .filter(s => s.isMilestone)
+                        .map((s, mi) => ({
+                                id: `milestone-${mi}`,
+                                label: s.milestoneLabel ?? `Milestone ${mi + 1}`,
+                                stepIndices: [s.index],
+                                isMajor: mi % 2 === 0 || mi === kovixSteps.filter(st => st.isMilestone).length - 1,
+                                status: 'pending' as const,
+                        }));
+
                 // Plan header
                 const header = dom.$('.construct-plan-header');
-                header.style.cssText = `font-weight: 600; color: #E0E7FF; margin-bottom: 8px; font-size: 13px;`;
-                header.textContent = `\uD83D\uDCA1 Plan ready \u2014 ${plan.steps.length} steps`;
+                header.style.cssText = `font-weight: 600; color: #E0E7FF; margin-bottom: 4px; font-size: 13px;`;
+                header.textContent = `\uD83D\uDCCB Plan ready \u2014 ${plan.steps.length} steps, ${this.planMilestones.length} milestones`;
                 this.planContainer.appendChild(header);
 
-                // Select All / Deselect All controls
-                if (this.selectableSteps.length > 0) {
-                        const controlBar = dom.$('.construct-plan-controls');
-                        controlBar.style.cssText = `display: flex; gap: 8px; margin-bottom: 8px;`;
-
-                        const selectAllBtn = dom.$('button') as HTMLButtonElement;
-                        selectAllBtn.textContent = 'Select All';
-                        selectAllBtn.style.cssText = `
-                                background: #1A2744; border: 1px solid #2D3A5C; border-radius: 3px;
-                                color: #E0E7FF; font-size: 11px; padding: 3px 8px; cursor: pointer;
-                        `;
-                        selectAllBtn.onclick = () => {
-                                this.selectableSteps.forEach(s => s.selected = true);
-                                this.planContainer?.querySelectorAll<HTMLInputElement>('.construct-step-checkbox').forEach(cb => { cb.checked = true; });
-                                this.planContainer?.querySelectorAll('.construct-step-text').forEach(el => { (el as HTMLElement).style.textDecoration = 'none'; });
-                        };
-
-                        const deselectAllBtn = dom.$('button') as HTMLButtonElement;
-                        deselectAllBtn.textContent = 'Deselect All';
-                        deselectAllBtn.style.cssText = `
-                                background: #1A2744; border: 1px solid #2D3A5C; border-radius: 3px;
-                                color: #E0E7FF; font-size: 11px; padding: 3px 8px; cursor: pointer;
-                        `;
-                        deselectAllBtn.onclick = () => {
-                                this.selectableSteps.forEach(s => s.selected = false);
-                                this.planContainer?.querySelectorAll<HTMLInputElement>('.construct-step-checkbox').forEach(cb => { cb.checked = false; });
-                                this.planContainer?.querySelectorAll('.construct-step-text').forEach(el => { (el as HTMLElement).style.textDecoration = 'line-through'; });
-                        };
-
-                        controlBar.appendChild(selectAllBtn);
-                        controlBar.appendChild(deselectAllBtn);
-                        this.planContainer.appendChild(controlBar);
-                }
+                const subHeader = dom.$('.construct-plan-subheader');
+                subHeader.style.cssText = `font-size: 11px; color: #4A5568; margin-bottom: 8px;`;
+                subHeader.textContent = 'Uncheck any steps you want to skip';
+                this.planContainer.appendChild(subHeader);
 
                 // Plan steps with checkboxes
-                if (this.selectableSteps.length > 0) {
-                        for (const step of this.selectableSteps) {
-                                const stepRow = dom.$('.construct-plan-step');
-                                stepRow.style.cssText = `display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 12px;`;
+                this.planCheckboxes = [];
+                const stepsContainer = dom.$('.construct-plan-steps');
+                stepsContainer.style.cssText = `max-height: 300px; overflow-y: auto;`;
 
-                                const checkbox = document.createElement('input');
-                                checkbox.type = 'checkbox';
-                                checkbox.checked = step.selected;
-                                checkbox.className = 'construct-step-checkbox';
-                                checkbox.style.cssText = `accent-color: #00E5FF; cursor: pointer;`;
-                                checkbox.onchange = () => {
-                                        step.selected = checkbox.checked;
-                                        const textEl = stepRow.querySelector('.construct-step-text') as HTMLElement;
-                                        if (textEl) {
-                                                textEl.style.textDecoration = checkbox.checked ? 'none' : 'line-through';
-                                                textEl.style.color = checkbox.checked ? '#C0C0C0' : '#666';
-                                        }
-                                };
+                for (const step of kovixSteps) {
+                        const row = dom.$('.construct-plan-step-row');
+                        row.style.cssText = `display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 12px; color: #C0C0C0; ${step.isMilestone ? 'background: #1A2744; border-radius: 3px; padding: 4px 6px; margin: 2px 0;' : ''}`;
 
-                                const icon = this.getActionIcon(step.action);
-                                const stepText = dom.$('.construct-step-text');
-                                stepText.style.cssText = `color: #C0C0C0;`;
-                                stepText.textContent = `${icon} ${step.action}: ${step.target}`;
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.checked = step.selected;
+                        checkbox.style.cssText = `accent-color: #00E5FF; cursor: pointer;`;
+                        this.planCheckboxes.push(checkbox);
 
-                                stepRow.appendChild(checkbox);
-                                stepRow.appendChild(stepText);
-                                this.planContainer.appendChild(stepRow);
+                        const icon = this.getActionIcon(step.action);
+                        const milestoneMarker = step.isMilestone ? '\u2605 ' : '';
+                        const label = dom.$('span');
+                        label.textContent = `${milestoneMarker}${icon} ${step.action}: ${step.target}`;
+                        if (step.isMilestone) {
+                                label.style.color = '#00E5FF';
+                                label.style.fontWeight = '600';
                         }
-                } else {
-                        // No structured steps -- show the raw summary
-                        const summaryEl = dom.$('.construct-plan-summary');
-                        summaryEl.style.cssText = `font-size: 12px; color: #C0C0C0; white-space: pre-wrap; max-height: 150px; overflow-y: auto;`;
-                        summaryEl.textContent = plan.summary.substring(0, 500);
-                        this.planContainer.appendChild(summaryEl);
+
+                        checkbox.onchange = () => {
+                                step.selected = checkbox.checked;
+                                this._updatePlanSummary(summaryEl, kovixSteps);
+                        };
+
+                        row.appendChild(checkbox);
+                        row.appendChild(label);
+                        stepsContainer.appendChild(row);
                 }
+                this.planContainer.appendChild(stepsContainer);
+
+                // Select All / Deselect All
+                const selectBtns = dom.$('.construct-plan-select-btns');
+                selectBtns.style.cssText = `display: flex; gap: 8px; margin-top: 6px; margin-bottom: 6px;`;
+
+                const selectAllBtn = dom.$('button') as HTMLButtonElement;
+                selectAllBtn.textContent = 'Select All';
+                selectAllBtn.style.cssText = `background: transparent; border: 1px solid #1A1F2E; color: #4A5568; border-radius: 3px; padding: 2px 8px; cursor: pointer; font-size: 10px;`;
+                selectAllBtn.onclick = () => {
+                        kovixSteps.forEach((s, i) => { s.selected = true; this.planCheckboxes[i].checked = true; });
+                        this._updatePlanSummary(summaryEl, kovixSteps);
+                };
+
+                const deselectAllBtn = dom.$('button') as HTMLButtonElement;
+                deselectAllBtn.textContent = 'Deselect All';
+                deselectAllBtn.style.cssText = `background: transparent; border: 1px solid #1A1F2E; color: #4A5568; border-radius: 3px; padding: 2px 8px; cursor: pointer; font-size: 10px;`;
+                deselectAllBtn.onclick = () => {
+                        kovixSteps.forEach((s, i) => { s.selected = false; this.planCheckboxes[i].checked = false; });
+                        this._updatePlanSummary(summaryEl, kovixSteps);
+                };
+
+                selectBtns.appendChild(selectAllBtn);
+                selectBtns.appendChild(deselectAllBtn);
+                this.planContainer.appendChild(selectBtns);
+
+                // Summary
+                const summaryEl = dom.$('.construct-plan-summary-text');
+                summaryEl.style.cssText = `font-size: 11px; color: #4A5568; margin-bottom: 8px;`;
+                this._updatePlanSummary(summaryEl, kovixSteps);
+                this.planContainer.appendChild(summaryEl);
 
                 // Buttons
                 const btnContainer = dom.$('.construct-plan-buttons');
-                btnContainer.style.cssText = `display: flex; gap: 8px; margin-top: 10px;`;
+                btnContainer.style.cssText = `display: flex; gap: 8px; margin-top: 6px; justify-content: flex-end;`;
 
-                const approveBtn = dom.$('button') as HTMLButtonElement;
-                approveBtn.textContent = '\u2705 Approve';
-                approveBtn.style.cssText = `
-                        background: #00C853; color: white; border: none;
-                        border-radius: 4px; padding: 6px 14px; cursor: pointer;
-                        font-size: 12px; font-weight: 600;
-                `;
-
-                const cancelBtn = dom.$('button') as HTMLButtonElement;
-                cancelBtn.textContent = '\u274C Cancel';
-                cancelBtn.style.cssText = `
-                        background: #FF4444; color: white; border: none;
-                        border-radius: 4px; padding: 6px 14px; cursor: pointer;
-                        font-size: 12px; font-weight: 600;
-                `;
-
-                approveBtn.onclick = async () => {
-                        // Show stop mode picker
-                        const milestones = this.agentLoop.extractMilestonesFromPlan(plan.steps);
-                        const selectedMode = await showStopModePicker(this.quickInputService, milestones);
-                        if (!selectedMode) { return; } // cancelled
-
-                        const approvedPlan: IApprovedPlan = {
-                                task,
-                                steps: this.selectableSteps,
-                                executionMode: selectedMode,
-                                milestones,
-                                approved: true,
-                                approvedAt: Date.now(),
-                        };
-
+                const refineBtn = dom.$('button') as HTMLButtonElement;
+                refineBtn.textContent = '\u2190 Refine Idea';
+                refineBtn.style.cssText = `background: transparent; border: 1px solid #1A1F2E; color: #4A5568; border-radius: 4px; padding: 6px 12px; cursor: pointer; font-size: 12px;`;
+                refineBtn.onclick = () => {
                         this.planContainer?.remove();
                         this.planContainer = null;
-                        this.runExecution(task, approvedPlan);
+                        // Go back to idea refinement
+                        this.setExecutionState('idle');
+                        this.addAgentMessage('[INFO] Returning to idea refinement. Type your additional thoughts below.', 'info');
                 };
 
+                const approveBtn = dom.$('button') as HTMLButtonElement;
+                approveBtn.textContent = 'Approve & Continue \u2192';
+                approveBtn.style.cssText = `background: #00C853; color: white; border: none; border-radius: 4px; padding: 6px 14px; cursor: pointer; font-size: 12px; font-weight: 600;`;
+                approveBtn.onclick = () => {
+                        // Build IApprovedPlan from selected steps
+                        const selectedSteps = kovixSteps.filter(s => s.selected);
+                        const excludedSteps = kovixSteps.filter(s => !s.selected);
+                        if (selectedSteps.length === 0) {
+                                this.notificationService.warn('Select at least one step to continue.');
+                                return;
+                        }
+                        const projectId = this.projectService.getActiveProject()?.id ?? 'default';
+                        this.approvedPlan = {
+                                projectId,
+                                allSteps: kovixSteps,
+                                selectedSteps,
+                                excludedSteps,
+                                milestones: this.planMilestones,
+                                approvedAt: Date.now(),
+                        };
+                        this.planContainer?.remove();
+                        this.planContainer = null;
+                        // Show stop mode picker
+                        this._showStopModePicker(task);
+                };
+
+                const cancelBtn = dom.$('button') as HTMLButtonElement;
+                cancelBtn.textContent = 'Cancel';
+                cancelBtn.style.cssText = `background: transparent; border: 1px solid #FF4444; color: #FF4444; border-radius: 4px; padding: 6px 14px; cursor: pointer; font-size: 12px;`;
                 cancelBtn.onclick = () => {
                         this.planContainer?.remove();
                         this.planContainer = null;
@@ -742,11 +785,53 @@ export class ConstructAgentViewPane extends ViewPane {
                         this.progressPanel?.clear();
                 };
 
-                btnContainer.appendChild(approveBtn);
+                btnContainer.appendChild(refineBtn);
                 btnContainer.appendChild(cancelBtn);
+                btnContainer.appendChild(approveBtn);
                 this.planContainer.appendChild(btnContainer);
 
                 this.messageContainer.appendChild(this.planContainer);
+                this.scrollToBottom();
+        }
+
+        private _updatePlanSummary(summaryEl: HTMLElement, steps: IKovixPlanStep[]): void {
+                const selected = steps.filter(s => s.selected).length;
+                const excluded = steps.filter(s => !s.selected).length;
+                summaryEl.textContent = `${selected} steps selected, ${excluded} excluded`;
+        }
+
+        private _generateMilestoneLabel(step: { action: string; target: string; description: string }): string {
+                const target = step.target || step.description;
+                if (target.length > 40) {
+                        return target.substring(0, 40) + '...';
+                }
+                return target;
+        }
+
+        private _showStopModePicker(task: string): void {
+                this.planContainer?.remove();
+                this.stopModePicker?.dispose();
+
+                this.stopModePicker = new ConstructStopModePicker(
+                        this.planMilestones,
+                        (modeConfig: IExecutionModeConfig) => {
+                                // Store the execution mode in the approved plan
+                                if (this.approvedPlan) {
+                                        this.approvedPlan.executionModeConfig = modeConfig;
+                                }
+                                this.stopModePicker?.dispose();
+                                this.stopModePicker = null;
+                                this.runExecution(task);
+                        },
+                        () => {
+                                // Back to plan — re-render plan view
+                                this.stopModePicker?.dispose();
+                                this.stopModePicker = null;
+                                this.setExecutionState('idle');
+                        },
+                );
+
+                this.stopModePicker.render(this.messageContainer);
                 this.scrollToBottom();
         }
 

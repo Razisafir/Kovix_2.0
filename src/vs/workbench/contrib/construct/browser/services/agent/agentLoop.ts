@@ -1275,7 +1275,139 @@ Guidelines:
                 return [...corePlanning, ...extraReadOnly];
         }
 
+        // --- Phase 5 (Kovix): Milestone-Aware Pausable Execution ---
+
+        private _kovixExecutionState: import('../../../../../../platform/construct/common/agent/milestoneStateMachine.js').ExecutionState = { type: 'idle' };
+        private _resumeResolver: (() => void) | null = null;
+        private _onMilestoneReached = new Emitter<import('../../../../../../platform/construct/common/agent/milestoneStateMachine.js').IMilestone>();
+        private _currentApprovedPlan: import('../../../../../../platform/construct/common/agent/milestoneStateMachine.js').IApprovedPlan | null = null;
+        private _currentModeConfig: import('../../../../../../platform/construct/common/agent/executionMode.js').IExecutionModeConfig | null = null;
+
+        getExecutionState(): import('../../../../../../platform/construct/common/agent/milestoneStateMachine.js').ExecutionState {
+                return this._kovixExecutionState;
+        }
+
+        get onMilestoneReached(): Event<import('../../../../../../platform/construct/common/agent/milestoneStateMachine.js').IMilestone> {
+                return this._onMilestoneReached.event;
+        }
+
+        resumeFromMilestone(_milestoneId: string): void {
+                if (this._resumeResolver) {
+                        this._resumeResolver();
+                        this._resumeResolver = null;
+                        this._kovixExecutionState = { type: 'running', currentStepIndex: 0, currentMilestoneId: _milestoneId };
+                }
+        }
+
+        skipCurrentMilestone(): void {
+                if (this._resumeResolver) {
+                        this._resumeResolver();
+                        this._resumeResolver = null;
+                        this._kovixExecutionState = { type: 'running', currentStepIndex: 0, currentMilestoneId: '' };
+                }
+        }
+
+        async *startExecution(
+                plan: import('../../../../../../platform/construct/common/agent/milestoneStateMachine.js').IApprovedPlan,
+                modeConfig: import('../../../../../../platform/construct/common/agent/executionMode.js').IExecutionModeConfig,
+                signal?: AbortSignal,
+        ): AsyncGenerator<AgentLoopEvent> {
+                this._currentApprovedPlan = plan;
+                this._currentModeConfig = modeConfig;
+                this._kovixExecutionState = { type: 'running', currentStepIndex: 0, currentMilestoneId: plan.milestones[0]?.id ?? '' };
+
+                // Build task from approved plan steps
+                const stepDescriptions = plan.selectedSteps.map(s => `${s.action}: ${s.target} — ${s.description}`);
+                const task = `Execute the following approved plan steps:\n${stepDescriptions.join('\n')}`;
+
+                // Delegate to the existing run() method but intercept milestone events
+                const stream = this.run(task, signal);
+
+                let stepCount = 0;
+                for await (const event of stream) {
+                        // Track step completions for milestone detection
+                        if (event.type === 'tool_result') {
+                                stepCount++;
+                        }
+
+                        // Check if we've completed a milestone
+                        if (event.type === 'tool_result' || event.type === 'complete') {
+                                const completedMilestone = this._checkMilestoneCompletion(stepCount, plan, modeConfig);
+                                if (completedMilestone && event.type === 'tool_result') {
+                                        // Generate a summary of what was done
+                                        const summary = `Completed ${stepCount} steps including ${completedMilestone.label}`;
+                                        completedMilestone.status = 'completed';
+                                        completedMilestone.completedAt = Date.now();
+                                        completedMilestone.summary = summary;
+
+                                        // Yield milestone event
+                                        yield { type: 'milestone_reached', milestone: completedMilestone, summary };
+                                        this._onMilestoneReached.fire(completedMilestone);
+
+                                        // Check if we should pause
+                                        const shouldPause = this._shouldPauseAtMilestone(completedMilestone, modeConfig);
+                                        if (shouldPause) {
+                                                this._kovixExecutionState = { type: 'paused_at_milestone', milestoneId: completedMilestone.id, milestone: completedMilestone, summary };
+
+                                                // Wait for resume
+                                                await new Promise<void>((resolve) => {
+                                                        this._resumeResolver = resolve;
+                                                });
+
+                                                if (signal?.aborted) { break; }
+                                                yield { type: 'milestone_resumed', milestoneId: completedMilestone.id };
+                                        }
+                                }
+                        }
+
+                        yield event;
+                }
+
+                if (!signal?.aborted) {
+                        const completedMilestones = plan.milestones.filter(m => m.status === 'completed').length;
+                        this._kovixExecutionState = { type: 'completed', totalSteps: plan.selectedSteps.length, milestonesCompleted: completedMilestones };
+                }
+        }
+
+        private _checkMilestoneCompletion(stepCount: number, plan: import('../../../../../../platform/construct/common/agent/milestoneStateMachine.js').IApprovedPlan, _modeConfig: import('../../../../../../platform/construct/common/agent/executionMode.js').IExecutionModeConfig): import('../../../../../../platform/construct/common/agent/milestoneStateMachine.js').IMilestone | null {
+                for (const milestone of plan.milestones) {
+                        if (milestone.status !== 'pending') { continue; }
+                        const maxStepIndex = Math.max(...milestone.stepIndices, -1);
+                        // If we've completed enough steps to have passed this milestone's steps
+                        if (stepCount >= maxStepIndex + 1) {
+                                return milestone;
+                        }
+                }
+                return null;
+        }
+
+        private _shouldPauseAtMilestone(milestone: import('../../../../../../platform/construct/common/agent/milestoneStateMachine.js').IMilestone, config: import('../../../../../../platform/construct/common/agent/executionMode.js').IExecutionModeConfig): boolean {
+                switch (config.mode) {
+                        case ExecutionMode.EVERY_MILESTONE:
+                                return true;
+                        case ExecutionMode.MAJOR_MILESTONE:
+                                return milestone.isMajor;
+                        case ExecutionMode.SELECTIVE:
+                                return (config.selectedMilestoneIds ?? []).includes(milestone.id);
+                        case ExecutionMode.FULL_AUTO:
+                                return false;
+                        default:
+                                return false;
+                }
+        }
+
+        async runPlanningPhaseWithIdea(task: string, refinedIdea: import('../../../../../../platform/construct/common/agent/ideaRefinementTypes.js').IRefinedIdea | undefined, signal?: AbortSignal): Promise<IPlanResult> {
+                if (!refinedIdea) {
+                        return this.runPlanningPhase(task, signal);
+                }
+
+                // Enhance the task with the refined idea context
+                const enhancedTask = `${task}\n\nRefined Project Idea:\nDescription: ${refinedIdea.refinedDescription}\nScope: ${refinedIdea.scope}\nOut of scope: ${refinedIdea.outOfScope.join(', ')}\nConstraints: ${refinedIdea.constraints.join(', ')}\nSuccess criteria: ${refinedIdea.successCriteria.join(', ')}\nAssumptions: ${refinedIdea.assumptions.join(', ')}`;
+                return this.runPlanningPhase(enhancedTask, signal);
+        }
+
         override dispose(): void {
                 super.dispose();
+                this._onMilestoneReached.dispose();
         }
 }

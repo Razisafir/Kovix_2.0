@@ -1,131 +1,63 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_ADDITIONAL_TERMS.txt.
+// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 /**
- * Predefined project templates for the new project wizard.
+ * KOVIX — Project Types
+ *
+ * Defines the data model for a Kovix project. A project represents the
+ * user's intent to build something — with a name, description, tech stack,
+ * goals, and persistent metadata stored in .construct/project.json.
  */
-export enum ProjectTemplate {
-	Empty = 'empty',
-	WebApp = 'web-app',
-	APIServer = 'api-server',
-	CLITool = 'cli-tool',
-	MobileApp = 'mobile-app',
-	DesktopApp = 'desktop-app',
-	DataScience = 'data-science',
-	GameDev = 'game-dev',
-}
 
-/**
- * Labels for each project template.
- */
-export const PROJECT_TEMPLATE_LABELS: Record<ProjectTemplate, string> = {
-	[ProjectTemplate.Empty]: 'Empty Project',
-	[ProjectTemplate.WebApp]: 'Web Application',
-	[ProjectTemplate.APIServer]: 'API Server',
-	[ProjectTemplate.CLITool]: 'CLI Tool',
-	[ProjectTemplate.MobileApp]: 'Mobile App',
-	[ProjectTemplate.DesktopApp]: 'Desktop App',
-	[ProjectTemplate.DataScience]: 'Data Science',
-	[ProjectTemplate.GameDev]: 'Game Development',
-};
-
-/**
- * Descriptions for each project template.
- */
-export const PROJECT_TEMPLATE_DESCRIPTIONS: Record<ProjectTemplate, string> = {
-	[ProjectTemplate.Empty]: 'Start from scratch with an empty workspace',
-	[ProjectTemplate.WebApp]: 'React, Vue, Svelte, or vanilla web application',
-	[ProjectTemplate.APIServer]: 'REST/GraphQL API server with Express, Fastify, or similar',
-	[ProjectTemplate.CLITool]: 'Command-line tool with argument parsing and I/O',
-	[ProjectTemplate.MobileApp]: 'React Native or Flutter mobile application',
-	[ProjectTemplate.DesktopApp]: 'Electron or Tauri desktop application',
-	[ProjectTemplate.DataScience]: 'Jupyter notebooks, data pipelines, ML models',
-	[ProjectTemplate.GameDev]: 'Game project with a rendering engine',
-};
-
-/**
- * Icons (Unicode) for each project template.
- */
-export const PROJECT_TEMPLATE_ICONS: Record<ProjectTemplate, string> = {
-	[ProjectTemplate.Empty]: '\uD83D\uDCC2',     // 📂
-	[ProjectTemplate.WebApp]: '\uD83C\uDF10',     // 🌐
-	[ProjectTemplate.APIServer]: '\uD83D\uDDC3',  // 🗳
-	[ProjectTemplate.CLITool]: '\uD83D\uDCBB',    // 💻
-	[ProjectTemplate.MobileApp]: '\uD83D\uDCF1',  // 📱
-	[ProjectTemplate.DesktopApp]: '\uD83D\uDDA5', // 🖥
-	[ProjectTemplate.DataScience]: '\uD83D\uDCCA', // 📊
-	[ProjectTemplate.GameDev]: '\uD83C\uDFAE',    // 🎮
-};
-
-/**
- * A technology stack entry in a project.
- */
-export interface ITechStackEntry {
-	readonly category: 'language' | 'framework' | 'database' | 'tool' | 'runtime';
-	readonly name: string;
-	readonly version?: string;
-}
-
-/**
- * Status of a KOVIX project.
- */
-export enum ProjectStatus {
-	Initializing = 'initializing',
-	Active = 'active',
-	Paused = 'paused',
-	Completed = 'completed',
-	Archived = 'archived',
-}
-
-/**
- * Represents a KOVIX project tracked by the Construct agent system.
- */
 export interface IKovixProject {
-	/** Unique identifier. */
-	readonly id: string;
-	/** Human-readable project name. */
-	readonly name: string;
-	/** Project description. */
-	readonly description: string;
-	/** Template used to create the project. */
-	readonly template: ProjectTemplate;
-	/** Technology stack entries. */
-	readonly techStack: ITechStackEntry[];
-	/** Goals / objectives for the project. */
-	readonly goals: string[];
-	/** Workspace root URI. */
-	readonly workspaceRoot: string;
-	/** Current project status. */
-	readonly status: ProjectStatus;
-	/** When this project was created. */
-	readonly createdAt: number;
-	/** When this project was last modified. */
-	readonly updatedAt: number;
+	/** Unique identifier (uuid v4) */
+	id: string;
+	/** Human-readable project name */
+	name: string;
+	/** One-paragraph description of what the user wants to build */
+	description: string;
+	/** Technologies the project uses (e.g. ['TypeScript', 'React', 'Node.js']) */
+	techStack: string[];
+	/** Success criteria — what does "done" look like? */
+	goals: string[];
+	/** When the project was created (unix timestamp ms) */
+	createdAt: number;
+	/** When the project was last updated (unix timestamp ms) */
+	updatedAt: number;
+	/** Absolute path to the workspace folder */
+	workspacePath: string;
+	/** All session IDs associated with this project */
+	sessionIds: string[];
+	/** Current project lifecycle status */
+	status: 'active' | 'paused' | 'completed' | 'archived';
+	/** The final refined idea text, stored after Phase 2 (idea refinement) completes */
+	lastIdeaRefinement?: string;
+	/** JSON-serialized IPlanResult, stored after planning completes */
+	lastPlan?: string;
 }
 
-/**
- * Input for creating a new KOVIX project.
- */
 export interface IProjectCreationInput {
-	readonly name: string;
-	readonly description: string;
-	readonly template: ProjectTemplate;
-	readonly techStack: ITechStackEntry[];
-	readonly goals: string[];
-	readonly workspaceRoot: string;
+	name: string;
+	description: string;
+	techStack: string[];
+	goals: string[];
 }
 
-/**
- * Summary of a project for display in lists/pickers.
- */
-export interface IProjectSummary {
-	readonly id: string;
-	readonly name: string;
-	readonly template: ProjectTemplate;
-	readonly status: ProjectStatus;
-	readonly lastActiveAt: number;
+/** Filename for the per-workspace project config */
+export const PROJECT_CONFIG_FILENAME = '.construct/project.json';
+
+/** Filename for the global project registry (stored in user home) */
+export const GLOBAL_PROJECT_REGISTRY_FILENAME = '.kovix/projects.json';
+
+/** Minimal entry stored in the global registry for fast cross-project listing */
+export interface IProjectRegistryEntry {
+	id: string;
+	name: string;
+	workspacePath: string;
+	status: IKovixProject['status'];
+	updatedAt: number;
 }

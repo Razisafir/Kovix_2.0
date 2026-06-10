@@ -1,54 +1,68 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_ADDITIONAL_TERMS.txt.
+// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import { createDecorator } from '../../../instantiation/common/instantiation.js';
-import { Event } from '../../../../base/common/event.js';
-import { IRefinementQuestion, IRefinementAnswer, IRefinedIdea, RefinementEvent } from './ideaRefinementTypes.js';
+import { IRefinedIdea } from './ideaRefinementTypes.js';
 
-export const IIdeaRefinementService = createDecorator<IIdeaRefinementService>('construct.ideaRefinement');
+export const IIdeaRefinementService = createDecorator<IIdeaRefinementService>('ideaRefinementService');
+
+export interface IIdeaRefinementTurn {
+	role: 'agent' | 'user';
+	content: string;
+}
 
 /**
- * Service for the idea refinement phase of the Construct agent workflow.
- * Takes a raw user idea and conducts an interactive Q&A to produce a
- * well-scoped, detailed specification before planning begins.
+ * Service for the idea refinement phase — a conversational loop
+ * that runs BEFORE planning. The agent helps the user clarify,
+ * scope, and pressure-test their idea through 3-5 back-and-forth
+ * exchanges before generating a plan.
+ *
+ * This is what separates KOVIX from every other AI coding tool:
+ * the user doesn't just describe an idea and get code — they
+ * refine it with the AI first.
  */
 export interface IIdeaRefinementService {
 	readonly _serviceBrand: undefined;
 
-	/** Events emitted during the refinement process. */
-	readonly onRefinementEvent: Event<RefinementEvent>;
-
-	/** Whether a refinement session is currently active. */
-	readonly isRefining: boolean;
+	/**
+	 * Start a new refinement session for a project's initial description.
+	 * Returns the agent's first question as a string.
+	 */
+	startRefinement(projectId: string, initialDescription: string, techStack: string[]): Promise<string>;
 
 	/**
-	 * Start the refinement process for a user's raw idea.
-	 * The AI will generate clarifying questions.
-	 * @param idea The raw user idea or task description.
-	 * @returns The initial set of refinement questions.
+	 * Submit a user's answer to the agent's question.
+	 * Returns either the agent's next question OR signals readyForPlanning.
 	 */
-	startRefinement(idea: string): Promise<IRefinementQuestion[]>;
+	submitAnswer(projectId: string, answer: string): Promise<{
+		nextQuestion?: string;
+		readyForPlanning: boolean;
+		refinedIdea?: IRefinedIdea;
+	}>;
 
 	/**
-	 * Submit answers to the current refinement questions.
-	 * The AI may generate more questions or complete the refinement.
-	 * @param answers The user's answers to the current questions.
-	 * @returns Either more questions or the refined idea.
+	 * Force-complete refinement with whatever has been gathered so far.
+	 * Useful when the user clicks "Skip refinement → Plan now".
 	 */
-	submitAnswers(answers: IRefinementAnswer[]): Promise<{ type: 'questions'; questions: IRefinementQuestion[] } | { type: 'complete'; refinedIdea: IRefinedIdea }>;
+	forceComplete(projectId: string): Promise<IRefinedIdea>;
 
 	/**
-	 * Skip the refinement process and produce a best-effort refined idea
-	 * from whatever information is available.
+	 * Get the current conversation history for a project.
 	 */
-	skipToRefinedIdea(): Promise<IRefinedIdea>;
+	getHistory(projectId: string): IIdeaRefinementTurn[];
 
 	/**
-	 * Cancel the current refinement session.
+	 * Get the final refined idea (after readyForPlanning = true).
+	 * Returns null if refinement has not completed.
 	 */
-	cancelRefinement(): void;
+	getRefinedIdea(projectId: string): IRefinedIdea | null;
+
+	/**
+	 * Whether a refinement session is currently active for the given project.
+	 */
+	isRefinementActive(projectId: string): boolean;
 }

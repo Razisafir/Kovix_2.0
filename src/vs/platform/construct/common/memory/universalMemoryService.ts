@@ -1,61 +1,61 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_ADDITIONAL_TERMS.txt.
+// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
 import { createDecorator } from '../../../instantiation/common/instantiation.js';
-import { IUniversalMemoryEntry, IUniversalMemoryQuery, IUniversalMemoryStats } from './universalMemoryTypes.js';
+import { IUniversalMemoryEntry, IUniversalMemoryQuery } from './universalMemoryTypes.js';
 
-export const IUniversalMemoryService = createDecorator<IUniversalMemoryService>('construct.universalMemory');
+export const IUniversalMemoryService = createDecorator<IUniversalMemoryService>('universalMemoryService');
 
 /**
- * Service for universal, cross-project memory that persists locally.
- * Unlike the per-project four-layer memory, universal memory stores
- * facts, patterns, and preferences that apply across all projects.
+ * Service for the universal cross-project memory system.
  *
- * Storage: ~/.kovix/universal-memory.json (local JSON file)
- * Fallback: Supermemory write-through when available
+ * This is the local, always-available alternative to Supermemory.ai.
+ * It stores learnings from every project in a global SQLite database
+ * at ~/.kovix/universal-memory.db, searchable from any project.
+ *
+ * When Ollama embeddings are available, it uses semantic search.
+ * Otherwise, it falls back to FTS5 full-text search.
  */
 export interface IUniversalMemoryService {
 	readonly _serviceBrand: undefined;
 
 	/**
-	 * Add a memory entry to the universal store.
+	 * Add a memory entry (called automatically after milestone completions).
 	 */
-	addMemory(content: string, category: string, tags?: string[]): Promise<IUniversalMemoryEntry>;
+	addMemory(entry: Omit<IUniversalMemoryEntry, 'id' | 'createdAt'>): Promise<IUniversalMemoryEntry>;
 
 	/**
-	 * Query universal memory with fuzzy search.
-	 * Uses tag matching, substring search, and category filtering.
+	 * Search memories semantically (uses embeddings if available, FTS5 fallback).
 	 */
-	query(query: IUniversalMemoryQuery): Promise<IUniversalMemoryEntry[]>;
+	searchMemories(query: IUniversalMemoryQuery): Promise<IUniversalMemoryEntry[]>;
 
 	/**
-	 * Get formatted context string for a task.
-	 * Searches for relevant memories and formats them for LLM injection.
+	 * Get all memories for a specific project.
 	 */
-	getContextForTask(task: string, limit?: number): Promise<string>;
+	getProjectMemories(projectId: string): Promise<IUniversalMemoryEntry[]>;
 
 	/**
-	 * Auto-extract memories from a completed task.
-	 * Uses the AI to identify reusable facts, patterns, or conventions.
+	 * Get memories relevant to the current task (called before planning).
+	 * Returns a formatted context string for injection into the LLM system prompt.
 	 */
-	autoExtractFromTask(task: string, summary: string): Promise<void>;
+	getContextForTask(taskDescription: string, currentProjectId: string): Promise<string>;
 
 	/**
-	 * Remove a memory entry by ID.
+	 * Delete a memory by ID.
 	 */
-	removeMemory(id: string): Promise<void>;
+	deleteMemory(id: string): Promise<void>;
 
 	/**
-	 * Get statistics about the universal memory store.
+	 * Get total memory count.
 	 */
-	getStats(): Promise<IUniversalMemoryStats>;
+	getMemoryCount(): Promise<number>;
 
 	/**
-	 * Compact the memory store by removing duplicates and low-value entries.
+	 * Export all memories as JSON (for backup).
 	 */
-	compact(): Promise<number>;
+	exportMemories(): Promise<string>;
 }
