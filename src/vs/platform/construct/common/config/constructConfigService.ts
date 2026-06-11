@@ -9,6 +9,11 @@ import { createDecorator } from '../../../instantiation/common/instantiation.js'
 import { Event } from '../../../../base/common/event.js';
 import { URI } from '../../../../base/common/uri.js';
 
+/**
+ * @deprecated IConstructConfigService is not yet registered in the DI container.
+ * Configuration is currently handled via VS Code's IConfigurationService.
+ * This interface will be registered when the unified config service is implemented.
+ */
 export const IConstructConfigService = createDecorator<IConstructConfigService>('construct.configService');
 
 /**

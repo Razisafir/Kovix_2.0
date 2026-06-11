@@ -7,6 +7,11 @@
 
 import { createDecorator } from '../../../instantiation/common/instantiation.js';
 
+/**
+ * @deprecated IMCPProcessNodeService is a node-layer-only service and is not
+ * registered in the browser DI container. It is only available via IPC in
+ * desktop mode. Do not inject this in browser-layer code.
+ */
 export const IMCPProcessNodeService = createDecorator<IMCPProcessNodeService>('construct.mcpProcessNode');
 
 /**

@@ -85,7 +85,9 @@ import { showProjectWizard } from './constructProjectWizard.js';
 import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
 import { ConstructOnboardingWizard } from './constructOnboarding.js';
 import { IObsidianMemoryService } from '../../../../platform/construct/common/memory/obsidianMemoryService.js';
+import { IConstructTelemetryService } from '../../../../platform/construct/common/telemetry/constructTelemetryService.js';
 import { ObsidianMemoryServiceImpl } from './services/memory/obsidianMemoryServiceImpl.js';
+import { ConstructTelemetryService } from './services/telemetry/constructTelemetryService.js';
 import { ObsidianMemoryTreePanel } from './constructMemoryExplorer.js';
 import { MEMORY_CATEGORIES, MEMORY_CATEGORY_LABELS } from '../../../../platform/construct/common/memory/obsidianMemoryTypes.js';
 import './constructMemoryConfig';
@@ -631,6 +633,9 @@ registerSingleton(IConstructSessionService, ConstructSessionServiceImpl, Instant
 
 // --- Obsidian Memory Service Singleton ---------------------------------------------
 registerSingleton(IObsidianMemoryService, ObsidianMemoryServiceImpl, InstantiationType.Delayed);
+
+// --- Telemetry Service Singleton ---------------------------------------------------
+registerSingleton(IConstructTelemetryService, ConstructTelemetryService, InstantiationType.Delayed);
 
 // --- Feature Build: Project Commands -----------------------------------------
 registerAction2(class NewProjectAction extends Action2 {

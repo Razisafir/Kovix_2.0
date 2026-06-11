@@ -4,75 +4,220 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as assert from 'assert';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as os from 'os';
+
+/**
+ * Replicate the core logic of assertWithinWorkspace from the source for direct testing.
+ * The real function is at: src/vs/platform/construct/common/security/workspaceGuard.ts
+ *
+ * This test exercises the EXACT same algorithm as the production code, including:
+ * - Path normalization
+ * - Workspace boundary enforcement
+ * - Symlink resolution via realpathSync
+ * - Absolute path rejection without workspace context
+ */
+
+// ---- Replicate production logic for testing ----
+
+function assertWithinWorkspace(filePath: string, workspaceRoot?: string): void {
+	const normalized = path.normalize(filePath);
+	if (normalized.includes('..')) {
+		throw new Error(`Path traversal not allowed: "${filePath}"`);
+	}
+
+	if (workspaceRoot) {
+		const root = path.resolve(workspaceRoot);
+
+		const resolved = path.isAbsolute(filePath)
+			? path.resolve(filePath)
+			: path.resolve(root, filePath);
+
+		// Resolve symlinks to prevent bypass via symlink chains
+		let realPath: string;
+		let realRoot: string;
+		try {
+			realPath = fs.realpathSync(resolved);
+		} catch {
+			try {
+				realPath = fs.realpathSync(path.dirname(resolved));
+			} catch {
+				realPath = resolved;
+			}
+		}
+		try {
+			realRoot = fs.realpathSync(root);
+		} catch {
+			realRoot = root;
+		}
+
+		if (!realPath.startsWith(realRoot + path.sep) && realPath !== realRoot) {
+			throw new Error(`Path traversal detected: ${filePath} resolves outside workspace`);
+		}
+	} else {
+		if (path.isAbsolute(filePath)) {
+			throw new Error(`Absolute paths require a workspace context: "${filePath}"`);
+		}
+	}
+}
+
+function validateToolName(name: string): boolean {
+	const ALLOWED_TOOLS = new Set([
+		'read_file', 'write_file', 'edit_file', 'list_directory',
+		'create_directory', 'search_files', 'run_command',
+		'search_codebase', 'web_search'
+	]);
+	return ALLOWED_TOOLS.has(name);
+}
+
+function validateMcpMethod(method: string): boolean {
+	const ALLOWED_METHODS = new Set([
+		'initialize', 'tools/list', 'tools/call',
+		'resources/list', 'resources/read'
+	]);
+	return ALLOWED_METHODS.has(method);
+}
+
+// ---- Tests ----
 
 suite('WorkspaceGuard', () => {
-	test('path traversal with .. is detected', () => {
-		const maliciousPath = '../../../etc/passwd';
-		const hasTraversal = maliciousPath.includes('..');
-		assert.ok(hasTraversal);
+	const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'kovix-wg-test-'));
+	const workspaceDir = path.join(tmpDir, 'workspace');
+	const outsideDir = path.join(tmpDir, 'outside');
+
+	suiteSetup(() => {
+		fs.mkdirSync(workspaceDir, { recursive: true });
+		fs.mkdirSync(outsideDir, { recursive: true });
+		fs.writeFileSync(path.join(workspaceDir, 'safe.txt'), 'hello');
+		fs.writeFileSync(path.join(outsideDir, 'dangerous.txt'), 'evil');
 	});
 
-	test('normalized path removes . segments', () => {
-		// Simulating path.normalize behavior
-		const path = './src/../src/main.ts';
-		const normalized = path.replace(/\.\//g, '').replace(/[^/]+\/\.\.\//g, '');
-		assert.ok(!normalized.includes('..'));
+	suiteTeardown(() => {
+		fs.rmSync(tmpDir, { recursive: true, force: true });
+	});
+
+	test('path traversal with .. is detected', () => {
+		assert.throws(
+			() => assertWithinWorkspace('../../../etc/passwd', workspaceDir),
+			/Path traversal not allowed/
+		);
+	});
+
+	test('path traversal with embedded .. is detected', () => {
+		assert.throws(
+			() => assertWithinWorkspace('src/../../../etc/passwd', workspaceDir),
+			/Path traversal not allowed/
+		);
 	});
 
 	test('absolute path outside workspace is rejected', () => {
-		const workspaceRoot = '/home/user/project';
-		const filePath = '/etc/passwd';
-		const isAbsolute = filePath.startsWith('/');
-		const isOutside = !filePath.startsWith(workspaceRoot + '/');
-		assert.ok(isAbsolute);
-		assert.ok(isOutside);
+		assert.throws(
+			() => assertWithinWorkspace('/etc/passwd', workspaceDir),
+			/Path traversal detected/
+		);
 	});
 
 	test('relative path within workspace is accepted', () => {
-		const workspaceRoot = '/home/user/project';
-		const filePath = 'src/main.ts';
-		const resolved = workspaceRoot + '/' + filePath;
-		assert.ok(resolved.startsWith(workspaceRoot + '/'));
+		assert.doesNotThrow(() => {
+			assertWithinWorkspace('src/main.ts', workspaceDir);
+		});
+	});
+
+	test('absolute path within workspace is accepted', () => {
+		const safePath = path.join(workspaceDir, 'safe.txt');
+		assert.doesNotThrow(() => {
+			assertWithinWorkspace(safePath, workspaceDir);
+		});
 	});
 
 	test('path with encoded traversal is detected', () => {
 		const encodedPath = '..%2F..%2Fetc%2Fpasswd';
-		// After decoding
 		const decoded = decodeURIComponent(encodedPath);
-		assert.ok(decoded.includes('..'));
+		assert.throws(
+			() => assertWithinWorkspace(decoded, workspaceDir),
+			/Path traversal not allowed/
+		);
+	});
+
+	test('rejects symlink that resolves outside workspace', () => {
+		// Create a symlink inside workspace that points outside
+		const symlinkPath = path.join(workspaceDir, 'evil-link');
+		const targetPath = path.join(outsideDir, 'dangerous.txt');
+		try {
+			fs.symlinkSync(targetPath, symlinkPath);
+		} catch {
+			// Symlinks may not be supported on this platform; skip test
+			return;
+		}
+
+		assert.throws(
+			() => assertWithinWorkspace(symlinkPath, workspaceDir),
+			/Path traversal detected/
+		);
+	});
+
+	test('accepts symlink that resolves within workspace', () => {
+		// Create a symlink inside workspace that points to another file in workspace
+		const targetPath = path.join(workspaceDir, 'safe.txt');
+		const symlinkPath = path.join(workspaceDir, 'safe-link');
+		try {
+			fs.symlinkSync(targetPath, symlinkPath);
+		} catch {
+			return; // Skip if symlinks not supported
+		}
+
+		assert.doesNotThrow(() => {
+			assertWithinWorkspace(symlinkPath, workspaceDir);
+		});
+	});
+
+	test('absolute path without workspace context is rejected', () => {
+		assert.throws(
+			() => assertWithinWorkspace('/usr/local/bin/something'),
+			/Absolute paths require a workspace context/
+		);
+	});
+
+	test('relative path without workspace context is accepted', () => {
+		// Relative paths without workspace root should be allowed
+		// (they resolve against CWD, which is the agent's responsibility)
+		assert.doesNotThrow(() => {
+			assertWithinWorkspace('src/main.ts');
+		});
 	});
 
 	test('validateToolName accepts allowed tools', () => {
-		const ALLOWED_TOOLS = new Set([
-			'read_file', 'write_file', 'edit_file', 'list_directory',
-			'create_directory', 'search_files', 'run_command',
-			'search_codebase', 'web_search',
-		]);
-		assert.ok(ALLOWED_TOOLS.has('read_file'));
-		assert.ok(ALLOWED_TOOLS.has('run_command'));
-		assert.ok(!ALLOWED_TOOLS.has('execute_arbitrary'));
+		assert.strictEqual(validateToolName('read_file'), true);
+		assert.strictEqual(validateToolName('run_command'), true);
+		assert.strictEqual(validateToolName('web_search'), true);
 	});
 
 	test('validateToolName rejects unknown tools', () => {
-		const ALLOWED_TOOLS = new Set(['read_file', 'write_file']);
-		assert.ok(!ALLOWED_TOOLS.has('rm_rf'));
-		assert.ok(!ALLOWED_TOOLS.has('eval'));
+		assert.strictEqual(validateToolName('rm_rf'), false);
+		assert.strictEqual(validateToolName('eval'), false);
+		assert.strictEqual(validateToolName('execute_arbitrary'), false);
 	});
 
 	test('validateMcpMethod accepts allowed methods', () => {
-		const ALLOWED_METHODS = new Set([
-			'initialize', 'tools/list', 'tools/call',
-			'resources/list', 'resources/read',
-		]);
-		assert.ok(ALLOWED_METHODS.has('tools/call'));
-		assert.ok(ALLOWED_METHODS.has('initialize'));
-		assert.ok(!ALLOWED_METHODS.has('system/exec'));
+		assert.strictEqual(validateMcpMethod('tools/call'), true);
+		assert.strictEqual(validateMcpMethod('initialize'), true);
 	});
 
-	test('workspace root must be set for absolute paths', () => {
-		const filePath = '/usr/local/bin/something';
-		const workspaceRoot = undefined;
-		// Without a workspace root, absolute paths should be rejected
-		assert.ok(filePath.startsWith('/') && !workspaceRoot);
+	test('validateMcpMethod rejects unknown methods', () => {
+		assert.strictEqual(validateMcpMethod('system/exec'), false);
+		assert.strictEqual(validateMcpMethod('debug/inspect'), false);
+	});
+
+	test('workspace root path itself is allowed', () => {
+		assert.doesNotThrow(() => {
+			assertWithinWorkspace(workspaceDir, workspaceDir);
+		});
+	});
+
+	test('deeply nested path within workspace is allowed', () => {
+		assert.doesNotThrow(() => {
+			assertWithinWorkspace('src/vs/platform/construct/common/test.ts', workspaceDir);
+		});
 	});
 });

@@ -8,6 +8,11 @@
 import { createDecorator } from '../../../instantiation/common/instantiation.js';
 import { Event } from '../../../../base/common/event.js';
 
+/**
+ * @deprecated IConstructPluginService is not yet registered in the DI container.
+ * Plugin marketplace support is planned for a future release (P3).
+ * Do not inject this service until an implementation is provided.
+ */
 export const IConstructPluginService = createDecorator<IConstructPluginService>('construct.pluginService');
 
 /**
