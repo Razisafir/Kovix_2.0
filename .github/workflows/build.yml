@@ -1,4 +1,4 @@
-name: Build Construct IDE
+name: Build Kovix
 
 on:
   push:
@@ -20,7 +20,7 @@ permissions:
   contents: read
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   PYTHON_VERSION: '3.11'
 
 jobs:
@@ -209,16 +209,16 @@ jobs:
             cd VSCode-darwin-x64
             APP_NAME=$(ls -d *.app 2>/dev/null | head -1)
             if [ -n "$APP_NAME" ]; then
-              zip -r "../construct-ide-darwin-x64.zip" "$APP_NAME"
+              zip -r "../kovix-darwin-x64.zip" "$APP_NAME"
             else
               cd ..
-              zip -r "construct-ide-darwin-x64.zip" "VSCode-darwin-x64/"
+              zip -r "kovix-darwin-x64.zip" "VSCode-darwin-x64/"
             fi
           elif [ -d ".build/darwin/x64" ]; then
             cd .build/darwin/x64
             APP_NAME=$(ls -d *.app 2>/dev/null | head -1)
             if [ -n "$APP_NAME" ]; then
-              zip -r "../construct-ide-darwin-x64.zip" "$APP_NAME"
+              zip -r "../kovix-darwin-x64.zip" "$APP_NAME"
             else
               cd ..
               zip -r "construct-ide-darwin-x64.zip" x64/

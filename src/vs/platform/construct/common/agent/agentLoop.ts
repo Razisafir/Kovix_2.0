@@ -116,6 +116,13 @@ export interface IAgentLoop {
         readonly onFileChange: Event<FileChangeEntry>;
 
         /**
+         * Event fired when a milestone-related event occurs during execution
+         * (milestone_paused, milestone_reached, milestone_resumed, milestone_completed).
+         * Used by startExecution() which cannot yield because it is not a generator.
+         */
+        readonly onDidMilestoneEvent: Event<AgentLoopEvent>;
+
+        /**
          * Undo the last agent task by restoring the most recent snapshot.
          * Reverts all file changes made during the last task.
          *

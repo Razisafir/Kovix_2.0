@@ -174,6 +174,9 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
         private readonly _onFileChange = this._register(new Emitter<FileChangeEntry>());
         readonly onFileChange = this._onFileChange.event;
 
+        private readonly _onDidMilestoneEvent = this._register(new Emitter<AgentLoopEvent>());
+        readonly onDidMilestoneEvent = this._onDidMilestoneEvent.event;
+
         /** H2: Multi-turn conversation history preserved across run() calls. */
         private _conversationHistory: IChatMessage[] = [];
 
@@ -723,7 +726,7 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                                 const shouldPause = this.shouldPauseAtMilestone(event);
                                                 if (shouldPause && this._currentMilestone) {
                                                         this._executionState = ExecutionState.PausedAtMilestone;
-                                                        yield { type: 'milestone_paused', milestone: this._currentMilestone } as AgentLoopEvent;
+                                                        this._onDidMilestoneEvent.fire({ type: 'milestone_paused', milestone: this._currentMilestone } as AgentLoopEvent);
                                                         // Wait for resume
                                                         await this._waitForResume();
                                                 }
