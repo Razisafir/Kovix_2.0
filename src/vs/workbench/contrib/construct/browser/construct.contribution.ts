@@ -195,7 +195,7 @@ registerAction2(class FocusConstructPanelAction extends Action2 {
                                                 id: 'construct.focusPanel',
                                                 title: localize2('focusConstructPanel', "Show Construct Agent"),
                                                 keybinding: {
-                                                                primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyK,
+                                                                primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyL,
                                                                 weight: KeybindingWeight.WorkbenchContrib,
                                                 },
                                                 f1: true,

@@ -20,11 +20,12 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
+      # npm audit fails on critical CVEs — do NOT use continue-on-error;
+      # critical vulnerabilities must block the release build.
       - name: Security audit (production deps only)
         run: npm audit --production --audit-level=critical
-        continue-on-error: true
 
       - name: Compile
         run: npm run compile
@@ -51,15 +52,17 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
+      # npm audit fails on critical CVEs — do NOT use continue-on-error;
+      # critical vulnerabilities must block the release build.
       - name: Security audit (production deps only)
         run: npm audit --production --audit-level=critical
-        continue-on-error: true
 
       - name: Compile
         run: npm run compile
 
+      # macOS runners cost 10× more than Linux; only build when releasing
       - name: Build macOS app
         run: node ./node_modules/gulp/bin/gulp.js vscode-darwin-x64
 
@@ -87,11 +90,12 @@ jobs:
           sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libgbm1
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
+      # npm audit fails on critical CVEs — do NOT use continue-on-error;
+      # critical vulnerabilities must block the release build.
       - name: Security audit (production deps only)
         run: npm audit --production --audit-level=critical
-        continue-on-error: true
 
       - name: Compile
         run: npm run compile
@@ -114,7 +118,7 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             kovix-windows/**

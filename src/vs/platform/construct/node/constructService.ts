@@ -5,8 +5,6 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { spawn, ChildProcess } from 'child_process';
-import { join } from '../../../base/common/path.js';
 import { IConstructService } from '../common/construct.js';
 import { IMCPProcessNodeService } from '../common/mcp/mcpProcessNode.js';
 import { MCPProcessNodeService } from './mcpProcessNode.js';
@@ -26,32 +24,21 @@ import { IFileWatcherService } from '../common/watcher/fileWatcherService.js';
 import { FileWatcherNodeService } from './constructFileWatcherService.js';
 import { ITerminalExecutor } from '../common/terminal/terminalExecutor.js';
 import { TerminalNodeService } from './constructTerminalService.js';
-import { assertWithinWorkspace } from '../common/security/workspaceGuard.js';
 import { registerSingleton, InstantiationType } from '../../instantiation/common/extensions';
 
 class ConstructService implements IConstructService {
         declare readonly _serviceBrand: undefined;
-        private _agentProcess: ChildProcess | undefined;
         private _port: number = 8000;
 
         async start(): Promise<void> {
-                const isDev = process.env.VSCODE_DEV === '1';
-                if (isDev) {
-                        const agentBackendPath = join(__dirname, '..', '..', '..', '..', '..', 'agent-backend');
-                        // Validate resolved path to prevent directory traversal from env manipulation
-                        assertWithinWorkspace(agentBackendPath);
-
-                        this._agentProcess = spawn('python', ['-m', 'uvicorn', 'app:app', '--host', '127.0.0.1', '--port', String(this._port)], {
-                                cwd: agentBackendPath,
-                                env: { ...process.env as Record<string, string> }
-                        });
-                }
+                // Python agent-backend has been removed.
+                // The Construct service now runs entirely within the Node.js process.
         }
 
         getPort(): number { return this._port; }
 
         async stop(): Promise<void> {
-                this._agentProcess?.kill();
+                // No external process to stop
         }
 }
 

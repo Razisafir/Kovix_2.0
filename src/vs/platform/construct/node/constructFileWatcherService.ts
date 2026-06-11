@@ -10,6 +10,8 @@ import { ILogService } from '../../log/common/log.js';
 import { Emitter } from '../../../base/common/event.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
 import { URI } from '../../../base/common/uri.js';
+import { watch } from 'fs';
+import { join } from '../../../base/common/path.js';
 
 /**
  * Default file watcher configuration.
@@ -61,8 +63,66 @@ export class FileWatcherNodeService extends Disposable implements IFileWatcherSe
         startWatching(workspaceRoot: URI): void {
                 if (this._isWatching) { return; }
                 this._isWatching = true;
-                this.logService.info(`[FileWatcherNode] Started watching: ${workspaceRoot.fsPath}`);
-                // Full implementation would use fs.watch with debouncing
+                this.logService.info(`[FileWatcherNode] Starting file watching for: ${workspaceRoot.fsPath}`);
+
+                const watchPath = workspaceRoot.fsPath;
+                let pendingFileChanges = new Map<string, FileChangeType>();
+                let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+                const flushFileChanges = () => {
+                        for (const [filePath, changeType] of pendingFileChanges) {
+                                switch (changeType) {
+                                        case 'created':
+                                                this.notifyAgentFileCreated(URI.file(filePath));
+                                                break;
+                                        case 'modified':
+                                                this.notifyAgentFileModified(URI.file(filePath));
+                                                break;
+                                        case 'deleted':
+                                                this.notifyAgentFileDeleted(URI.file(filePath));
+                                                break;
+                                }
+                        }
+                        pendingFileChanges.clear();
+                        debounceTimer = null;
+                };
+
+                try {
+                        const fsWatcher = watch(watchPath, { recursive: true }, (eventType, filename) => {
+                                if (!filename) { return; }
+                                // Skip ignored patterns
+                                if (this._shouldIgnore(filename)) { return; }
+
+                                const fullPath = join(watchPath, filename);
+
+                                // Map fs.watch event types to our FileChangeType
+                                let changeType: FileChangeType;
+                                if (eventType === 'rename') {
+                                        // 'rename' can mean create or delete; we'll treat it as create.
+                                        // The notifyAgentFile* methods add to the debounced pipeline,
+                                        // so a subsequent modification will correct the type.
+                                        changeType = 'created';
+                                } else {
+                                        changeType = 'modified';
+                                }
+
+                                pendingFileChanges.set(fullPath, changeType);
+
+                                if (debounceTimer) { clearTimeout(debounceTimer); }
+                                debounceTimer = setTimeout(flushFileChanges, 300);
+                        });
+
+                        this._watchers.set(workspaceRoot.toString(), { close: () => fsWatcher.close() });
+                        this.logService.info(`[FileWatcherNode] fs.watch active on: ${watchPath}`);
+                } catch (error) {
+                        this.logService.error('[FileWatcherNode] Failed to start watching:', error);
+                        this._isWatching = false;
+                }
+        }
+
+        private _shouldIgnore(filename: string): boolean {
+                const ignorePatterns = ['node_modules', '.git', 'dist', '.construct', '__pycache__', '.next', '.DS_Store'];
+                return ignorePatterns.some(pattern => filename.includes(pattern));
         }
 
         stopWatching(): void {

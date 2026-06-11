@@ -39,6 +39,10 @@ export class MemoryOrchestratorService extends Disposable implements IMemoryOrch
         private readonly _onDidForget = this._register(new Emitter<{ projectId: string }>());
         readonly onDidForget = this._onDidForget.event;
 
+        // Rolling tracking for live stats
+        private _lastConsolidationTime: number = 0;
+        private _queryTimes: number[] = [];  // rolling window of last 10 query times
+
         constructor(
                 @ILogService private readonly logService: ILogService,
                 @IWorkingMemoryService private readonly workingMemory: IWorkingMemoryService,
@@ -53,7 +57,7 @@ export class MemoryOrchestratorService extends Disposable implements IMemoryOrch
         }
 
         async query(query: IMemoryQuery): Promise<IMemorySearchResult> {
-                const startTime = Date.now();
+                const startTime = performance.now();
                 const results: IMemoryEntry[] = [];
                 const scores: number[] = [];
 
@@ -75,11 +79,15 @@ export class MemoryOrchestratorService extends Disposable implements IMemoryOrch
                 const topK = query.topK ?? 10;
                 const filtered = combined.slice(0, topK);
 
+                const elapsed = performance.now() - startTime;
+                this._queryTimes.push(elapsed);
+                if (this._queryTimes.length > 10) { this._queryTimes.shift(); }
+
                 return {
                         entries: filtered.map(c => c.entry),
                         total: filtered.length,
                         relevanceScores: filtered.map(c => c.score),
-                        queryTimeMs: Date.now() - startTime
+                        queryTimeMs: elapsed
                 };
         }
 
@@ -210,6 +218,8 @@ export class MemoryOrchestratorService extends Disposable implements IMemoryOrch
                         this.workingMemory.pruneContext(projectId, ctx.tokenBudget * 0.6);
                 }
 
+                this._lastConsolidationTime = Date.now();
+
                 const stats = this.getMemoryStats(projectId);
                 this._onDidConsolidate.fire({ projectId, stats });
 
@@ -231,10 +241,27 @@ export class MemoryOrchestratorService extends Disposable implements IMemoryOrch
         }
 
         getMemoryStats(projectId: string): IMemoryStats {
-                const working = this.workingMemory.getCurrentContext(projectId) ? 1 : 0;
-                const episodic = this.episodicMemory.getRecentEvents(projectId, 999999).length;
-                const semantic = this.semanticMemory.getAllKnowledge(projectId).length;
-                const procedural = this.proceduralMemory.getPatternLeaderboard(projectId).length;
+                const workingCtx = this.workingMemory.getCurrentContext(projectId);
+                const working = workingCtx ? 1 : 0;
+                const episodicEvents = this.episodicMemory.getRecentEvents(projectId, 999999);
+                const episodic = episodicEvents.length;
+                const semanticEntries = this.semanticMemory.getAllKnowledge(projectId);
+                const semantic = semanticEntries.length;
+                const proceduralEntries = this.proceduralMemory.getPatternLeaderboard(projectId);
+                const procedural = proceduralEntries.length;
+
+                // Estimate storage: JSON.stringify each layer's data, multiply by 2 for UTF-16 encoding
+                let storageUsedBytes = 0;
+                try {
+                        if (workingCtx) { storageUsedBytes += JSON.stringify(workingCtx).length * 2; }
+                        storageUsedBytes += JSON.stringify(episodicEvents).length * 2;
+                        storageUsedBytes += JSON.stringify(semanticEntries).length * 2;
+                        storageUsedBytes += JSON.stringify(proceduralEntries).length * 2;
+                } catch { /* if serialization fails, leave as 0 */ }
+
+                const avgQueryTimeMs = this._queryTimes.length > 0
+                        ? this._queryTimes.reduce((sum, t) => sum + t, 0) / this._queryTimes.length
+                        : 0;
 
                 return {
                         totalEntries: working + episodic + semantic + procedural,
@@ -244,9 +271,9 @@ export class MemoryOrchestratorService extends Disposable implements IMemoryOrch
                                 [MemoryLayer.Semantic]: semantic,
                                 [MemoryLayer.Procedural]: procedural
                         },
-                        storageUsedBytes: 0,
-                        lastConsolidation: 0,
-                        avgQueryTimeMs: 0
+                        storageUsedBytes,
+                        lastConsolidation: this._lastConsolidationTime,
+                        avgQueryTimeMs
                 };
         }
 

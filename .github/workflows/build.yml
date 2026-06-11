@@ -3,7 +3,6 @@ name: Build Construct IDE
 on:
   push:
     branches: [main]
-    tags: ['v*']
   workflow_dispatch:
     inputs:
       build_macos:
@@ -14,9 +13,6 @@ on:
         options:
           - 'false'
           - 'true'
-
-permissions:
-  contents: write
 
 env:
   NODE_VERSION: '20'
@@ -124,18 +120,6 @@ jobs:
             .build/win32-x64/checksums-sha256.txt
           retention-days: 30
 
-      - name: Upload to Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            .build/win32-x64/system-setup/*.exe
-            .build/win32-x64/checksums-sha256.txt
-          draft: true
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # LINUX BUILD — produces .deb package
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -197,25 +181,13 @@ jobs:
             .build/linux/checksums-sha256.txt
           retention-days: 30
 
-      - name: Upload to Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            .build/linux/deb/amd64/**/*.deb
-            .build/linux/checksums-sha256.txt
-          draft: true
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # macOS BUILD — produces .dmg (opt-in, expensive)
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   build-macos:
     needs: compile
     name: macOS x64 Build
-    if: github.event.inputs.build_macos == 'true' || startsWith(github.ref, 'refs/tags/v')
+    if: github.event.inputs.build_macos == 'true'
     runs-on: macos-latest
     timeout-minutes: 120
     steps:
@@ -284,15 +256,3 @@ jobs:
             construct-ide-darwin-x64.zip
             checksums-sha256.txt
           retention-days: 30
-
-      - name: Upload to Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            construct-ide-darwin-x64.zip
-            checksums-sha256.txt
-          draft: true
-          generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -18,6 +18,7 @@ import {
         IConstructToolRegistry, IToolDefinition, IToolResult, assertWithinWorkspace
 } from '../../../../../../platform/construct/common/tools/constructToolRegistry.js';
 import { ITerminalExecutor } from '../../../../../../platform/construct/common/terminal/terminalExecutor.js';
+import { IPendingChangesService } from '../../../../../../platform/construct/common/diff/pendingChanges.js';
 import { nmapToolDefinition } from '../../tools/security/nmapTool.js';
 import { ghidraToolDefinition } from '../../tools/security/ghidraTool.js';
 import { nucleiToolDefinition } from '../../tools/security/nucleiTool.js';
@@ -39,8 +40,12 @@ const COMMAND_BLOCKLIST = [
  * - read_file(path) — read file from workspace
  * - write_file(path, content) — write with diff preview before applying
  * - run_terminal(command) — execute in node-pty, stream output to panel
+ * - run_command(command, cwd) — alias for run_terminal with agent-compatible schema
  * - search_codebase(query) — semantic search via Qdrant vector store
  * - web_search(query) — only when online mode active
+ * - list_directory(path) — list directory contents
+ * - create_directory(path) — create a directory including parents
+ * - edit_file(path, diff) — apply a unified diff to an existing file (staged for review)
  *
  * Kali integration:
  * - On Windows, detect Kali WSL2 distro via: wsl.exe -l -v
@@ -73,6 +78,7 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                 @IWorkspaceContextService private readonly workspaceContextService: IWorkspaceContextService,
                 @IConstructVectorStore private readonly vectorStore: IConstructVectorStore,
                 @ITerminalExecutor private readonly terminalExecutor: ITerminalExecutor,
+                @IPendingChangesService private readonly pendingChanges: IPendingChangesService,
         ) {
                 super();
 
@@ -312,6 +318,72 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                         requiresNetwork: false,
                         category: 'file',
                 }, async (input) => this.executeListDirectory(input));
+
+                // create_directory — create a directory, including any necessary parent directories
+                this.registerTool({
+                        name: 'create_directory',
+                        description: 'Create a directory, including any necessary parent directories. Returns confirmation of creation.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        path: {
+                                                type: 'string',
+                                                description: 'Absolute or workspace-relative path to the directory to create.',
+                                        },
+                                },
+                                required: ['path'],
+                        },
+                        modifiesFiles: true,
+                        requiresNetwork: false,
+                        category: 'file',
+                }, async (input) => this.executeCreateDirectory(input));
+
+                // edit_file — apply a unified diff to an existing file (staged for user review)
+                this.registerTool({
+                        name: 'edit_file',
+                        description: 'Apply a unified diff to an existing file. Use for targeted edits rather than rewriting entire files. The change is staged for user review before applying.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        path: {
+                                                type: 'string',
+                                                description: 'Absolute or workspace-relative path to the file to edit.',
+                                        },
+                                        diff: {
+                                                type: 'string',
+                                                description: 'Unified diff content to apply to the file.',
+                                        },
+                                },
+                                required: ['path', 'diff'],
+                        },
+                        modifiesFiles: true,
+                        requiresNetwork: false,
+                        category: 'file',
+                }, async (input) => this.executeEditFile(input));
+
+                // run_command — alias for run_terminal with agent-compatible input schema
+                // This ensures the tool registry can handle both 'run_terminal' and 'run_command' names
+                this.registerTool({
+                        name: 'run_command',
+                        description: 'Execute a shell command and return the output. Use for installing dependencies, running builds, tests, etc. Commands are checked against a blocklist for safety.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        command: {
+                                                type: 'string',
+                                                description: 'The shell command to execute.',
+                                        },
+                                        cwd: {
+                                                type: 'string',
+                                                description: 'Working directory for the command. Defaults to workspace root.',
+                                        },
+                                },
+                                required: ['command'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: false,
+                        category: 'terminal',
+                }, async (input) => this.executeRunTerminal(input));
         }
 
         // --- Tool Implementations ---
@@ -629,6 +701,70 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                         return {
                                 success: false,
                                 output: `Failed to list directory "${path}": ${error instanceof Error ? error.message : String(error)}`,
+                                truncated: false,
+                        };
+                }
+        }
+
+        private async executeCreateDirectory(input: Record<string, unknown>): Promise<IToolResult> {
+                const path = input.path as string;
+                if (!path) {
+                        return { success: false, output: 'Missing required parameter: path', truncated: false };
+                }
+
+                try {
+                        // SEC-4: Path traversal prevention
+                        const workspaceRoot = this.workspaceContextService.getWorkspace().folders[0]?.uri.fsPath;
+                        if (workspaceRoot) {
+                                assertWithinWorkspace(path, workspaceRoot);
+                        }
+
+                        const uri = this.resolveUri(path);
+                        await this.fileService.createFolder(uri);
+
+                        return {
+                                success: true,
+                                output: `Directory created: ${path}`,
+                                truncated: false,
+                        };
+                } catch (error) {
+                        return {
+                                success: false,
+                                output: `Failed to create directory "${path}": ${error instanceof Error ? error.message : String(error)}`,
+                                truncated: false,
+                        };
+                }
+        }
+
+        private async executeEditFile(input: Record<string, unknown>): Promise<IToolResult> {
+                const path = input.path as string;
+                const diff = input.diff as string;
+
+                if (!path || !diff) {
+                        return { success: false, output: 'Missing required parameters: path and diff', truncated: false };
+                }
+
+                // USER IN CONTROL: Stage the edit for review instead of applying directly.
+                // The agent view's diff viewer handles the approval flow.
+                try {
+                        // SEC-4: Path traversal prevention
+                        const workspaceRoot = this.workspaceContextService.getWorkspace().folders[0]?.uri.fsPath;
+                        if (workspaceRoot) {
+                                assertWithinWorkspace(path, workspaceRoot);
+                        }
+
+                        const editUri = this.resolveUri(path);
+                        await this.pendingChanges.stageEdit(editUri, diff);
+
+                        return {
+                                success: true,
+                                output: `Edit staged: ${path}. Review and accept/reject in diff view.`,
+                                truncated: false,
+                        };
+                } catch (error) {
+                        return {
+                                success: false,
+                                output: `Failed to stage edit for "${path}": ${error instanceof Error ? error.message : String(error)}`,
                                 truncated: false,
                         };
                 }

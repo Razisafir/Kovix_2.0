@@ -218,7 +218,7 @@ export class MCPServerManagerService extends Disposable implements IMCPServerMan
 
         // --- Tool Execution ---------------------------------------------------
 
-        async executeTool(serverName: string, toolName: string, args: any): Promise<IMCPExecutionResult> {
+        async executeTool(serverName: string, toolName: string, args: any, signal?: AbortSignal): Promise<IMCPExecutionResult> {
                 const startTime = Date.now();
                 this.logService.info(`[MCP Manager] Executing tool ${toolName} on ${serverName}`);
 

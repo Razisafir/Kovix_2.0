@@ -1030,6 +1030,9 @@ export class ConstructAgentViewPane extends ViewPane {
                 this.toolLogEntries = [];
                 this.toolLogContainer = null;
 
+                // Clear conversation history so the agent doesn't remember previous turns
+                this.agentLoop.clearConversationHistory();
+
                 // Re-render welcome message
                 const welcome = dom.$('.construct-welcome');
                 welcome.style.cssText = `padding: 16px; text-align: center;`;

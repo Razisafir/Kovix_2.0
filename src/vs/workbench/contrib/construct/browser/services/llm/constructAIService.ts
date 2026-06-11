@@ -51,6 +51,9 @@ export class ConstructAIService extends Disposable implements IConstructAIServic
         private readonly _providers: Map<AIProviderType, IConstructAIProvider> = new Map();
         private _activeProvider: IConstructAIProvider | undefined;
 
+        /** Active stream controller, aborted when switching providers. */
+        private _activeStreamController: AbortController | null = null;
+
         private readonly _onDidChangeActiveProvider = this._register(new Emitter<AIProviderType>());
         readonly onDidChangeActiveProvider = this._onDidChangeActiveProvider.event;
         private readonly _onDidChangeActiveModel = this._register(new Emitter<IModelInfo | undefined>());
@@ -190,7 +193,24 @@ export class ConstructAIService extends Disposable implements IConstructAIServic
                         return;
                 }
 
-                yield* this._activeProvider.chat(messages, tools, options);
+                // Bug 4 fix: Create an AbortController so we can abort on provider switch
+                const streamController = new AbortController();
+                this._activeStreamController = streamController;
+                // Chain the user's signal with our controller
+                if (options?.signal) {
+                        options.signal.addEventListener('abort', () => streamController.abort());
+                }
+
+                const mergedOptions: IChatOptions = {
+                        ...options,
+                        signal: streamController.signal,
+                };
+
+                try {
+                        yield* this._activeProvider.chat(messages, tools, mergedOptions);
+                } finally {
+                        this._activeStreamController = null;
+                }
         }
 
         async complete(prefix: string, suffix: string, options?: ICompleteOptions): Promise<ICompleteResult> {
@@ -225,6 +245,12 @@ export class ConstructAIService extends Disposable implements IConstructAIServic
         // --- Private helpers ---
 
         private _setActiveProvider(type: AIProviderType): void {
+                // Bug 4 fix: Abort any in-flight stream before switching providers
+                if (this._activeStreamController) {
+                        this._activeStreamController.abort();
+                        this._activeStreamController = null;
+                }
+
                 this._activeProvider = this._providers.get(type);
                 this._onDidChangeActiveProvider.fire(type);
                 if (this._activeProvider) {

@@ -7,6 +7,33 @@
 - New domain: kovix.dev
 - Bundle ID updated to ai.kovix.ide
 
+### Fixed (Grand Launch)
+- Multi-turn conversation context preserved across run() calls (Bug 1)
+- Universal memory injection sanitized against prompt injection (Bug 2)
+- AbortSignal propagated to tool execution for immediate cancellation (Bug 3)
+- Provider switch aborts in-flight streams cleanly (Bug 4)
+- Keybinding changed from Ctrl+Shift+K to Ctrl+Shift+L to avoid Delete Line conflict (Bug 5)
+- FileWatcher now uses fs.watch for external file change detection (Stub 1)
+- MemoryOrchestrator stats now return real metrics (Stub 2)
+
+### Removed (Grand Launch)
+- Non-functional Python agent backend (Stub 3)
+
+### Added (Grand Launch)
+- PromptSanitizer utility for memory context sanitization
+- Unit tests for Construct services
+
+### CI (Grand Launch)
+- Consolidated build/release workflows — build.yml is compile-only on push to main, release.yml is the sole tagged-release workflow
+- npm audit now fails on critical CVEs (removed continue-on-error)
+- release.yml uses npm ci instead of npm install
+- release.yml upgraded to softprops/action-gh-release@v2
+- macOS runner cost trade-off documented in release.yml
+
+### Docs (Grand Launch)
+- Added SECURITY.md with vulnerability reporting policy, supported versions, and known security considerations
+- Added Known Limitations section in README.md
+
 ## [1.0.0] - 2026-06-09
 
 ### Added

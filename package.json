@@ -18,6 +18,7 @@
     "test-browser-no-install": "node test/unit/browser/index.js",
     "test-node": "mocha test/unit/node/index.js --delay --ui=tdd --timeout=5000 --exit",
     "test-extension": "vscode-test",
+    "test-unit-construct": "mocha --require ts-node/register --timeout 10000 'test/unit/construct/**/*.test.ts'",
     "preinstall": "node build/npm/preinstall.js",
     "postinstall": "node build/npm/postinstall.js",
     "compile": "node ./node_modules/gulp/bin/gulp.js compile",

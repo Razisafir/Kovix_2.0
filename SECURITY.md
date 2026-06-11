@@ -2,74 +2,53 @@
 
 ## Reporting a Vulnerability
 
-If you discover a security vulnerability in Kovix, please report it by:
+We take security vulnerabilities seriously. If you discover a security issue in Kovix, please report it responsibly:
 
-1. **Do NOT open a public GitHub issue** for security vulnerabilities
-2. Email: security@kovix.dev
-3. Or use GitHub's private vulnerability reporting: https://github.com/Razisafir/KOVIX/security/advisories/new
+- **Email**: Send details to [security@kovix.dev](mailto:security@kovix.dev)
+- **GitHub**: Use the [Security Advisories](https://github.com/Razisafir/KOVIX/security/advisories) tab to privately report a vulnerability
 
-We will respond within 72 hours.
+Please do not file public issues for security vulnerabilities. We aim to acknowledge reports within 48 hours and provide a substantive response within 5 business days.
 
 ## Supported Versions
 
 | Version | Supported |
 | ------- | --------- |
-| 1.0.x   | ✅ Yes    |
+| v1.0.x  | ✅ Yes    |
+| < v1.0  | ❌ No     |
 
-## Security Considerations for AI Features
+Only the latest patch release within the v1.0.x line receives security updates. We encourage all users to upgrade to the most recent release.
 
-Kovix includes AI capabilities. Users should be aware:
+## Security Update Policy
 
-- **Cloud AI providers**: AI features that connect to external APIs (Anthropic, OpenAI, etc.) will transmit code and context to those services. This only happens if you explicitly configure an API key and select a cloud provider. No cloud providers are configured by default.
-- **Local AI**: Local ML models (via Transformers.js / Xenova) and Ollama run entirely on-device. No data leaves your machine when using local providers.
-- **No telemetry**: No telemetry is collected by default. All Microsoft telemetry systems have been disabled in this fork.
-- **API key security**: API keys are stored in your operating system's secure credential storage (OS keychain / Credential Manager / libsecret), never in plaintext files.
-- **MCP servers**: MCP servers you configure may receive data from the agent. Review each server's privacy policy before connecting.
+- Security patches are released as patch versions (e.g., v1.0.1 → v1.0.2) and are published through the standard GitHub Releases workflow.
+- Critical vulnerabilities are addressed with the highest priority and typically patched within 72 hours of confirmation.
+- Medium and low-severity issues are triaged into the next scheduled release.
+- All security fixes are documented in [CHANGELOG.md](./CHANGELOG.md) and referenced in [SECURITY_AUDIT.md](./SECURITY_AUDIT.md).
 
-## Scope
+## Known Security Considerations
 
-The following components are in scope for our security policy:
+### No Code Signing
 
-- **Kovix application** — the Electron-based desktop application
-- **Agent loop** — the LLM orchestration layer that executes tasks
-- **Terminal executor** — the shell command execution subsystem
-- **File tools** — read_file, write_file, and all filesystem-accessing tools
-- **IPC layer** — all communication between renderer and main process
-- **Webview panels** — onboarding wizard, agent panel, memory view, browser preview
-- **API key management** — storage, retrieval, and redaction of secrets
-- **Prompt sanitisation** — injection defence for LLM context
+Kovix v1.0.x builds are **not code-signed**. This means:
 
-### Out of Scope
+- **Windows**: SmartScreen will display a warning on first launch ("Windows protected your PC"). Users must click "More info" → "Run anyway" to proceed.
+- **macOS**: Gatekeeper will block the application on first launch. Users must right-click → "Open" or bypass via System Preferences → Security & Privacy.
+- We strongly recommend verifying SHA256 checksums (published with each release) before running unsigned binaries.
 
-- The underlying VS Code engine (reported to Microsoft separately)
-- Third-party Ollama service (report to ollama/ollama)
-- Third-party Qdrant service (report to qdrant/qdrant)
-- Issues in dependencies not introduced by Kovix changes
+### Prompt Injection Mitigations
 
-## Reporting Process
+Kovix's AI agent system processes user input and file contents as LLM prompts. We implement the following mitigations against prompt injection:
 
-1. Email **security@kovix.dev** with a description of the vulnerability
-2. Include steps to reproduce, affected versions, and potential impact
-3. We will respond within **72 hours** with an initial assessment
-4. We will work with you to coordinate disclosure once a fix is available
+- **PromptSanitizer**: All memory context injected into conversations is sanitized to strip control patterns and injection attempts.
+- **Tool approval gates**: Agent tool calls (file write, terminal execution, security tools) require explicit user approval before execution.
+- **Path traversal protection**: All file operations validate paths remain within the workspace boundary.
+- **Terminal command blocklist**: Dangerous commands (`rm -rf /`, `sudo`, etc.) are blocked by the safety blocklist.
 
-## Security Controls
+For technical details on the security architecture, see [SECURITY_AUDIT.md](./SECURITY_AUDIT.md).
 
-| Control | Description |
-|---------|-------------|
-| SEC-1 | Electron sandbox lockdown — contextIsolation, CSP, sandbox mode |
-| SEC-2 | IPC channel hardening — sender validation, schema validation, channel enum |
-| SEC-3 | Terminal command injection prevention — blocklist, allowlist, rate limiting, audit log |
-| SEC-4 | Path traversal prevention — assertWithinWorkspace for all file tools |
-| SEC-5 | API key security — OS keychain storage, secret redaction, .gitignore |
-| SEC-6 | Prompt injection defence — content delimiters, injection prefix filtering |
-| SEC-7 | Auto-update URL neutralised, external network URLs audited |
+## Disclosure Policy
 
-## Responsible Disclosure
-
-We ask that security researchers:
-
-- Do not access or modify user data belonging to others
-- Do not degrade service availability
-- Provide reasonable time for remediation before public disclosure
-- Report in good faith
+- We follow **coordinated disclosure**: vulnerabilities are disclosed publicly only after a fix is available and users have had reasonable time to upgrade (typically 30 days after the patch release).
+- We credit researchers who report vulnerabilities responsibly (unless they request anonymity).
+- We do not disclose zero-day details before a patch is available under any circumstances.
+- CVE identifiers will be requested for all confirmed vulnerabilities through GitHub Security Advisories.

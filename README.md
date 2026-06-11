@@ -302,6 +302,13 @@ We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for:
 - TypeScript strict mode requirements
 - PR workflow (target `main-dev`, not `main`)
 
+## Known Limitations
+
+- **No code signing** — Windows SmartScreen and macOS Gatekeeper warnings are expected on first launch. Verify SHA256 checksums (published with each release) before running unsigned binaries.
+- **16 GB RAM required for packaging builds** — The full build pipeline (gulp + Electron packaging) runs out of memory on systems with less than 16 GB RAM.
+- **Multi-turn context is session-scoped** — Conversation context is preserved within a single session but is not persisted across application restarts (until session persistence lands in a future release).
+- **Python agent backend removed** — The non-functional Python agent backend was removed in v1.0. TypeScript AI providers (Ollama, Xenova, Cloud) now handle all AI operations natively.
+
 ## License
 
 This project is licensed under the [MIT License](./LICENSE).
