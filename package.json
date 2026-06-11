@@ -8,7 +8,7 @@
     "name": "Razisafir"
   },
   "homepage": "https://github.com/Razisafir/KOVIX",
-  "license": "SEE LICENSE IN CONSTRUCT_LICENSE.txt",
+  "license": "MIT",
   "main": "./out/main.js",
   "type": "module",
   "private": true,
@@ -237,6 +237,7 @@
   },
   "overrides": {
     "node-gyp-build": "4.8.1",
+    "protobufjs": ">=7.5.8",
     "kerberos@2.1.1": {
       "node-addon-api": "7.1.0"
     },

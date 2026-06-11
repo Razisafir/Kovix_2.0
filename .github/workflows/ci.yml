@@ -107,6 +107,19 @@ jobs:
         timeout-minutes: 15
         run: DISPLAY=:10 ./scripts/test-remote-integration.sh --no-sandbox
 
+      - name: Check test results
+        if: always()
+        run: |
+          echo "Electron unit tests: ${{ steps.electron-unit-tests.outcome }}"
+          echo "Node.js unit tests: ${{ steps.nodejs-unit-tests.outcome }}"
+          echo "Browser unit tests: ${{ steps.browser-unit-tests.outcome }}"
+          if [[ "${{ steps.electron-unit-tests.outcome }}" == "failure" && \
+                "${{ steps.nodejs-unit-tests.outcome }}" == "failure" && \
+                "${{ steps.browser-unit-tests.outcome }}" == "failure" ]]; then
+            echo "ALL test suites failed — CI will fail"
+            exit 1
+          fi
+
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # CONSTRUCT HYGIENE — only checks construct code
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

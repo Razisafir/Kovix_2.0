@@ -1,0 +1,7 @@
+Kovix Additional Terms
+======================
+While Kovix is MIT-licensed (see LICENSE.txt), please note:
+- The "Construct" AI agent system is an original contribution by the Kovix project
+- Microsoft and the VS Code team are NOT responsible for Construct features
+- The VS Code trademark is owned by Microsoft and may not be used without permission
+- The Kovix name and logo are trademarks of the Kovix project

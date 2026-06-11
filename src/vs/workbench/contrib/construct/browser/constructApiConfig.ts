@@ -1,9 +1,10 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
+// Kovix proprietary code. See CONSTRUCT_ADDITIONAL_TERMS.txt.
 /*---------------------------------------------------------------------------------------------
- *  Copyright (c) Kovix. All rights reserved.
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+
 
 import { localize } from '../../../../nls';
 import { Registry } from '../../../../platform/registry/common/platform.js';

@@ -33,8 +33,14 @@ jobs:
       - name: Compile
         run: npm run compile
 
-      - name: Build Windows installer
+      - name: Build Windows app
+        run: node ./node_modules/gulp/bin/gulp.js vscode-win32-x64
+
+      - name: Copy Windows updater
         run: node ./node_modules/gulp/bin/gulp.js vscode-win32-x64-inno-updater
+
+      - name: Create Windows system setup (.exe)
+        run: node ./node_modules/gulp/bin/gulp.js vscode-win32-x64-system-setup
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
@@ -69,11 +75,15 @@ jobs:
       - name: Build macOS app
         run: node ./node_modules/gulp/bin/gulp.js vscode-darwin-x64
 
+      # TODO(v1.1): Create proper .dmg using hdiutil or create-dmg
+      - name: Create macOS ZIP archive
+        run: cd .build/darwin-x64 && zip -r kovix-darwin-x64.zip Kovix.app
+
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
         with:
           name: kovix-macos
-          path: .build/darwin-x64/**/*.dmg
+          path: .build/darwin-x64/**/*.zip
 
   build-linux:
     runs-on: ubuntu-latest
@@ -134,7 +144,7 @@ jobs:
 
             ### Downloads
             - **Windows**: Download the `.exe` installer
-            - **macOS**: Download the `.dmg` file
+            - **macOS**: Download the `.zip` file
             - **Linux**: Download the `.tar.gz` archive
 
             ### What's New

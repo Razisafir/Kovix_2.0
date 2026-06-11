@@ -1,7 +1,7 @@
 # Building Kovix Locally
 
 ## Prerequisites
-- Node.js 20.x (use nvm: `nvm use`)
+- Node.js 22.x (use nvm: `nvm use`)
 - Git
 - Python 3.x (for native module compilation)
 - C++ build tools:
@@ -58,4 +58,4 @@ node ./node_modules/gulp/bin/gulp.js vscode-linux-x64
 
 - **Compile-time**: 16+ GB RAM recommended (8 GB may cause OOM on full builds)
 - **Disk space**: ~10 GB for full build output
-- **Node.js**: Version 20.x required
+- **Node.js**: Version 22.x required

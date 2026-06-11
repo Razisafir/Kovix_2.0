@@ -6,7 +6,7 @@
 - **Storage**: 5GB for Kovix, additional 5–10GB for Ollama models
 - **CPU**: 4+ cores recommended for local LLM inference
 - **GPU**: Optional — NVIDIA GPU with CUDA for faster Ollama inference
-- **Node.js**: 20+ (required for building from source)
+- **Node.js**: 22+ (required for building from source)
 - **npm**: 10+ (required for building from source)
 - **Git**: Required for cloning the repository
 
@@ -25,7 +25,7 @@
    ```
 3. Run the application:
    ```bash
-   ./VSCode-linux-x64/construct
+   ./kovix-linux-x64/kovix
    ```
 4. *(Optional)* Create a desktop entry for easy launching:
 
@@ -35,8 +35,8 @@
    [Desktop Entry]
    Name=Kovix
    Comment=Offline-first AI coding environment
-   Exec=/path/to/VSCode-linux-x64/construct
-   Icon=/path/to/VSCode-linux-x64/resources/app/resources/linux/construct.png
+   Exec=/path/to/kovix-linux-x64/kovix
+   Icon=/path/to/kovix-linux-x64/resources/app/resources/linux/kovix.png
    Type=Application
    Categories=Development;IDE;
    StartupNotify=true
@@ -49,12 +49,12 @@
 
 5. *(Optional)* Add to PATH for terminal access:
    ```bash
-   sudo ln -s /path/to/VSCode-linux-x64/construct /usr/local/bin/construct
+   sudo ln -s /path/to/kovix-linux-x64/kovix /usr/local/bin/kovix
    ```
 
 #### Build from Source
 
-Building from source gives you the latest development version and allows customization. The build process compiles the entire VS Code fork including all CONSTRUCT extensions.
+Building from source gives you the latest development version and allows customization. The build process compiles the entire Kovix codebase including all Construct extensions.
 
 ```bash
 # Install system dependencies (Debian/Ubuntu)
@@ -98,16 +98,16 @@ NODE_OPTIONS="--max-old-space-size=8192" npm run compile
    - **Right-click** (or Control-click) the app → select **Open**
    - Click **Open** again in the confirmation dialog
    - Alternatively, go to **System Settings → Privacy & Security** and click **Open Anyway** next to the security warning
-4. *(Optional)* Install the `construct` command-line tool:
+4. *(Optional)* Install the `kovix` command-line tool:
    - Open Kovix
    - Press `Cmd+Shift+P` to open the Command Palette
-   - Search for **"Shell Command: Install 'construct' command in PATH"**
+   - Search for **"Shell Command: Install 'kovix' command in PATH"**
    - Click it to create the symlink
 
 **Apple Silicon Notes:**
 - Kovix runs natively on Apple Silicon — no Rosetta translation needed.
 - Ollama also runs natively on Apple Silicon and leverages the Neural Engine / GPU for fast inference.
-- If you previously used an Intel build, clear the cache: `rm -rf ~/Library/Application\ Support/Construct`
+- If you previously used an Intel build, clear the cache: `rm -rf ~/Library/Application\ Support/Kovix`
 
 #### Build from Source
 
@@ -220,7 +220,7 @@ For cloud-based AI when local hardware is insufficient:
 
 1. Get an API key from https://console.anthropic.com
 2. In Kovix, press `Ctrl+Shift+P`
-3. Run **"Construct: Set API Key"**
+3. Run **"Construct: Set API Key"** (part of the Construct agent system)
 4. Enter your key (starts with `sk-ant-`)
 5. Switch provider to **Cloud** via the status bar model picker
 
@@ -321,7 +321,7 @@ On Linux, you may also need: `sudo apt-get install nvidia-container-toolkit`
 ### "Permission denied" on Linux
 The AppImage or binary needs execute permission:
 ```bash
-chmod +x ./VSCode-linux-x64/construct
+chmod +x ./kovix-linux-x64/kovix
 ```
 
 ### macOS Gatekeeper blocks the app
@@ -338,9 +338,9 @@ docker info
 ```
 
 ### TypeScript compilation errors
-Ensure you're using Node.js 20+:
+Ensure you're using Node.js 22+:
 ```bash
-node --version  # Should be v20.x.x
+node --version  # Should be v22.x.x
 ```
 Clean and rebuild:
 ```bash
