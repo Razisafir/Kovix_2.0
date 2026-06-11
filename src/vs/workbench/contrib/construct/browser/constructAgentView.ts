@@ -34,14 +34,13 @@ import { ITelemetryService } from '../../../../platform/telemetry/common/telemet
 import { IHoverService } from '../../../../platform/hover/browser/hover.js';
 import { ConstructProgressPanel } from './constructProgressPanel.js';
 import { LoadingState, FileChangeEntry, TaskMetrics } from '../../../../platform/construct/common/agent/loadingState.js';
-import { IRefinedIdea, IRefinementQuestion, IRefinementAnswer } from '../../../../platform/construct/common/agent/ideaRefinementTypes.js';
+import { IRefinedIdea } from '../../../../platform/construct/common/agent/ideaRefinementTypes.js';
 import { IIdeaRefinementService } from '../../../../platform/construct/common/agent/ideaRefinementService.js';
 import { IConstructSessionService } from '../../../../platform/construct/common/session/constructSessionService.js';
 import { IConstructProjectService } from '../../../../platform/construct/common/project/constructProjectService.js';
-import { IKovixPlanStep, IApprovedPlan, IMilestone, ExecutionState as KovixExecutionState } from '../../../../platform/construct/common/agent/milestoneStateMachine.js';
-import { ExecutionMode, IExecutionModeConfig } from '../../../../platform/construct/common/agent/executionMode.js';
+import { IKovixPlanStep, IApprovedPlan, IMilestone } from '../../../../platform/construct/common/agent/milestoneStateMachine.js';
+import { IExecutionModeConfig } from '../../../../platform/construct/common/agent/executionMode.js';
 import { ConstructStopModePicker } from './constructStopModePicker.js';
-import { ConstructProjectWizard } from './constructProjectWizard.js';
 import { IUniversalMemoryService } from '../../../../platform/construct/common/memory/universalMemoryService.js';
 import { IQuickInputService } from '../../../../platform/quickinput/common/quickInput.js';
 
@@ -119,9 +118,9 @@ export class ConstructAgentViewPane extends ViewPane {
         private diffCounter = 0;
 
         // Phase 2 (Kovix): Idea refinement state
-        private ideaRefinementProjectId: string | null = null;
-        private refinedIdea: IRefinedIdea | null = null;
-        private skipRefinement = false;
+        private _ideaRefinementProjectId: string | null = null;
+        private _refinedIdea: IRefinedIdea | null = null;
+        private _skipRefinement = false;
 
         // Phase 3-4 (Kovix): Plan with checkboxes + stop mode
         private approvedPlan: IApprovedPlan | null = null;
@@ -130,8 +129,8 @@ export class ConstructAgentViewPane extends ViewPane {
         private planMilestones: IMilestone[] = [];
 
         // Phase 5 (Kovix): Milestone pause state
-        private executionPaused = false;
-        private resumeResolver: (() => void) | null = null;
+        private _executionPaused = false;
+        private _resumeResolver: (() => void) | null = null;
 
         constructor(
                 options: IViewPaneOptions,
@@ -161,9 +160,17 @@ export class ConstructAgentViewPane extends ViewPane {
                 @IConstructSessionService private readonly sessionService: IConstructSessionService,
                 @IQuickInputService private readonly quickInputService: IQuickInputService,
                 @IConstructProjectService private readonly projectService: IConstructProjectService,
-                @IUniversalMemoryService private readonly universalMemoryService: IUniversalMemoryService,
+                @IUniversalMemoryService private readonly _universalMemoryService: IUniversalMemoryService,
         ) {
                 super(options, keybindingService, contextMenuService, configurationService, contextKeyService, viewDescriptorService, instantiationService, openerService, themeService, telemetryService, hoverService);
+
+                // Suppress TS6133/TS6138 — these fields are placeholders for Phase 2/5 functionality
+                void this._ideaRefinementProjectId;
+                void this._refinedIdea;
+                void this._skipRefinement;
+                void this._executionPaused;
+                void this._resumeResolver;
+                void this._universalMemoryService;
         }
 
         protected override renderBody(container: HTMLElement): void {
@@ -939,22 +946,22 @@ export class ConstructAgentViewPane extends ViewPane {
                                                 break;
 
                                         case 'milestone_reached':
-                                                fullText += `\n\n\uD83D\uDEA9 Milestone reached: ${event.milestone.name}`;
+                                                fullText += `\n\n\uD83D\uDEA9 Milestone reached: ${event.milestone.label}`;
                                                 break;
 
                                         case 'milestone_paused':
                                                 this.setExecutionState('paused_at_milestone');
-                                                fullText += `\n\n\u23F8 Paused at milestone: ${event.milestone.name}`;
+                                                fullText += `\n\n\u23F8 Paused at milestone: ${event.milestone.label}`;
                                                 this.renderMilestonePauseControls(event.milestone);
                                                 break;
 
                                         case 'milestone_resumed':
                                                 this.setExecutionState('executing');
-                                                fullText += `\n\n\u25B6 Resumed from milestone: ${event.milestone.name}`;
+                                                fullText += `\n\n\u25B6 Resumed from milestone: ${event.milestoneId}`;
                                                 break;
 
                                         case 'milestone_completed':
-                                                fullText += `\n\n\u2705 Milestone completed: ${event.milestone.name}`;
+                                                fullText += `\n\n\u2705 Milestone completed: ${event.milestone.label}`;
                                                 break;
 
                                         case 'complete':
@@ -1579,10 +1586,12 @@ export class ConstructAgentViewPane extends ViewPane {
 
         private async runRefinementFlow(idea: string): Promise<void> {
                 this.setExecutionState('refining');
+                const projectId = this.projectService.getActiveProject()?.id ?? 'default';
+                const techStack: string[] = [];
                 try {
-                        const questions = await this.ideaRefinementService.startRefinement(idea);
-                        if (questions.length === 0) {
-                                // No questions - go straight to planning
+                        const firstQuestion = await this.ideaRefinementService.startRefinement(projectId, idea, techStack);
+                        if (!firstQuestion) {
+                                // No question - go straight to planning
                                 this.setExecutionState('idle');
                                 const contextText = this.gatherContext();
                                 const taskWithContext = contextText ? `${idea}\n\n[Context (${this.contextScope})]:\n${contextText}` : idea;
@@ -1590,7 +1599,7 @@ export class ConstructAgentViewPane extends ViewPane {
                                 await this.runPlanActFlow(taskWithContext);
                                 return;
                         }
-                        this.renderRefinementQuestions(questions, idea);
+                        this.renderRefinementQuestion(firstQuestion, idea, projectId);
                 } catch (error) {
                         const msg = error instanceof Error ? error.message : String(error);
                         this.addAgentMessage(`[Refinement Error] ${msg}. Proceeding to planning...`, 'error');
@@ -1602,7 +1611,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 }
         }
 
-        private renderRefinementQuestions(questions: IRefinementQuestion[], idea: string): void {
+        private renderRefinementQuestion(questionText: string, idea: string, projectId: string): void {
                 const container = dom.$('.construct-refinement');
                 container.style.cssText = `
                         background: #141B2D; border: 1px solid #1A1F2E;
@@ -1611,72 +1620,38 @@ export class ConstructAgentViewPane extends ViewPane {
 
                 const header = dom.$('.construct-refinement-header');
                 header.style.cssText = `font-weight: 600; color: #E0E7FF; margin-bottom: 10px; font-size: 13px;`;
-                header.textContent = `\uD83D\uDCA1 Idea Refinement \u2014 ${questions.length} questions`;
+                header.textContent = `\uD83D\uDCA1 Idea Refinement`;
                 container.appendChild(header);
 
-                const answers: Map<string, string> = new Map();
+                const qCard = dom.$('.construct-refinement-question');
+                qCard.style.cssText = `
+                        background: #0D1117; border: 1px solid #1A1F2E;
+                        border-radius: 4px; padding: 8px 10px; margin-bottom: 8px;
+                `;
 
-                for (const q of questions) {
-                        const qCard = dom.$('.construct-refinement-question');
-                        qCard.style.cssText = `
-                                background: #0D1117; border: 1px solid #1A1F2E;
-                                border-radius: 4px; padding: 8px 10px; margin-bottom: 8px;
-                        `;
+                const qText = dom.$('.construct-refinement-text');
+                qText.style.cssText = `font-size: 12px; color: #E0E7FF; margin-bottom: 6px;`;
+                qText.textContent = questionText;
 
-                        const categoryBadge = dom.$('.construct-refinement-category');
-                        categoryBadge.style.cssText = `
-                                font-size: 10px; background: #1A2744; color: #00E5FF;
-                                border-radius: 3px; padding: 1px 6px; display: inline-block; margin-bottom: 4px;
-                        `;
-                        categoryBadge.textContent = q.category;
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'Your answer...';
+                input.style.cssText = `
+                        width: 100%; background: #0A0E1A; border: 1px solid #1A1F2E;
+                        border-radius: 3px; padding: 6px 8px; color: #E0E7FF;
+                        font-size: 12px; outline: none; box-sizing: border-box;
+                `;
 
-                        const qText = dom.$('.construct-refinement-text');
-                        qText.style.cssText = `font-size: 12px; color: #E0E7FF; margin-bottom: 6px;`;
-                        qText.textContent = q.text;
-
-                        const input = document.createElement('input');
-                        input.type = 'text';
-                        input.placeholder = q.suggestions?.[0] ?? 'Your answer...';
-                        input.style.cssText = `
-                                width: 100%; background: #0A0E1A; border: 1px solid #1A1F2E;
-                                border-radius: 3px; padding: 6px 8px; color: #E0E7FF;
-                                font-size: 12px; outline: none; box-sizing: border-box;
-                        `;
-                        input.oninput = () => { answers.set(q.id, input.value); };
-
-                        qCard.appendChild(categoryBadge);
-                        qCard.appendChild(qText);
-                        qCard.appendChild(input);
-
-                        // Suggestion chips
-                        if (q.suggestions && q.suggestions.length > 0) {
-                                const chipContainer = dom.$('.construct-refinement-chips');
-                                chipContainer.style.cssText = `display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;`;
-                                for (const suggestion of q.suggestions.slice(0, 3)) {
-                                        const chip = dom.$('button') as HTMLButtonElement;
-                                        chip.textContent = suggestion;
-                                        chip.style.cssText = `
-                                                background: #1A2744; border: 1px solid #2D3A5C; border-radius: 12px;
-                                                color: #E0E7FF; font-size: 10px; padding: 2px 8px; cursor: pointer;
-                                        `;
-                                        chip.onclick = () => {
-                                                input.value = suggestion;
-                                                answers.set(q.id, suggestion);
-                                        };
-                                        chipContainer.appendChild(chip);
-                                }
-                                qCard.appendChild(chipContainer);
-                        }
-
-                        container.appendChild(qCard);
-                }
+                qCard.appendChild(qText);
+                qCard.appendChild(input);
+                container.appendChild(qCard);
 
                 // Action buttons
                 const btnContainer = dom.$('.construct-refinement-buttons');
                 btnContainer.style.cssText = `display: flex; gap: 8px; margin-top: 8px;`;
 
                 const submitBtn = dom.$('button') as HTMLButtonElement;
-                submitBtn.textContent = 'Submit Answers';
+                submitBtn.textContent = 'Submit Answer';
                 submitBtn.style.cssText = `
                         background: #00E5FF; color: #0A0E1A; border: none;
                         border-radius: 4px; padding: 6px 14px; cursor: pointer;
@@ -1693,18 +1668,14 @@ export class ConstructAgentViewPane extends ViewPane {
 
                 submitBtn.onclick = async () => {
                         container.remove();
-                        const refinementAnswers: IRefinementAnswer[] = questions.map(q => ({
-                                questionId: q.id,
-                                text: answers.get(q.id) ?? '',
-                                skipped: !answers.has(q.id),
-                        }));
-                        await this.handleRefinementAnswers(refinementAnswers, idea);
+                        const answer = input.value || '';
+                        await this.handleRefinementAnswer(answer, idea, projectId);
                 };
 
                 skipBtn.onclick = async () => {
                         container.remove();
                         try {
-                                const refinedIdea = await this.ideaRefinementService.skipToRefinedIdea();
+                                const refinedIdea = await this.ideaRefinementService.forceComplete(projectId);
                                 this.proceedWithRefinedIdea(refinedIdea, idea);
                         } catch {
                                 this.setExecutionState('idle');
@@ -1723,14 +1694,21 @@ export class ConstructAgentViewPane extends ViewPane {
                 this.scrollToBottom();
         }
 
-        private async handleRefinementAnswers(answers: IRefinementAnswer[], idea: string): Promise<void> {
-                this.addAgentMessage('\u23F3 Processing your answers...', 'info');
+        private async handleRefinementAnswer(answer: string, idea: string, projectId: string): Promise<void> {
+                this.addAgentMessage('\u23F3 Processing your answer...', 'info');
                 try {
-                        const result = await this.ideaRefinementService.submitAnswers(answers);
-                        if (result.type === 'questions') {
-                                this.renderRefinementQuestions(result.questions, idea);
-                        } else {
+                        const result = await this.ideaRefinementService.submitAnswer(projectId, answer);
+                        if (result.readyForPlanning && result.refinedIdea) {
                                 this.proceedWithRefinedIdea(result.refinedIdea, idea);
+                        } else if (result.nextQuestion) {
+                                this.renderRefinementQuestion(result.nextQuestion, idea, projectId);
+                        } else {
+                                // No more questions but no refined idea either — proceed with original idea
+                                this.setExecutionState('idle');
+                                const contextText = this.gatherContext();
+                                const taskWithContext = contextText ? `${idea}\n\n[Context (${this.contextScope})]:\n${contextText}` : idea;
+                                this.toolLogEntries = [];
+                                await this.runPlanActFlow(taskWithContext);
                         }
                 } catch (error) {
                         const msg = error instanceof Error ? error.message : String(error);
@@ -1752,7 +1730,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 summaryEl.innerHTML = `
                         <div style="font-weight:600;color:#E0E7FF;margin-bottom:6px;font-size:13px">\u2705 Refined Idea</div>
                         <div style="font-size:12px;color:#C0C0C0;margin-bottom:8px">${this.escapeHtml(refinedIdea.refinedDescription)}</div>
-                        <div style="font-size:11px;color:#00E5FF">Confidence: ${Math.round(refinedIdea.confidence * 100)}%</div>
+                        <div style="font-size:11px;color:#00E5FF">Scope: ${this.escapeHtml(refinedIdea.scope)}</div>
                 `;
                 this.messageContainer.appendChild(summaryEl);
                 this.scrollToBottom();
@@ -1774,12 +1752,12 @@ export class ConstructAgentViewPane extends ViewPane {
 
                 const header = dom.$('.construct-milestone-header');
                 header.style.cssText = `font-weight: 600; color: #00E5FF; margin-bottom: 6px; font-size: 13px;`;
-                header.textContent = `\u23F8 Paused at: ${milestone.name}`;
+                header.textContent = `\u23F8 Paused at: ${milestone.label}`;
                 container.appendChild(header);
 
                 const desc = dom.$('.construct-milestone-desc');
                 desc.style.cssText = `font-size: 12px; color: #C0C0C0; margin-bottom: 10px;`;
-                desc.textContent = milestone.description;
+                desc.textContent = milestone.summary ?? milestone.label;
                 container.appendChild(desc);
 
                 const btnContainer = dom.$('.construct-milestone-buttons');
@@ -1794,7 +1772,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 `;
                 continueBtn.onclick = () => {
                         container.remove();
-                        this.agentLoop.resumeFromMilestone();
+                        this.agentLoop.resumeFromMilestone(milestone.id);
                         this.setExecutionState('executing');
                 };
 

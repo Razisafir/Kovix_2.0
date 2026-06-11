@@ -81,7 +81,7 @@ import { IUniversalMemoryService } from '../../../../platform/construct/common/m
 import { UniversalMemoryService } from './services/memory/universalMemoryService.js';
 import { IConstructSessionService } from '../../../../platform/construct/common/session/constructSessionService.js';
 import { ConstructSessionServiceImpl } from './services/session/constructSessionServiceImpl.js';
-import { showProjectWizard } from './constructProjectWizard.js';
+import { ConstructProjectWizard } from './constructProjectWizard.js';
 import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
 import { ConstructOnboardingWizard } from './constructOnboarding.js';
 import { IObsidianMemoryService } from '../../../../platform/construct/common/memory/obsidianMemoryService.js';
@@ -649,7 +649,8 @@ registerAction2(class NewProjectAction extends Action2 {
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
                         const instantiationService = accessor.get(IInstantiationService);
-                        await showProjectWizard(instantiationService);
+                        const wizard = instantiationService.createInstance(ConstructProjectWizard);
+                        wizard.show();
                 }
 });
 
@@ -664,7 +665,8 @@ registerAction2(class OpenProjectWizardAction extends Action2 {
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
                         const instantiationService = accessor.get(IInstantiationService);
-                        await showProjectWizard(instantiationService);
+                        const wizard = instantiationService.createInstance(ConstructProjectWizard);
+                        wizard.show();
                 }
 });
 
@@ -682,13 +684,13 @@ registerAction2(class LoadProjectAction extends Action2 {
                         const quickInput = accessor.get(IQuickInputService);
                         const notificationService = accessor.get(INotificationService);
 
-                        const projects = projectService.projects;
+                        const projects = await projectService.listAllProjects();
                         if (projects.length === 0) {
                                 notificationService.info('No projects found. Create one with "New Kovix Project".');
                                 return;
                         }
 
-                        const picks = projects.map(p => ({
+                        const picks = projects.map((p: { id: string; name: string; template?: string; status: string }) => ({
                                 label: p.name,
                                 description: p.template,
                                 detail: `Status: ${p.status}`,

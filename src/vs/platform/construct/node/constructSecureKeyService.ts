@@ -300,8 +300,8 @@ export class SecureKeyNodeService extends Disposable implements ISecureKeyManage
 
                         // Encrypt with AES-256-GCM
                         const iv = crypto.randomBytes(12);
-                        const cipher = crypto.createCipheriv('aes-256-gcm', encKey, iv);
-                        const encrypted = Buffer.concat([cipher.update(plaintext, 'utf-8'), cipher.final()]);
+                        const cipher = crypto.createCipheriv('aes-256-gcm', encKey as unknown as Uint8Array, iv as unknown as Uint8Array);
+                        const encrypted = Buffer.concat([cipher.update(plaintext, 'utf-8') as unknown as Uint8Array, cipher.final() as unknown as Uint8Array]);
                         const authTag = cipher.getAuthTag();
 
                         // Format: aes:iv:authTag:ciphertext (all base64)
@@ -341,9 +341,9 @@ export class SecureKeyNodeService extends Disposable implements ISecureKeyManage
                         }
                         const encKey = Buffer.from(readFileSync(keyFilePath, 'utf-8').trim(), 'hex');
 
-                        const decipher = crypto.createDecipheriv('aes-256-gcm', encKey, iv);
-                        decipher.setAuthTag(authTag);
-                        return decipher.update(encrypted) + decipher.final('utf-8');
+                        const decipher = crypto.createDecipheriv('aes-256-gcm', encKey as unknown as Uint8Array, iv as unknown as Uint8Array);
+                        decipher.setAuthTag(authTag as unknown as Uint8Array);
+                        return decipher.update(encrypted as unknown as Uint8Array) + decipher.final('utf-8');
                 }
 
                 // Check for base64 fallback prefix

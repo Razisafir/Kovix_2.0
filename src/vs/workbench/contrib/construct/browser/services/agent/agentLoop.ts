@@ -5,7 +5,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Emitter } from '../../../../../../base/common/event.js';
+import { Emitter, Event } from '../../../../../../base/common/event.js';
 import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { IWorkspaceContextService } from '../../../../../../platform/workspace/common/workspace.js';
@@ -187,17 +187,10 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
         /** Active snapshot ID for the current task (for undo support). */
         private _activeSnapshotId: string | null = null;
 
-        /** Milestone execution state. */
-        private _executionState: ExecutionState = ExecutionState.Idle;
-        private _currentMilestone: IMilestone | null = null;
-        private _approvedPlan: IApprovedPlan | null = null;
-        private _executionConfig: { mode: ExecutionMode; selectedMilestoneIds?: string[] } | null = null;
-        private _milestoneResumeResolver: (() => void) | null = null;
         private _currentPlanContext: string | null = null;
         get currentPlanContext(): string | null {
                 return this._currentPlanContext;
         }
-        private _completedMilestoneIds: Set<string> = new Set();
 
         constructor(
                 @ILogService private readonly logService: ILogService,
@@ -234,11 +227,14 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
         }
 
         get executionState(): ExecutionState {
-                return this._executionState;
+                return this._kovixExecutionState;
         }
 
         get currentMilestone(): IMilestone | null {
-                return this._currentMilestone;
+                if (this._kovixExecutionState.type === 'paused_at_milestone') {
+                        return this._kovixExecutionState.milestone;
+                }
+                return null;
         }
 
         /**
@@ -679,7 +675,13 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
 
                         // Auto-extract universal memory from completed task
                         if (this.universalMemory && finalSummary) {
-                                this.universalMemory.autoExtractFromTask(task, finalSummary.substring(0, 500)).catch(() => { /* non-critical */ });
+                                this.universalMemory.addMemory({
+                                        content: `Task: ${task}\nSummary: ${finalSummary.substring(0, 500)}`,
+                                        type: 'fact',
+                                        projectId: this._currentPlanContext ?? 'default',
+                                        projectName: this._currentPlanContext ?? 'default',
+                                        tags: ['auto-extracted'],
+                                }).catch(() => { /* non-critical */ });
                         }
 
                         // Record assistant turn and auto-extract from Obsidian memory
@@ -702,171 +704,29 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
         }
 
         /**
-         * Run the planning phase with a pre-refined idea description.
-         * The refined idea provides more detail than a raw prompt.
-         */
-        async runPlanningPhaseWithIdea(refinedDescription: string, signal?: AbortSignal): Promise<IPlanResult> {
-                this.logService.info(`[AgentLoop] Planning phase started with refined idea: ${refinedDescription.substring(0, 100)}...`);
-                const task = `Based on the following refined specification, analyze the workspace and create a detailed implementation plan:\n\n${refinedDescription}`;
-                return this.runPlanningPhase(task, signal);
-        }
-
-        /**
          * Run execution with an approved plan, supporting milestone-based pausing.
+         * Delegates to startExecution() with a default IExecutionModeConfig.
          */
         async *runWithApprovedPlan(approvedPlan: IApprovedPlan, signal?: AbortSignal): AsyncGenerator<AgentLoopEvent> {
-                const selectedSteps = approvedPlan.steps.filter(s => s.selected);
-                if (selectedSteps.length === 0) {
-                        yield { type: 'error', text: 'No steps selected for execution.', recoverable: false };
-                        return;
-                }
-
-                const taskDescription = selectedSteps.map(s => `${s.action}: ${s.target}`).join('\n');
-                const enhancedTask = `${approvedPlan.task}\n\nExecute these specific steps:\n${taskDescription}`;
-
-                yield* this.run(enhancedTask, signal);
+                const defaultConfig: import('../../../../../../platform/construct/common/agent/executionMode.js').IExecutionModeConfig = {
+                        mode: ExecutionMode.EVERY_MILESTONE,
+                };
+                yield* this.startExecution(approvedPlan, defaultConfig, signal);
         }
 
         /**
-         * @deprecated Use runWithApprovedPlan() instead which yields events via AsyncGenerator.
-         * startExecution() runs in the background without yielding and may be removed in a future version.
-         *
-         * Start milestone-aware execution from an approved plan.
-         */
-        startExecution(approvedPlan: IApprovedPlan, signal?: AbortSignal): void {
-                this._approvedPlan = approvedPlan;
-                this._executionConfig = {
-                        mode: approvedPlan.executionMode as ExecutionMode,
-                };
-                this._completedMilestoneIds = new Set();
-                this._executionState = ExecutionState.Executing;
-                this._currentPlanContext = approvedPlan.task;
-
-                // Run the execution in the background
-                const runAsync = async () => {
-                        try {
-                                const selectedSteps = approvedPlan.steps.filter(s => s.selected);
-                                const taskDescription = selectedSteps.map(s => `${s.action}: ${s.target}`).join('\n');
-                                const enhancedTask = `${approvedPlan.task}\n\nExecute these specific steps:\n${taskDescription}`;
-
-                                const stream = this.run(enhancedTask, signal);
-                                for await (const event of stream) {
-                                        // Check for milestone pauses
-                                        if (event.type === 'tool_result' && event.success) {
-                                                const shouldPause = this.shouldPauseAtMilestone(event);
-                                                if (shouldPause && this._currentMilestone) {
-                                                        this._executionState = ExecutionState.PausedAtMilestone;
-                                                        this._onDidMilestoneEvent.fire({ type: 'milestone_paused', milestone: this._currentMilestone } as AgentLoopEvent);
-                                                        // Wait for resume
-                                                        await this._waitForResume();
-                                                }
-                                        }
-                                }
-                                this._executionState = ExecutionState.Complete;
-                        } catch (error) {
-                                this._executionState = ExecutionState.Error;
-                        }
-                };
-                runAsync().catch(err => { this._executionState = ExecutionState.Error; this._onError.fire({ text: err instanceof Error ? err.message : String(err), recoverable: false }); this.logService.error('[AgentLoop] startExecution failed:', err); });
-        }
-
-        /**
-         * Reset the execution state to Idle and clear the current milestone.
+         * Reset the execution state to idle and clear the current milestone.
          * Called by the VIEW after processing a terminal state (Complete/Error).
          */
         resetState(): void {
-                this._executionState = ExecutionState.Idle;
-                this._currentMilestone = null;
-        }
-
-        /**
-         * Resume from the current milestone pause.
-         */
-        resumeFromMilestone(): void {
-                if (this._milestoneResumeResolver) {
-                        this._executionState = ExecutionState.Executing;
-                        const milestone = this._currentMilestone;
-                        this._milestoneResumeResolver();
-                        this._milestoneResumeResolver = null;
-                        if (milestone) {
-                                this._completedMilestoneIds.add(milestone.id);
-                        }
-                        this._currentMilestone = null;
-                }
-        }
-
-        /**
-         * Skip the current milestone and move to the next.
-         */
-        skipCurrentMilestone(): void {
-                if (this._milestoneResumeResolver) {
-                        this._executionState = ExecutionState.Executing;
-                        const milestone = this._currentMilestone;
-                        this._milestoneResumeResolver();
-                        this._milestoneResumeResolver = null;
-                        if (milestone) {
-                                this._completedMilestoneIds.add(milestone.id);
-                        }
-                        this._currentMilestone = null;
-                }
-        }
-
-        /**
-         * Wait for the user to resume from a milestone pause.
-         */
-        private _waitForResume(): Promise<void> {
-                return new Promise<void>((resolve) => {
-                        this._milestoneResumeResolver = resolve;
-                });
-        }
-
-        /**
-         * Check if the agent should pause at a milestone based on the execution mode.
-         */
-        private shouldPauseAtMilestone(event: { type: string; toolId?: string; toolName?: string }): boolean {
-                if (!this._executionConfig || !this._approvedPlan) {
-                        return false;
-                }
-
-                const milestones = this._approvedPlan.milestones;
-                if (!milestones || milestones.length === 0) {
-                        return false;
-                }
-
-                const mode = this._executionConfig.mode;
-
-                // Full auto: never pause
-                if (mode === ExecutionMode.FullAuto) {
-                        return false;
-                }
-
-                // Find the next uncompleted milestone
-                const nextMilestone = milestones.find(m => !this._completedMilestoneIds.has(m.id) && !m.completed);
-                if (!nextMilestone) {
-                        return false;
-                }
-
-                // Set current milestone if not already set
-                if (!this._currentMilestone || this._currentMilestone.id !== nextMilestone.id) {
-                        this._currentMilestone = nextMilestone;
-                }
-
-                switch (mode) {
-                        case ExecutionMode.EveryMilestone:
-                                return true;
-                        case ExecutionMode.MajorMilestone:
-                                return nextMilestone.isMajor;
-                        case ExecutionMode.Selective:
-                                return this._executionConfig.selectedMilestoneIds?.includes(nextMilestone.id) ?? false;
-                        default:
-                                return false;
-                }
+                this._kovixExecutionState = { type: 'idle' };
         }
 
         /**
          * Extract milestones from a plan's steps.
          * Groups consecutive steps into milestones, marking major ones
          * at natural boundaries (e.g., after file creation steps).
+         * Mark every other milestone as isMajor: true.
          */
         extractMilestonesFromPlan(steps: IPlanStep[]): IMilestone[] {
                 if (steps.length === 0) {
@@ -892,18 +752,13 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                         if (isNaturalBoundary) {
                                 const firstStep = steps[currentGroup[0]];
                                 const lastStep = steps[currentGroup[currentGroup.length - 1]];
-                                const isMajor = currentGroup.some(idx =>
-                                        steps[idx].action === 'Create' || steps[idx].action === 'Run'
-                                );
 
                                 milestones.push({
                                         id: `milestone-${milestoneIndex}`,
-                                        name: `${firstStep.action}: ${firstStep.target}${currentGroup.length > 1 ? ` -> ${lastStep.target}` : ''}`,
-                                        description: `Steps ${currentGroup[0] + 1}-${currentGroup[currentGroup.length - 1] + 1}`,
-                                        index: milestoneIndex,
-                                        isMajor,
+                                        label: `${firstStep.action}: ${firstStep.target}${currentGroup.length > 1 ? ` -> ${lastStep.target}` : ''}`,
                                         stepIndices: [...currentGroup],
-                                        completed: false,
+                                        isMajor: milestoneIndex % 2 === 0,
+                                        status: 'pending',
                                 });
 
                                 currentGroup = [];
@@ -916,14 +771,10 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                         const firstStep = steps[currentGroup[0]];
                         milestones.push({
                                 id: `milestone-${milestoneIndex}`,
-                                name: `${firstStep.action}: ${firstStep.target}`,
-                                description: `Steps ${currentGroup[0] + 1}-${currentGroup[currentGroup.length - 1] + 1}`,
-                                index: milestoneIndex,
-                                isMajor: currentGroup.some(idx =>
-                                        steps[idx].action === 'Create' || steps[idx].action === 'Run'
-                                ),
+                                label: `${firstStep.action}: ${firstStep.target}`,
                                 stepIndices: [...currentGroup],
-                                completed: false,
+                                isMajor: milestoneIndex % 2 === 0,
+                                status: 'pending',
                         });
                 }
 
@@ -1144,7 +995,7 @@ Guidelines:
                 // Inject universal memory context (cross-project knowledge)
                 if (this.universalMemory) {
                         try {
-                                const universalContext = await this.universalMemory.getContextForTask(task, 5);
+                                const universalContext = await this.universalMemory.getContextForTask(task, this._currentPlanContext ?? 'default');
                                 if (universalContext) {
                                         // H3: Sanitize universal memory context before appending
                                         const sanitizedContext = sanitizeMemoryContext(universalContext);
@@ -1282,6 +1133,11 @@ Guidelines:
         private _onMilestoneReached = new Emitter<import('../../../../../../platform/construct/common/agent/milestoneStateMachine.js').IMilestone>();
         private _currentApprovedPlan: import('../../../../../../platform/construct/common/agent/milestoneStateMachine.js').IApprovedPlan | null = null;
         private _currentModeConfig: import('../../../../../../platform/construct/common/agent/executionMode.js').IExecutionModeConfig | null = null;
+
+        /** @internal current approved plan for milestone-aware execution */
+        get currentApprovedPlan() { return this._currentApprovedPlan; }
+        /** @internal current execution mode config */
+        get currentModeConfig() { return this._currentModeConfig; }
 
         getExecutionState(): import('../../../../../../platform/construct/common/agent/milestoneStateMachine.js').ExecutionState {
                 return this._kovixExecutionState;
