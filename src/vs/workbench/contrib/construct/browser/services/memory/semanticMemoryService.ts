@@ -11,11 +11,18 @@ import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { ISemanticMemoryService } from '../../../../../../platform/construct/common/memory/semanticMemory.js';
 import { ISemanticMemoryEntry, IMemorySearchResult, MemoryLayer } from '../../../../../../platform/construct/common/memory/memoryTypes';
 import { IEmbeddingService } from '../../../../../../platform/construct/common/memory/embeddingService.js';
+import { IFileService } from '../../../../../../platform/files/common/files.js';
+import { IWorkspaceContextService } from '../../../../../../platform/workspace/common/workspace.js';
+import { URI } from '../../../../../../base/common/uri.js';
+import { VSBuffer } from '../../../../../../base/common/buffer.js';
+import * as path from '../../../../../../base/common/path.js';
 
+// TODO(v1.1): Replace with Qdrant vector store for proper semantic search
 export class SemanticMemoryService extends Disposable implements ISemanticMemoryService {
         readonly _serviceBrand: undefined;
 
         private entries = new Map<string, ISemanticMemoryEntry[]>();
+        private _persistTimeout: ReturnType<typeof setTimeout> | undefined;
 
         private readonly _onDidStoreKnowledge = this._register(new Emitter<ISemanticMemoryEntry>());
         readonly onDidStoreKnowledge = this._onDidStoreKnowledge.event;
@@ -25,10 +32,13 @@ export class SemanticMemoryService extends Disposable implements ISemanticMemory
 
         constructor(
                 @ILogService private readonly logService: ILogService,
-                @IEmbeddingService private readonly embeddingService: IEmbeddingService
+                @IEmbeddingService private readonly embeddingService: IEmbeddingService,
+                @IFileService private readonly fileService: IFileService,
+                @IWorkspaceContextService private readonly workspaceContextService: IWorkspaceContextService
         ) {
                 super();
                 this.logService.info('[SemanticMemory] Initialized with in-memory storage');
+                this.loadFromDisk();
         }
 
         async storeKnowledge(entry: Omit<ISemanticMemoryEntry, 'id' | 'layer' | 'timestamp'>): Promise<void> {
@@ -54,6 +64,8 @@ export class SemanticMemoryService extends Disposable implements ISemanticMemory
 
                 this._onDidStoreKnowledge.fire(fullEntry);
                 this.logService.info(`[SemanticMemory] Stored knowledge: ${id}`);
+
+                this.debouncedPersist();
         }
 
         async searchKnowledge(projectId: string, query: string, topK: number = 5): Promise<IMemorySearchResult> {
@@ -107,6 +119,8 @@ export class SemanticMemoryService extends Disposable implements ISemanticMemory
                 const filtered = entries.filter(e => e.id !== id);
                 this.entries.set(projectId, filtered);
                 this._onDidDeleteKnowledge.fire({ projectId, id });
+
+                this.debouncedPersist();
         }
 
         getAllKnowledge(projectId: string): ISemanticMemoryEntry[] {
@@ -129,7 +143,47 @@ export class SemanticMemoryService extends Disposable implements ISemanticMemory
                 return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB) + 1e-10);
         }
 
+        // --- Disk Persistence -------------------------------------------------------
+        // TODO(v1.1): Replace with Qdrant vector store for proper semantic search
+
+        private debouncedPersist(): void {
+                if (this._persistTimeout) {
+                        clearTimeout(this._persistTimeout);
+                }
+                this._persistTimeout = setTimeout(() => this.persistToDisk(), 500);
+        }
+
+        private async persistToDisk(): Promise<void> {
+                try {
+                        const data = JSON.stringify(Array.from(this.entries.entries()));
+                        const storagePath = this.getStoragePath();
+                        await this.fileService.writeFile(storagePath, VSBuffer.fromString(data));
+                } catch (e) {
+                        this.logService.warn('[SemanticMemory] Failed to persist:', e);
+                }
+        }
+
+        private async loadFromDisk(): Promise<void> {
+                try {
+                        const storagePath = this.getStoragePath();
+                        const content = await this.fileService.readFile(storagePath);
+                        const entries = JSON.parse(content.value.toString());
+                        this.entries = new Map(entries);
+                } catch (e) {
+                        /* first run, no file yet */
+                }
+        }
+
+        private getStoragePath(): URI {
+                const workspace = this.workspaceContextService.getWorkspace();
+                const root = workspace.folders[0]?.uri.fsPath || '';
+                return URI.file(path.join(root, '.kovix', 'memory', 'semantic', 'store.json'));
+        }
+
         override dispose(): void {
+                if (this._persistTimeout) {
+                        clearTimeout(this._persistTimeout);
+                }
                 this.entries.clear();
                 super.dispose();
         }

@@ -151,6 +151,9 @@ export interface IAgentLoop {
         runWithApprovedPlan(approvedPlan: IApprovedPlan, signal?: AbortSignal): AsyncGenerator<AgentLoopEvent>;
 
         /**
+         * @deprecated Use runWithApprovedPlan() instead which yields events via AsyncGenerator.
+         * startExecution() runs in the background without yielding and may be removed in a future version.
+         *
          * Start milestone-aware execution from an approved plan.
          * The agent will pause at milestones based on the execution mode.
          *
@@ -169,6 +172,12 @@ export interface IAgentLoop {
          * Skip the current milestone and move to the next one.
          */
         skipCurrentMilestone(): void;
+
+        /**
+         * Reset the execution state to Idle and clear the current milestone.
+         * Called by the VIEW after processing a terminal state (Complete/Error).
+         */
+        resetState(): void;
 
         /**
          * Current execution state for milestone-aware execution.

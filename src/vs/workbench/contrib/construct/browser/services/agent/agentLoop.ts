@@ -359,7 +359,17 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                                 } else {
                                                         // Fallback: should not happen, but execute once if cache miss
                                                         this.logService.warn(`[AgentLoop] Cache miss for tool ${toolCall.id}, executing as fallback`);
-                                                        const input = JSON.parse(toolCall.arguments);
+                                                        let input: any;
+                                                        try {
+                                                                input = JSON.parse(toolCall.arguments);
+                                                        } catch (parseError) {
+                                                                conversationMessages.push({
+                                                                        role: 'tool',
+                                                                        content: `Error: Your tool call produced invalid JSON. Please fix and try again. Error: ${parseError instanceof Error ? parseError.message : String(parseError)}`
+                                                                });
+                                                                roundCount++;
+                                                                continue;
+                                                        }
                                                         const result = await this.executeTool(toolCall.name, input, true, signal);
                                                         conversationMessages.push({
                                                                 role: 'tool',
@@ -645,6 +655,10 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                 }
                         }
 
+                        if (roundCount >= MAX_ROUNDS) {
+                                yield { type: 'error', text: `Maximum rounds (${MAX_ROUNDS}) reached — task may be incomplete. Consider increasing the limit in settings.`, recoverable: true } as AgentLoopEvent;
+                        }
+
                         // Store task summary in memory
                         if (this.constructMemory.isInitialized && this.constructMemory.config.autoLearn) {
                                 this.constructMemory.addMemory(
@@ -704,6 +718,9 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
         }
 
         /**
+         * @deprecated Use runWithApprovedPlan() instead which yields events via AsyncGenerator.
+         * startExecution() runs in the background without yielding and may be removed in a future version.
+         *
          * Start milestone-aware execution from an approved plan.
          */
         startExecution(approvedPlan: IApprovedPlan, signal?: AbortSignal): void {
@@ -741,6 +758,15 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                         }
                 };
                 runAsync().catch(err => { this._executionState = ExecutionState.Error; this._onError.fire({ text: err instanceof Error ? err.message : String(err), recoverable: false }); this.logService.error('[AgentLoop] startExecution failed:', err); });
+        }
+
+        /**
+         * Reset the execution state to Idle and clear the current milestone.
+         * Called by the VIEW after processing a terminal state (Complete/Error).
+         */
+        resetState(): void {
+                this._executionState = ExecutionState.Idle;
+                this._currentMilestone = null;
         }
 
         /**

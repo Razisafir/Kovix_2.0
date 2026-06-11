@@ -10,11 +10,17 @@ import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { IProceduralMemoryService } from '../../../../../../platform/construct/common/memory/proceduralMemory.js';
 import { IProceduralMemoryEntry, MemoryLayer } from '../../../../../../platform/construct/common/memory/memoryTypes';
+import { IFileService } from '../../../../../../platform/files/common/files.js';
+import { IWorkspaceContextService } from '../../../../../../platform/workspace/common/workspace.js';
+import { URI } from '../../../../../../base/common/uri.js';
+import { VSBuffer } from '../../../../../../base/common/buffer.js';
+import * as path from '../../../../../../base/common/path.js';
 
 export class ProceduralMemoryService extends Disposable implements IProceduralMemoryService {
         readonly _serviceBrand: undefined;
 
         private patterns = new Map<string, IProceduralMemoryEntry[]>();
+        private _persistTimeout: ReturnType<typeof setTimeout> | undefined;
 
         private readonly _onDidRecordPattern = this._register(new Emitter<IProceduralMemoryEntry>());
         readonly onDidRecordPattern = this._onDidRecordPattern.event;
@@ -23,10 +29,13 @@ export class ProceduralMemoryService extends Disposable implements IProceduralMe
         readonly onDidUpdatePattern = this._onDidUpdatePattern.event;
 
         constructor(
-                @ILogService private readonly logService: ILogService
+                @ILogService private readonly logService: ILogService,
+                @IFileService private readonly fileService: IFileService,
+                @IWorkspaceContextService private readonly workspaceContextService: IWorkspaceContextService
         ) {
                 super();
                 this.logService.info('[ProceduralMemory] Initialized with in-memory storage');
+                this.loadFromDisk();
         }
 
         recordPattern(entry: Omit<IProceduralMemoryEntry, 'id' | 'layer' | 'timestamp' | 'successCount' | 'failureCount' | 'totalAttempts' | 'lastUsed' | 'createdAt'>): void {
@@ -52,6 +61,8 @@ export class ProceduralMemoryService extends Disposable implements IProceduralMe
 
                 this._onDidRecordPattern.fire(fullEntry);
                 this.logService.info(`[ProceduralMemory] Recorded pattern: ${id}`);
+
+                this.debouncedPersist();
         }
 
         getPatternsForContext(projectId: string, context: string): IProceduralMemoryEntry[] {
@@ -92,6 +103,8 @@ export class ProceduralMemoryService extends Disposable implements IProceduralMe
                 }
 
                 this.logService.info(`[ProceduralMemory] Updated pattern ${id}: ${success ? 'success' : 'failure'}`);
+
+                this.debouncedPersist();
         }
 
         getPatternLeaderboard(projectId: string): IProceduralMemoryEntry[] {
@@ -150,7 +163,46 @@ export class ProceduralMemoryService extends Disposable implements IProceduralMe
                         .map(([phrase, _]) => phrase);
         }
 
+        // --- Disk Persistence -------------------------------------------------------
+
+        private debouncedPersist(): void {
+                if (this._persistTimeout) {
+                        clearTimeout(this._persistTimeout);
+                }
+                this._persistTimeout = setTimeout(() => this.persistToDisk(), 1000);
+        }
+
+        private async persistToDisk(): Promise<void> {
+                try {
+                        const data = JSON.stringify(Array.from(this.patterns.entries()));
+                        const storagePath = this.getStoragePath();
+                        await this.fileService.writeFile(storagePath, VSBuffer.fromString(data));
+                } catch (e) {
+                        this.logService.warn('[ProceduralMemory] Failed to persist:', e);
+                }
+        }
+
+        private async loadFromDisk(): Promise<void> {
+                try {
+                        const storagePath = this.getStoragePath();
+                        const content = await this.fileService.readFile(storagePath);
+                        const entries = JSON.parse(content.value.toString());
+                        this.patterns = new Map(entries);
+                } catch (e) {
+                        /* first run, no file yet */
+                }
+        }
+
+        private getStoragePath(): URI {
+                const workspace = this.workspaceContextService.getWorkspace();
+                const root = workspace.folders[0]?.uri.fsPath || '';
+                return URI.file(path.join(root, '.kovix', 'memory', 'procedural', 'store.json'));
+        }
+
         override dispose(): void {
+                if (this._persistTimeout) {
+                        clearTimeout(this._persistTimeout);
+                }
                 this.patterns.clear();
                 super.dispose();
         }

@@ -10,6 +10,11 @@ import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { IEpisodicMemoryService } from '../../../../../../platform/construct/common/memory/episodicMemory.js';
 import { IEpisodicMemoryEntry, MemoryLayer } from '../../../../../../platform/construct/common/memory/memoryTypes';
+import { IFileService } from '../../../../../../platform/files/common/files.js';
+import { IWorkspaceContextService } from '../../../../../../platform/workspace/common/workspace.js';
+import { URI } from '../../../../../../base/common/uri.js';
+import { VSBuffer } from '../../../../../../base/common/buffer.js';
+import * as path from '../../../../../../base/common/path.js';
 
 interface IInMemoryEpisode {
         entry: IEpisodicMemoryEntry;
@@ -21,14 +26,18 @@ export class EpisodicMemoryService extends Disposable implements IEpisodicMemory
 
         private episodes = new Map<string, IInMemoryEpisode[]>();
         private sequences = new Map<string, number>();
+        private _persistTimeout: ReturnType<typeof setTimeout> | undefined;
 
         private readonly _onDidRecordEvent = this._register(new Emitter<IEpisodicMemoryEntry>());
         readonly onDidRecordEvent = this._onDidRecordEvent.event;
 
         constructor(
-                @ILogService private readonly logService: ILogService
+                @ILogService private readonly logService: ILogService,
+                @IFileService private readonly fileService: IFileService,
+                @IWorkspaceContextService private readonly workspaceContextService: IWorkspaceContextService
         ) {
                 super();
+                this.loadFromDisk();
         }
 
         recordEvent(entry: Omit<IEpisodicMemoryEntry, 'id' | 'layer' | 'timestamp'>): void {
@@ -50,6 +59,8 @@ export class EpisodicMemoryService extends Disposable implements IEpisodicMemory
 
                 this._onDidRecordEvent.fire(fullEntry);
                 this.logService.info(`[EpisodicMemory] Recorded: ${entry.action} (${entry.success ? 'success' : 'failure'})`);
+
+                this.debouncedPersist();
         }
 
         getRecentEvents(projectId: string, limit: number): IEpisodicMemoryEntry[] {
@@ -133,7 +144,60 @@ export class EpisodicMemoryService extends Disposable implements IEpisodicMemory
                 return Array.from(ids);
         }
 
+        // --- Disk Persistence -------------------------------------------------------
+
+        private debouncedPersist(): void {
+                if (this._persistTimeout) {
+                        clearTimeout(this._persistTimeout);
+                }
+                this._persistTimeout = setTimeout(() => this.persistToDisk(), 500);
+        }
+
+        private async persistToDisk(): Promise<void> {
+                try {
+                        const serialisable = Array.from(this.episodes.entries()).map(([projectId, episodes]) => [
+                                projectId,
+                                episodes.map(e => ({ entry: e.entry, sequence: e.sequence }))
+                        ]);
+                        const data = JSON.stringify(serialisable);
+                        const storagePath = this.getStoragePath();
+                        await this.fileService.writeFile(storagePath, VSBuffer.fromString(data));
+                } catch (e) {
+                        this.logService.warn('[EpisodicMemory] Failed to persist:', e);
+                }
+        }
+
+        private async loadFromDisk(): Promise<void> {
+                try {
+                        const storagePath = this.getStoragePath();
+                        const content = await this.fileService.readFile(storagePath);
+                        const entries = JSON.parse(content.value.toString());
+                        const loaded = new Map<string, IInMemoryEpisode[]>();
+                        for (const [projectId, episodes] of entries as [string, IInMemoryEpisode[]][]) {
+                                loaded.set(projectId, episodes);
+                                // Rebuild sequences map
+                                let maxSeq = 0;
+                                for (const ep of episodes) {
+                                        if (ep.sequence > maxSeq) { maxSeq = ep.sequence; }
+                                }
+                                this.sequences.set(projectId, maxSeq);
+                        }
+                        this.episodes = loaded;
+                } catch (e) {
+                        /* first run, no file yet */
+                }
+        }
+
+        private getStoragePath(): URI {
+                const workspace = this.workspaceContextService.getWorkspace();
+                const root = workspace.folders[0]?.uri.fsPath || '';
+                return URI.file(path.join(root, '.kovix', 'memory', 'episodic', 'store.json'));
+        }
+
         override dispose(): void {
+                if (this._persistTimeout) {
+                        clearTimeout(this._persistTimeout);
+                }
                 super.dispose();
         }
 }
