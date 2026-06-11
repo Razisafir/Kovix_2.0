@@ -73,6 +73,15 @@ import { IPendingChangesService } from '../../../../platform/construct/common/di
 import { PendingChangesService } from './services/diff/pendingChangesService.js';
 import { IConstructNotificationService } from '../../../../platform/construct/common/notification/constructNotificationService.js';
 import { ConstructNotificationBrowserService } from './services/notification/constructNotificationService.js';
+import { IConstructProjectService } from '../../../../platform/construct/common/project/constructProjectService.js';
+import { ConstructProjectServiceImpl } from './services/project/constructProjectServiceImpl.js';
+import { IIdeaRefinementService } from '../../../../platform/construct/common/agent/ideaRefinementService.js';
+import { IdeaRefinementServiceImpl } from './services/agent/ideaRefinementServiceImpl.js';
+import { IUniversalMemoryService } from '../../../../platform/construct/common/memory/universalMemoryService.js';
+import { UniversalMemoryServiceImpl } from './services/memory/universalMemoryService.js';
+import { IConstructSessionService } from '../../../../platform/construct/common/session/constructSessionService.js';
+import { ConstructSessionServiceImpl } from './services/session/constructSessionServiceImpl.js';
+import { showProjectWizard } from './constructProjectWizard.js';
 import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
 import { ConstructOnboardingWizard } from './constructOnboarding.js';
 import './constructMemoryConfig';
@@ -600,6 +609,78 @@ registerSingleton(IFileWatcherService, FileWatcherService, InstantiationType.Del
 registerSingleton(ISnapshotManager, SnapshotManagerService, InstantiationType.Delayed);
 registerSingleton(IPendingChangesService, PendingChangesService, InstantiationType.Delayed);
 registerSingleton(IConstructNotificationService, ConstructNotificationBrowserService, InstantiationType.Delayed);
+
+// --- Feature Build: Project, Idea Refinement, Universal Memory, Session -----------
+registerSingleton(IConstructProjectService, ConstructProjectServiceImpl, InstantiationType.Delayed);
+registerSingleton(IIdeaRefinementService, IdeaRefinementServiceImpl, InstantiationType.Delayed);
+registerSingleton(IUniversalMemoryService, UniversalMemoryServiceImpl, InstantiationType.Delayed);
+registerSingleton(IConstructSessionService, ConstructSessionServiceImpl, InstantiationType.Delayed);
+
+// --- Feature Build: Project Commands -----------------------------------------
+registerAction2(class NewProjectAction extends Action2 {
+                constructor() {
+                        super({
+                                id: 'construct.newProject',
+                                title: localize2('newConstructProject', "New Kovix Project"),
+                                f1: true,
+                                category: localize2('constructCategoryProject', "Construct"),
+                        });
+                }
+                async run(accessor: ServicesAccessor): Promise<void> {
+                        const instantiationService = accessor.get(IInstantiationService);
+                        await showProjectWizard(instantiationService);
+                }
+});
+
+registerAction2(class OpenProjectWizardAction extends Action2 {
+                constructor() {
+                        super({
+                                id: 'construct.openProjectWizard',
+                                title: localize2('openProjectWizard', "Open Project Wizard"),
+                                f1: true,
+                                category: localize2('constructCategoryWizard', "Construct"),
+                        });
+                }
+                async run(accessor: ServicesAccessor): Promise<void> {
+                        const instantiationService = accessor.get(IInstantiationService);
+                        await showProjectWizard(instantiationService);
+                }
+});
+
+registerAction2(class LoadProjectAction extends Action2 {
+                constructor() {
+                        super({
+                                id: 'construct.loadProject',
+                                title: localize2('loadProject', "Load Kovix Project"),
+                                f1: true,
+                                category: localize2('constructCategoryLoadProject', "Construct"),
+                        });
+                }
+                async run(accessor: ServicesAccessor): Promise<void> {
+                        const projectService = accessor.get(IConstructProjectService);
+                        const quickInput = accessor.get(IQuickInputService);
+                        const notificationService = accessor.get(INotificationService);
+
+                        const projects = projectService.projects;
+                        if (projects.length === 0) {
+                                notificationService.info('No projects found. Create one with "New Kovix Project".');
+                                return;
+                        }
+
+                        const picks = projects.map(p => ({
+                                label: p.name,
+                                description: p.template,
+                                detail: `Status: ${p.status}`,
+                                projectId: p.id,
+                        }));
+
+                        const pick = await quickInput.pick(picks, { placeHolder: 'Select a project to load' });
+                        if (pick) {
+                                await projectService.loadProject((pick as any).projectId);
+                                notificationService.info(`Project loaded: ${pick.label}`);
+                        }
+                }
+});
 
 // --- Phase 1: Task-Level Undo Command -----------------------------------------
 registerAction2(class UndoTaskAction extends Action2 {

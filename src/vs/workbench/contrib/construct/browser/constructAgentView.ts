@@ -34,8 +34,15 @@ import { ITelemetryService } from '../../../../platform/telemetry/common/telemet
 import { IHoverService } from '../../../../platform/hover/browser/hover.js';
 import { ConstructProgressPanel } from './constructProgressPanel.js';
 import { LoadingState, FileChangeEntry, TaskMetrics } from '../../../../platform/construct/common/agent/loadingState.js';
+import { IRefinedIdea, IRefinementQuestion, IRefinementAnswer } from '../../../../platform/construct/common/agent/ideaRefinementTypes.js';
+import { IIdeaRefinementService } from '../../../../platform/construct/common/agent/ideaRefinementService.js';
+import { IConstructSessionService } from '../../../../platform/construct/common/session/constructSessionService.js';
+import { ISelectablePlanStep, IApprovedPlan, IMilestone } from '../../../../platform/construct/common/agent/milestoneStateMachine.js';
+import { showStopModePicker } from './constructStopModePicker.js';
+import { ExecutionMode } from '../../../../platform/construct/common/agent/executionMode.js';
+import { IQuickInputService } from '../../../../platform/quickinput/common/quickInput.js';
 
-type ExecutionState = 'idle' | 'planning' | 'awaiting_approval' | 'executing' | 'complete' | 'error' | 'stopped';
+type ExecutionState = 'idle' | 'planning' | 'refining' | 'awaiting_approval' | 'executing' | 'paused_at_milestone' | 'complete' | 'error' | 'stopped';
 
 type ContextScope = 'currentFile' | 'workspace' | 'selectedText';
 
@@ -128,6 +135,9 @@ export class ConstructAgentViewPane extends ViewPane {
                 @ICommandService private readonly commandService: ICommandService,
                 @IFileService private readonly fileService: IFileService,
                 @IPendingChangesService private readonly pendingChangesService: IPendingChangesService,
+                @IIdeaRefinementService private readonly ideaRefinementService: IIdeaRefinementService,
+                @IConstructSessionService private readonly sessionService: IConstructSessionService,
+                @IQuickInputService private readonly quickInputService: IQuickInputService,
         ) {
                 super(options, keybindingService, contextMenuService, configurationService, contextKeyService, viewDescriptorService, instantiationService, openerService, themeService, telemetryService, hoverService);
         }
@@ -176,6 +186,19 @@ export class ConstructAgentViewPane extends ViewPane {
                 };
 
                 modelPickerBar.appendChild(this.modelPickerBtn);
+
+                // Session history button
+                const sessionHistoryBtn = dom.$('button.construct-session-history-btn') as HTMLButtonElement;
+                sessionHistoryBtn.textContent = '\uD83D\uDCDC'; // 📜
+                sessionHistoryBtn.style.cssText = `
+                        background: transparent; border: none; color: #4A5568;
+                        cursor: pointer; font-size: 13px; padding: 2px 4px;
+                        border-radius: 3px;
+                `;
+                sessionHistoryBtn.title = 'Session History';
+                sessionHistoryBtn.onclick = () => { this.showSessionHistory(); };
+                modelPickerBar.appendChild(sessionHistoryBtn);
+
                 modelPickerBar.appendChild(settingsBtn);
                 modelPickerBar.appendChild(providerLabel);
                 container.appendChild(modelPickerBar);
@@ -289,6 +312,14 @@ export class ConstructAgentViewPane extends ViewPane {
                         // Phase 2: Check IConstructAIService availability first, then fallback to Anthropic
                         const hasAIProvider = !!this.aiService.activeProvider;
                         const apiKey = this.configurationService.getValue<string>('construct.anthropic.apiKey');
+
+                        // Check if idea refinement is enabled
+                        const refinementEnabled = this.configurationService.getValue<boolean>('construct.ideaRefinement.enabled');
+                        if (refinementEnabled !== false && hasAIProvider) {
+                                // Run idea refinement flow before planning
+                                await this.runRefinementFlow(text);
+                                return;
+                        }
 
                         if (!hasAIProvider && !apiKey) {
                                 this.addAgentMessage(
@@ -560,9 +591,22 @@ export class ConstructAgentViewPane extends ViewPane {
         /**
          * Render the plan with Approve/Cancel buttons.
          */
+        private selectableSteps: ISelectablePlanStep[] = [];
+        private currentPlanTask: string = '';
+
         private renderPlan(plan: IPlanResult, task: string): void {
                 // Remove any existing plan container
                 this.planContainer?.remove();
+                this.currentPlanTask = task;
+
+                // Create selectable steps from the plan
+                this.selectableSteps = plan.steps.map((step, idx) => ({
+                        index: idx,
+                        action: step.action,
+                        target: step.target,
+                        description: step.description,
+                        selected: true,
+                }));
 
                 this.planContainer = dom.$('.construct-plan');
                 this.planContainer.style.cssText = `
@@ -576,14 +620,68 @@ export class ConstructAgentViewPane extends ViewPane {
                 header.textContent = `\uD83D\uDCA1 Plan ready \u2014 ${plan.steps.length} steps`;
                 this.planContainer.appendChild(header);
 
-                // Plan steps
-                if (plan.steps.length > 0) {
-                        for (const step of plan.steps) {
-                                const stepEl = dom.$('.construct-plan-step');
+                // Select All / Deselect All controls
+                if (this.selectableSteps.length > 0) {
+                        const controlBar = dom.$('.construct-plan-controls');
+                        controlBar.style.cssText = `display: flex; gap: 8px; margin-bottom: 8px;`;
+
+                        const selectAllBtn = dom.$('button') as HTMLButtonElement;
+                        selectAllBtn.textContent = 'Select All';
+                        selectAllBtn.style.cssText = `
+                                background: #1A2744; border: 1px solid #2D3A5C; border-radius: 3px;
+                                color: #E0E7FF; font-size: 11px; padding: 3px 8px; cursor: pointer;
+                        `;
+                        selectAllBtn.onclick = () => {
+                                this.selectableSteps.forEach(s => s.selected = true);
+                                this.planContainer?.querySelectorAll<HTMLInputElement>('.construct-step-checkbox').forEach(cb => { cb.checked = true; });
+                                this.planContainer?.querySelectorAll('.construct-step-text').forEach(el => { (el as HTMLElement).style.textDecoration = 'none'; });
+                        };
+
+                        const deselectAllBtn = dom.$('button') as HTMLButtonElement;
+                        deselectAllBtn.textContent = 'Deselect All';
+                        deselectAllBtn.style.cssText = `
+                                background: #1A2744; border: 1px solid #2D3A5C; border-radius: 3px;
+                                color: #E0E7FF; font-size: 11px; padding: 3px 8px; cursor: pointer;
+                        `;
+                        deselectAllBtn.onclick = () => {
+                                this.selectableSteps.forEach(s => s.selected = false);
+                                this.planContainer?.querySelectorAll<HTMLInputElement>('.construct-step-checkbox').forEach(cb => { cb.checked = false; });
+                                this.planContainer?.querySelectorAll('.construct-step-text').forEach(el => { (el as HTMLElement).style.textDecoration = 'line-through'; });
+                        };
+
+                        controlBar.appendChild(selectAllBtn);
+                        controlBar.appendChild(deselectAllBtn);
+                        this.planContainer.appendChild(controlBar);
+                }
+
+                // Plan steps with checkboxes
+                if (this.selectableSteps.length > 0) {
+                        for (const step of this.selectableSteps) {
+                                const stepRow = dom.$('.construct-plan-step');
+                                stepRow.style.cssText = `display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 12px;`;
+
+                                const checkbox = document.createElement('input');
+                                checkbox.type = 'checkbox';
+                                checkbox.checked = step.selected;
+                                checkbox.className = 'construct-step-checkbox';
+                                checkbox.style.cssText = `accent-color: #00E5FF; cursor: pointer;`;
+                                checkbox.onchange = () => {
+                                        step.selected = checkbox.checked;
+                                        const textEl = stepRow.querySelector('.construct-step-text') as HTMLElement;
+                                        if (textEl) {
+                                                textEl.style.textDecoration = checkbox.checked ? 'none' : 'line-through';
+                                                textEl.style.color = checkbox.checked ? '#C0C0C0' : '#666';
+                                        }
+                                };
+
                                 const icon = this.getActionIcon(step.action);
-                                stepEl.style.cssText = `padding: 4px 0; font-size: 12px; color: #C0C0C0;`;
-                                stepEl.textContent = `${icon} ${step.action}: ${step.target}`;
-                                this.planContainer.appendChild(stepEl);
+                                const stepText = dom.$('.construct-step-text');
+                                stepText.style.cssText = `color: #C0C0C0;`;
+                                stepText.textContent = `${icon} ${step.action}: ${step.target}`;
+
+                                stepRow.appendChild(checkbox);
+                                stepRow.appendChild(stepText);
+                                this.planContainer.appendChild(stepRow);
                         }
                 } else {
                         // No structured steps -- show the raw summary
@@ -598,7 +696,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 btnContainer.style.cssText = `display: flex; gap: 8px; margin-top: 10px;`;
 
                 const approveBtn = dom.$('button') as HTMLButtonElement;
-                approveBtn.textContent = '[OK] Approve';
+                approveBtn.textContent = '\u2705 Approve';
                 approveBtn.style.cssText = `
                         background: #00C853; color: white; border: none;
                         border-radius: 4px; padding: 6px 14px; cursor: pointer;
@@ -606,17 +704,31 @@ export class ConstructAgentViewPane extends ViewPane {
                 `;
 
                 const cancelBtn = dom.$('button') as HTMLButtonElement;
-                cancelBtn.textContent = '[X] Cancel';
+                cancelBtn.textContent = '\u274C Cancel';
                 cancelBtn.style.cssText = `
                         background: #FF4444; color: white; border: none;
                         border-radius: 4px; padding: 6px 14px; cursor: pointer;
                         font-size: 12px; font-weight: 600;
                 `;
 
-                approveBtn.onclick = () => {
+                approveBtn.onclick = async () => {
+                        // Show stop mode picker
+                        const milestones = (this.agentLoop as any).extractMilestonesFromPlan?.(plan.steps) ?? [];
+                        const selectedMode = await showStopModePicker(this.quickInputService, milestones);
+                        if (!selectedMode) { return; } // cancelled
+
+                        const approvedPlan: IApprovedPlan = {
+                                task,
+                                steps: this.selectableSteps,
+                                executionMode: selectedMode,
+                                milestones,
+                                approved: true,
+                                approvedAt: Date.now(),
+                        };
+
                         this.planContainer?.remove();
                         this.planContainer = null;
-                        this.runExecution(task);
+                        this.runExecution(task, approvedPlan);
                 };
 
                 cancelBtn.onclick = () => {
@@ -639,7 +751,7 @@ export class ConstructAgentViewPane extends ViewPane {
          * Run the execution phase with full tool access.
          * Now shows granular, function-level progress indicators.
          */
-        private async runExecution(task: string): Promise<void> {
+        private async runExecution(task: string, approvedPlan?: IApprovedPlan): Promise<void> {
                 this.setExecutionState('executing');
                 this.currentCancellationToken = new CancellationTokenSource();
                 // BUG 2 FIX: Create a real AbortController and bridge cancellation
@@ -667,7 +779,10 @@ export class ConstructAgentViewPane extends ViewPane {
                 let currentToolDetail = '';
 
                 try {
-                        const stream = this.agentLoop.run(task, abortController.signal);
+                        // Use approved plan with milestone support if available, otherwise standard execution
+                        const stream = approvedPlan
+                                ? this.agentLoop.runWithApprovedPlan(approvedPlan, abortController.signal)
+                                : this.agentLoop.run(task, abortController.signal);
 
                         for await (const event of stream) {
                                 switch (event.type) {
@@ -733,6 +848,25 @@ export class ConstructAgentViewPane extends ViewPane {
                                         case 'file_written':
                                                 // Refresh file explorer after writes
                                                 this.refreshFileExplorer();
+                                                break;
+
+                                        case 'milestone_reached':
+                                                fullText += `\n\n\uD83D\uDEA9 Milestone reached: ${event.milestone.name}`;
+                                                break;
+
+                                        case 'milestone_paused':
+                                                this.setExecutionState('paused_at_milestone');
+                                                fullText += `\n\n\u23F8 Paused at milestone: ${event.milestone.name}`;
+                                                this.renderMilestonePauseControls(event.milestone);
+                                                break;
+
+                                        case 'milestone_resumed':
+                                                this.setExecutionState('executing');
+                                                fullText += `\n\n\u25B6 Resumed from milestone: ${event.milestone.name}`;
+                                                break;
+
+                                        case 'milestone_completed':
+                                                fullText += `\n\n\u2705 Milestone completed: ${event.milestone.name}`;
                                                 break;
 
                                         case 'complete':
@@ -1248,5 +1382,301 @@ export class ConstructAgentViewPane extends ViewPane {
                         diff.element.remove();
                 }
                 this.pendingDiffs = [];
+        }
+
+        // --- Idea Refinement Flow ---
+
+        private async runRefinementFlow(idea: string): Promise<void> {
+                this.setExecutionState('refining');
+                try {
+                        const questions = await this.ideaRefinementService.startRefinement(idea);
+                        if (questions.length === 0) {
+                                // No questions - go straight to planning
+                                this.setExecutionState('idle');
+                                const contextText = this.gatherContext();
+                                const taskWithContext = contextText ? `${idea}\n\n[Context (${this.contextScope})]:\n${contextText}` : idea;
+                                this.toolLogEntries = [];
+                                await this.runPlanActFlow(taskWithContext);
+                                return;
+                        }
+                        this.renderRefinementQuestions(questions, idea);
+                } catch (error) {
+                        const msg = error instanceof Error ? error.message : String(error);
+                        this.addAgentMessage(`[Refinement Error] ${msg}. Proceeding to planning...`, 'error');
+                        this.setExecutionState('idle');
+                        const contextText = this.gatherContext();
+                        const taskWithContext = contextText ? `${idea}\n\n[Context (${this.contextScope})]:\n${contextText}` : idea;
+                        this.toolLogEntries = [];
+                        await this.runPlanActFlow(taskWithContext);
+                }
+        }
+
+        private renderRefinementQuestions(questions: IRefinementQuestion[], idea: string): void {
+                const container = dom.$('.construct-refinement');
+                container.style.cssText = `
+                        background: #141B2D; border: 1px solid #1A1F2E;
+                        border-radius: 6px; padding: 12px; margin: 8px 0;
+                `;
+
+                const header = dom.$('.construct-refinement-header');
+                header.style.cssText = `font-weight: 600; color: #E0E7FF; margin-bottom: 10px; font-size: 13px;`;
+                header.textContent = `\uD83D\uDCA1 Idea Refinement \u2014 ${questions.length} questions`;
+                container.appendChild(header);
+
+                const answers: Map<string, string> = new Map();
+
+                for (const q of questions) {
+                        const qCard = dom.$('.construct-refinement-question');
+                        qCard.style.cssText = `
+                                background: #0D1117; border: 1px solid #1A1F2E;
+                                border-radius: 4px; padding: 8px 10px; margin-bottom: 8px;
+                        `;
+
+                        const categoryBadge = dom.$('.construct-refinement-category');
+                        categoryBadge.style.cssText = `
+                                font-size: 10px; background: #1A2744; color: #00E5FF;
+                                border-radius: 3px; padding: 1px 6px; display: inline-block; margin-bottom: 4px;
+                        `;
+                        categoryBadge.textContent = q.category;
+
+                        const qText = dom.$('.construct-refinement-text');
+                        qText.style.cssText = `font-size: 12px; color: #E0E7FF; margin-bottom: 6px;`;
+                        qText.textContent = q.text;
+
+                        const input = document.createElement('input');
+                        input.type = 'text';
+                        input.placeholder = q.suggestions?.[0] ?? 'Your answer...';
+                        input.style.cssText = `
+                                width: 100%; background: #0A0E1A; border: 1px solid #1A1F2E;
+                                border-radius: 3px; padding: 6px 8px; color: #E0E7FF;
+                                font-size: 12px; outline: none; box-sizing: border-box;
+                        `;
+                        input.oninput = () => { answers.set(q.id, input.value); };
+
+                        qCard.appendChild(categoryBadge);
+                        qCard.appendChild(qText);
+                        qCard.appendChild(input);
+
+                        // Suggestion chips
+                        if (q.suggestions && q.suggestions.length > 0) {
+                                const chipContainer = dom.$('.construct-refinement-chips');
+                                chipContainer.style.cssText = `display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;`;
+                                for (const suggestion of q.suggestions.slice(0, 3)) {
+                                        const chip = dom.$('button') as HTMLButtonElement;
+                                        chip.textContent = suggestion;
+                                        chip.style.cssText = `
+                                                background: #1A2744; border: 1px solid #2D3A5C; border-radius: 12px;
+                                                color: #E0E7FF; font-size: 10px; padding: 2px 8px; cursor: pointer;
+                                        `;
+                                        chip.onclick = () => {
+                                                input.value = suggestion;
+                                                answers.set(q.id, suggestion);
+                                        };
+                                        chipContainer.appendChild(chip);
+                                }
+                                qCard.appendChild(chipContainer);
+                        }
+
+                        container.appendChild(qCard);
+                }
+
+                // Action buttons
+                const btnContainer = dom.$('.construct-refinement-buttons');
+                btnContainer.style.cssText = `display: flex; gap: 8px; margin-top: 8px;`;
+
+                const submitBtn = dom.$('button') as HTMLButtonElement;
+                submitBtn.textContent = 'Submit Answers';
+                submitBtn.style.cssText = `
+                        background: #00E5FF; color: #0A0E1A; border: none;
+                        border-radius: 4px; padding: 6px 14px; cursor: pointer;
+                        font-size: 12px; font-weight: 600;
+                `;
+
+                const skipBtn = dom.$('button') as HTMLButtonElement;
+                skipBtn.textContent = 'Skip to Planning';
+                skipBtn.style.cssText = `
+                        background: #1A2744; border: 1px solid #2D3A5C; color: #E0E7FF;
+                        border-radius: 4px; padding: 6px 14px; cursor: pointer;
+                        font-size: 12px;
+                `;
+
+                submitBtn.onclick = async () => {
+                        container.remove();
+                        const refinementAnswers: IRefinementAnswer[] = questions.map(q => ({
+                                questionId: q.id,
+                                text: answers.get(q.id) ?? '',
+                                skipped: !answers.has(q.id),
+                        }));
+                        await this.handleRefinementAnswers(refinementAnswers, idea);
+                };
+
+                skipBtn.onclick = async () => {
+                        container.remove();
+                        try {
+                                const refinedIdea = await this.ideaRefinementService.skipToRefinedIdea();
+                                this.proceedWithRefinedIdea(refinedIdea, idea);
+                        } catch {
+                                this.setExecutionState('idle');
+                                const contextText = this.gatherContext();
+                                const taskWithContext = contextText ? `${idea}\n\n[Context (${this.contextScope})]:\n${contextText}` : idea;
+                                this.toolLogEntries = [];
+                                await this.runPlanActFlow(taskWithContext);
+                        }
+                };
+
+                btnContainer.appendChild(submitBtn);
+                btnContainer.appendChild(skipBtn);
+                container.appendChild(btnContainer);
+
+                this.messageContainer.appendChild(container);
+                this.scrollToBottom();
+        }
+
+        private async handleRefinementAnswers(answers: IRefinementAnswer[], idea: string): Promise<void> {
+                this.addAgentMessage('\u23F3 Processing your answers...', 'info');
+                try {
+                        const result = await this.ideaRefinementService.submitAnswers(answers);
+                        if (result.type === 'questions') {
+                                this.renderRefinementQuestions(result.questions, idea);
+                        } else {
+                                this.proceedWithRefinedIdea(result.refinedIdea, idea);
+                        }
+                } catch (error) {
+                        const msg = error instanceof Error ? error.message : String(error);
+                        this.addAgentMessage(`[Refinement Error] ${msg}. Proceeding with original idea...`, 'error');
+                        this.setExecutionState('idle');
+                        const contextText = this.gatherContext();
+                        const taskWithContext = contextText ? `${idea}\n\n[Context (${this.contextScope})]:\n${contextText}` : idea;
+                        this.toolLogEntries = [];
+                        await this.runPlanActFlow(taskWithContext);
+                }
+        }
+
+        private async proceedWithRefinedIdea(refinedIdea: IRefinedIdea, originalIdea: string): Promise<void> {
+                const summaryEl = dom.$('.construct-refined-summary');
+                summaryEl.style.cssText = `
+                        background: #141B2D; border: 1px solid #00E5FF;
+                        border-radius: 6px; padding: 12px; margin: 8px 0;
+                `;
+                summaryEl.innerHTML = `
+                        <div style="font-weight:600;color:#E0E7FF;margin-bottom:6px;font-size:13px">\u2705 Refined Idea</div>
+                        <div style="font-size:12px;color:#C0C0C0;margin-bottom:8px">${this.escapeHtml(refinedIdea.refinedDescription)}</div>
+                        <div style="font-size:11px;color:#00E5FF">Confidence: ${Math.round(refinedIdea.confidence * 100)}%</div>
+                `;
+                this.messageContainer.appendChild(summaryEl);
+                this.scrollToBottom();
+
+                // Use refined idea for planning
+                this.setExecutionState('idle');
+                this.toolLogEntries = [];
+                await this.runPlanActFlow(refinedIdea.refinedDescription);
+        }
+
+        // --- Milestone Pause Controls ---
+
+        private renderMilestonePauseControls(milestone: IMilestone): void {
+                const container = dom.$('.construct-milestone-pause');
+                container.style.cssText = `
+                        background: #1A2744; border: 1px solid #00E5FF;
+                        border-radius: 6px; padding: 12px; margin: 8px 0;
+                `;
+
+                const header = dom.$('.construct-milestone-header');
+                header.style.cssText = `font-weight: 600; color: #00E5FF; margin-bottom: 6px; font-size: 13px;`;
+                header.textContent = `\u23F8 Paused at: ${milestone.name}`;
+                container.appendChild(header);
+
+                const desc = dom.$('.construct-milestone-desc');
+                desc.style.cssText = `font-size: 12px; color: #C0C0C0; margin-bottom: 10px;`;
+                desc.textContent = milestone.description;
+                container.appendChild(desc);
+
+                const btnContainer = dom.$('.construct-milestone-buttons');
+                btnContainer.style.cssText = `display: flex; gap: 8px;`;
+
+                const continueBtn = dom.$('button') as HTMLButtonElement;
+                continueBtn.textContent = '\u25B6 Continue';
+                continueBtn.style.cssText = `
+                        background: #00C853; color: white; border: none;
+                        border-radius: 4px; padding: 6px 14px; cursor: pointer;
+                        font-size: 12px; font-weight: 600;
+                `;
+                continueBtn.onclick = () => {
+                        container.remove();
+                        this.agentLoop.resumeFromMilestone();
+                        this.setExecutionState('executing');
+                };
+
+                const skipBtn = dom.$('button') as HTMLButtonElement;
+                skipBtn.textContent = '\u23ED Skip';
+                skipBtn.style.cssText = `
+                        background: #FF9800; color: white; border: none;
+                        border-radius: 4px; padding: 6px 14px; cursor: pointer;
+                        font-size: 12px; font-weight: 600;
+                `;
+                skipBtn.onclick = () => {
+                        container.remove();
+                        this.agentLoop.skipCurrentMilestone();
+                        this.setExecutionState('executing');
+                };
+
+                const stopBtn = dom.$('button') as HTMLButtonElement;
+                stopBtn.textContent = '\u25A0 Stop';
+                stopBtn.style.cssText = `
+                        background: #FF4444; color: white; border: none;
+                        border-radius: 4px; padding: 6px 14px; cursor: pointer;
+                        font-size: 12px; font-weight: 600;
+                `;
+                stopBtn.onclick = () => {
+                        container.remove();
+                        if (this._abortController) {
+                                this._abortController.abort();
+                                this._abortController = null;
+                        }
+                        this.setExecutionState('idle');
+                };
+
+                btnContainer.appendChild(continueBtn);
+                btnContainer.appendChild(skipBtn);
+                btnContainer.appendChild(stopBtn);
+                container.appendChild(btnContainer);
+
+                this.messageContainer.appendChild(container);
+                this.scrollToBottom();
+        }
+
+        // --- Session History ---
+
+        private async showSessionHistory(): Promise<void> {
+                const sessions = this.sessionService.sessions;
+                if (sessions.length === 0) {
+                        this.notificationService.info('No previous sessions found.');
+                        return;
+                }
+
+                const picks = sessions.map(s => ({
+                        label: s.title,
+                        description: `${s.messageCount} messages`,
+                        detail: `Last active: ${new Date(s.lastActiveAt).toLocaleString()}`,
+                        sessionId: s.id,
+                }));
+
+                const pick = await this.quickInputService.pick(picks, {
+                        placeHolder: 'Select a session to restore...',
+                        title: 'Session History',
+                });
+
+                if (pick) {
+                        await this.sessionService.switchToSession((pick as any).sessionId);
+                        this.notificationService.info(`Session restored: ${pick.label}`);
+                }
+        }
+
+        // --- Utility ---
+
+        private escapeHtml(text: string): string {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
         }
 }

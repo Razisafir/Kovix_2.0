@@ -10,6 +10,8 @@ import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { IWorkspaceContextService } from '../../../../../../platform/workspace/common/workspace.js';
 import { IAgentLoop, AgentLoopEvent, IPlanResult, IPlanStep } from '../../../../../../platform/construct/common/agent/agentLoop.js';
+import { IApprovedPlan, IMilestone, ExecutionState } from '../../../../../../platform/construct/common/agent/milestoneStateMachine.js';
+import { ExecutionMode } from '../../../../../../platform/construct/common/agent/executionMode.js';
 import { LoadingState, FileChangeEntry } from '../../../../../../platform/construct/common/agent/loadingState.js';
 import { IConstructAIService } from '../../../../../../platform/construct/common/llm/constructAIService.js';
 import { IChatMessage, IToolDefinition, IToolCall } from '../../../../../../platform/construct/common/llm/constructAIProvider.js';
@@ -33,6 +35,7 @@ import { assertWithinWorkspace } from '../../../../../../platform/construct/comm
 import { redactSecrets } from '../../../../../../platform/construct/common/security/secretRedactor.js';
 // P0-5: In-memory staging for agent-proposed changes
 import { IPendingChangesService } from '../../../../../../platform/construct/common/diff/pendingChanges.js';
+import { IUniversalMemoryService } from '../../../../../../platform/construct/common/memory/universalMemoryService.js';
 
 const MAX_ROUNDS = 15;
 
@@ -170,6 +173,15 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
         /** Active snapshot ID for the current task (for undo support). */
         private _activeSnapshotId: string | null = null;
 
+        /** Milestone execution state. */
+        private _executionState: ExecutionState = ExecutionState.Idle;
+        private _currentMilestone: IMilestone | null = null;
+        private _approvedPlan: IApprovedPlan | null = null;
+        private _executionConfig: { mode: ExecutionMode; selectedMilestoneIds?: string[] } | null = null;
+        private _milestoneResumeResolver: (() => void) | null = null;
+        private _currentPlanContext: string | null = null;
+        private _completedMilestoneIds: Set<string> = new Set();
+
         constructor(
                 @ILogService private readonly logService: ILogService,
                 @IConstructAIService private readonly aiService: IConstructAIService,
@@ -186,13 +198,22 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                 @IFileWatcherService private readonly fileWatcher: IFileWatcherService,
                 @IPendingChangesService private readonly pendingChanges: IPendingChangesService,
                 @IMCPServerManager private readonly mcpServerManager: IMCPServerManager,
+                @IUniversalMemoryService private readonly universalMemory: IUniversalMemoryService,
         ) {
                 super();
-                this.logService.info('[AgentLoop] Service created with error recovery, snapshots, file watcher, and pending changes');
+                this.logService.info('[AgentLoop] Service created with error recovery, snapshots, file watcher, pending changes, and universal memory');
         }
 
         get isRunning(): boolean {
                 return this._isRunning;
+        }
+
+        get executionState(): ExecutionState {
+                return this._executionState;
+        }
+
+        get currentMilestone(): IMilestone | null {
+                return this._currentMilestone;
         }
 
         async runPlanningPhase(task: string, signal?: AbortSignal): Promise<IPlanResult> {
@@ -583,6 +604,11 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                 ).catch(() => { /* non-critical */ });
                         }
 
+                        // Auto-extract universal memory from completed task
+                        if (this.universalMemory && finalSummary) {
+                                this.universalMemory.autoExtractFromTask(task, finalSummary.substring(0, 500)).catch(() => { /* non-critical */ });
+                        }
+
                         yield { type: 'complete', summary: finalSummary || 'Task completed.' };
                         this._onDidComplete.fire({ summary: finalSummary });
                 } catch (error) {
@@ -594,6 +620,223 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                         this._isRunning = false;
                         this._activeSnapshotId = null;
                 }
+        }
+
+        /**
+         * Run the planning phase with a pre-refined idea description.
+         * The refined idea provides more detail than a raw prompt.
+         */
+        async runPlanningPhaseWithIdea(refinedDescription: string, signal?: AbortSignal): Promise<IPlanResult> {
+                this.logService.info(`[AgentLoop] Planning phase started with refined idea: ${refinedDescription.substring(0, 100)}...`);
+                const task = `Based on the following refined specification, analyze the workspace and create a detailed implementation plan:\n\n${refinedDescription}`;
+                return this.runPlanningPhase(task, signal);
+        }
+
+        /**
+         * Run execution with an approved plan, supporting milestone-based pausing.
+         */
+        async *runWithApprovedPlan(approvedPlan: IApprovedPlan, signal?: AbortSignal): AsyncGenerator<AgentLoopEvent> {
+                const selectedSteps = approvedPlan.steps.filter(s => s.selected);
+                if (selectedSteps.length === 0) {
+                        yield { type: 'error', text: 'No steps selected for execution.', recoverable: false };
+                        return;
+                }
+
+                const taskDescription = selectedSteps.map(s => `${s.action}: ${s.target}`).join('\n');
+                const enhancedTask = `${approvedPlan.task}\n\nExecute these specific steps:\n${taskDescription}`;
+
+                yield* this.run(enhancedTask, signal);
+        }
+
+        /**
+         * Start milestone-aware execution from an approved plan.
+         */
+        startExecution(approvedPlan: IApprovedPlan, signal?: AbortSignal): void {
+                this._approvedPlan = approvedPlan;
+                this._executionConfig = {
+                        mode: approvedPlan.executionMode as ExecutionMode,
+                };
+                this._completedMilestoneIds = new Set();
+                this._executionState = ExecutionState.Executing;
+                this._currentPlanContext = approvedPlan.task;
+
+                // Run the execution in the background
+                const runAsync = async () => {
+                        try {
+                                const selectedSteps = approvedPlan.steps.filter(s => s.selected);
+                                const taskDescription = selectedSteps.map(s => `${s.action}: ${s.target}`).join('\n');
+                                const enhancedTask = `${approvedPlan.task}\n\nExecute these specific steps:\n${taskDescription}`;
+
+                                const stream = this.run(enhancedTask, signal);
+                                for await (const event of stream) {
+                                        // Check for milestone pauses
+                                        if (event.type === 'tool_result' && event.success) {
+                                                const shouldPause = this.shouldPauseAtMilestone(event);
+                                                if (shouldPause && this._currentMilestone) {
+                                                        this._executionState = ExecutionState.PausedAtMilestone;
+                                                        yield { type: 'milestone_paused', milestone: this._currentMilestone } as AgentLoopEvent;
+                                                        // Wait for resume
+                                                        await this._waitForResume();
+                                                }
+                                        }
+                                }
+                                this._executionState = ExecutionState.Complete;
+                        } catch (error) {
+                                this._executionState = ExecutionState.Error;
+                        }
+                };
+                runAsync();
+        }
+
+        /**
+         * Resume from the current milestone pause.
+         */
+        resumeFromMilestone(): void {
+                if (this._milestoneResumeResolver) {
+                        this._executionState = ExecutionState.Executing;
+                        const milestone = this._currentMilestone;
+                        this._milestoneResumeResolver();
+                        this._milestoneResumeResolver = null;
+                        if (milestone) {
+                                this._completedMilestoneIds.add(milestone.id);
+                        }
+                        this._currentMilestone = null;
+                }
+        }
+
+        /**
+         * Skip the current milestone and move to the next.
+         */
+        skipCurrentMilestone(): void {
+                if (this._milestoneResumeResolver) {
+                        this._executionState = ExecutionState.Executing;
+                        const milestone = this._currentMilestone;
+                        this._milestoneResumeResolver();
+                        this._milestoneResumeResolver = null;
+                        if (milestone) {
+                                this._completedMilestoneIds.add(milestone.id);
+                        }
+                        this._currentMilestone = null;
+                }
+        }
+
+        /**
+         * Wait for the user to resume from a milestone pause.
+         */
+        private _waitForResume(): Promise<void> {
+                return new Promise<void>((resolve) => {
+                        this._milestoneResumeResolver = resolve;
+                });
+        }
+
+        /**
+         * Check if the agent should pause at a milestone based on the execution mode.
+         */
+        private shouldPauseAtMilestone(event: { type: string; toolId?: string; toolName?: string }): boolean {
+                if (!this._executionConfig || !this._approvedPlan) {
+                        return false;
+                }
+
+                const milestones = this._approvedPlan.milestones;
+                if (!milestones || milestones.length === 0) {
+                        return false;
+                }
+
+                const mode = this._executionConfig.mode;
+
+                // Full auto: never pause
+                if (mode === ExecutionMode.FullAuto) {
+                        return false;
+                }
+
+                // Find the next uncompleted milestone
+                const nextMilestone = milestones.find(m => !this._completedMilestoneIds.has(m.id) && !m.completed);
+                if (!nextMilestone) {
+                        return false;
+                }
+
+                // Set current milestone if not already set
+                if (!this._currentMilestone || this._currentMilestone.id !== nextMilestone.id) {
+                        this._currentMilestone = nextMilestone;
+                }
+
+                switch (mode) {
+                        case ExecutionMode.EveryMilestone:
+                                return true;
+                        case ExecutionMode.MajorMilestone:
+                                return nextMilestone.isMajor;
+                        case ExecutionMode.Selective:
+                                return this._executionConfig.selectedMilestoneIds?.includes(nextMilestone.id) ?? false;
+                        default:
+                                return false;
+                }
+        }
+
+        /**
+         * Extract milestones from a plan's steps.
+         * Groups consecutive steps into milestones, marking major ones
+         * at natural boundaries (e.g., after file creation steps).
+         */
+        extractMilestonesFromPlan(steps: IPlanStep[]): IMilestone[] {
+                if (steps.length === 0) {
+                        return [];
+                }
+
+                const milestones: IMilestone[] = [];
+                let currentGroup: number[] = [];
+                let milestoneIndex = 0;
+
+                for (let i = 0; i < steps.length; i++) {
+                        currentGroup.push(i);
+
+                        // Create a milestone boundary after every 3-5 steps,
+                        // or when the action type changes to a different category
+                        const isNaturalBoundary =
+                                currentGroup.length >= 3 &&
+                                (i === steps.length - 1 ||
+                                        (steps[i].action === 'Run' && steps[i + 1]?.action !== 'Run') ||
+                                        (steps[i].action === 'Create' && steps[i + 1]?.action !== 'Create') ||
+                                        currentGroup.length >= 5);
+
+                        if (isNaturalBoundary) {
+                                const firstStep = steps[currentGroup[0]];
+                                const lastStep = steps[currentGroup[currentGroup.length - 1]];
+                                const isMajor = currentGroup.some(idx =>
+                                        steps[idx].action === 'Create' || steps[idx].action === 'Run'
+                                );
+
+                                milestones.push({
+                                        id: `milestone-${milestoneIndex}`,
+                                        name: `${firstStep.action}: ${firstStep.target}${currentGroup.length > 1 ? ` -> ${lastStep.target}` : ''}`,
+                                        description: `Steps ${currentGroup[0] + 1}-${currentGroup[currentGroup.length - 1] + 1}`,
+                                        index: milestoneIndex,
+                                        isMajor,
+                                        stepIndices: [...currentGroup],
+                                        completed: false,
+                                });
+
+                                currentGroup = [];
+                                milestoneIndex++;
+                        }
+                }
+
+                // Handle remaining steps
+                if (currentGroup.length > 0) {
+                        const firstStep = steps[currentGroup[0]];
+                        milestones.push({
+                                id: `milestone-${milestoneIndex}`,
+                                name: `${firstStep.action}: ${firstStep.target}`,
+                                description: `Steps ${currentGroup[0] + 1}-${currentGroup[currentGroup.length - 1] + 1}`,
+                                index: milestoneIndex,
+                                isMajor: currentGroup.some(idx =>
+                                        steps[idx].action === 'Create' || steps[idx].action === 'Run'
+                                ),
+                                stepIndices: [...currentGroup],
+                                completed: false,
+                        });
+                }
+
+                return milestones;
         }
 
         /**
@@ -789,6 +1032,18 @@ Guidelines:
                                 // We only sanitise the memory-injected portion, not the system prompt itself
                         } catch (error) {
                                 this.logService.warn('[AgentLoop] Memory context injection failed, using base prompt:', error instanceof Error ? error.message : String(error));
+                        }
+                }
+
+                // Inject universal memory context (cross-project knowledge)
+                if (this.universalMemory) {
+                        try {
+                                const universalContext = await this.universalMemory.getContextForTask(task, 5);
+                                if (universalContext) {
+                                        prompt += `\n\n[Universal Knowledge]\n${universalContext}`;
+                                }
+                        } catch (error) {
+                                this.logService.warn('[AgentLoop] Universal memory context injection failed:', error instanceof Error ? error.message : String(error));
                         }
                 }
 

@@ -9,6 +9,7 @@ import { createDecorator } from '../../../instantiation/common/instantiation.js'
 import { Event } from '../../../../base/common/event.js';
 import { LoadingState, FileChangeEntry } from './loadingState.js';
 import { IRestoreResult } from '../snapshot/snapshotManager.js';
+import { IApprovedPlan, IMilestone, ExecutionState } from './milestoneStateMachine.js';
 
 export const IAgentLoop = createDecorator<IAgentLoop>('construct.agentLoop');
 
@@ -23,7 +24,11 @@ export type AgentLoopEvent =
         | { type: 'tool_result'; toolId: string; toolName: string; result: string; success: boolean }
         | { type: 'file_written'; filePath: string }
         | { type: 'complete'; summary: string }
-        | { type: 'error'; text: string; recoverable: boolean };
+        | { type: 'error'; text: string; recoverable: boolean }
+        | { type: 'milestone_reached'; milestone: IMilestone }
+        | { type: 'milestone_paused'; milestone: IMilestone }
+        | { type: 'milestone_resumed'; milestone: IMilestone }
+        | { type: 'milestone_completed'; milestone: IMilestone };
 
 /**
  * Plan step returned from the planning phase.
@@ -117,4 +122,54 @@ export interface IAgentLoop {
          * @returns The restore result, or null if no active snapshot exists.
          */
         undoLastTask(): Promise<IRestoreResult | null>;
+
+        /**
+         * Run the planning phase with a pre-refined idea.
+         * The refined idea provides a more detailed specification than a raw prompt.
+         *
+         * @param refinedDescription The refined idea description.
+         * @param signal Optional AbortSignal for cancellation.
+         * @returns Plan with steps for user approval.
+         */
+        runPlanningPhaseWithIdea(refinedDescription: string, signal?: AbortSignal): Promise<IPlanResult>;
+
+        /**
+         * Run execution with an approved plan and milestone-based pausing.
+         * Yields AgentLoopEvents including milestone pause/resume events.
+         *
+         * @param approvedPlan The user-approved plan with selected steps and execution mode.
+         * @param signal Optional AbortSignal for cancellation.
+         * @returns AsyncGenerator of events for real-time streaming.
+         */
+        runWithApprovedPlan(approvedPlan: IApprovedPlan, signal?: AbortSignal): AsyncGenerator<AgentLoopEvent>;
+
+        /**
+         * Start milestone-aware execution from an approved plan.
+         * The agent will pause at milestones based on the execution mode.
+         *
+         * @param approvedPlan The approved plan to execute.
+         * @param signal Optional AbortSignal for cancellation.
+         */
+        startExecution(approvedPlan: IApprovedPlan, signal?: AbortSignal): void;
+
+        /**
+         * Resume execution from the current milestone.
+         * Called after the user reviews and approves the milestone result.
+         */
+        resumeFromMilestone(): void;
+
+        /**
+         * Skip the current milestone and move to the next one.
+         */
+        skipCurrentMilestone(): void;
+
+        /**
+         * Current execution state for milestone-aware execution.
+         */
+        readonly executionState: ExecutionState;
+
+        /**
+         * The current milestone being executed, if paused.
+         */
+        readonly currentMilestone: IMilestone | null;
 }
