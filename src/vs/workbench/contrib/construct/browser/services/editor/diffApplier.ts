@@ -158,6 +158,10 @@ export class DiffApplierService extends Disposable implements IDiffApplier {
         }
 
         async readFile(filePath: string): Promise<string> {
+                if (!this.isWithinWorkspace(filePath)) {
+                        throw new Error(`Security: Cannot read file outside workspace: ${filePath}`);
+                }
+
                 const uri = this.resolveUri(filePath);
                 try {
                         const content = await this.fileService.readFile(uri);
@@ -196,6 +200,10 @@ export class DiffApplierService extends Disposable implements IDiffApplier {
         }
 
         async exists(filePath: string): Promise<boolean> {
+                if (!this.isWithinWorkspace(filePath)) {
+                        return false;
+                }
+
                 const uri = this.resolveUri(filePath);
                 try {
                         return await this.fileService.exists(uri);

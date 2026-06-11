@@ -99,7 +99,7 @@ export function isCommandInAllowlist(command: string, allowlist?: string[]): boo
         const baseCommand = command.trim().split(/\s+/)[0];
         // Handle path-prefixed commands like /usr/bin/git
         const commandName = baseCommand.split('/').pop() ?? baseCommand;
-        return list.some(allowed => commandName === allowed || commandName.startsWith(allowed));
+        return list.some(allowed => commandName === allowed);
 }
 
 /**

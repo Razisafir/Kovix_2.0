@@ -8,6 +8,7 @@
 import { IWorkspaceContextService } from '../../../workspace/common/workspace.js';
 // Use VS Code's browser-safe path utilities — Node 'path' is NOT available in the renderer
 import * as path from '../../../../base/common/path.js';
+import { realpathSync } from 'fs';
 
 /**
  * Assert that a path is within the workspace boundary.
@@ -52,8 +53,28 @@ export function assertWithinWorkspace(
                         ? path.resolve(filePath)
                         : path.resolve(root, filePath);
 
-                if (!resolved.startsWith(root + path.sep) && resolved !== root) {
-                        throw new Error(`Security: path "${resolved}" is outside workspace "${root}"`);
+                // Resolve symlinks to prevent bypass via symlink chains
+                let realPath: string;
+                let realRoot: string;
+                try {
+                        realPath = realpathSync(resolved);
+                } catch {
+                        // File doesn't exist yet (e.g. write operation) — check parent directory instead
+                        try {
+                                realPath = realpathSync(path.dirname(resolved));
+                        } catch {
+                                // Parent doesn't exist either — fall back to resolved path
+                                realPath = resolved;
+                        }
+                }
+                try {
+                        realRoot = realpathSync(root);
+                } catch {
+                        realRoot = root;
+                }
+
+                if (!realPath.startsWith(realRoot + path.sep) && realPath !== realRoot) {
+                        throw new Error(`Path traversal detected: ${filePath} resolves outside workspace`);
                 }
         } else {
                 // No workspace root provided — reject absolute paths as a safety measure
