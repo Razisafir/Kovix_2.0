@@ -103,7 +103,7 @@ export class PromptExtensionInstallFailureAction extends Action {
                 this.logService.error(this.error);
 
                 if (this.error.name === ExtensionManagementErrorCode.Unsupported) {
-                        const productName = isWeb ? localize('CONSTRUCT IDE for Web', "{0} for the Web", this.productService.nameLong) : this.productService.nameLong;
+                        const productName = isWeb ? localize('Kovix IDE for Web', "{0} for the Web", this.productService.nameLong) : this.productService.nameLong;
                         const message = localize('cannot be installed', "The '{0}' extension is not available in {1}. Click 'More Information' to learn more.", this.extension.displayName || this.extension.identifier.id, productName);
                         const { confirmed } = await this.dialogService.confirm({
                                 type: Severity.Info,
@@ -164,7 +164,7 @@ export class PromptExtensionInstallFailureAction extends Action {
                                 detail: getErrorMessage(this.error),
                                 buttons: [{
                                         label: localize('learn more', "Learn More"),
-                                        run: () => this.openerService.open('https://code.visualstudio.com/docs/editor/extension-marketplace#_the-extension-signature-cannot-be-verified-by-vs-code')
+                                        run: () => this.openerService.open('https://github.com/Razisafir/KOVIX')
                                 }, {
                                         label: localize('install donot verify', "Install Anyway (Don't Verify Signature)"),
                                         run: () => {
@@ -512,7 +512,7 @@ export class InstallAction extends ExtensionAction {
                                         }
                                 });
                         } else if (this.extension.deprecationInfo.settings) {
-                                detail = localize('deprecated with alternate settings message', "This extension is deprecated as this functionality is now built-in to CONSTRUCT IDE.");
+                                detail = localize('deprecated with alternate settings message', "This extension is deprecated as this functionality is now built-in to Kovix IDE.");
 
                                 const settings = this.extension.deprecationInfo.settings;
                                 buttons.push({
@@ -900,7 +900,7 @@ export class UninstallAction extends ExtensionAction {
 
                 try {
                         await this.extensionsWorkbenchService.uninstall(this.extension);
-                        alert(localize('uninstallExtensionComplete', "Please reload CONSTRUCT IDE to complete the uninstallation of the extension {0}.", this.extension.displayName));
+                        alert(localize('uninstallExtensionComplete', "Please reload Kovix IDE to complete the uninstallation of the extension {0}.", this.extension.displayName));
                 } catch (error) {
                         if (!isCancellationError(error)) {
                                 this.dialogService.error(getErrorMessage(error));
@@ -2553,7 +2553,7 @@ export class ExtensionStatusAction extends ExtensionAction {
                                 this.updateStatus({ icon: warningIcon, message: new MarkdownString(localize('deprecated with alternate extension tooltip', "This extension is deprecated. Use the {0} extension instead.", link)) }, true);
                         } else if (this.extension.deprecationInfo.settings) {
                                 const link = `[${localize('settings', "settings")}](${URI.parse(`command:workbench.action.openSettings?${encodeURIComponent(JSON.stringify([this.extension.deprecationInfo.settings.map(setting => `@id:${setting}`).join(' ')]))}`)})`;
-                                this.updateStatus({ icon: warningIcon, message: new MarkdownString(localize('deprecated with alternate settings tooltip', "This extension is deprecated as this functionality is now built-in to CONSTRUCT IDE. Configure these {0} to use this functionality.", link)) }, true);
+                                this.updateStatus({ icon: warningIcon, message: new MarkdownString(localize('deprecated with alternate settings tooltip', "This extension is deprecated as this functionality is now built-in to Kovix IDE. Configure these {0} to use this functionality.", link)) }, true);
                         } else {
                                 const message = new MarkdownString(localize('deprecated tooltip', "This extension is deprecated as it is no longer being maintained."));
                                 if (this.extension.deprecationInfo.additionalInfo) {
@@ -2666,7 +2666,7 @@ export class ExtensionStatusAction extends ExtensionAction {
                                 if (this.extensionManagementServerService.localExtensionManagementServer === this.extension.server) {
                                         if (this.extensionManifestPropertiesService.prefersExecuteOnWorkspace(this.extension.local.manifest)) {
                                                 if (this.extensionManagementServerService.remoteExtensionManagementServer) {
-                                                        message = new MarkdownString(`${localize('Install in remote server to enable', "This extension is disabled in this workspace because it is defined to run in the Remote Extension Host. Please install the extension in '{0}' to enable.", this.extensionManagementServerService.remoteExtensionManagementServer.label)} [${localize('learn more', "Learn More")}](https://code.visualstudio.com/api/advanced-topics/remote-extensions#architecture-and-extension-kinds)`);
+                                                        message = new MarkdownString(`${localize('Install in remote server to enable', "This extension is disabled in this workspace because it is defined to run in the Remote Extension Host. Please install the extension in '{0}' to enable.", this.extensionManagementServerService.remoteExtensionManagementServer.label)} [${localize('learn more', "Learn More")}](https://github.com/Razisafir/KOVIX#extension-kinds)`);
                                                 }
                                         }
                                 }
@@ -2674,15 +2674,15 @@ export class ExtensionStatusAction extends ExtensionAction {
                                 else if (this.extensionManagementServerService.remoteExtensionManagementServer === this.extension.server) {
                                         if (this.extensionManifestPropertiesService.prefersExecuteOnUI(this.extension.local.manifest)) {
                                                 if (this.extensionManagementServerService.localExtensionManagementServer) {
-                                                        message = new MarkdownString(`${localize('Install in local server to enable', "This extension is disabled in this workspace because it is defined to run in the Local Extension Host. Please install the extension locally to enable.", this.extensionManagementServerService.remoteExtensionManagementServer.label)} [${localize('learn more', "Learn More")}](https://code.visualstudio.com/api/advanced-topics/remote-extensions#architecture-and-extension-kinds)`);
+                                                        message = new MarkdownString(`${localize('Install in local server to enable', "This extension is disabled in this workspace because it is defined to run in the Local Extension Host. Please install the extension locally to enable.", this.extensionManagementServerService.remoteExtensionManagementServer.label)} [${localize('learn more', "Learn More")}](https://github.com/Razisafir/KOVIX#extension-kinds)`);
                                                 } else if (isWeb) {
-                                                        message = new MarkdownString(`${localize('Defined to run in desktop', "This extension is disabled because it is defined to run only in {0} for the Desktop.", this.productService.nameLong)} [${localize('learn more', "Learn More")}](https://code.visualstudio.com/api/advanced-topics/remote-extensions#architecture-and-extension-kinds)`);
+                                                        message = new MarkdownString(`${localize('Defined to run in desktop', "This extension is disabled because it is defined to run only in {0} for the Desktop.", this.productService.nameLong)} [${localize('learn more', "Learn More")}](https://github.com/Razisafir/KOVIX#extension-kinds)`);
                                                 }
                                         }
                                 }
                                 // Extension on Web Server
                                 else if (this.extensionManagementServerService.webExtensionManagementServer === this.extension.server) {
-                                        message = new MarkdownString(`${localize('Cannot be enabled', "This extension is disabled because it is not supported in {0} for the Web.", this.productService.nameLong)} [${localize('learn more', "Learn More")}](https://code.visualstudio.com/api/advanced-topics/remote-extensions#architecture-and-extension-kinds)`);
+                                        message = new MarkdownString(`${localize('Cannot be enabled', "This extension is disabled because it is not supported in {0} for the Web.", this.productService.nameLong)} [${localize('learn more', "Learn More")}](https://github.com/Razisafir/KOVIX#extension-kinds)`);
                                 }
                                 if (message) {
                                         this.updateStatus({ icon: warningIcon, message }, true);
@@ -2722,21 +2722,21 @@ export class ExtensionStatusAction extends ExtensionAction {
                         const runningExtensionServer = runningExtension ? this.extensionManagementServerService.getExtensionManagementServer(toExtension(runningExtension)) : null;
                         if (this.extension.server === this.extensionManagementServerService.localExtensionManagementServer && runningExtensionServer === this.extensionManagementServerService.remoteExtensionManagementServer) {
                                 if (this.extensionManifestPropertiesService.prefersExecuteOnWorkspace(this.extension.local.manifest)) {
-                                        this.updateStatus({ icon: infoIcon, message: new MarkdownString(`${localize('enabled remotely', "This extension is enabled in the Remote Extension Host because it prefers to run there.")} [${localize('learn more', "Learn More")}](https://code.visualstudio.com/api/advanced-topics/remote-extensions#architecture-and-extension-kinds)`) }, true);
+                                        this.updateStatus({ icon: infoIcon, message: new MarkdownString(`${localize('enabled remotely', "This extension is enabled in the Remote Extension Host because it prefers to run there.")} [${localize('learn more', "Learn More")}](https://github.com/Razisafir/KOVIX#extension-kinds)`) }, true);
                                 }
                                 return;
                         }
 
                         if (this.extension.server === this.extensionManagementServerService.remoteExtensionManagementServer && runningExtensionServer === this.extensionManagementServerService.localExtensionManagementServer) {
                                 if (this.extensionManifestPropertiesService.prefersExecuteOnUI(this.extension.local.manifest)) {
-                                        this.updateStatus({ icon: infoIcon, message: new MarkdownString(`${localize('enabled locally', "This extension is enabled in the Local Extension Host because it prefers to run there.")} [${localize('learn more', "Learn More")}](https://code.visualstudio.com/api/advanced-topics/remote-extensions#architecture-and-extension-kinds)`) }, true);
+                                        this.updateStatus({ icon: infoIcon, message: new MarkdownString(`${localize('enabled locally', "This extension is enabled in the Local Extension Host because it prefers to run there.")} [${localize('learn more', "Learn More")}](https://github.com/Razisafir/KOVIX#extension-kinds)`) }, true);
                                 }
                                 return;
                         }
 
                         if (this.extension.server === this.extensionManagementServerService.remoteExtensionManagementServer && runningExtensionServer === this.extensionManagementServerService.webExtensionManagementServer) {
                                 if (this.extensionManifestPropertiesService.canExecuteOnWeb(this.extension.local.manifest)) {
-                                        this.updateStatus({ icon: infoIcon, message: new MarkdownString(`${localize('enabled in web worker', "This extension is enabled in the Web Worker Extension Host because it prefers to run there.")} [${localize('learn more', "Learn More")}](https://code.visualstudio.com/api/advanced-topics/remote-extensions#architecture-and-extension-kinds)`) }, true);
+                                        this.updateStatus({ icon: infoIcon, message: new MarkdownString(`${localize('enabled in web worker', "This extension is enabled in the Web Worker Extension Host because it prefers to run there.")} [${localize('learn more', "Learn More")}](https://github.com/Razisafir/KOVIX#extension-kinds)`) }, true);
                                 }
                                 return;
                         }
@@ -2892,7 +2892,7 @@ export class ReinstallAction extends Action {
                                 return this.extensionsWorkbenchService.reinstall(extension)
                                         .then(extension => {
                                                 const requireReload = !(extension.local && this.extensionService.canAddExtension(toExtensionDescription(extension.local)));
-                                                const message = requireReload ? localize('ReinstallAction.successReload', "Please reload CONSTRUCT IDE to complete reinstalling the extension {0}.", extension.identifier.id)
+                                                const message = requireReload ? localize('ReinstallAction.successReload', "Please reload Kovix IDE to complete reinstalling the extension {0}.", extension.identifier.id)
                                                         : localize('ReinstallAction.success', "Reinstalling the extension {0} is completed.", extension.identifier.id);
                                                 const actions = requireReload ? [{
                                                         label: localize('InstallVSIXAction.reloadNow', "Reload Now"),

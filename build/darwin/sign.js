@@ -15,14 +15,14 @@ function getElectronVersion() {
     return target;
 }
 async function main(buildDir) {
-    const tempDir = process.env['AGENT_TEMPDIRECTORY'];
-    const arch = process.env['VSCODE_ARCH'];
+    const tempDir = process.env['RUNNER_TEMP'] || process.env['AGENT_TEMPDIRECTORY'];
+    const arch = process.env['KOVIX_ARCH'];
     const identity = process.env['CODESIGN_IDENTITY'];
     if (!buildDir) {
-        throw new Error('$AGENT_BUILDDIRECTORY not set');
+        throw new Error('Build directory not set. Pass as argument or set GITHUB_WORKSPACE / AGENT_BUILDDIRECTORY');
     }
     if (!tempDir) {
-        throw new Error('$AGENT_TEMPDIRECTORY not set');
+        throw new Error('RUNNER_TEMP (or AGENT_TEMPDIRECTORY) not set');
     }
     const product = JSON.parse(fs.readFileSync(path.join(root, 'product.json'), 'utf8'));
     const baseDir = path.dirname(__dirname);

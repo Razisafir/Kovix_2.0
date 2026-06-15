@@ -1,12 +1,13 @@
 {
         "nameShort": "Kovix",
-        "nameLong": "Kovix",
+        "nameLong": "Kovix IDE",
+        "nameMedium": "Kovix IDE",
         "applicationName": "kovix",
         "dataFolderName": ".kovix",
         "win32MutexName": "kovixide",
         "licenseName": "Proprietary",
-        "licenseUrl": "https://github.com/Razisafir/KOVIX/blob/main/CONSTRUCT_LICENSE.txt",
-        "serverLicenseUrl": "https://github.com/Razisafir/KOVIX/blob/main/CONSTRUCT_LICENSE.txt",
+        "licenseUrl": "https://github.com/Razisafir/KOVIX/blob/main/KOVIX_LICENSE.txt",
+        "serverLicenseUrl": "https://github.com/Razisafir/KOVIX/blob/main/KOVIX_LICENSE.txt",
         "serverGreeting": [],
         "serverLicense": [],
         "serverLicensePrompt": "",
@@ -26,7 +27,7 @@
         "win32TunnelMutex": "kovix-tunnel",
         "darwinBundleIdentifier": "ai.kovix.ide",
         "linuxIconName": "kovix",
-        "licenseFileName": "CONSTRUCT_LICENSE.txt",
+        "licenseFileName": "KOVIX_LICENSE.txt",
         "reportIssueUrl": "https://github.com/Razisafir/KOVIX/issues/new",
         "privacyStatementUrl": "https://github.com/Razisafir/KOVIX/blob/main/PRIVACY.md",
         "nodejsRepository": "https://nodejs.org",
@@ -42,7 +43,20 @@
                 "resourceUrlTemplate": "https://open-vsx.org/vscode/unpkg/{publisher}/{name}/{version}/{path}"
         },
         "webviewContentExternalBaseUrlTemplate": "https://{{uuid}}.vscode-cdn.net/stable/{{commit}}/out/vs/workbench/contrib/webview/browser/pre/",
-        "updateUrl": "",
+        "updateUrl": "https://razisafir.github.io/KOVIX/update.json",
+        "quality": "stable",
+        "documentationUrl": "https://github.com/Razisafir/KOVIX#readme",
+        "downloadUrl": "https://github.com/Razisafir/KOVIX/releases",
+        "productConfiguration": {
+                "telemetryOptInMessage": "Help improve Kovix IDE by sending anonymous usage data. Read our privacy policy: https://github.com/Razisafir/KOVIX/blob/main/PRIVACY.md",
+                "telemetryConfiguration": "off",
+                "enabledTelemetryLevels": {"usage": false, "error": false, "crash": false}
+        },
+        "crashReporter": {
+                "companyName": "Razisafir",
+                "productName": "Kovix IDE",
+                "uploadToServer": false
+        },
         "builtInExtensions": [
                 {
                         "name": "ms-vscode.js-debug-companion",

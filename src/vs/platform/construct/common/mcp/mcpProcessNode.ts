@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
+// Kovix proprietary code. See KOVIX_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -16,7 +16,7 @@ export const IMCPProcessNodeService = createDecorator<IMCPProcessNodeService>('c
  * JSON-RPC 2.0. This service runs in the main process and is exposed
  * to the renderer via IPC.
  *
- * In desktop CONSTRUCT IDE: the node service is available via IPC and provides
+ * In desktop Kovix IDE: the node service is available via IPC and provides
  * spec-compliant MCP protocol communication.
  * In browser mode (vscode.dev): this service is unavailable and the
  * browser-layer MCPProcessService falls back to IFileService.

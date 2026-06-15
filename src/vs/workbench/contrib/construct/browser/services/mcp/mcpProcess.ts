@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
+// Kovix proprietary code. See KOVIX_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -22,8 +22,8 @@ import { joinPath } from '../../../../../../base/common/resources';
  *
  * Strategy:
  * 1. Attempts to use the node-layer MCPProcessNodeService for real MCP protocol
- *    over stdio (if available via CONSTRUCT IDE's remote/node IPC).
- * 2. Falls back to CONSTRUCT IDE's IFileService for file operations when the node
+ *    over stdio (if available via Kovix IDE's remote/node IPC).
+ * 2. Falls back to Kovix IDE's IFileService for file operations when the node
  *    layer is unavailable (browser-only mode).
  *
  * This ensures the agent loop always has functional file operations regardless

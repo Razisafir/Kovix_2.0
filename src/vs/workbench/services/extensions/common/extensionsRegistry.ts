@@ -179,21 +179,21 @@ export const schema: IJSONSchema = {
                         properties: {
                                 'vscode': {
                                         type: 'string',
-                                        description: nls.localize('vscode.extension.engines.vscode', 'For CONSTRUCT IDE extensions, specifies the CONSTRUCT IDE version that the extension is compatible with. Cannot be *. For example: ^0.10.5 indicates compatibility with a minimum CONSTRUCT IDE version of 0.10.5.'),
+                                        description: nls.localize('vscode.extension.engines.vscode', 'For Kovix IDE extensions, specifies the Kovix IDE version that the extension is compatible with. Cannot be *. For example: ^0.10.5 indicates compatibility with a minimum Kovix IDE version of 0.10.5.'),
                                         default: '^1.22.0',
                                 }
                         }
                 },
                 publisher: {
-                        description: nls.localize('vscode.extension.publisher', 'The publisher of the CONSTRUCT IDE extension.'),
+                        description: nls.localize('vscode.extension.publisher', 'The publisher of the Kovix IDE extension.'),
                         type: 'string'
                 },
                 displayName: {
-                        description: nls.localize('vscode.extension.displayName', 'The display name for the extension used in the CONSTRUCT IDE gallery.'),
+                        description: nls.localize('vscode.extension.displayName', 'The display name for the extension used in the Kovix IDE gallery.'),
                         type: 'string'
                 },
                 categories: {
-                        description: nls.localize('vscode.extension.categories', 'The categories used by the CONSTRUCT IDE gallery to categorize the extension.'),
+                        description: nls.localize('vscode.extension.categories', 'The categories used by the Kovix IDE gallery to categorize the extension.'),
                         type: 'array',
                         uniqueItems: true,
                         items: {
@@ -210,10 +210,10 @@ export const schema: IJSONSchema = {
                 },
                 galleryBanner: {
                         type: 'object',
-                        description: nls.localize('vscode.extension.galleryBanner', 'Banner used in the CONSTRUCT IDE marketplace.'),
+                        description: nls.localize('vscode.extension.galleryBanner', 'Banner used in the Kovix IDE marketplace.'),
                         properties: {
                                 color: {
-                                        description: nls.localize('vscode.extension.galleryBanner.color', 'The banner color on the CONSTRUCT IDE marketplace page header.'),
+                                        description: nls.localize('vscode.extension.galleryBanner.color', 'The banner color on the Kovix IDE marketplace page header.'),
                                         type: 'string'
                                 },
                                 theme: {
@@ -224,7 +224,7 @@ export const schema: IJSONSchema = {
                         }
                 },
                 contributes: {
-                        description: nls.localize('vscode.extension.contributes', 'All contributions of the CONSTRUCT IDE extension represented by this package.'),
+                        description: nls.localize('vscode.extension.contributes', 'All contributions of the Kovix IDE extension represented by this package.'),
                         type: 'object',
                         properties: {
                                 // extensions will fill in
@@ -240,7 +240,7 @@ export const schema: IJSONSchema = {
                         deprecationMessage: nls.localize('vscode.extension.enableProposedApi.deprecated', 'Use `enabledApiProposals` instead.'),
                 },
                 enabledApiProposals: {
-                        markdownDescription: nls.localize('vscode.extension.enabledApiProposals', 'Enable API proposals to try them out. Only valid **during development**. Extensions **cannot be published** with this property. For more details visit: https://code.visualstudio.com/api/advanced-topics/using-proposed-api'),
+                        markdownDescription: nls.localize('vscode.extension.enabledApiProposals', 'Enable API proposals to try them out. Only valid **during development**. Extensions **cannot be published** with this property. For more details visit: https://github.com/Razisafir/KOVIX#proposed-api'),
                         type: 'array',
                         uniqueItems: true,
                         items: {
@@ -250,7 +250,7 @@ export const schema: IJSONSchema = {
                         }
                 },
                 api: {
-                        markdownDescription: nls.localize('vscode.extension.api', 'Describe the API provided by this extension. For more details visit: https://code.visualstudio.com/api/advanced-topics/remote-extensions#handling-dependencies-with-remote-extensions'),
+                        markdownDescription: nls.localize('vscode.extension.api', 'Describe the API provided by this extension. For more details visit: https://github.com/Razisafir/KOVIX#remote-extensions'),
                         type: 'string',
                         enum: ['none'],
                         enumDescriptions: [
@@ -258,7 +258,7 @@ export const schema: IJSONSchema = {
                         ]
                 },
                 activationEvents: {
-                        description: nls.localize('vscode.extension.activationEvents', 'Activation events for the CONSTRUCT IDE extension.'),
+                        description: nls.localize('vscode.extension.activationEvents', 'Activation events for the Kovix IDE extension.'),
                         type: 'array',
                         items: {
                                 type: 'string',
@@ -405,7 +405,7 @@ export const schema: IJSONSchema = {
                                         },
                                         {
                                                 label: '*',
-                                                description: nls.localize('vscode.extension.activationEvents.star', 'An activation event emitted on CONSTRUCT IDE startup. To ensure a great end user experience, please use this activation event in your extension only when no other activation events combination works in your use-case.'),
+                                                description: nls.localize('vscode.extension.activationEvents.star', 'An activation event emitted on Kovix IDE startup. To ensure a great end user experience, please use this activation event in your extension only when no other activation events combination works in your use-case.'),
                                                 body: '*'
                                         }
                                 ],
@@ -577,11 +577,11 @@ export const schema: IJSONSchema = {
                         type: 'object',
                         properties: {
                                 'vscode:prepublish': {
-                                        description: nls.localize('vscode.extension.scripts.prepublish', 'Script executed before the package is published as a CONSTRUCT IDE extension.'),
+                                        description: nls.localize('vscode.extension.scripts.prepublish', 'Script executed before the package is published as a Kovix IDE extension.'),
                                         type: 'string'
                                 },
                                 'vscode:uninstall': {
-                                        description: nls.localize('vscode.extension.scripts.uninstall', 'Uninstall hook for CONSTRUCT IDE extension. Script that gets executed when the extension is completely uninstalled from CONSTRUCT IDE which is when CONSTRUCT IDE is restarted (shutdown and start) after the extension is uninstalled. Only Node scripts are supported.'),
+                                        description: nls.localize('vscode.extension.scripts.uninstall', 'Uninstall hook for Kovix IDE extension. Script that gets executed when the extension is completely uninstalled from Kovix IDE which is when Kovix IDE is restarted (shutdown and start) after the extension is uninstalled. Only Node scripts are supported.'),
                                         type: 'string'
                                 }
                         }
@@ -602,7 +602,7 @@ export const schema: IJSONSchema = {
                 },
                 pricing: {
                         type: 'string',
-                        markdownDescription: nls.localize('vscode.extension.pricing', 'The pricing information for the extension. Can be Free (default) or Trial. For more details visit: https://code.visualstudio.com/api/working-with-extensions/publishing-extension#extension-pricing-label'),
+                        markdownDescription: nls.localize('vscode.extension.pricing', 'The pricing information for the extension. Can be Free (default) or Trial. For more details visit: https://github.com/Razisafir/KOVIX#extension-pricing'),
                         enum: ['Free', 'Trial'],
                         default: 'Free'
                 }

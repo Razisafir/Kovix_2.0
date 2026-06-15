@@ -39,7 +39,7 @@ function getParams(type) {
                     operationSetCode: 'SigntoolSign',
                     parameters: [
                         { parameterName: 'OpusName', parameterValue: 'CONSTRUCT IDE' },
-                        { parameterName: 'OpusInfo', parameterValue: 'https://code.visualstudio.com/' },
+                        { parameterName: 'OpusInfo', parameterValue: 'https://github.com/Razisafir/KOVIX' },
                         { parameterName: 'Append', parameterValue: '/as' },
                         { parameterName: 'FileDigest', parameterValue: '/fd "SHA256"' },
                         { parameterName: 'PageHash', parameterValue: '/NPH' },
@@ -65,7 +65,7 @@ function getParams(type) {
                     operationSetCode: 'SigntoolSign',
                     parameters: [
                         { parameterName: 'OpusName', parameterValue: 'CONSTRUCT IDE' },
-                        { parameterName: 'OpusInfo', parameterValue: 'https://code.visualstudio.com/' },
+                        { parameterName: 'OpusInfo', parameterValue: 'https://github.com/Razisafir/KOVIX' },
                         { parameterName: 'FileDigest', parameterValue: '/fd "SHA256"' },
                         { parameterName: 'PageHash', parameterValue: '/NPH' },
                         { parameterName: 'TimeStamp', parameterValue: '/tr "http://rfc3161.gtm.corp.microsoft.com/TSS/HttpTspServer" /td sha256' }
@@ -129,7 +129,7 @@ function main([esrpCliPath, type, folderPath, pattern]) {
     const key = crypto.randomBytes(32);
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
-    const encryptedToken = cipher.update(process.env['SYSTEM_ACCESSTOKEN'].trim(), 'utf8', 'hex') + cipher.final('hex');
+    const encryptedToken = cipher.update(process.env['GITHUB_TOKEN'].trim(), 'utf8', 'hex') + cipher.final('hex');
     const encryptionDetailsPath = tmp.tmpNameSync();
     fs.writeFileSync(encryptionDetailsPath, JSON.stringify({ key: key.toString('hex'), iv: iv.toString('hex') }));
     const encryptedTokenPath = tmp.tmpNameSync();

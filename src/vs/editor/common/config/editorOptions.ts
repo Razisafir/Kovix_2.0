@@ -5807,7 +5807,7 @@ export const EditorOptions = {
                 'off' as 'off' | 'on',
                 ['off', 'on'] as const,
                 undefined
-                // TODO: Uncomment when we want to expose the setting to CONSTRUCT IDE users
+                // TODO: Uncomment when we want to expose the setting to Kovix IDE users
                 // {
                 //      enumDescriptions: [
                 //              nls.localize('experimentalGpuAcceleration.off', "Use regular DOM-based rendering."),
@@ -5970,7 +5970,7 @@ export const EditorOptions = {
                                         '- `ctrlCmd` refers to a value the setting can take and should not be localized.',
                                         '- `Control` and `Command` refer to the modifier keys Ctrl or Cmd on the keyboard and can be localized.'
                                 ]
-                        }, "The modifier to be used to add multiple cursors with the mouse. The Go to Definition and Open Link mouse gestures will adapt such that they do not conflict with the [multicursor modifier](https://code.visualstudio.com/docs/editor/codebasics#_multicursor-modifier).")
+                        }, "The modifier to be used to add multiple cursors with the mouse. The Go to Definition and Open Link mouse gestures will adapt such that they do not conflict with the [multicursor modifier](https://github.com/Razisafir/KOVIX).")
                 }
         )),
         multiCursorPaste: register(new EditorStringEnumOption(

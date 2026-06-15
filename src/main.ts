@@ -358,16 +358,16 @@ function createDefaultArgvConfigSync(argvConfigPath: string): void {
 
                 // Default argv content
                 const defaultArgvConfigContent = [
-                        '// This configuration file allows you to pass permanent command line arguments to CONSTRUCT IDE.',
+                        '// This configuration file allows you to pass permanent command line arguments to Kovix IDE.',
                         '// Only a subset of arguments is currently supported to reduce the likelihood of breaking',
                         '// the installation.',
                         '//',
                         '// PLEASE DO NOT CHANGE WITHOUT UNDERSTANDING THE IMPACT',
                         '//',
-                        '// NOTE: Changing this file requires a restart of CONSTRUCT IDE.',
+                        '// NOTE: Changing this file requires a restart of Kovix IDE.',
                         '{',
                         '       // Use software rendering instead of hardware accelerated rendering.',
-                        '       // This can help in cases where you see rendering issues in CONSTRUCT IDE.',
+                        '       // This can help in cases where you see rendering issues in Kovix IDE.',
                         '       // "disable-hardware-acceleration": true',
                         '}'
                 ];

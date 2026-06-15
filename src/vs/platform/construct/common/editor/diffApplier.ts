@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
+// Kovix proprietary code. See KOVIX_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -18,7 +18,7 @@ export interface IDiffApplyResult {
 }
 
 /**
- * Service for applying file changes using CONSTRUCT IDE's IFileService.
+ * Service for applying file changes using Kovix IDE's IFileService.
  * Supports unified diff patches, direct file writes, and workspace-safe operations.
  */
 export interface IDiffApplier {

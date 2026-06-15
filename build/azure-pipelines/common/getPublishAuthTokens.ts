@@ -3,45 +3,40 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { AccessToken } from '@azure/core-auth';
-import { ConfidentialClientApplication } from '@azure/msal-node';
+/**
+ * Provides authentication tokens for publishing.
+ *
+ * Previously this module used Azure MSAL (ConfidentialClientApplication) to acquire
+ * tokens for Cosmos DB and Azure Blob Storage. It now returns a GitHub token from the
+ * GITHUB_TOKEN environment variable, which is used for GitHub Releases & Pages APIs.
+ */
 
 function e(name: string): string {
 	const result = process.env[name];
-
 	if (typeof result !== 'string') {
 		throw new Error(`Missing env: ${name}`);
 	}
-
 	return result;
 }
 
-export async function getAccessToken(endpoint: string, tenantId: string, clientId: string, idToken: string): Promise<AccessToken> {
-	const app = new ConfidentialClientApplication({
-		auth: {
-			clientId,
-			authority: `https://login.microsoftonline.com/${tenantId}`,
-			clientAssertion: idToken
-		}
-	});
+export interface PublishAuthToken {
+	token: string;
+	provider: 'github';
+}
 
-	const result = await app.acquireTokenByClientCredential({ scopes: [`${endpoint}.default`] });
-
-	if (!result) {
-		throw new Error('Failed to get access token');
-	}
-
+export async function getPublishAuthTokens(): Promise<{ githubToken: PublishAuthToken }> {
+	const token = e('GITHUB_TOKEN');
 	return {
-		token: result.accessToken,
-		expiresOnTimestamp: result.expiresOn!.getTime(),
-		refreshAfterTimestamp: result.refreshOn?.getTime()
+		githubToken: {
+			token,
+			provider: 'github',
+		},
 	};
 }
 
 async function main() {
-	const cosmosDBAccessToken = await getAccessToken(e('AZURE_DOCUMENTDB_ENDPOINT')!, e('AZURE_TENANT_ID')!, e('AZURE_CLIENT_ID')!, e('AZURE_ID_TOKEN')!);
-	const blobServiceAccessToken = await getAccessToken(`https://${e('VSCODE_STAGING_BLOB_STORAGE_ACCOUNT_NAME')}.blob.core.windows.net/`, process.env['AZURE_TENANT_ID']!, process.env['AZURE_CLIENT_ID']!, process.env['AZURE_ID_TOKEN']!);
-	console.log(JSON.stringify({ cosmosDBAccessToken, blobServiceAccessToken }));
+	const tokens = await getPublishAuthTokens();
+	console.log(JSON.stringify(tokens));
 }
 
 if (require.main === module) {

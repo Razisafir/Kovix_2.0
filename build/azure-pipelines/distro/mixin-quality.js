@@ -10,9 +10,9 @@ function log(...args) {
     console.log(`[${new Date().toLocaleTimeString('en', { hour12: false })}]`, '[distro]', ...args);
 }
 function main() {
-    const quality = process.env['VSCODE_QUALITY'];
+    const quality = process.env['KOVIX_QUALITY'];
     if (!quality) {
-        throw new Error('Missing VSCODE_QUALITY, skipping mixin');
+        throw new Error('Missing KOVIX_QUALITY, skipping mixin');
     }
     log(`Mixing in distro quality...`);
     const basePath = `.build/distro/mixin/${quality}`;

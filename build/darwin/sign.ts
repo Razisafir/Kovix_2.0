@@ -17,21 +17,25 @@ function getElectronVersion(): string {
 }
 
 async function main(buildDir?: string): Promise<void> {
-        const tempDir = process.env['AGENT_TEMPDIRECTORY'];
-        const arch = process.env['VSCODE_ARCH'];
-        const identity = process.env['CODESIGN_IDENTITY'];
+        // KOVIX: Use GitHub Actions / self-managed CI env vars
+        const tempDir = process.env['RUNNER_TEMP'] || process.env['AGENT_TEMPDIRECTORY'];
+        const arch = process.env['KOVIX_ARCH'];
+        const identity = process.env['KOVIX_SIGN_IDENTITY'] || process.env['CODESIGN_IDENTITY'];
 
-        if (!buildDir) {
-                throw new Error('$AGENT_BUILDDIRECTORY not set');
+        // Resolve build directory: explicit arg > GITHUB_WORKSPACE > AGENT_BUILDDIRECTORY
+        const resolvedBuildDir = buildDir || process.env['GITHUB_WORKSPACE'] || process.env['AGENT_BUILDDIRECTORY'];
+
+        if (!resolvedBuildDir) {
+                throw new Error('Build directory not set. Pass as argument or set GITHUB_WORKSPACE / AGENT_BUILDDIRECTORY');
         }
 
         if (!tempDir) {
-                throw new Error('$AGENT_TEMPDIRECTORY not set');
+                throw new Error('RUNNER_TEMP (or AGENT_TEMPDIRECTORY) not set');
         }
 
         const product = JSON.parse(fs.readFileSync(path.join(root, 'product.json'), 'utf8'));
         const baseDir = path.dirname(__dirname);
-        const appRoot = path.join(buildDir, `VSCode-darwin-${arch}`);
+        const appRoot = path.join(resolvedBuildDir, `VSCode-darwin-${arch}`);
         const appName = product.nameLong + '.app';
         const appFrameworkPath = path.join(appRoot, appName, 'Contents', 'Frameworks');
         const helperAppBaseName = product.nameShort;
@@ -40,15 +44,21 @@ async function main(buildDir?: string): Promise<void> {
         const pluginHelperAppName = helperAppBaseName + ' Helper (Plugin).app';
         const infoPlistPath = path.resolve(appRoot, appName, 'Contents', 'Info.plist');
 
+        // KOVIX: Entitlements now in build/darwin/entitlements/
+        const entitlementsDir = path.join(baseDir, 'darwin', 'entitlements');
+
+        // Keychain: prefer KOVIX_SIGN_KEYCHAIN, fall back to legacy temp keychain path
+        const keychainPath = process.env['KOVIX_SIGN_KEYCHAIN'] || path.join(tempDir, 'buildagent.keychain');
+
         const defaultOpts: codesign.SignOptions = {
                 app: path.join(appRoot, appName),
                 platform: 'darwin',
-                entitlements: path.join(baseDir, 'azure-pipelines', 'darwin', 'app-entitlements.plist'),
-                'entitlements-inherit': path.join(baseDir, 'azure-pipelines', 'darwin', 'app-entitlements.plist'),
+                entitlements: path.join(entitlementsDir, 'app-entitlements.plist'),
+                'entitlements-inherit': path.join(entitlementsDir, 'app-entitlements.plist'),
                 hardenedRuntime: true,
                 'pre-auto-entitlements': false,
                 'pre-embed-provisioning-profile': false,
-                keychain: path.join(tempDir, 'buildagent.keychain'),
+                keychain: keychainPath,
                 version: getElectronVersion(),
                 identity,
                 'gatekeeper-assess': false
@@ -67,22 +77,22 @@ async function main(buildDir?: string): Promise<void> {
         const gpuHelperOpts: codesign.SignOptions = {
                 ...defaultOpts,
                 app: path.join(appFrameworkPath, gpuHelperAppName),
-                entitlements: path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-gpu-entitlements.plist'),
-                'entitlements-inherit': path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-gpu-entitlements.plist'),
+                entitlements: path.join(entitlementsDir, 'helper-gpu-entitlements.plist'),
+                'entitlements-inherit': path.join(entitlementsDir, 'helper-gpu-entitlements.plist'),
         };
 
         const rendererHelperOpts: codesign.SignOptions = {
                 ...defaultOpts,
                 app: path.join(appFrameworkPath, rendererHelperAppName),
-                entitlements: path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-renderer-entitlements.plist'),
-                'entitlements-inherit': path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-renderer-entitlements.plist'),
+                entitlements: path.join(entitlementsDir, 'helper-renderer-entitlements.plist'),
+                'entitlements-inherit': path.join(entitlementsDir, 'helper-renderer-entitlements.plist'),
         };
 
         const pluginHelperOpts: codesign.SignOptions = {
                 ...defaultOpts,
                 app: path.join(appFrameworkPath, pluginHelperAppName),
-                entitlements: path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-plugin-entitlements.plist'),
-                'entitlements-inherit': path.join(baseDir, 'azure-pipelines', 'darwin', 'helper-plugin-entitlements.plist'),
+                entitlements: path.join(entitlementsDir, 'helper-plugin-entitlements.plist'),
+                'entitlements-inherit': path.join(entitlementsDir, 'helper-plugin-entitlements.plist'),
         };
 
         // Only overwrite plist entries for x64 and arm64 builds,

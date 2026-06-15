@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
+// Kovix proprietary code. See KOVIX_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -60,7 +60,7 @@ export interface IConstructMemoryAddEvent {
 }
 
 /**
- * Service that wraps Supermemory with CONSTRUCT IDE-specific logic for persistent
+ * Service that wraps Supermemory with Kovix IDE-specific logic for persistent
  * memory that survives reloads, learns from conversations, and provides
  * intelligent context retrieval for the Construct agent.
  *

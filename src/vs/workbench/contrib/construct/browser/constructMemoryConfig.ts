@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
+// Kovix proprietary code. See KOVIX_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -9,7 +9,7 @@ import { localize } from '../../../../nls';
 import { Registry } from '../../../../platform/registry/common/platform.js';
 import { IConfigurationRegistry, Extensions as ConfigurationExtensions, IConfigurationNode } from '../../../../platform/configuration/common/configurationRegistry.js';
 
-// Register Construct memory settings as CONSTRUCT IDE configuration
+// Register Construct memory settings as Kovix IDE configuration
 const memoryConfiguration: IConfigurationNode = {
                 id: 'construct.memory',
                 order: 100,

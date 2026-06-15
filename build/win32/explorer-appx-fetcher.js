@@ -37,7 +37,7 @@ async function downloadExplorerAppx(outDir, quality = 'stable', targetArch = 'x6
     await extract(artifact, { dir: fs.realpathSync(outDir) });
 }
 async function main(outputDir) {
-    const arch = process.env['VSCODE_ARCH'];
+    const arch = process.env['KOVIX_ARCH'];
     if (!outputDir) {
         throw new Error('Required build env not set');
     }

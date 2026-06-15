@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
+// Kovix proprietary code. See KOVIX_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -71,7 +71,7 @@ export class ConstructMemoryService extends Disposable implements IConstructMemo
                                                 this.containerTag = `construct-${workspaceName.replace(/[^a-zA-Z0-9._-]/g, '-')}`;
                                 }
 
-                                // Load config from CONSTRUCT IDE settings first, fall back to storage
+                                // Load config from Kovix IDE settings first, fall back to storage
                                 const enabled = this.configurationService.getValue<boolean>('construct.memory.enabled')
                                                 ?? this.storageService.getBoolean(SUPERMEMORY_ENABLED_STORAGE_KEY, StorageScope.WORKSPACE, false);
                                 const autoLearn = this.configurationService.getValue<boolean>('construct.memory.autoLearn')

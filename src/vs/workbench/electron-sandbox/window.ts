@@ -255,8 +255,8 @@ export class NativeWindow extends BaseWindow {
                                         label: localize('downloadArmBuild', "Download"),
                                         run: () => {
                                                 const quality = this.productService.quality;
-                                                const stableURL = 'https://code.visualstudio.com/docs/?dv=osx';
-                                                const insidersURL = 'https://code.visualstudio.com/docs/?dv=osx&build=insiders';
+                                                const stableURL = 'https://github.com/Razisafir/KOVIX';
+                                                const insidersURL = 'https://github.com/Razisafir/KOVIX';
                                                 this.openerService.open(quality === 'stable' ? stableURL : insidersURL);
                                         }
                                 }],
@@ -728,10 +728,10 @@ export class NativeWindow extends BaseWindow {
                 if (this.environmentService.isBuilt) {
                         let installLocationUri: URI;
                         if (isMacintosh) {
-                                // appRoot = /Applications/CONSTRUCT IDE.app/Contents/Resources/app
+                                // appRoot = /Applications/Kovix IDE.app/Contents/Resources/app
                                 installLocationUri = dirname(dirname(dirname(URI.file(this.nativeEnvironmentService.appRoot))));
                         } else {
-                                // appRoot = C:\Users\<name>\AppData\Local\Programs\CONSTRUCT IDE\resources\app
+                                // appRoot = C:\Users\<name>\AppData\Local\Programs\Kovix IDE\resources\app
                                 // appRoot = /usr/share/code-insiders/resources/app
                                 installLocationUri = dirname(dirname(URI.file(this.nativeEnvironmentService.appRoot)));
                         }

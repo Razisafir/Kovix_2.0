@@ -29,8 +29,8 @@ async function getConfig(client, quality) {
     return res.resources[0];
 }
 async function main(force) {
-    const commit = getEnv('BUILD_SOURCEVERSION');
-    const quality = getEnv('VSCODE_QUALITY');
+    const commit = getEnv('GITHUB_SHA');
+    const quality = getEnv('KOVIX_QUALITY');
     const aadCredentials = new identity_1.ClientAssertionCredential(process.env['AZURE_TENANT_ID'], process.env['AZURE_CLIENT_ID'], () => Promise.resolve(process.env['AZURE_ID_TOKEN']));
     const client = new cosmos_1.CosmosClient({ endpoint: process.env['AZURE_DOCUMENTDB_ENDPOINT'], aadCredentials });
     if (!force) {

@@ -1,0 +1,41 @@
+name: Nightly Build
+
+on:
+  schedule:
+    - cron: '0 5 * * *'  # Daily at 5 UTC
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    env:
+      KOVIX_QUALITY: stable
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbfile-dev pkg-config libkrb5-dev libxss1 dbus xvfb libgtk-3-0 libgbm1
+          sudo cp build/azure-pipelines/linux/xvfb.init /etc/init.d/xvfb
+          sudo chmod +x /etc/init.d/xvfb
+          sudo update-rc.d xvfb defaults
+          sudo service xvfb start
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - run: npm ci
+
+      - run: npm run compile
+
+      - name: Run tests
+        run: npm test
+        env:
+          DISPLAY: ':99.0'

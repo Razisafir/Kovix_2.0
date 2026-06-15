@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
+// Kovix proprietary code. See KOVIX_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -10,7 +10,7 @@ import { createDecorator } from '../../../instantiation/common/instantiation.js'
 export const IConstructTelemetryService = createDecorator<IConstructTelemetryService>('construct.telemetryService');
 
 /**
- * Telemetry event types for CONSTRUCT IDE.
+ * Telemetry event types for Kovix IDE.
  */
 export type ConstructTelemetryEvent =
         | 'provider.switched'

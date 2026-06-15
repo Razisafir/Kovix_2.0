@@ -6,8 +6,8 @@ Task: Phase 10 - Documentation and final verification
 Work Log:
 - Verified INSTALL.md already exists (351 lines, 1531 words) with comprehensive platform-specific instructions for Linux, macOS, and Windows — includes pre-built binary and build-from-source sections, LLM provider setup, Docker/Ghidra setup, security tools, and troubleshooting
 - Verified README.md already updated with 1.0.0-beta version badge, Security Tooling section (nmap_scan, ghidra_decompile, nuclei_scan), MCP Servers section, Semantic Memory section, Commands section (15 construct.* commands), updated Architecture diagram, and updated license notice
-- Verified product.json license fields: licenseName="Proprietary", licenseUrl=CONSTRUCT_LICENSE.txt, serverLicenseUrl=CONSTRUCT_LICENSE.txt, licenseFileName=CONSTRUCT_LICENSE.txt
-- Verified package.json license field: "SEE LICENSE IN CONSTRUCT_LICENSE.txt"
+- Verified product.json license fields: licenseName="Proprietary", licenseUrl=KOVIX_LICENSE.txt, serverLicenseUrl=KOVIX_LICENSE.txt, licenseFileName=KOVIX_LICENSE.txt
+- Verified package.json license field: "SEE LICENSE IN KOVIX_LICENSE.txt"
 - Updated TEST_RESULTS.md with Phase 9 and Phase 10 results tables
 - Attempted TypeScript compilation verification — OOM on 8GB RAM (known issue); validated JSON files parse correctly; no TypeScript source files were changed
 - Created git tag v1.0.0-beta

@@ -10,7 +10,7 @@ const minimatch = require("minimatch");
 const vscode_universal_bundler_1 = require("vscode-universal-bundler");
 const root = path.dirname(path.dirname(__dirname));
 async function main(buildDir) {
-    const arch = process.env['VSCODE_ARCH'];
+    const arch = process.env['KOVIX_ARCH'];
     if (!buildDir) {
         throw new Error('Build dir not provided');
     }

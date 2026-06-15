@@ -1,8 +1,8 @@
 name: @@NAME@@
 version: '@@VERSION@@'
-summary: CONSTRUCT IDE. AI-native code editing. Redefined.
+summary: Kovix IDE. AI-native code editing. Redefined.
 description: |
-  CONSTRUCT IDE is a new choice of tool that combines the
+  Kovix IDE is a new choice of tool that combines the
   simplicity of a code editor with what developers need for the core
   edit-build-debug cycle, powered by AI.
 

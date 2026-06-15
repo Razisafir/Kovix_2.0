@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
+// Kovix proprietary code. See KOVIX_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -35,7 +35,7 @@ export interface IConstructConfigEntry<T = unknown> {
 }
 
 /**
- * Centralized configuration service for CONSTRUCT IDE.
+ * Centralized configuration service for Kovix IDE.
  *
  * P0 FIX: This is the SINGLE source of truth for all configuration.
  * Previously, configuration was fragmented across 3+ independent paths

@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
+// Kovix proprietary code. See KOVIX_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -1092,7 +1092,7 @@ Guidelines:
          */
         private async refreshExplorer(): Promise<void> {
                 try {
-                        // Primary: CONSTRUCT IDE command
+                        // Primary: Kovix IDE command
                         await this.commandService.executeCommand('workbench.files.action.refreshFilesExplorer');
                 } catch {
                         // Fallback: stat the workspace root to trigger file watcher
@@ -1105,6 +1105,13 @@ Guidelines:
                                 // Non-critical -- file explorer will refresh eventually via watchers
                         }
                 }
+        }
+
+        clearConversationHistory(): void {
+                this._currentPlanContext = null;
+                this._activeSnapshotId = null;
+                this._completedMilestoneIds.clear();
+                this.logService.info('[AgentLoop] Conversation history cleared');
         }
 
         override dispose(): void {

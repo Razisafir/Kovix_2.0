@@ -17,6 +17,8 @@ on:
 env:
   NODE_VERSION: '20'
   PYTHON_VERSION: '3.11'
+  KOVIX_ARCH: x64
+  KOVIX_QUALITY: stable
 
 jobs:
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

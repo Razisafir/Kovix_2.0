@@ -104,7 +104,7 @@ function createTerminalProfileMarkdownDescription(platform: Platform.Linux | Pla
                 PlatformToString(platform),
                 '```json\n"terminal.integrated.profile.' + key + '": {\n  "bash": null\n}\n```',
                 '[',
-                '](https://code.visualstudio.com/docs/terminal/profiles)'
+                '](https://github.com/Razisafir/KOVIX)'
         );
 }
 
@@ -336,7 +336,7 @@ const terminalPlatformConfiguration: IConfigurationNode = {
                 },
                 [TerminalSettingId.InheritEnv]: {
                         scope: ConfigurationScope.APPLICATION,
-                        description: localize('terminal.integrated.inheritEnv', "Whether new shells should inherit their environment from CONSTRUCT IDE, which may source a login shell to ensure $PATH and other development variables are initialized. This has no effect on Windows."),
+                        description: localize('terminal.integrated.inheritEnv', "Whether new shells should inherit their environment from Kovix IDE, which may source a login shell to ensure $PATH and other development variables are initialized. This has no effect on Windows."),
                         type: 'boolean',
                         default: true
                 },

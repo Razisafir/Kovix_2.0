@@ -1,11 +1,11 @@
 {
-        "codebaseName": "devdiv_microsoft_vscode",
+        "codebaseName": "kovix",
         "serviceTreeID": "79c048b2-322f-4ed5-a1ea-252a1250e4b3",
-        "instanceUrl": "https://devdiv.visualstudio.com/defaultcollection",
+        "instanceUrl": "https://github.com/Razisafir/KOVIX",
         "projectName": "DevDiv",
-        "areaPath": "DevDiv\\Kovix (compliance tracking only)\\Kovix Client",
+        "areaPath": "Kovix\\Kovix Client",
         "notificationAliases": [
-                "monacotools@microsoft.com"
+                "kovix@razisafir.com"
         ],
         "validateToolOutput": "None",
         "allTools": true

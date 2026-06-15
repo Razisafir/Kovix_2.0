@@ -297,7 +297,7 @@ const azdoFetchOptions = {
         'Accept-Encoding': 'gzip, deflate, br',
         'Accept-Language': 'en-US,en;q=0.9',
         'Referer': 'https://dev.azure.com',
-        Authorization: `Bearer ${e('SYSTEM_ACCESSTOKEN')}`
+        Authorization: `Bearer ${e('GITHUB_TOKEN')}`
     }
 };
 async function requestAZDOAPI(path) {
@@ -477,8 +477,8 @@ async function processArtifact(artifact, filePath) {
     }
     // getPlatform needs the unprocessedType
     const { cosmosDBAccessToken, blobServiceAccessToken } = JSON.parse(e('PUBLISH_AUTH_TOKENS'));
-    const quality = e('VSCODE_QUALITY');
-    const version = e('BUILD_SOURCEVERSION');
+    const quality = e('KOVIX_QUALITY');
+    const version = e('GITHUB_SHA');
     const { product, os, arch, unprocessedType } = match.groups;
     const isLegacy = artifact.name.includes('_legacy');
     const platform = getPlatform(product, os, arch, unprocessedType, isLegacy);
@@ -575,7 +575,7 @@ async function main() {
                 continue;
             }
             console.log(`[${artifact.name}] Found new artifact`);
-            const artifactZipPath = path.join(e('AGENT_TEMPDIRECTORY'), `${artifact.name}.zip`);
+            const artifactZipPath = path.join(e('RUNNER_TEMP'), `${artifact.name}.zip`);
             await (0, retry_1.retry)(async (attempt) => {
                 const start = Date.now();
                 console.log(`[${artifact.name}] Downloading (attempt ${attempt})...`);
@@ -585,7 +585,7 @@ async function main() {
                 const downloadSpeedKBS = Math.round((archiveSize / 1024) / downloadDurationS);
                 console.log(`[${artifact.name}] Successfully downloaded after ${Math.floor(downloadDurationS)} seconds(${downloadSpeedKBS} KB/s).`);
             });
-            const artifactFilePaths = await unzip(artifactZipPath, e('AGENT_TEMPDIRECTORY'));
+            const artifactFilePaths = await unzip(artifactZipPath, e('RUNNER_TEMP'));
             const artifactFilePath = artifactFilePaths.filter(p => !/_manifest/.test(p))[0];
             processing.add(artifact.name);
             const promise = new Promise((resolve, reject) => {

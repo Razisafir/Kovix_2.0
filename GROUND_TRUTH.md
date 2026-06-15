@@ -44,9 +44,9 @@ Local main and origin/main are at the same commit (2054a23c). All previous sessi
 | README.md updated | CONFIRMED - shows Kovix v1.0.0-beta | ✅ TRUE |
 | INSTALL.md created | CONFIRMED - exists on GitHub main | ✅ TRUE |
 | CHANGELOG.md updated | CONFIRMED - v1.0.0-beta section exists | ✅ TRUE |
-| CONSTRUCT_LICENSE.txt exists | CONFIRMED - on GitHub main | ✅ TRUE |
+| KOVIX_LICENSE.txt exists | CONFIRMED - renamed from CONSTRUCT_LICENSE.txt | ✅ TRUE |
 | TEST_RESULTS.md exists | CONFIRMED - on GitHub main | ✅ TRUE |
-| License changed from MIT | CONFIRMED - product.json shows "Proprietary", package.json shows "SEE LICENSE IN CONSTRUCT_LICENSE.txt" | ✅ TRUE |
+| License changed from MIT | CONFIRMED - product.json shows "Proprietary", package.json shows "SEE LICENSE IN KOVIX_LICENSE.txt" | ✅ TRUE |
 | GitHub release created | CONFIRMED - v1.0.0-beta-final release exists | ✅ TRUE |
 | 8 commits total (user claim) | FALSE - 20+ commits exist, all Phase 1-10 work is committed | ❌ INCORRECT |
 | README still default VS Code | FALSE - README is CONSTRUCT-specific | ❌ INCORRECT |

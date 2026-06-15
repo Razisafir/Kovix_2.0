@@ -1,0 +1,99 @@
+name: Pre-Release
+
+on:
+  push:
+    branches:
+      - 'release/*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            arch: x64
+            gulp_task: vscode-win32-x64-inno-updater
+            artifact_name: kovix-windows
+            artifact_path: .build/win32-x64/**/*.exe
+          - os: macos-latest
+            arch: x64
+            gulp_task: vscode-darwin-x64
+            artifact_name: kovix-macos
+            artifact_path: .build/darwin-x64/**/*.dmg
+          - os: ubuntu-latest
+            arch: x64
+            gulp_task: vscode-linux-x64
+            artifact_name: kovix-linux
+            artifact_path: .build/linux-x64/**/*.tar.gz
+    runs-on: ${{ matrix.os }}
+    env:
+      KOVIX_ARCH: ${{ matrix.arch }}
+      KOVIX_QUALITY: stable
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libgbm1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Package (${{ matrix.gulp_task }})
+        run: node ./node_modules/gulp/bin/gulp.js ${{ matrix.gulp_task }}
+
+      - name: Sign (macOS)
+        if: runner.os == 'macOS'
+        env:
+          KOVIX_SIGN_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          KOVIX_SIGN_CERT_PATH: ${{ secrets.APPLE_CERT_PATH }}
+          KOVIX_SIGN_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+        run: node build/darwin/sign.js
+
+      - name: Sign (Windows)
+        if: runner.os == 'Windows'
+        env:
+          KOVIX_SIGN_CERT_PATH: ${{ secrets.WINDOWS_CERT_PATH }}
+          KOVIX_SIGN_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
+        run: node build/azure-pipelines/common/sign-win32.js
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_path }}
+
+  draft-release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Draft GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: |
+            kovix-windows/**
+            kovix-macos/**
+            kovix-linux/**
+          body: |
+            ## Kovix Pre-Release
+
+            Draft build from `release/*` branch.
+
+            **⚠️ This is a pre-release build — not intended for production use.**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

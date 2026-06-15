@@ -1,5 +1,5 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See CONSTRUCT_LICENSE.txt.
+// Kovix proprietary code. See KOVIX_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
@@ -182,4 +182,11 @@ export interface IAgentLoop {
          * @returns Array of milestones with their associated steps.
          */
         extractMilestonesFromPlan(steps: IPlanStep[]): IMilestone[];
+
+        /**
+         * Clear the accumulated conversation history.
+         * Resets any in-memory conversation state so the next
+         * agent invocation starts with a fresh context.
+         */
+        clearConversationHistory(): void;
 }

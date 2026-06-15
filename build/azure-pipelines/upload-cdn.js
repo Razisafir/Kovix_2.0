@@ -12,7 +12,7 @@ const gzip = require("gulp-gzip");
 const mime = require("mime");
 const identity_1 = require("@azure/identity");
 const azure = require('gulp-azure-storage');
-const commit = process.env['BUILD_SOURCEVERSION'];
+const commit = process.env['GITHUB_SHA'];
 const credential = new identity_1.ClientAssertionCredential(process.env['AZURE_TENANT_ID'], process.env['AZURE_CLIENT_ID'], () => Promise.resolve(process.env['AZURE_ID_TOKEN']));
 mime.define({
     'application/typescript': ['ts'],
@@ -75,7 +75,7 @@ async function main() {
     const options = (compressed) => ({
         account: process.env.AZURE_STORAGE_ACCOUNT,
         credential,
-        container: process.env.VSCODE_QUALITY,
+        container: process.env.KOVIX_QUALITY,
         prefix: commit + '/',
         contentSettings: {
             contentEncoding: compressed ? 'gzip' : undefined,

@@ -20,10 +20,10 @@ function getEnv(name) {
 }
 async function main() {
     const [, , _version] = process.argv;
-    const quality = getEnv('VSCODE_QUALITY');
-    const commit = getEnv('BUILD_SOURCEVERSION');
-    const queuedBy = getEnv('BUILD_QUEUEDBY');
-    const sourceBranch = getEnv('BUILD_SOURCEBRANCH');
+    const quality = getEnv('KOVIX_QUALITY');
+    const commit = getEnv('GITHUB_SHA');
+    const queuedBy = getEnv('GITHUB_ACTOR');
+    const sourceBranch = getEnv('GITHUB_REF_NAME');
     const version = _version + (quality === 'stable' ? '' : `-${quality}`);
     console.log('Creating build...');
     console.log('Quality:', quality);

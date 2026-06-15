@@ -1,0 +1,24 @@
+{
+  "id": "kovix",
+  "version": "1.0.0",
+  "name": "Kovix IDE",
+  "quality": "stable",
+  "products": {
+    "darwin-x64": {
+      "url": "https://github.com/Razisafir/KOVIX/releases/download/v1.0.0/Kovix-darwin-x64.zip",
+      "sha256hash": "PLACEHOLDER"
+    },
+    "darwin-arm64": {
+      "url": "https://github.com/Razisafir/KOVIX/releases/download/v1.0.0/Kovix-darwin-arm64.zip",
+      "sha256hash": "PLACEHOLDER"
+    },
+    "linux-x64": {
+      "url": "https://github.com/Razisafir/KOVIX/releases/download/v1.0.0/kovix_1.0.0_amd64.deb",
+      "sha256hash": "PLACEHOLDER"
+    },
+    "win32-x64": {
+      "url": "https://github.com/Razisafir/KOVIX/releases/download/v1.0.0/KovixSetup-x64.exe",
+      "sha256hash": "PLACEHOLDER"
+    }
+  }
+}

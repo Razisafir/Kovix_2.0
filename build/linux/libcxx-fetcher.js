@@ -51,7 +51,7 @@ async function main() {
     const libcxxObjectsDirPath = process.env['VSCODE_LIBCXX_OBJECTS_DIR'];
     const libcxxHeadersDownloadDir = process.env['VSCODE_LIBCXX_HEADERS_DIR'];
     const libcxxabiHeadersDownloadDir = process.env['VSCODE_LIBCXXABI_HEADERS_DIR'];
-    const arch = process.env['VSCODE_ARCH'];
+    const arch = process.env['KOVIX_ARCH'];
     const packageJSON = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
     const electronVersion = packageJSON.devDependencies.electron;
     if (!libcxxObjectsDirPath || !libcxxHeadersDownloadDir || !libcxxabiHeadersDownloadDir) {

@@ -108,10 +108,10 @@ jobs:
         run: DISPLAY=:10 ./scripts/test-remote-integration.sh --no-sandbox
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  # CONSTRUCT HYGIENE — only checks construct code
+  # Kovix Hygiene — lint, type-check, and hygiene
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  construct-hygiene:
-    name: Construct Hygiene
+  kovix-hygiene:
+    name: Kovix Hygiene
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
