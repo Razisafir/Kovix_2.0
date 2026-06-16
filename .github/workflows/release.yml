@@ -40,6 +40,9 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Setup Visual Studio Build Tools
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Install dependencies
         run: npm ci
         timeout-minutes: 30
