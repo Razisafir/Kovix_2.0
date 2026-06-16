@@ -145,8 +145,17 @@ const mcpConfiguration: IConfigurationNode = {
         properties: {
                 'construct.mcp.servers': {
                         type: 'array',
-                        default: [],
-                        description: localize('construct.mcp.servers', "MCP server configurations."),
+                        default: [
+                                {
+                                        name: 'agent-reach',
+                                        command: 'node',
+                                        args: ['${extensionPath}/node_modules/@agent-reach/mcp-server/dist/index.js'],
+                                        env: {},
+                                        enabled: true,
+                                        isBuiltin: true
+                                }
+                        ],
+                        description: localize('construct.mcp.servers', "MCP server configurations. The agent-reach server is pre-configured for internet research tools (webpage reading, YouTube, GitHub, Twitter, Reddit, Bilibili, Xiaohongshu, Exa search, RSS). Install it with: npm install -g @agent-reach/mcp-server"),
                         scope: 4,
                         items: {
                                 type: 'object',
@@ -154,7 +163,9 @@ const mcpConfiguration: IConfigurationNode = {
                                         name: { type: 'string', description: 'Server name' },
                                         command: { type: 'string', description: 'Command to start the server' },
                                         args: { type: 'array', items: { type: 'string', description: 'Argument' }, description: 'Command arguments' },
-                                        env: { type: 'object', description: 'Environment variables' }
+                                        env: { type: 'object', description: 'Environment variables' },
+                                        enabled: { type: 'boolean', description: 'Whether this MCP server is enabled', default: true },
+                                        isBuiltin: { type: 'boolean', description: 'Whether this is a built-in server managed by KOVIX', default: false }
                                 },
                                 required: ['name', 'command']
                         }

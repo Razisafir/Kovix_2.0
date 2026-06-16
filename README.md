@@ -267,6 +267,97 @@ Kovix indexes your entire workspace for semantic search, enabling the agent to r
 
 If Ollama is unavailable, the system falls back to BM25 keyword search -- no embeddings required.
 
+## Internet Research
+
+Kovix integrates **Agent Reach**, an internet research toolkit that gives the AI agent access to the entire web — no API keys required for most platforms. The agent can search YouTube, GitHub, Reddit, read documentation pages, and more, directly within conversations.
+
+### What It Enables
+
+- **Web research** — Read any public webpage or documentation and summarize it in-chat
+- **Video discovery** — Search YouTube and pull transcripts for analysis
+- **Code exploration** — Search GitHub for libraries, examples, and repositories
+- **Community insights** — Search Reddit, Twitter/X, Bilibili, and Xiaohongshu for discussions and opinions
+- **AI-powered search** — Semantic search via Exa for research questions where meaning matters more than keywords
+
+### Installation
+
+Agent Reach is available as an MCP server and can be installed via the setup wizard:
+
+1. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`)
+2. Run `Kovix: Open Setup Wizard`
+3. Select **Agent Reach** from the integrations list and follow the prompts
+
+Or configure it manually by adding the MCP server to your settings:
+
+```json
+{
+  "construct.mcp.servers": [
+    {
+      "name": "agent-reach",
+      "command": "npx",
+      "args": ["-y", "@agent-reach/mcp-server"]
+    }
+  ]
+}
+```
+
+Then restart Kovix. The agent will automatically discover the new tools.
+
+### Out-of-the-Box Channels
+
+These channels work immediately with no authentication:
+
+| Tool | Description |
+|------|-------------|
+| `agent_reach__read_webpage` | Read and extract clean text from any URL |
+| `agent_reach__read_rss` | Fetch recent articles from RSS/Atom feeds |
+| `agent_reach__search_youtube` | Search YouTube videos |
+| `agent_reach__get_youtube_transcript` | Retrieve video transcripts |
+| `agent_reach__search_github` | Search repositories, code, issues on GitHub |
+| `agent_reach__search_bilibili` | Search Bilibili videos (Chinese content) |
+| `agent_reach__search_exa` | AI-powered semantic web search |
+
+### Channels Requiring Authentication
+
+These platforms require cookie-based login due to anti-bot protections:
+
+| Tool | Description | Setup |
+|------|-------------|-------|
+| `agent_reach__search_twitter` | Search tweets and trending topics | `agent-reach configure twitter-cookies "..."` |
+| `agent_reach__search_reddit` | Search subreddits and discussions | `agent-reach configure reddit-cookies "..."` |
+| `agent_reach__search_xiaohongshu` | Search lifestyle/review content | `agent-reach configure xiaohongshu-cookies "..."` |
+
+### Cookie Security Notes
+
+- Cookies are **stored locally** on your machine only — never sent to any remote server except the target platform
+- Obtain cookies by logging into the platform in your browser, then copying them from the browser's developer tools (Application/Storage → Cookies)
+- For Twitter/X: copy the `auth_token` cookie value
+- For Reddit: copy the `reddit_session` cookie value
+- For Xiaohongshu: copy the `web_session` cookie value
+- Cookies expire — re-run the configure command when authentication fails
+
+### Diagnostics
+
+Run `agent_reach__doctor` at any time to check which channels are operational and which need setup. If a tool returns an error, the agent will automatically suggest running the doctor to diagnose the issue.
+
+### Full Tool Reference
+
+| Tool | Use When | Auth Required |
+|------|----------|---------------|
+| `agent_reach__read_webpage` | User asks about a specific URL or docs page | No |
+| `agent_reach__read_rss` | User asks about news or blog feed updates | No |
+| `agent_reach__search_youtube` | User wants video tutorials or YouTube content | No |
+| `agent_reach__get_youtube_transcript` | User wants to summarize or search within a video | No |
+| `agent_reach__search_github` | User wants libraries, repos, or code examples | No |
+| `agent_reach__search_twitter` | User asks about tweets, trends, or X content | Yes (cookies) |
+| `agent_reach__search_reddit` | User wants community opinions or troubleshooting | Sometimes |
+| `agent_reach__search_bilibili` | User wants Chinese-language tutorials or content | No |
+| `agent_reach__search_xiaohongshu` | User wants product reviews or lifestyle content | Yes (cookies) |
+| `agent_reach__search_exa` | User asks broad research questions needing semantic search | No |
+| `agent_reach__doctor` | Another Agent Reach tool fails or returns an error | No |
+
+---
+
 ## Architecture
 
 Kovix is built on the [VS Code open-source project](https://github.com/microsoft/vscode) with the following additions:

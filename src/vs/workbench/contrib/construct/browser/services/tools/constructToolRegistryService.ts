@@ -384,6 +384,269 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                         requiresNetwork: false,
                         category: 'terminal',
                 }, async (input) => this.executeRunTerminal(input));
+
+                // ===== Agent Reach — Internet Research Tools =====
+                // These proxy to the agent-reach MCP server but are registered natively
+                // so the LLM knows about them even without MCP enabled.
+
+                // 1. agent_reach__read_webpage — read and extract content from a webpage
+                this.registerTool({
+                        name: 'agent_reach__read_webpage',
+                        description: 'Read and extract the main content from a webpage URL. Returns the cleaned article text, title, and metadata. Supports most websites including news, blogs, docs, and forums.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        url: {
+                                                type: 'string',
+                                                description: 'The full URL of the webpage to read (e.g., https://example.com/article).',
+                                        },
+                                },
+                                required: ['url'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: true,
+                        category: 'network',
+                }, async (input) => this.executeAgentReachTool('agent_reach__read_webpage', input));
+
+                // 2. agent_reach__search_youtube — search YouTube videos
+                this.registerTool({
+                        name: 'agent_reach__search_youtube',
+                        description: 'Search YouTube for videos matching a query. Returns video titles, URLs, channel names, view counts, and publish dates.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        query: {
+                                                type: 'string',
+                                                description: 'Search query for YouTube videos.',
+                                        },
+                                        max_results: {
+                                                type: 'number',
+                                                description: 'Maximum number of results to return. Defaults to 5.',
+                                                default: 5,
+                                        },
+                                },
+                                required: ['query'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: true,
+                        category: 'network',
+                }, async (input) => this.executeAgentReachTool('agent_reach__search_youtube', input));
+
+                // 3. agent_reach__get_youtube_transcript — get transcript of a YouTube video
+                this.registerTool({
+                        name: 'agent_reach__get_youtube_transcript',
+                        description: 'Fetch the transcript/subtitles of a YouTube video. Returns the full transcript text with timestamps. Useful for summarizing video content.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        video_id: {
+                                                type: 'string',
+                                                description: 'The YouTube video ID (e.g., "dQw4w9WgXcQ" from https://www.youtube.com/watch?v=dQw4w9WgXcQ).',
+                                        },
+                                },
+                                required: ['video_id'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: true,
+                        category: 'network',
+                }, async (input) => this.executeAgentReachTool('agent_reach__get_youtube_transcript', input));
+
+                // 4. agent_reach__search_bilibili — search Bilibili videos
+                this.registerTool({
+                        name: 'agent_reach__search_bilibili',
+                        description: 'Search Bilibili (Chinese video platform) for videos. Returns video titles, URLs, uploader names, view counts, and descriptions.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        query: {
+                                                type: 'string',
+                                                description: 'Search query for Bilibili videos.',
+                                        },
+                                        max_results: {
+                                                type: 'number',
+                                                description: 'Maximum number of results to return. Defaults to 5.',
+                                                default: 5,
+                                        },
+                                },
+                                required: ['query'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: true,
+                        category: 'network',
+                }, async (input) => this.executeAgentReachTool('agent_reach__search_bilibili', input));
+
+                // 5. agent_reach__search_github — search GitHub repositories, code, issues, and users
+                this.registerTool({
+                        name: 'agent_reach__search_github',
+                        description: 'Search GitHub for repositories, code, issues, pull requests, or users. Returns relevant results with URLs, descriptions, stars, and metadata.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        query: {
+                                                type: 'string',
+                                                description: 'Search query for GitHub. Can use GitHub search syntax (e.g., "language:typescript stars:>100").',
+                                        },
+                                        type: {
+                                                type: 'string',
+                                                description: 'Type of search: "repositories", "code", "issues", "pull_requests", or "users". Defaults to "repositories".',
+                                                enum: ['repositories', 'code', 'issues', 'pull_requests', 'users'],
+                                                default: 'repositories',
+                                        },
+                                        max_results: {
+                                                type: 'number',
+                                                description: 'Maximum number of results to return. Defaults to 5.',
+                                                default: 5,
+                                        },
+                                },
+                                required: ['query'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: true,
+                        category: 'network',
+                }, async (input) => this.executeAgentReachTool('agent_reach__search_github', input));
+
+                // 6. agent_reach__search_twitter — search Twitter/X tweets
+                this.registerTool({
+                        name: 'agent_reach__search_twitter',
+                        description: 'Search Twitter/X for tweets matching a query. Returns tweets with author, text, timestamp, likes, retweets, and URLs.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        query: {
+                                                type: 'string',
+                                                description: 'Search query for Twitter/X. Supports Twitter search operators.',
+                                        },
+                                        max_results: {
+                                                type: 'number',
+                                                description: 'Maximum number of results to return. Defaults to 10.',
+                                                default: 10,
+                                        },
+                                },
+                                required: ['query'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: true,
+                        category: 'network',
+                }, async (input) => this.executeAgentReachTool('agent_reach__search_twitter', input));
+
+                // 7. agent_reach__search_reddit — search Reddit posts and comments
+                this.registerTool({
+                        name: 'agent_reach__search_reddit',
+                        description: 'Search Reddit for posts and comments. Returns post titles, subreddit, author, score, comment count, and URLs.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        query: {
+                                                type: 'string',
+                                                description: 'Search query for Reddit.',
+                                        },
+                                        subreddit: {
+                                                type: 'string',
+                                                description: 'Optional subreddit to limit search to (e.g., "programming").',
+                                        },
+                                        max_results: {
+                                                type: 'number',
+                                                description: 'Maximum number of results to return. Defaults to 5.',
+                                                default: 5,
+                                        },
+                                },
+                                required: ['query'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: true,
+                        category: 'network',
+                }, async (input) => this.executeAgentReachTool('agent_reach__search_reddit', input));
+
+                // 8. agent_reach__search_xiaohongshu — search Xiaohongshu (Little Red Book) posts
+                this.registerTool({
+                        name: 'agent_reach__search_xiaohongshu',
+                        description: 'Search Xiaohongshu (Little Red Book / RED) for posts. Returns post titles, content excerpts, author, likes, and URLs.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        query: {
+                                                type: 'string',
+                                                description: 'Search query for Xiaohongshu (Chinese or English).',
+                                        },
+                                        max_results: {
+                                                type: 'number',
+                                                description: 'Maximum number of results to return. Defaults to 5.',
+                                                default: 5,
+                                        },
+                                },
+                                required: ['query'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: true,
+                        category: 'network',
+                }, async (input) => this.executeAgentReachTool('agent_reach__search_xiaohongshu', input));
+
+                // 9. agent_reach__search_exa — search using Exa AI (neural search engine)
+                this.registerTool({
+                        name: 'agent_reach__search_exa',
+                        description: 'Search the web using Exa AI, a neural search engine that finds semantically relevant results. Returns high-quality web pages with content summaries.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        query: {
+                                                type: 'string',
+                                                description: 'Natural language search query. Exa understands meaning, not just keywords.',
+                                        },
+                                        max_results: {
+                                                type: 'number',
+                                                description: 'Maximum number of results to return. Defaults to 5.',
+                                                default: 5,
+                                        },
+                                },
+                                required: ['query'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: true,
+                        category: 'network',
+                }, async (input) => this.executeAgentReachTool('agent_reach__search_exa', input));
+
+                // 10. agent_reach__read_rss — read and parse RSS feeds
+                this.registerTool({
+                        name: 'agent_reach__read_rss',
+                        description: 'Read and parse an RSS or Atom feed. Returns feed title, description, and recent entries with titles, summaries, publish dates, and links.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        url: {
+                                                type: 'string',
+                                                description: 'The RSS or Atom feed URL to read.',
+                                        },
+                                        max_entries: {
+                                                type: 'number',
+                                                description: 'Maximum number of entries to return. Defaults to 10.',
+                                                default: 10,
+                                        },
+                                },
+                                required: ['url'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: true,
+                        category: 'network',
+                }, async (input) => this.executeAgentReachTool('agent_reach__read_rss', input));
+
+                // 11. agent_reach__doctor — diagnose and fix MCP/Agent Reach connection issues
+                this.registerTool({
+                        name: 'agent_reach__doctor',
+                        description: 'Diagnose and fix Agent Reach MCP server connection issues. Runs health checks on the MCP server, network connectivity, and configuration. Returns diagnostic report and suggested fixes.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        fix: {
+                                                type: 'boolean',
+                                                description: 'Whether to attempt automatic fixes. Defaults to false (diagnostic only).',
+                                                default: false,
+                                        },
+                                },
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: true,
+                        category: 'network',
+                }, async (input) => this.executeAgentReachTool('agent_reach__doctor', input));
         }
 
         // --- Tool Implementations ---
@@ -655,6 +918,94 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                                 truncated: false,
                         };
                 }
+        }
+
+        /**
+         * Execute an Agent Reach tool by delegating to the agent-reach MCP server.
+         * Falls back to direct command execution if the MCP server is not running.
+         */
+        private async executeAgentReachTool(toolName: string, input: Record<string, unknown>): Promise<IToolResult> {
+                if (!this._onlineMode) {
+                        return {
+                                success: false,
+                                output: `Agent Reach tool "${toolName}" requires network access, but offline mode is active. Enable online mode in settings to use this tool.`,
+                                truncated: false,
+                        };
+                }
+
+                // Get MCP server configuration
+                const mcpServers = this._configurationService.getValue<Array<{ name: string; command: string; args: string[]; env: Record<string, string>; enabled?: boolean }>>('construct.mcp.servers') ?? [];
+                const agentReachServer = mcpServers.find(s => s.name === 'agent-reach' && s.enabled !== false);
+
+                // Build the JSON-RPC request payload for the MCP tool
+                const mcpRequest = {
+                        jsonrpc: '2.0' as const,
+                        id: 1,
+                        method: 'tools/call',
+                        params: {
+                                name: toolName,
+                                arguments: input,
+                        },
+                };
+
+                // If the MCP server is configured and enabled, try to execute via the server command
+                if (agentReachServer?.command) {
+                        try {
+                                const args = agentReachServer.args ?? [];
+                                const command = `${agentReachServer.command} ${args.join(' ')}`.trim();
+                                const envVars = Object.entries(agentReachServer.env ?? {})
+                                        .map(([k, v]) => `${k}=${v}`)
+                                        .join(' ');
+                                const fullCommand = envVars ? `${envVars} ${command}` : command;
+
+                                // Send the MCP request via stdin to the MCP server process
+                                const result = await this.terminalExecutor.execute(
+                                        `echo '${JSON.stringify(mcpRequest)}' | ${fullCommand}`,
+                                        undefined,
+                                        60000 // 60s timeout for network operations
+                                );
+
+                                const output = (result.stdout ?? '') + (result.stderr ?? '');
+                                const truncated = output.length > MAX_OUTPUT_LENGTH;
+                                const displayOutput = truncated ? output.substring(0, MAX_OUTPUT_LENGTH) + '\n... [truncated]' : output;
+
+                                if (result.exitCode !== 0 && !result.stdout) {
+                                        return {
+                                                success: false,
+                                                output: displayOutput || `Agent Reach MCP server exited with code ${result.exitCode}`,
+                                                truncated,
+                                                metadata: { exitCode: result.exitCode, tool: toolName },
+                                        };
+                                }
+
+                                return {
+                                        success: true,
+                                        output: displayOutput || '(no output)',
+                                        truncated,
+                                        metadata: { exitCode: result.exitCode, tool: toolName },
+                                };
+                        } catch (error) {
+                                this.logService.warn(`[ToolRegistry] Agent Reach MCP server execution failed for ${toolName}: ${error instanceof Error ? error.message : String(error)}`);
+                                // Fall through to fallback behavior
+                        }
+                }
+
+                // Fallback: return a helpful message explaining how to configure Agent Reach
+                return {
+                        success: false,
+                        output: [
+                                `Agent Reach tool "${toolName}" is not yet configured.`,
+                                '',
+                                'To use Agent Reach internet research tools:',
+                                '1. Install the agent-reach MCP server: npm install -g @agent-reach/mcp-server',
+                                '2. Or configure the MCP server path in Construct: MCP Servers settings',
+                                '3. Ensure online mode is enabled (construct.onlineMode)',
+                                '',
+                                `Tool input received: ${JSON.stringify(input, null, 2)}`,
+                        ].join('\n'),
+                        truncated: false,
+                        metadata: { tool: toolName, configured: false },
+                };
         }
 
         private async executeListDirectory(input: Record<string, unknown>): Promise<IToolResult> {

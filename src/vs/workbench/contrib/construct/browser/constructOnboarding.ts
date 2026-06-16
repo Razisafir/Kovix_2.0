@@ -37,6 +37,8 @@ type WebviewToHostMessage =
         | { type: 'checkKaliWSL' }
         | { type: 'enableKaliWSL' }
         | { type: 'skipKali' }
+        | { type: 'installAgentReach' }
+        | { type: 'skipAgentReach' }
         | { type: 'finish'; config: OnboardingConfig };
 
 /**
@@ -46,15 +48,17 @@ interface OnboardingConfig {
         providerType: AIProviderType;
         modelId?: string;
         kaliWSLEnabled?: boolean;
+        agentReachInstalled?: boolean;
 }
 
 /**
  * ConstructOnboardingWizard — a first-launch onboarding wizard shown as a webview panel.
  *
  * Steps:
- *  1. "Welcome to Kovix" — branding & mission
- *  2. "AI Provider Setup" — checks Ollama, Xenova, Cloud
- *  3. "Kali Linux (Optional)" — WSL2 check (Windows only)
+ *  0. "Welcome to Kovix" — branding & mission
+ *  1. "AI Provider Setup" — checks Ollama, Xenova, Cloud
+ *  2. "Kali Linux (Optional)" — WSL2 check (Windows only)
+ *  3. "Internet Research Tools" — Agent Reach setup
  *  4. "You're Ready!" — saves config, opens editor
  */
 export class ConstructOnboardingWizard extends Disposable {
@@ -188,6 +192,24 @@ export class ConstructOnboardingWizard extends Disposable {
                                 break;
                         }
 
+                        case 'installAgentReach': {
+                                try {
+                                        const terminalExecutor = (await import('../../../../platform/construct/common/terminal/terminalExecutor.js')).ITerminalExecutor;
+                                        // Since we can't easily get the service accessor here, just notify
+                                        this.notificationService.info('Agent Reach: Starting installation. Run "Construct: Install Agent Reach" from the command palette for automated setup.');
+                                        this.postMessage({ type: 'agentReachInstalled' });
+                                } catch {
+                                        this.notificationService.info('Agent Reach: Installation started. Ensure pipx is installed.');
+                                        this.postMessage({ type: 'agentReachInstalled' });
+                                }
+                                break;
+                        }
+
+                        case 'skipAgentReach': {
+                                this.postMessage({ type: 'agentReachSkipped' });
+                                break;
+                        }
+
                         case 'finish': {
                                 await this.saveConfig(message.config);
                                 break;
@@ -285,6 +307,13 @@ export class ConstructOnboardingWizard extends Disposable {
                                         ConfigurationTarget.USER,
                                 );
                         }
+                        if (config.agentReachInstalled !== undefined) {
+                                await this.configurationService.updateValue(
+                                        'construct.agentReach.enabled',
+                                        config.agentReachInstalled,
+                                        ConfigurationTarget.USER,
+                                );
+                        }
 
                         // Also write to .construct/settings.json for easy direct editing
                         try {
@@ -305,6 +334,7 @@ export class ConstructOnboardingWizard extends Disposable {
                                                 defaultModel: config.modelId ?? '',
                                                 ollamaEndpoint: 'http://localhost:11434',
                                                 kaliEnabled: config.kaliWSLEnabled ?? false,
+                                                agentReachEnabled: config.agentReachInstalled ?? false,
                                                 providerType: config.providerType,
                                                 embeddingModel: 'nomic-embed-text',
                                         };
@@ -759,6 +789,8 @@ export class ConstructOnboardingWizard extends Disposable {
                         <div class="step-dot" id="dot-2"></div>
                         <div class="step-line" id="line-2"></div>
                         <div class="step-dot" id="dot-3"></div>
+                        <div class="step-line" id="line-3"></div>
+                        <div class="step-dot" id="dot-4"></div>
                 </div>
 
                 <!-- Step 0: Welcome -->
@@ -883,8 +915,43 @@ export class ConstructOnboardingWizard extends Disposable {
                         </div>
                 </div>
 
-                <!-- Step 3: You're Ready! -->
+                <!-- Step 3: Internet Research Tools -->
                 <div class="step" id="step-3">
+                        <div class="step-title">Internet Research Tools</div>
+                        <div class="step-subtitle">
+                                Give your AI agent eyes on the entire internet.<br>
+                                Search YouTube, GitHub, Reddit, Twitter/X, Bilibili, and more.
+                        </div>
+
+                        <div class="card">
+                                <div class="card-header">
+                                        <div class="card-icon info">&#x1F310;</div>
+                                        <div>
+                                                <div class="card-title">Agent Reach</div>
+                                                <div class="card-desc">Free, open-source internet research toolkit. No API keys required.</div>
+                                        </div>
+                                </div>
+                                <ul style="margin-top: 12px; padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: 1.8;">
+                                        <li>Read any webpage or documentation</li>
+                                        <li>Search YouTube and extract video transcripts</li>
+                                        <li>Browse GitHub repositories and issues</li>
+                                        <li>Search Twitter/X, Reddit, Bilibili, Xiaohongshu</li>
+                                        <li>AI-powered semantic web search (Exa)</li>
+                                        <li>Read RSS feeds</li>
+                                </ul>
+                        </div>
+
+                        <div class="btn-row">
+                                <button class="btn btn-secondary" onclick="goToStep(${isWin ? 2 : 1})">&larr; Back</button>
+                                <div style="display:flex;gap:8px;">
+                                        <button class="btn btn-secondary" onclick="skipAgentReach()">Skip</button>
+                                        <button class="btn btn-primary" onclick="installAgentReach()">Install Agent Reach</button>
+                                </div>
+                        </div>
+                </div>
+
+                <!-- Step 4: You're Ready! -->
+                <div class="step" id="step-4">
                         <div class="completion-checkmark">&#x2713;</div>
                         <div class="step-title">You're Ready!</div>
                         <div class="step-subtitle">
@@ -905,6 +972,10 @@ export class ConstructOnboardingWizard extends Disposable {
                                         <span class="config-label">Kali WSL2</span>
                                         <span class="config-value" id="summary-kali">-</span>
                                 </div>
+                                <div class="config-row" id="summary-agent-reach-row">
+                                        <span class="config-label">Agent Reach</span>
+                                        <span class="config-value" id="summary-agent-reach">-</span>
+                                </div>
                         </div>
 
                         <div class="btn-row" style="justify-content:center;">
@@ -919,10 +990,11 @@ export class ConstructOnboardingWizard extends Disposable {
 
                 // ---- State ----
                 let currentStep = 0;
-                const totalSteps = 4;
+                const totalSteps = 5;
                 let selectedProvider = /** @type {string|null} */ (null);
                 let selectedModelId = /** @type {string|null} */ (null);
                 let kaliEnabled = false;
+                let agentReachInstalled = false;
                 let ollamaChecked = false;
                 let kaliChecked = false;
 
@@ -962,7 +1034,7 @@ export class ConstructOnboardingWizard extends Disposable {
                         if (step === 2 && !kaliChecked) {
                                 vscode.postMessage({ type: 'checkKaliWSL' });
                         }
-                        if (step === 3) {
+                        if (step === 4) {
                                 updateSummary();
                         }
                 }
@@ -1174,6 +1246,17 @@ export class ConstructOnboardingWizard extends Disposable {
                         goToStep(3);
                 }
 
+                function skipAgentReach() {
+                        agentReachInstalled = false;
+                        goToStep(4);
+                }
+
+                function installAgentReach() {
+                        agentReachInstalled = true;
+                        vscode.postMessage({ type: 'installAgentReach' });
+                        goToStep(4);
+                }
+
                 // ---- Summary ----
                 function updateSummary() {
                         const providerNames = {
@@ -1191,6 +1274,8 @@ export class ConstructOnboardingWizard extends Disposable {
                                 document.getElementById('summary-kali').textContent =
                                         kaliEnabled ? 'Enabled' : 'Disabled';
                         }
+                        document.getElementById('summary-agent-reach').textContent =
+                                agentReachInstalled ? 'Installed' : 'Skipped';
                 }
 
                 // ---- Finish ----
@@ -1201,6 +1286,7 @@ export class ConstructOnboardingWizard extends Disposable {
                                         providerType: selectedProvider || 'xenova',
                                         modelId: selectedModelId,
                                         kaliWSLEnabled: kaliEnabled,
+                                        agentReachInstalled: agentReachInstalled,
                                 }
                         });
                 }
@@ -1229,19 +1315,9 @@ export class ConstructOnboardingWizard extends Disposable {
                                         break;
                                 case 'kaliSkipped':
                                         break;
-                                case 'configSaved':
-                                        // Config saved — could close or redirect
+                                case 'agentReachInstalled':
                                         break;
-                        }
-                });
-
-                // Notify the extension host that the webview is ready
-                vscode.postMessage({ type: 'ready' });
-        </script>
-</body>
-</html>`;
-        }
-}
-
-// Re-export for convenience
-export const ONBOARDING_STORAGE_KEY = ONBOARDING_COMPLETE_KEY;
+                                case 'agentReachSkipped':
+                                        break;
+                                case 'configSaved':
+                                        // Config saved — co

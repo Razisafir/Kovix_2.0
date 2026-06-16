@@ -124,6 +124,7 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
                 static readonly ID = 'workbench.contrib.constructStatusBar';
 
                 private modelEntryAccessor: IStatusbarEntryAccessor | undefined;
+                private agentReachEntryAccessor: IStatusbarEntryAccessor | undefined;
 
                 constructor(
                                 @IStatusbarService private readonly statusbarService: IStatusbarService,
@@ -164,6 +165,15 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
                                                 ariaLabel: localize('constructChangesAria', "No changes awaiting approval"),
                                                 tooltip: localize('constructChangesTooltip', "No changes awaiting approval"),
                                 }, 'construct.changes', StatusbarAlignment.RIGHT, 50));
+
+                                // Agent Reach status (left side, priority 49)
+                                this.agentReachEntryAccessor = this._register(this.statusbarService.addEntry({
+                                                name: localize('constructAgentReach', "Agent Reach"),
+                                                text: '$(globe) Agent Reach',
+                                                ariaLabel: localize('constructAgentReachAria', "Agent Reach internet research tools"),
+                                                tooltip: localize('constructAgentReachTooltip', "Click to check Agent Reach status"),
+                                                command: 'construct.checkAgentReach',
+                                }, 'construct.agentReach', StatusbarAlignment.LEFT, 49));
                 }
 
                 private updateModelStatus(): void {
@@ -181,6 +191,19 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
                                                 ariaLabel: localize('constructModelAria', `Active LLM: ${modelName} (${suffix})`),
                                                 tooltip: localize('constructModelTooltip', `Active LLM: ${modelName} (${suffix}) — click to change`),
                                                 command: 'construct.selectModel',
+                                });
+                }
+
+                public updateAgentReachStatus(status: 'ok' | 'warn' | 'error', message?: string): void {
+                                if (!this.agentReachEntryAccessor) { return; }
+                                const icons = { ok: '$(globe)', warn: '$(globe~spin)', error: '$(globe~remove)' };
+                                const icon = icons[status] || icons.error;
+                                this.agentReachEntryAccessor.update({
+                                                name: localize('constructAgentReach', "Agent Reach"),
+                                                text: `${icon} ${message || 'Agent Reach'}`,
+                                                ariaLabel: localize('constructAgentReachAria', `Agent Reach: ${message || status}`),
+                                                tooltip: localize('constructAgentReachTooltip', `Agent Reach status: ${message || status} — click to check`),
+                                                command: 'construct.checkAgentReach',
                                 });
                 }
 }
@@ -963,6 +986,173 @@ registerAction2(class ProviderStatusAction extends Action2 {
                 } catch (error) {
                         logService.error('[Construct] Failed to get provider status:', error);
                         notificationService.error('Failed to get provider status: ' + (error instanceof Error ? error.message : String(error)));
+                }
+        }
+});
+
+// --- Agent Reach Commands ----------------------------------------------------
+
+registerAction2(class CheckAgentReachAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.checkAgentReach',
+                        title: localize2('checkAgentReach', "Check Agent Reach Health"),
+                        f1: true,
+                        category: localize2('constructCategoryAgentReach', "Construct"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const terminalExecutor = accessor.get(ITerminalExecutor);
+                const notificationService = accessor.get(INotificationService);
+                const logService = accessor.get(ILogService);
+
+                notificationService.info('Agent Reach: Running health check...');
+                try {
+                        const result = await terminalExecutor.execute('agent-reach doctor');
+                        if (result.exitCode === 0) {
+                                notificationService.info('Agent Reach: Healthy — ' + (result.stdout || 'All systems operational'));
+                        } else {
+                                notificationService.warn('Agent Reach: Not installed or not working. Use "Construct: Install Agent Reach" to set it up.');
+                        }
+                } catch (error) {
+                        logService.error('[Construct] Agent Reach health check failed:', error);
+                        notificationService.warn('Agent Reach: Not installed. Use "Construct: Install Agent Reach" to set it up.');
+                }
+        }
+});
+
+registerAction2(class InstallAgentReachAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.installAgentReach',
+                        title: localize2('installAgentReach', "Install Agent Reach"),
+                        f1: true,
+                        category: localize2('constructCategoryAgentReach2', "Construct"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const terminalExecutor = accessor.get(ITerminalExecutor);
+                const notificationService = accessor.get(INotificationService);
+                const logService = accessor.get(ILogService);
+
+                notificationService.info('Agent Reach: Starting installation...');
+                try {
+                        // Install agent-reach via pipx
+                        const installResult = await terminalExecutor.execute('pipx install agent-reach || pip install --user agent-reach');
+                        if (installResult.exitCode === 0) {
+                                notificationService.info('Agent Reach: Installed successfully!');
+                                // Run doctor to verify
+                                const doctorResult = await terminalExecutor.execute('agent-reach doctor');
+                                if (doctorResult.exitCode === 0) {
+                                        notificationService.info('Agent Reach: Installation verified and ready.');
+                                } else {
+                                        notificationService.warn('Agent Reach: Installed but verification failed. Try reloading the window.');
+                                }
+                        } else {
+                                notificationService.error('Agent Reach: Installation failed. Ensure pipx or pip is available.');
+                        }
+                } catch (error) {
+                        logService.error('[Construct] Agent Reach installation failed:', error);
+                        notificationService.error('Agent Reach: Installation failed: ' + (error instanceof Error ? error.message : String(error)));
+                }
+        }
+});
+
+registerAction2(class ConfigureAgentReachAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.configureAgentReach',
+                        title: localize2('configureAgentReach', "Configure Agent Reach Channels"),
+                        f1: true,
+                        category: localize2('constructCategoryAgentReach3', "Construct"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const notificationService = accessor.get(INotificationService);
+                const commandService = accessor.get(ICommandService);
+
+                notificationService.info('Agent Reach: Channels are configured automatically. Use the status bar icon or run "Check Agent Reach Health" to verify.');
+                commandService.executeCommand('construct.checkAgentReach');
+        }
+});
+
+registerAction2(class SearchWebExaAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.searchWebExa',
+                        title: localize2('searchWebExa', "Search Web (Exa)"),
+                        f1: true,
+                        category: localize2('constructCategoryAgentReach4', "Construct"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const quickInput = accessor.get(IQuickInputService);
+                const notificationService = accessor.get(INotificationService);
+                const terminalExecutor = accessor.get(ITerminalExecutor);
+                const logService = accessor.get(ILogService);
+
+                const query = await quickInput.input({
+                        prompt: 'Enter search query for Exa web search',
+                        placeHolder: 'e.g., latest TypeScript features',
+                });
+
+                if (!query) { return; }
+
+                try {
+                        notificationService.info(`Agent Reach: Searching Exa for "${query}"...`);
+                        const result = await terminalExecutor.execute(`agent-reach search-exa "${query.replace(/"/g, '\\"')}"`);
+                        if (result.exitCode === 0) {
+                                notificationService.info('Agent Reach (Exa): ' + (result.stdout || 'Search completed'));
+                        } else {
+                                notificationService.warn('Agent Reach: Exa search failed. Ensure Agent Reach is installed.');
+                        }
+                } catch (error) {
+                        logService.error('[Construct] Exa search failed:', error);
+                        notificationService.error('Exa search failed: ' + (error instanceof Error ? error.message : String(error)));
+                }
+        }
+});
+
+registerAction2(class ReadWebpageAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.readWebpage',
+                        title: localize2('readWebpage', "Read Webpage"),
+                        f1: true,
+                        category: localize2('constructCategoryAgentReach5', "Construct"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const quickInput = accessor.get(IQuickInputService);
+                const notificationService = accessor.get(INotificationService);
+                const terminalExecutor = accessor.get(ITerminalExecutor);
+                const logService = accessor.get(ILogService);
+
+                const url = await quickInput.input({
+                        prompt: 'Enter webpage URL to read',
+                        placeHolder: 'https://example.com',
+                        validateInput: (value) => {
+                                if (!value) { return 'URL cannot be empty'; }
+                                if (!value.startsWith('http://') && !value.startsWith('https://')) {
+                                        return 'URL must start with http:// or https://';
+                                }
+                                return undefined as unknown as string;
+                        },
+                });
+
+                if (!url) { return; }
+
+                try {
+                        notificationService.info(`Agent Reach: Reading ${url}...`);
+                        const result = await terminalExecutor.execute(`agent-reach read-web "${url.replace(/"/g, '\\"')}"`);
+                        if (result.exitCode === 0) {
+                                notificationService.info('Agent Reach: Page read — ' + (result.stdout || 'Done'));
+                        } else {
+                                notificationService.warn('Agent Reach: Failed to read page. Ensure Agent Reach is installed.');
+                        }
+                } catch (error) {
+                        logService.error('[Construct] Read webpage failed:', error);
+                        notificationService.error('Read webpage failed: ' + (error instanceof Error ? error.message : String(error)));
                 }
         }
 });
