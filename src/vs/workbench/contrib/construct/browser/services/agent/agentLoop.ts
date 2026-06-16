@@ -1109,7 +1109,6 @@ Guidelines:
         }
 
         clearConversationHistory(): void {
-                this._currentPlanContext = null;
                 this._activeSnapshotId = null;
                 this._completedMilestoneIds.clear();
                 this.logService.info('[AgentLoop] Conversation history cleared');
@@ -1117,11 +1116,5 @@ Guidelines:
 
         override dispose(): void {
                 super.dispose();
-        }
-
-        clearConversationHistory(): void {
-                // Conversation messages are local to each run() / runPlanningPhase() call,
-                // so there is no persistent history to clear.  The method exists to
-                // satisfy the IAgentLoop contract used by the UI layer.
         }
 }
