@@ -125,6 +125,7 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
 
                 private modelEntryAccessor: IStatusbarEntryAccessor | undefined;
                 private agentReachEntryAccessor: IStatusbarEntryAccessor | undefined;
+                private ponytailEntryAccessor: IStatusbarEntryAccessor | undefined;
 
                 constructor(
                                 @IStatusbarService private readonly statusbarService: IStatusbarService,
@@ -174,6 +175,15 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
                                                 tooltip: localize('constructAgentReachTooltip', "Click to check Agent Reach status"),
                                                 command: 'construct.checkAgentReach',
                                 }, 'construct.agentReach', StatusbarAlignment.LEFT, 49));
+
+                                // Ponytail lazy-dev mode status (left side, priority 48)
+                                this.ponytailEntryAccessor = this._register(this.statusbarService.addEntry({
+                                                name: localize('constructPonytail', "Ponytail"),
+                                                text: '$(shield) PONYTAIL',
+                                                ariaLabel: localize('constructPonytailAria', "Ponytail lazy-dev mode: full"),
+                                                tooltip: localize('constructPonytailTooltip', "Ponytail: full mode — click to change mode"),
+                                                command: 'construct.ponytailSetMode',
+                                }, 'construct.ponytail', StatusbarAlignment.LEFT, 48));
                 }
 
                 private updateModelStatus(): void {
@@ -204,6 +214,25 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
                                                 ariaLabel: localize('constructAgentReachAria', `Agent Reach: ${message || status}`),
                                                 tooltip: localize('constructAgentReachTooltip', `Agent Reach status: ${message || status} — click to check`),
                                                 command: 'construct.checkAgentReach',
+                                });
+                }
+
+                public updatePonytailStatus(mode: string): void {
+                                if (!this.ponytailEntryAccessor) { return; }
+                                const modeLabels: Record<string, string> = {
+                                                lite: 'LITE',
+                                                full: 'FULL',
+                                                ultra: 'ULTRA',
+                                                off: 'OFF',
+                                };
+                                const label = modeLabels[mode] || mode.toUpperCase();
+                                const icon = mode === 'off' ? '$(circle-slash)' : '$(shield)';
+                                this.ponytailEntryAccessor.update({
+                                                name: localize('constructPonytail', "Ponytail"),
+                                                text: `${icon} PONYTAIL ${label}`,
+                                                ariaLabel: localize('constructPonytailAria', `Ponytail lazy-dev mode: ${mode}`),
+                                                tooltip: localize('constructPonytailTooltip', `Ponytail: ${mode} mode — click to change`),
+                                                command: 'construct.ponytailSetMode',
                                 });
                 }
 }
@@ -990,6 +1019,66 @@ registerAction2(class ProviderStatusAction extends Action2 {
         }
 });
 
+// --- f2u-cli (File-to-URL) Commands ------------------------------------------
+
+registerAction2(class FileToUrlAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.fileToUrl',
+                        title: localize2('fileToUrl', "Convert File to URL (f2u)"),
+                        f1: true,
+                        category: localize2('constructCategoryF2U', "Construct"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const notificationService = accessor.get(INotificationService);
+                const terminalExecutor = accessor.get(ITerminalExecutor);
+                const logService = accessor.get(ILogService);
+
+                try {
+                        const result = await terminalExecutor.execute('f2u --version');
+                        if (result.exitCode === 0) {
+                                notificationService.info('f2u-cli: ' + (result.stdout || 'Ready'));
+                        } else {
+                                notificationService.warn('f2u-cli: Not installed. Run "npm install -g f2u-cli" to set it up.');
+                        }
+                } catch (error) {
+                        logService.error('[Construct] f2u-cli check failed:', error);
+                        notificationService.warn('f2u-cli: Not installed. Run "npm install -g f2u-cli" to set it up.');
+                }
+        }
+});
+
+// --- GoClaw MCP Commands -----------------------------------------------------
+
+registerAction2(class GoclawDashboardAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.goclawDashboard',
+                        title: localize2('goclawDashboard', "Open GoClaw Dashboard"),
+                        f1: true,
+                        category: localize2('constructCategoryGoclaw', "Construct"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const notificationService = accessor.get(INotificationService);
+                const mcpManager = accessor.get(IMCPServerManager);
+                const logService = accessor.get(ILogService);
+
+                try {
+                        const status = mcpManager.getServerStatus('goclaw');
+                        if (status === 'running') {
+                                notificationService.info('GoClaw: MCP server is running. Dashboard available via the GoClaw Gateway.');
+                        } else {
+                                notificationService.info('GoClaw: MCP server is not running. Start it via "Construct: Start MCP Server".');
+                        }
+                } catch (error) {
+                        logService.error('[Construct] GoClaw dashboard check failed:', error);
+                        notificationService.warn('GoClaw: MCP server not configured. Ensure goclaw-mcp is installed.');
+                }
+        }
+});
+
 // --- Agent Reach Commands ----------------------------------------------------
 
 registerAction2(class CheckAgentReachAction extends Action2 {
@@ -1153,6 +1242,254 @@ registerAction2(class ReadWebpageAction extends Action2 {
                 } catch (error) {
                         logService.error('[Construct] Read webpage failed:', error);
                         notificationService.error('Read webpage failed: ' + (error instanceof Error ? error.message : String(error)));
+                }
+        }
+});
+
+// --- Ponytail Commands (Lazy Senior Developer Mode) ----------------------------
+
+registerAction2(class PonytailSetModeAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.ponytailSetMode',
+                        title: localize2('ponytailSetMode', "Set Ponytail Mode"),
+                        f1: true,
+                        category: localize2('constructCategoryPonytail', "Construct"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const quickInput = accessor.get(IQuickInputService);
+                const notificationService = accessor.get(INotificationService);
+
+                const modes: { label: string; detail: string; mode: string }[] = [
+                        { label: '$(shield) Full', detail: 'The ladder enforced: YAGNI → stdlib → native → deps → one line → minimum', mode: 'full' },
+                        { label: '$(shield) Lite', detail: "Build what's asked, name the lazier alternative in one line", mode: 'lite' },
+                        { label: '$(shield) Ultra', detail: 'YAGNI extremist. Deletion before addition. Challenges requirements.', mode: 'ultra' },
+                        { label: '$(circle-slash) Off', detail: 'Disable Ponytail rules', mode: 'off' },
+                ];
+
+                const pick = await quickInput.pick(modes, { placeHolder: 'Select Ponytail lazy-dev mode' });
+                if (pick) {
+                        // Save mode to ~/.kovix/ponytail-mode.json
+                        const fs = await import('fs');
+                        const path = await import('path');
+                        const os = await import('os');
+                        const modeFile = path.join(os.homedir(), '.kovix', 'ponytail-mode.json');
+                        try {
+                                if (!fs.existsSync(path.dirname(modeFile))) {
+                                        fs.mkdirSync(path.dirname(modeFile), { recursive: true });
+                                }
+                                fs.writeFileSync(modeFile, JSON.stringify({ mode: pick.mode, updatedAt: new Date().toISOString() }, null, 2), 'utf-8');
+                                notificationService.info(`Ponytail mode set to: ${pick.mode.toUpperCase()}`);
+                        } catch (error) {
+                                notificationService.warn(`Ponytail: Could not persist mode — ${error instanceof Error ? error.message : String(error)}`);
+                        }
+                }
+        }
+});
+
+registerAction2(class PonytailReviewAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.ponytailReview',
+                        title: localize2('ponytailReview', "Review Current File for Over-Engineering"),
+                        f1: true,
+                        category: localize2('constructCategoryPonytail2', "Construct"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const notificationService = accessor.get(INotificationService);
+                const logService = accessor.get(ILogService);
+
+                try {
+                        notificationService.info(
+                                'Ponytail review: Ask the agent "Review this file with ponytail" or use the ponytail_review_code tool.'
+                        );
+                } catch (error) {
+                        logService.error('[Construct] Ponytail review failed:', error);
+                        notificationService.error('Ponytail review failed: ' + (error instanceof Error ? error.message : String(error)));
+                }
+        }
+});
+
+registerAction2(class PonytailHelpAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.ponytailHelp',
+                        title: localize2('ponytailHelp', "Show Ponytail Help"),
+                        f1: true,
+                        category: localize2('constructCategoryPonytail3', "Construct"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const notificationService = accessor.get(INotificationService);
+
+                const helpLines = [
+                        'Ponytail — Lazy Senior Developer Mode',
+                        '',
+                        'Modes:',
+                        '  /ponytail full   — Enforce the decision ladder (default)',
+                        '  /ponytail lite   — Build what\'s asked, suggest lazier alternatives',
+                        '  /ponytail ultra  — YAGNI extremist, challenge requirements',
+                        '  /ponytail off    — Disable Ponytail rules',
+                        '',
+                        'Commands:',
+                        '  /ponytail-review     — Review current diff for over-engineering',
+                        '  /ponytail-audit      — Audit entire repo for bloat',
+                        '  /ponytail-debt       — List all ponytail: shortcut comments',
+                        '  /ponytail-help       — This help card',
+                        '',
+                        'Decision Ladder:',
+                        '  1. YAGNI — Does this need to exist?',
+                        '  2. Stdlib — Does the standard library already do this?',
+                        '  3. Native — Does a platform feature cover it?',
+                        '  4. Deps   — Does an installed dependency solve it?',
+                        '  5. One line — Can it be one line?',
+                        '  6. Minimum — Only then: write the minimum code.',
+                        '',
+                        'Full docs: https://github.com/DietrichGebert/ponytail',
+                ];
+
+                notificationService.info(helpLines.join('\n'));
+        }
+});
+
+// --- UI-UX Pro Max — Design Intelligence Commands --------------------------------
+
+registerAction2(class UiuxSearchStyleAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.uiuxSearchStyle',
+                        title: localize2('uiuxSearchStyle', "Search UI Styles"),
+                        f1: true,
+                        category: localize2('constructCategoryUiux', "Construct: Design"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const quickInput = accessor.get(IQuickInputService);
+                const toolRegistry = accessor.get(IConstructToolRegistry);
+                const notificationService = accessor.get(INotificationService);
+
+                const query = await quickInput.input({ prompt: 'Search UI styles (e.g., "glassmorphism dashboard", "minimalist SaaS")' });
+                if (!query) { return; }
+
+                try {
+                        const result = await toolRegistry.execute('uiux_pro_max__search_style', { query, max_results: 3 });
+                        notificationService.info(result.output || 'No results found.');
+                } catch (error) {
+                        notificationService.error(`Search failed: ${error instanceof Error ? error.message : String(error)}`);
+                }
+        }
+});
+
+registerAction2(class UiuxSearchColorAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.uiuxSearchColor',
+                        title: localize2('uiuxSearchColor', "Search Color Palettes"),
+                        f1: true,
+                        category: localize2('constructCategoryUiux2', "Construct: Design"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const quickInput = accessor.get(IQuickInputService);
+                const toolRegistry = accessor.get(IConstructToolRegistry);
+                const notificationService = accessor.get(INotificationService);
+
+                const query = await quickInput.input({ prompt: 'Search color palettes (e.g., "SaaS blue", "fintech professional")' });
+                if (!query) { return; }
+
+                try {
+                        const result = await toolRegistry.execute('uiux_pro_max__search_color', { query, max_results: 3 });
+                        notificationService.info(result.output || 'No results found.');
+                } catch (error) {
+                        notificationService.error(`Search failed: ${error instanceof Error ? error.message : String(error)}`);
+                }
+        }
+});
+
+registerAction2(class UiuxGenerateDesignSystemAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.uiuxGenerateDesignSystem',
+                        title: localize2('uiuxGenerateDesignSystem', "Generate Design System"),
+                        f1: true,
+                        category: localize2('constructCategoryUiux3', "Construct: Design"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const quickInput = accessor.get(IQuickInputService);
+                const toolRegistry = accessor.get(IConstructToolRegistry);
+                const notificationService = accessor.get(INotificationService);
+
+                const query = await quickInput.input({ prompt: 'Describe your project (e.g., "SaaS dashboard", "e-commerce luxury store")' });
+                if (!query) { return; }
+
+                const projectName = await quickInput.input({ prompt: 'Project name (optional)', value: query });
+
+                notificationService.info('Generating design system... this may take a moment.');
+
+                try {
+                        const result = await toolRegistry.execute('uiux_pro_max__generate_design_system', {
+                                query,
+                                project_name: projectName || query,
+                                format: 'markdown',
+                        });
+                        notificationService.info(result.output || 'Design system generated.');
+                } catch (error) {
+                        notificationService.error(`Design system generation failed: ${error instanceof Error ? error.message : String(error)}`);
+                }
+        }
+});
+
+registerAction2(class UiuxStackGuidelinesAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.uiuxStackGuidelines',
+                        title: localize2('uiuxStackGuidelines', "Get Stack Guidelines"),
+                        f1: true,
+                        category: localize2('constructCategoryUiux4', "Construct: Design"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const quickInput = accessor.get(IQuickInputService);
+                const toolRegistry = accessor.get(IConstructToolRegistry);
+                const notificationService = accessor.get(INotificationService);
+
+                const stacks = [
+                        { label: 'React', value: 'react' },
+                        { label: 'Next.js', value: 'nextjs' },
+                        { label: 'Vue', value: 'vue' },
+                        { label: 'Svelte', value: 'svelte' },
+                        { label: 'Astro', value: 'astro' },
+                        { label: 'SwiftUI', value: 'swiftui' },
+                        { label: 'React Native', value: 'react-native' },
+                        { label: 'Flutter', value: 'flutter' },
+                        { label: 'NuxtJS', value: 'nuxtjs' },
+                        { label: 'Nuxt UI', value: 'nuxt-ui' },
+                        { label: 'HTML + Tailwind', value: 'html-tailwind' },
+                        { label: 'shadcn/ui', value: 'shadcn' },
+                        { label: 'Jetpack Compose', value: 'jetpack-compose' },
+                        { label: 'Three.js', value: 'threejs' },
+                        { label: 'Angular', value: 'angular' },
+                        { label: 'Laravel', value: 'laravel' },
+                ];
+
+                const stackPick = await quickInput.pick(stacks.map(s => ({ label: s.label, detail: s.value })), {
+                        placeHolder: 'Select a tech stack',
+                });
+                if (!stackPick) { return; }
+
+                const stack = (stackPick as any).detail as string;
+
+                const query = await quickInput.input({ prompt: 'Search guidelines (e.g., "component structure", "styling patterns")' });
+                if (!query) { return; }
+
+                try {
+                        const result = await toolRegistry.execute('uiux_pro_max__get_stack_guidelines', { query, stack, max_results: 3 });
+                        notificationService.info(result.output || 'No results found.');
+                } catch (error) {
+                        notificationService.error(`Search failed: ${error instanceof Error ? error.message : String(error)}`);
                 }
         }
 });

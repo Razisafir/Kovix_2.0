@@ -1,0 +1,12 @@
+{
+  "name": "ui-ux-pro-max",
+  "version": "1.0.0",
+  "description": "AI-powered design intelligence engine with 67 UI styles, 161 color palettes, 57 font pairings, and BM25 search",
+  "entry": "scripts/search.py",
+  "triggers": ["design", "UI", "UX", "color", "typography", "landing page", "frontend"],
+  "commands": {
+    "search": "python3 scripts/search.py",
+    "design_system": "python3 scripts/search.py --design-system",
+    "persist": "python3 scripts/search.py --persist"
+  }
+}

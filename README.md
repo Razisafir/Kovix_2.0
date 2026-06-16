@@ -356,6 +356,98 @@ Run `agent_reach__doctor` at any time to check which channels are operational an
 | `agent_reach__search_exa` | User asks broad research questions needing semantic search | No |
 | `agent_reach__doctor` | Another Agent Reach tool fails or returns an error | No |
 
+## Design Intelligence
+
+Kovix integrates **UI-UX Pro Max**, an AI-powered design intelligence engine that helps the agent generate proper design systems. It provides 67 UI styles, 161 color palettes, 57 font pairings, 99 UX guidelines, and 25 chart types across 16+ tech stacks — all searchable via BM25 ranking.
+
+### What It Enables
+
+- **Design system generation** -- Describe your project ("SaaS dashboard", "e-commerce luxury store") and get a complete design system with colors, typography, layout patterns, and component specs
+- **UI style search** -- Find the right visual style from 67 options (Minimalism, Glassmorphism, Brutalism, Aurora, Neumorphism, etc.)
+- **Color palette discovery** -- Get pre-tuned palettes for any product category with full hex values and CSS variables
+- **Typography pairing** -- Find curated heading/body font combinations with Google Fonts URLs
+- **Framework-specific guidelines** -- Get stack-specific UI rules for React, Vue, Svelte, Next.js, Astro, SwiftUI, Flutter, and more
+
+### Installation
+
+UI-UX Pro Max is bundled with Kovix and installed automatically at `.kovix/skills/ui-ux-pro-max/`. The engine is a Python script that reads local CSV data files — no API keys or network access required.
+
+### Available Tools
+
+| Tool | Description | Use When |
+|------|-------------|----------|
+| `uiux_pro_max__search_style` | Search 67 UI styles by keyword | User asks about visual style, design direction |
+| `uiux_pro_max__search_color` | Search 161 color palettes | User needs color scheme, palette, tokens |
+| `uiux_pro_max__search_typography` | Search 57 font pairings | User needs fonts, type system |
+| `uiux_pro_max__generate_design_system` | Generate complete design system | User is starting a new project or page |
+| `uiux_pro_max__get_stack_guidelines` | Get framework-specific guidelines | User needs React/Vue/Svelte/etc. UI guidance |
+
+### Command Palette Commands
+
+All UI-UX Pro Max commands are available from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) under the **Construct: Design** category:
+
+| Command | Description |
+|---------|-------------|
+| `construct.uiuxSearchStyle` | Search UI Styles |
+| `construct.uiuxSearchColor` | Search Color Palettes |
+| `construct.uiuxGenerateDesignSystem` | Generate Design System |
+| `construct.uiuxStackGuidelines` | Get Stack Guidelines |
+
+### Tech Stacks Supported
+
+React, Next.js, Vue, Svelte, Astro, SwiftUI, React Native, Flutter, NuxtJS, Nuxt UI, HTML + Tailwind, shadcn/ui, Jetpack Compose, Three.js, Angular, Laravel
+
+### Design System Output
+
+When generating a design system, the engine produces:
+
+- **Pattern**: Landing page structure, CTA placement, section order
+- **Style**: UI style name, effects, performance rating, accessibility grade
+- **Colors**: Full palette (primary, secondary, accent, background, foreground, muted, border, destructive, ring)
+- **Typography**: Heading/body fonts, mood, Google Fonts URLs
+- **Key Effects**: Animation and interaction recommendations
+- **Anti-Patterns**: Design patterns to avoid
+- **Pre-Delivery Checklist**: Accessibility and UX verification steps
+
+---
+
+## Behavioral Rules (Ponytail)
+
+Kovix integrates **Ponytail**, a behavioral ruleset that makes the AI agent adopt a "lazy senior developer" mindset. Before writing any code, the agent climbs a decision ladder: YAGNI -> stdlib -> native platform -> installed deps -> one line -> minimum code.
+
+### What It Enables
+
+- **Lazy mode** -- The agent prefers deleting code over adding it, uses stdlib over new dependencies, and writes the minimum viable solution
+- **Code review** -- On-demand review of any file or diff for over-engineering, with specific tags (`delete:`, `stdlib:`, `native:`, `yagni:`, `shrink:`)
+- **Repo audit** -- Scan the entire codebase for bloat and unnecessary complexity
+- **3 intensity levels**:
+  - **Lite** -- Gentle reminders, soft nudges toward simplicity
+  - **Full** (default) -- Strict rules, blocks unrequested abstractions and new dependencies
+  - **Ultra** -- Maximum enforcement, every line must justify its existence
+  - **Off** -- Rules disabled, agent operates normally
+
+### How to Use
+
+The agent reads the Ponytail ruleset automatically from `.kovix/skills/ponytail.md`. To change mode:
+
+1. **Command Palette**: `Ctrl+Shift+P` -> "Construct: Set Ponytail Mode"
+2. **Status bar**: Click the `[PONYTAIL]` badge to cycle modes
+3. **Slash commands** (in agent chat):
+   - `/ponytail` -- Show current mode and rules
+   - `/ponytail-review` -- Review current file for over-engineering
+   - `/ponytail-audit` -- Audit entire workspace for bloat
+   - `/ponytail-help` -- Show quick reference
+
+### Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `ponytail_set_mode` | Set lazy-dev intensity (lite/full/ultra/off) |
+| `ponytail_review_code` | Review code for over-engineering |
+| `ponytail_audit_repo` | Audit codebase for bloat |
+| `ponytail_get_rules` | Get current ruleset for the mode |
+| `ponytail_help` | Quick reference card |
+
 ---
 
 ## Architecture

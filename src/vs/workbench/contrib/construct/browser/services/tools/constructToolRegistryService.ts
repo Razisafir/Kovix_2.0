@@ -647,6 +647,236 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                         requiresNetwork: true,
                         category: 'network',
                 }, async (input) => this.executeAgentReachTool('agent_reach__doctor', input));
+
+                // ===== UI-UX Pro Max — Design Intelligence Tools =====
+                // These proxy to the UI-UX Pro Max Python engine for design system generation
+
+                // 1. uiux_pro_max__search_style — Search UI styles
+                this.registerTool({
+                        name: 'uiux_pro_max__search_style',
+                        description: 'Search UI/UX styles by keyword. Returns matching styles from 67 UI styles including Minimalism, Glassmorphism, Brutalism, Neumorphism, Aurora, Flat Design, and more. Each result includes style category, keywords, primary colors, effects, animation recommendations, best use cases, framework compatibility, and implementation checklist.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        query: {
+                                                type: 'string',
+                                                description: 'Search query for UI styles (e.g., "glassmorphism dashboard", "minimalist SaaS", "dark mode gaming")',
+                                        },
+                                        max_results: {
+                                                type: 'number',
+                                                description: 'Maximum number of results to return (1-10, default: 3)',
+                                                default: 3,
+                                        },
+                                },
+                                required: ['query'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: false,
+                        category: 'design',
+                }, async (input) => this.executeUiuxProMaxTool('uiux_search_style', input));
+
+                // 2. uiux_pro_max__search_color — Search color palettes
+                this.registerTool({
+                        name: 'uiux_pro_max__search_color',
+                        description: 'Search color palettes by product type, mood, or keyword. Returns matching palettes from 161 curated color schemes. Each result includes primary, secondary, accent, background, foreground, muted, border, destructive, and ring colors with hex values and CSS variable names.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        query: {
+                                                type: 'string',
+                                                description: 'Search query for color palettes (e.g., "SaaS blue", "fintech professional", "healthcare calming", "gaming neon")',
+                                        },
+                                        max_results: {
+                                                type: 'number',
+                                                description: 'Maximum number of results to return (1-10, default: 3)',
+                                                default: 3,
+                                        },
+                                },
+                                required: ['query'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: false,
+                        category: 'design',
+                }, async (input) => this.executeUiuxProMaxTool('uiux_search_color', input));
+
+                // 3. uiux_pro_max__search_typography — Search font pairings
+                this.registerTool({
+                        name: 'uiux_pro_max__search_typography',
+                        description: 'Search font pairings by mood, style, or use case. Returns matching pairings from 57 curated heading/body font combinations. Each result includes font names, category, mood keywords, best use cases, Google Fonts URL, CSS import code, and Tailwind config.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        query: {
+                                                type: 'string',
+                                                description: 'Search query for font pairings (e.g., "modern serif heading", "clean sans-serif", "playful startup", "elegant luxury")',
+                                        },
+                                        max_results: {
+                                                type: 'number',
+                                                description: 'Maximum number of results to return (1-10, default: 3)',
+                                                default: 3,
+                                        },
+                                },
+                                required: ['query'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: false,
+                        category: 'design',
+                }, async (input) => this.executeUiuxProMaxTool('uiux_search_typography', input));
+
+                // 4. uiux_pro_max__generate_design_system — Generate complete design system
+                this.registerTool({
+                        name: 'uiux_pro_max__generate_design_system',
+                        description: 'Generate a complete design system recommendation. Multi-domain search + reasoning produces a full design system with pattern structure, style recommendation, color palette with hex values, typography pairing, key effects, anti-patterns to avoid, and pre-delivery checklist. Optionally persists to design-system/MASTER.md.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        query: {
+                                                type: 'string',
+                                                description: 'Description of the project (e.g., "SaaS dashboard", "e-commerce luxury store", "fintech mobile app")',
+                                        },
+                                        project_name: {
+                                                type: 'string',
+                                                description: 'Project name for output. Defaults to query.',
+                                                default: 'Project',
+                                        },
+                                        format: {
+                                                type: 'string',
+                                                description: 'Output format: ascii or markdown. Default: markdown',
+                                                enum: ['ascii', 'markdown'],
+                                                default: 'markdown',
+                                        },
+                                        persist: {
+                                                type: 'boolean',
+                                                description: 'Save to design-system/MASTER.md. Default: false',
+                                                default: false,
+                                        },
+                                },
+                                required: ['query'],
+                        },
+                        modifiesFiles: true,
+                        requiresNetwork: false,
+                        category: 'design',
+                }, async (input) => this.executeUiuxProMaxTool('uiux_generate_design_system', input));
+
+                // 5. uiux_pro_max__get_stack_guidelines — Get framework-specific guidelines
+                this.registerTool({
+                        name: 'uiux_pro_max__get_stack_guidelines',
+                        description: 'Get framework-specific UI guidelines for a tech stack. Searches stack data for 16 frameworks: react, nextjs, vue, svelte, astro, swiftui, react-native, flutter, nuxtjs, nuxt-ui, html-tailwind, shadcn, jetpack-compose, threejs, angular, laravel. Returns component structure, styling, animation, accessibility, and performance guidelines.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        query: {
+                                                type: 'string',
+                                                description: 'Search query (e.g., "component structure", "styling patterns", "animation")',
+                                        },
+                                        stack: {
+                                                type: 'string',
+                                                description: 'Tech stack: react, nextjs, vue, svelte, astro, swiftui, react-native, flutter, nuxtjs, nuxt-ui, html-tailwind, shadcn, jetpack-compose, threejs, angular, laravel',
+                                        },
+                                        max_results: {
+                                                type: 'number',
+                                                description: 'Max results (1-10, default: 3)',
+                                                default: 3,
+                                        },
+                                },
+                                required: ['query', 'stack'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: false,
+                        category: 'design',
+                }, async (input) => this.executeUiuxProMaxTool('uiux_get_stack_guidelines', input));
+
+                // ===== Ponytail — Lazy Senior Developer Tools =====
+                // These proxy to the ponytail MCP server but are registered natively
+                // so the LLM knows about them even without MCP enabled.
+
+                // 1. ponytail_set_mode — set lazy-dev intensity
+                this.registerTool({
+                        name: 'ponytail_set_mode',
+                        description: 'Set the Ponytail lazy-developer intensity level (lite/full/ultra/off) or get the current mode. Modes: lite (suggest lazier alternatives), full (enforce the decision ladder — default), ultra (YAGNI extremist), off (disable). Mode persists across sessions.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        mode: {
+                                                type: 'string',
+                                                description: 'Intensity level: "lite", "full", "ultra", or "off". Omit to get current mode.',
+                                                enum: ['lite', 'full', 'ultra', 'off'],
+                                        },
+                                },
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: false,
+                        category: 'behavior',
+                }, async (input) => this.executePonytailTool('ponytail_set_mode', input));
+
+                // 2. ponytail_review_code — review for over-engineering
+                this.registerTool({
+                        name: 'ponytail_review_code',
+                        description: 'Review code for over-engineering using Ponytail rules. Returns review guidelines with tags: delete: (dead code), stdlib: (hand-rolled stdlib), native: (dependency doing what platform does), yagni: (one-implementation abstraction), shrink: (fewer lines possible). One finding per line.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        code: {
+                                                type: 'string',
+                                                description: 'The code to review for over-engineering.',
+                                        },
+                                        file_path: {
+                                                type: 'string',
+                                                description: 'Path to the file being reviewed (for context).',
+                                                default: 'current file',
+                                        },
+                                },
+                                required: ['code'],
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: false,
+                        category: 'behavior',
+                }, async (input) => this.executePonytailTool('ponytail_review_code', input));
+
+                // 3. ponytail_audit_repo — audit codebase for bloat
+                this.registerTool({
+                        name: 'ponytail_audit_repo',
+                        description: 'Audit an entire codebase for over-engineering (bloat, unnecessary abstractions, dead code, reinvention). Returns a ranked list of what to delete, simplify, or replace with stdlib/native equivalents.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {
+                                        repo_path: {
+                                                type: 'string',
+                                                description: 'Root path of the repository to audit. Defaults to current workspace.',
+                                                default: '.',
+                                        },
+                                },
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: false,
+                        category: 'behavior',
+                }, async (input) => this.executePonytailTool('ponytail_audit_repo', input));
+
+                // 4. ponytail_get_rules — get current ruleset
+                this.registerTool({
+                        name: 'ponytail_get_rules',
+                        description: 'Get the full Ponytail ruleset for the current mode. Returns the complete behavioral guidelines including the decision ladder (YAGNI → stdlib → native → deps → one line → minimum), rules, output format, and intensity levels.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {},
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: false,
+                        category: 'behavior',
+                }, async (input) => this.executePonytailTool('ponytail_get_rules', input));
+
+                // 5. ponytail_help — quick reference
+                this.registerTool({
+                        name: 'ponytail_help',
+                        description: 'Show the Ponytail quick-reference card: modes (lite/full/ultra/off), skills, commands, deactivation, and configuration.',
+                        inputSchema: {
+                                type: 'object',
+                                properties: {},
+                        },
+                        modifiesFiles: false,
+                        requiresNetwork: false,
+                        category: 'behavior',
+                }, async (input) => this.executePonytailTool('ponytail_help', input));
         }
 
         // --- Tool Implementations ---
@@ -1006,6 +1236,264 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                         truncated: false,
                         metadata: { tool: toolName, configured: false },
                 };
+        }
+
+        /**
+         * Execute a UI-UX Pro Max tool by delegating to the UI-UX Pro Max Python engine.
+         * UI-UX Pro Max works offline (it reads local CSV data files), so it doesn't
+         * require online mode. It executes the Python search script directly.
+         */
+        private async executeUiuxProMaxTool(toolName: string, input: Record<string, unknown>): Promise<IToolResult> {
+                // Resolve the skill path
+                const workspaceFolders = this.workspaceContextService.getWorkspace().folders;
+                const workspaceRoot = workspaceFolders[0]?.uri.fsPath;
+                let skillPath: string | null = null;
+
+                // Check workspace-local installation first
+                if (workspaceRoot) {
+                        const localPath = pathModule.join(workspaceRoot, '.kovix', 'skills', 'ui-ux-pro-max');
+                        if (await this.fileService.exists(URI.file(localPath))) {
+                                skillPath = localPath;
+                        }
+                }
+
+                // Fall back to global installation
+                if (!skillPath) {
+                        const os = await import('os');
+                        const globalPath = pathModule.join(os.homedir(), '.kovix', 'skills', 'ui-ux-pro-max');
+                        if (await this.fileService.exists(URI.file(globalPath))) {
+                                skillPath = globalPath;
+                        }
+                }
+
+                if (!skillPath) {
+                        return {
+                                success: false,
+                                output: [
+                                        `UI-UX Pro Max skill not found.`,
+                                        '',
+                                        'To use UI-UX Pro Max design intelligence tools:',
+                                        '1. Ensure the skill is installed at .kovix/skills/ui-ux-pro-max/',
+                                        '2. The skill includes: scripts/ (Python engine), data/ (CSV databases), skill.json, SKILL.md',
+                                        '',
+                                        `Tool input received: ${JSON.stringify(input, null, 2)}`,
+                                ].join('\n'),
+                                truncated: false,
+                                metadata: { tool: toolName, configured: false },
+                        };
+                }
+
+                // Build command arguments for the Python script
+                const scriptPath = pathModule.join(skillPath, 'scripts', 'search.py');
+                const cmdArgs = this.buildUiuxProMaxArgs(toolName, input);
+                const timeout = toolName === 'uiux_generate_design_system' ? 60000 : 30000;
+
+                try {
+                        const result = await this.terminalExecutor.execute(
+                                `cd "${skillPath}" && python3 "${scriptPath}" ${cmdArgs.join(' ')}`,
+                                skillPath,
+                                timeout
+                        );
+
+                        const output = (result.stdout ?? '') + (result.stderr ?? '');
+                        const truncated = output.length > MAX_OUTPUT_LENGTH;
+                        const displayOutput = truncated ? output.substring(0, MAX_OUTPUT_LENGTH) + '\n... [truncated]' : output;
+
+                        if (result.exitCode !== 0 && !result.stdout) {
+                                return {
+                                        success: false,
+                                        output: displayOutput || `UI-UX Pro Max exited with code ${result.exitCode}`,
+                                        truncated,
+                                        metadata: { exitCode: result.exitCode, tool: toolName },
+                                };
+                        }
+
+                        return {
+                                success: true,
+                                output: displayOutput || '(no output)',
+                                truncated,
+                                metadata: { exitCode: result.exitCode, tool: toolName },
+                        };
+                } catch (error) {
+                        this.logService.warn(`[ToolRegistry] UI-UX Pro Max execution failed for ${toolName}: ${error instanceof Error ? error.message : String(error)}`);
+                        return {
+                                success: false,
+                                output: `UI-UX Pro Max tool "${toolName}" execution failed: ${error instanceof Error ? error.message : String(error)}`,
+                                truncated: false,
+                                metadata: { tool: toolName, configured: true },
+                        };
+                }
+        }
+
+        /**
+         * Build command-line arguments for the UI-UX Pro Max Python script.
+         */
+        private buildUiuxProMaxArgs(toolName: string, input: Record<string, unknown>): string[] {
+                const query = (input.query as string) || '';
+                const args: string[] = [];
+
+                switch (toolName) {
+                        case 'uiux_search_style':
+                                args.push(JSON.stringify(query), '--domain', 'style', '--max-results', String(input.max_results ?? 3));
+                                break;
+                        case 'uiux_search_color':
+                                args.push(JSON.stringify(query), '--domain', 'color', '--max-results', String(input.max_results ?? 3));
+                                break;
+                        case 'uiux_search_typography':
+                                args.push(JSON.stringify(query), '--domain', 'typography', '--max-results', String(input.max_results ?? 3));
+                                break;
+                        case 'uiux_generate_design_system': {
+                                args.push(JSON.stringify(query), '--design-system');
+                                const projectName = (input.project_name as string) || query;
+                                if (projectName) { args.push('-p', JSON.stringify(projectName)); }
+                                const format = (input.format as string) || 'markdown';
+                                args.push('--format', format);
+                                if (input.persist === true) { args.push('--persist'); }
+                                break;
+                        }
+                        case 'uiux_get_stack_guidelines': {
+                                const stack = (input.stack as string) || 'react';
+                                args.push(JSON.stringify(query), '--stack', stack, '--max-results', String(input.max_results ?? 3));
+                                break;
+                        }
+                        default:
+                                args.push(JSON.stringify(query));
+                                break;
+                }
+
+                return args;
+        }
+
+        /**
+         * Execute a Ponytail tool by delegating to the ponytail MCP server.
+         * Ponytail tools work offline (they read local skill files), so they
+         * don't require online mode.
+         */
+        private async executePonytailTool(toolName: string, input: Record<string, unknown>): Promise<IToolResult> {
+                // Get MCP server configuration
+                const mcpServers = this._configurationService.getValue<Array<{ name: string; command: string; args: string[]; env: Record<string, string>; enabled?: boolean }>>('construct.mcp.servers') ?? [];
+                const ponytailServer = mcpServers.find(s => s.name === 'ponytail' && s.enabled !== false);
+
+                // Build the JSON-RPC request payload for the MCP tool
+                const mcpRequest = {
+                        jsonrpc: '2.0' as const,
+                        id: 1,
+                        method: 'tools/call',
+                        params: {
+                                name: toolName,
+                                arguments: input,
+                        },
+                };
+
+                // If the MCP server is configured and enabled, try to execute via the server command
+                if (ponytailServer?.command) {
+                        try {
+                                const args = ponytailServer.args ?? [];
+                                const command = `${ponytailServer.command} ${args.join(' ')}`.trim();
+                                const envVars = Object.entries(ponytailServer.env ?? {})
+                                        .map(([k, v]) => `${k}=${v}`)
+                                        .join(' ');
+                                const fullCommand = envVars ? `${envVars} ${command}` : command;
+
+                                // Send the MCP request via stdin to the MCP server process
+                                const result = await this.terminalExecutor.execute(
+                                        `echo '${JSON.stringify(mcpRequest)}' | ${fullCommand}`,
+                                        undefined,
+                                        30000 // 30s timeout for reading skill files
+                                );
+
+                                const output = (result.stdout ?? '') + (result.stderr ?? '');
+                                const truncated = output.length > MAX_OUTPUT_LENGTH;
+                                const displayOutput = truncated ? output.substring(0, MAX_OUTPUT_LENGTH) + '\n... [truncated]' : output;
+
+                                if (result.exitCode !== 0 && !result.stdout) {
+                                        return {
+                                                success: false,
+                                                output: displayOutput || `Ponytail MCP server exited with code ${result.exitCode}`,
+                                                truncated,
+                                                metadata: { exitCode: result.exitCode, tool: toolName },
+                                        };
+                                }
+
+                                return {
+                                        success: true,
+                                        output: displayOutput || '(no output)',
+                                        truncated,
+                                        metadata: { exitCode: result.exitCode, tool: toolName },
+                                };
+                        } catch (error) {
+                                this.logService.warn(`[ToolRegistry] Ponytail MCP server execution failed for ${toolName}: ${error instanceof Error ? error.message : String(error)}`);
+                                // Fall through to fallback behavior
+                        }
+                }
+
+                // Fallback: return a helpful message with Ponytail guidance
+                const mode = this.loadPonytailMode();
+                const modeDescriptions: Record<string, string> = {
+                        lite: 'Build what\'s asked, name the lazier alternative in one line.',
+                        full: 'The ladder enforced: YAGNI → stdlib → native → deps → one line → minimum.',
+                        ultra: 'YAGNI extremist. Deletion before addition. Challenges requirements.',
+                        off: 'Ponytail rules disabled.',
+                };
+
+                return {
+                        success: true,
+                        output: [
+                                `# Ponytail — ${toolName}`,
+                                '',
+                                `Current mode: ${mode.toUpperCase()}`,
+                                modeDescriptions[mode] || modeDescriptions.full,
+                                '',
+                                '## Tool Result',
+                                `Tool "${toolName}" executed with input:`,
+                                '```json',
+                                JSON.stringify(input, null, 2),
+                                '```',
+                                '',
+                                '---',
+                                'Ponytail MCP server not configured. To enable full skill-file retrieval:',
+                                '1. Clone ponytail: git clone https://github.com/DietrichGebert/ponytail.git /tmp/ponytail',
+                                '2. Or ensure ~/.kovix/skills/ponytail.md exists',
+                                '',
+                                '## Core Rules (always available)',
+                                '',
+                                '**Decision Ladder** — Stop at the first rung that holds:',
+                                '1. Does this need to exist? (YAGNI)',
+                                '2. Does the standard library already do this?',
+                                '3. Does a native platform feature cover it?',
+                                '4. Does an already-installed dependency solve it?',
+                                '5. Can this be one line?',
+                                '6. Only then: write the minimum code.',
+                                '',
+                                '**Rules**: No unrequested abstractions. No new deps. No boilerplate.',
+                                'Deletion over addition. Mark shortcuts with `ponytail:` comments.',
+                                '',
+                                'Full docs: https://github.com/DietrichGebert/ponytail',
+                        ].join('\n'),
+                        truncated: false,
+                        metadata: { tool: toolName, mode, configured: !!ponytailServer?.command },
+                };
+        }
+
+        /**
+         * Load the current Ponytail mode from ~/.kovix/ponytail-mode.json.
+         */
+        private loadPonytailMode(): string {
+                try {
+                        const os = require('os');
+                        const path = require('path');
+                        const fs = require('fs');
+                        const modeFile = path.join(os.homedir(), '.kovix', 'ponytail-mode.json');
+                        if (fs.existsSync(modeFile)) {
+                                const config = JSON.parse(fs.readFileSync(modeFile, 'utf-8'));
+                                if (['lite', 'full', 'ultra', 'off'].includes(config.mode)) {
+                                        return config.mode;
+                                }
+                        }
+                } catch {
+                        // ignore
+                }
+                return 'full';
         }
 
         private async executeListDirectory(input: Record<string, unknown>): Promise<IToolResult> {

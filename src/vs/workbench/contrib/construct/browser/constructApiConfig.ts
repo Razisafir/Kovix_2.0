@@ -153,6 +153,14 @@ const mcpConfiguration: IConfigurationNode = {
                                         env: {},
                                         enabled: true,
                                         isBuiltin: true
+                                },
+                                {
+                                        name: 'goclaw',
+                                        command: 'node',
+                                        args: ['${extensionPath}/node_modules/goclaw-mcp/dist/index.js'],
+                                        env: {},
+                                        enabled: false,
+                                        isBuiltin: true
                                 }
                         ],
                         description: localize('construct.mcp.servers', "MCP server configurations. The agent-reach server is pre-configured for internet research tools (webpage reading, YouTube, GitHub, Twitter, Reddit, Bilibili, Xiaohongshu, Exa search, RSS). Install it with: npm install -g @agent-reach/mcp-server"),
