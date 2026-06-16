@@ -81,17 +81,29 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: '3.11'
 
-      - name: Setup Visual Studio Build Tools
-        uses: ilammy/msvc-dev-cmd@v1
+      - name: Install setuptools (for node-gyp compatibility)
+        run: python -m pip install --upgrade setuptools wheel
+
+      - name: Configure npm for VS 2022
+        shell: pwsh
+        run: |
+          npm config set msvs_version 2022
+          # Find VS 2022 installation path
+          $vs2022 = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -version '[17.0,18.0)' -property installationPath -prerelease
+          Write-Host "VS 2022 path: $vs2022"
+          if ($vs2022) {
+            "GYP_MSVS_OVERRIDE_PATH=$vs2022" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
 
       - name: Install dependencies
         run: npm ci
-        timeout-minutes: 30
+        timeout-minutes: 45
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          npm_config_build_from_source: "true"
+          GYP_MSVS_VERSION: '2022'
+          npm_config_msvs_version: '2022'
 
       - name: Build Windows package
         run: npx gulp vscode-win32-x64
