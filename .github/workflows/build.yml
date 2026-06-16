@@ -91,6 +91,7 @@ jobs:
         timeout-minutes: 30
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npm_config_build_from_source: "true"
 
       - name: Build Windows package
         run: npx gulp vscode-win32-x64
