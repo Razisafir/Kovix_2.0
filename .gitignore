@@ -23,6 +23,9 @@ Thumbs.db
 id_rsa*
 *.secret
 
-# Build artifacts (not repo state)
-SECURITY_AUDIT.md
-BUILD_CHECKSUMS.txt
+# Development artifacts (now tracked in docs/internal/)
+# SECURITY_AUDIT.md and BUILD_CHECKSUMS.txt were moved to docs/internal/
+
+# Session artifacts
+tool-results/
+download/

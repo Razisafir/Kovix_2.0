@@ -5,7 +5,7 @@
 **AI-native development environment with autonomous coding agents**
 
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/Razisafir/KOVIX)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
+[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](./CONSTRUCT_LICENSE.txt)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/Razisafir/KOVIX)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/Razisafir/KOVIX/actions)
 
@@ -13,38 +13,65 @@
 
 ---
 
+## Download
+
+Grab the latest release for your platform from [GitHub Releases](https://github.com/Razisafir/KOVIX/releases):
+
+| Platform | Download |
+|---|---|
+| Windows | `.exe` installer |
+| macOS | `.dmg` (Intel and Apple Silicon) |
+| Linux | `.deb` / `.rpm` / `.tar.gz` |
+
+---
+
 ## What is Kovix?
 
-Kovix is an AI-native development environment built on the [VS Code open-source (Code-OSS)](https://github.com/microsoft/vscode) foundation. It integrates autonomous coding agents directly into the editor, enabling a workflow where AI reads your codebase, writes code, runs terminal commands, and searches your project — all with human approval before applying changes. Unlike cloud-dependent tools like Cursor or GitHub Copilot, Kovix is designed to work with **local LLMs** via Ollama or LM Studio, ensuring your code and API keys never leave your machine. No telemetry, no Microsoft account, and no subscription required.
+Kovix is an AI-native development environment with autonomous coding agents built directly into the editor. Describe what you need -- the agent reads your codebase, writes code, runs terminal commands, and searches your project -- all with human approval before applying changes.
 
-The agent system uses a plan/act loop: you describe what you want, the agent reasons through the steps, calls tools (file read/write, terminal execution, code search), and presents changes for your review. Multiple AI backends are supported — switch between Ollama for fully offline inference, Xenova Transformers.js for in-process ONNX models, or cloud APIs like Anthropic for maximum capability.
+Unlike cloud-dependent tools like Cursor or GitHub Copilot, Kovix is designed to work with **local LLMs** via Ollama or LM Studio. Your code and API keys never leave your machine. No telemetry, no Microsoft account, no subscription.
+
+The agent uses a plan/act loop: it reasons through the steps, calls tools (file read/write, terminal execution, code search), and presents changes for your review. Switch between Ollama for fully offline inference, Xenova Transformers.js for in-process ONNX models, or cloud APIs like Anthropic for maximum capability.
+
+## Quick Start
+
+1. **Install a local AI runtime** (recommended): [Ollama](https://ollama.ai)
+2. **Pull the recommended models:**
+
+   ```bash
+   ollama pull llama3.2
+   ollama pull nomic-embed-text
+   ```
+
+3. **Download and install Kovix** from [Releases](https://github.com/Razisafir/KOVIX/releases)
+4. **Launch Kovix** -- the setup wizard opens automatically and walks you through provider setup
+
+Re-open the wizard anytime via the Command Palette: `Kovix: Open Setup Wizard`
 
 ## Built on Code-OSS
 
-Kovix is built on [Microsoft's Code-OSS]((https://github.com/microsoft/vscode)), the open-source foundation of VS Code, used under the [MIT License](https://opensource.org/licenses/MIT). We are grateful to Microsoft and the VS Code team for their incredible work on the editor platform that makes Kovix possible. All VS Code editor features, the extension system, terminal, debugging, and the entire workbench are inherited from Code-OSS.
+Kovix is built on [Microsoft's Code-OSS](https://github.com/microsoft/vscode), the open-source foundation of VS Code, used under the [MIT License](https://opensource.org/licenses/MIT).
 
 ## Features
 
-- **Autonomous AI coding agents with tool use** — Plan-act agent loop that reads files, writes code, runs terminal commands, and searches your codebase — all with human approval before applying changes
-- **MCP protocol support** — Connect any Model Context Protocol server to extend agent capabilities with custom tools via JSON-RPC over stdio
-- **Vector memory (Qdrant)** — Index your entire workspace into vector embeddings for semantic search and automatic context injection into agent conversations
-- **Local ML models (Transformers.js)** — In-process ONNX inference via @xenova/transformers for code completion without any external API
-- **Persistent memory (Supermemory)** — Conversation context persistence and memory management across sessions
-- **Offline-first: runs on Ollama, LM Studio, or local ONNX models** — GPU-accelerated inference with automatic fallback to in-process ONNX or cloud APIs
-- **Built-in Kali Linux terminal on Windows via WSL2** — Detects Kali WSL2 automatically and adds a dedicated terminal profile for security testing workflows
-- **Security tooling: nmap, Ghidra, Nuclei** — Integrated network scanning, binary decompilation, and vulnerability scanning with safety gates requiring explicit user confirmation
-- **Multi-model: switch between local and cloud models in one click** — Status bar model picker lets you swap providers instantly
-- **No telemetry, no Microsoft account, no subscription** — All Microsoft telemetry removed; Open VSX gallery replaces the proprietary marketplace
+- **Autonomous AI coding agents with tool use** -- Plan-act agent loop that reads files, writes code, runs terminal commands, and searches your codebase with human approval before applying changes
+- **MCP protocol support** -- Connect any Model Context Protocol server to extend agent capabilities with custom tools via JSON-RPC over stdio
+- **Vector memory (Qdrant)** -- Index your entire workspace into vector embeddings for semantic search and automatic context injection into agent conversations
+- **Local ML models (Transformers.js)** -- In-process ONNX inference via @xenova/transformers for code completion without any external API
+- **Persistent memory (Supermemory)** -- Conversation context persistence and memory management across sessions
+- **Offline-first: runs on Ollama, LM Studio, or local ONNX models** -- GPU-accelerated inference with automatic fallback to in-process ONNX or cloud APIs
+- **Built-in Kali Linux terminal on Windows via WSL2** -- Detects Kali WSL2 automatically and adds a dedicated terminal profile for security testing workflows
+- **Security tooling: nmap, Ghidra, Nuclei** -- Integrated network scanning, binary decompilation, and vulnerability scanning with safety gates requiring explicit user confirmation
+- **Multi-model: switch between local and cloud models in one click** -- Status bar model picker lets you swap providers instantly
+- **No telemetry, no Microsoft account, no subscription** -- All Microsoft telemetry removed; Open VSX gallery replaces the proprietary marketplace
 
-## Screenshots / Demo
+## Screenshots
 
-<!-- Add screenshots here -->
-
-> **Placeholder:** Add screenshots of the agent panel, onboarding wizard, and status bar model picker.
+Coming soon.
 
 ## Prerequisites
 
-- **Node.js 20+** and **npm 10+**
+- **Node.js 20+** and **npm 10+** (for building from source)
 - **Git**
 - For local AI: [Ollama](https://ollama.ai) (recommended) or [LM Studio](https://lmstudio.ai)
 - For Kali terminal (Windows only): WSL2 + Kali Linux from Microsoft Store
@@ -70,24 +97,6 @@ NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 ```
 
 For detailed build instructions, see [BUILD.md](./BUILD.md).
-
-## First Launch
-
-When you start Kovix for the first time, the setup wizard opens automatically and walks you through:
-
-1. **Welcome** — Overview of Kovix features
-2. **Provider Setup** — Detects Ollama, lists available models, lets you pick a default
-3. **Kali Terminal** (Windows only) — Detects Kali WSL2 and offers to enable it
-4. **Ready** — Saves your configuration and starts the IDE
-
-Pull the recommended models before launching:
-
-```bash
-ollama pull llama3.2
-ollama pull nomic-embed-text
-```
-
-You can re-open the wizard anytime via the Command Palette: `Kovix: Open Setup Wizard`.
 
 ## Keyboard Shortcuts
 
@@ -147,40 +156,40 @@ Kovix stores workspace settings in `.kovix/settings.json`:
 
 ## Security Tooling
 
-Kovix integrates professional security tools directly into the agent loop. Every security tool has a **safety gate** — the agent must receive explicit user confirmation before execution.
+Kovix integrates professional security tools directly into the agent loop. Every security tool has a **safety gate** -- the agent must receive explicit user confirmation before execution.
 
-### nmap_scan — Network Scanner
+### nmap_scan -- Network Scanner
 
 Target scanning with XML output parsing. The agent can scan hosts, detect open ports, and identify running services.
 
 ```
 User: Scan 192.168.1.100 for open ports
 Agent: I'd like to run nmap to scan that target. Approve? [Yes/No]
-→ Parses XML output, summarizes open ports and services
+-> Parses XML output, summarizes open ports and services
 ```
 
 Requires: `nmap` installed on the system (`sudo apt-get install nmap` / `brew install nmap`)
 
-### ghidra_decompile — Binary Decompilation
+### ghidra_decompile -- Binary Decompilation
 
 Binary decompilation via Docker headless Ghidra. Upload a binary and get decompiled C-like source code.
 
 ```
 User: Decompile the function at 0x00401000 in malware.exe
 Agent: Running Ghidra headless decompilation. Approve? [Yes/No]
-→ Returns decompiled pseudocode from the specified address
+-> Returns decompiled pseudocode from the specified address
 ```
 
 Requires: Docker + `ghidra-headless` image (`docker pull ghidra-headless`)
 
-### nuclei_scan — Vulnerability Scanner
+### nuclei_scan -- Vulnerability Scanner
 
 Template-based vulnerability scanning with severity filtering and JSON output parsing.
 
 ```
 User: Scan https://example.com for CVEs
 Agent: Running Nuclei vulnerability scan. Approve? [Yes/No]
-→ Parses JSON output, lists findings by severity (critical/high/medium/low)
+-> Parses JSON output, lists findings by severity (critical/high/medium/low)
 ```
 
 Requires: `nuclei` installed (`go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest`)
@@ -223,7 +232,7 @@ For example, a server named `my-server` exposing a tool `query_database` would b
 
 ### Managing MCP Servers
 
-- Add servers via Settings → search `construct.mcp.servers`
+- Add servers via Settings -- search `construct.mcp.servers`
 - Restart Kovix after adding or removing servers
 - The agent automatically discovers available MCP tools and includes them in its tool registry
 - MCP tools respect the same safety blocklist as built-in tools
@@ -234,9 +243,9 @@ Kovix indexes your entire workspace for semantic search, enabling the agent to r
 
 ### How It Works
 
-1. **Indexing** — Run `Kovix: Index Workspace` (or it triggers automatically). Files are chunked and embedded using Ollama's `nomic-embed-text` model (or falls back to pseudo-embeddings).
-2. **Storage** — Embeddings are stored in a local Qdrant vector database running in-process. BM25 keyword indexing runs as a fallback.
-3. **Retrieval** — When you ask the agent a question, relevant code chunks are injected into the conversation context automatically.
+1. **Indexing** -- Run `Kovix: Index Workspace` (or it triggers automatically). Files are chunked and embedded using Ollama's `nomic-embed-text` model (or falls back to pseudo-embeddings).
+2. **Storage** -- Embeddings are stored in a local Qdrant vector database running in-process. BM25 keyword indexing runs as a fallback.
+3. **Retrieval** -- When you ask the agent a question, relevant code chunks are injected into the conversation context automatically.
 
 ### Commands
 
@@ -256,63 +265,47 @@ Kovix indexes your entire workspace for semantic search, enabling the agent to r
 }
 ```
 
-If Ollama is unavailable, the system falls back to BM25 keyword search — no embeddings required.
+If Ollama is unavailable, the system falls back to BM25 keyword search -- no embeddings required.
 
 ## Architecture
 
 Kovix is built on the [VS Code open-source project](https://github.com/microsoft/vscode) with the following additions:
 
-- **VS Code fork** — Full editor with all upstream features intact
-- **`IKovixAIService`** — Unified AI provider interface for Ollama, Xenova ONNX, and cloud backends
-- **Agent loop** — Plan/act cycle with built-in tools (read, write, run, search, memory) plus security tools and MCP extensions
-- **MCP tool registry** — Extensible tool execution engine with command safety blocklist; dispatches MCP tools via `serverName__toolName` format
-- **Security tools** — nmap_scan, ghidra_decompile, nuclei_scan with user-approval safety gates
-- **Qdrant + BM25 memory** — Hybrid retrieval: vector embeddings with keyword fallback
+- **VS Code fork** -- Full editor with all upstream features intact
+- **`IKovixAIService`** -- Unified AI provider interface for Ollama, Xenova ONNX, and cloud backends
+- **Agent loop** -- Plan/act cycle with built-in tools (read, write, run, search, memory) plus security tools and MCP extensions
+- **MCP tool registry** -- Extensible tool execution engine with command safety blocklist; dispatches MCP tools via `serverName__toolName` format
+- **Security tools** -- nmap_scan, ghidra_decompile, nuclei_scan with user-approval safety gates
+- **Qdrant + BM25 memory** -- Hybrid retrieval: vector embeddings with keyword fallback
 
 ```
-┌──────────────────────────────────────────────────────┐
-│                    Kovix                       │
-├──────────┬──────────┬──────────┬─────────────────────┤
-│  Editor  │  Agent   │ Terminal │  Memory Panel       │
-│ (VS Code │  Panel   │(Kali/    │  (Qdrant/BM25)      │
-│  fork)   │          │ WSL2)    │                     │
-├──────────┴──────────┴──────────┴─────────────────────┤
-│              IKovixAIService                       │
-├──────────┬──────────┬────────────────────────────────┤
-│ Ollama   │ Xenova   │   Cloud API (Anthropic)        │
-│ Provider │ Provider │   Provider                     │
-├──────────┴──────────┴────────────────────────────────┤
-│         Tool Registry (Built-in + MCP + Security)     │
-├─────────────┬───────────────┬────────────────────────┤
-│ Agent Tools │ Security Tools│  MCP Server Tools      │
-│ read/write/ │ nmap_scan /   │  server__tool          │
-│ run/search/ │ ghidra /      │  (user-configured)     │
-│ memory      │ nuclei_scan   │                        │
-├─────────────┴───────────────┴────────────────────────┤
-│           Semantic Memory (Qdrant · BM25)             │
-│          nomic-embed-text embeddings                  │
-└──────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                        Kovix                             │
+├───────────┬───────────┬───────────┬──────────────────────┤
+│  Editor   │  Agent    │ Terminal   │  Memory Panel       │
+│ (VS Code  │  Panel    │ (Kali/    │  (Qdrant/BM25)      │
+│  fork)    │           │  WSL2)    │                     │
+├───────────┴───────────┴───────────┴──────────────────────┤
+│                  IKovixAIService                         │
+├───────────┬───────────┬─────────────────────────────────┤
+│  Ollama   │  Xenova   │   Cloud API (Anthropic)         │
+│  Provider │  Provider │   Provider                      │
+├───────────┴───────────┴─────────────────────────────────┤
+│          Tool Registry (Built-in + MCP + Security)       │
+├────────────┬──────────────┬─────────────────────────────┤
+│ Agent      │ Security     │  MCP Server Tools           │
+│ Tools      │ Tools        │                             │
+│ read/write │ nmap_scan/   │  server__tool               │
+│ run/search │ ghidra/      │  (user-configured)          │
+│ memory     │ nuclei_scan  │                             │
+├────────────┴──────────────┴─────────────────────────────┤
+│             Semantic Memory (Qdrant + BM25)              │
+│             nomic-embed-text embeddings                  │
+└──────────────────────────────────────────────────────────┘
 ```
-
-## Contributing
-
-We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for:
-
-- Branch naming conventions (`feature/`, `fix/`, `security/`)
-- TypeScript strict mode requirements
-- PR workflow (target `main-dev`, not `main`)
-
-## Known Limitations
-
-- **No code signing** — Windows SmartScreen and macOS Gatekeeper warnings are expected on first launch. Verify SHA256 checksums (published with each release) before running unsigned binaries.
-- **16 GB RAM required for packaging builds** — The full build pipeline (gulp + Electron packaging) runs out of memory on systems with less than 16 GB RAM.
-- **Multi-turn context is session-scoped** — Conversation context is preserved within a single session but is not persisted across application restarts (until session persistence lands in a future release).
-- **Python agent backend removed** — The non-functional Python agent backend was removed in v1.0. TypeScript AI providers (Ollama, Xenova, Cloud) now handle all AI operations natively.
 
 ## License
 
-This project is licensed under the [MIT License](./LICENSE).
+This project is licensed under a Proprietary license. See [CONSTRUCT_LICENSE.txt](./CONSTRUCT_LICENSE.txt) for details.
 
-## Fork Attribution
-
-Kovix is a fork of [Code-OSS](https://github.com/microsoft/vscode) by Microsoft, used under the [MIT License](https://opensource.org/licenses/MIT). The original VS Code open-source project is available at https://github.com/microsoft/vscode.
+Kovix is a fork of [Code-OSS](https://github.com/microsoft/vscode) by Microsoft, used under the MIT License.

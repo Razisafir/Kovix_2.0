@@ -44,7 +44,7 @@ Kovix's AI agent system processes user input and file contents as LLM prompts. W
 - **Path traversal protection**: All file operations validate paths remain within the workspace boundary.
 - **Terminal command blocklist**: Dangerous commands (`rm -rf /`, `sudo`, etc.) are blocked by the safety blocklist.
 
-For technical details on the security architecture, see [SECURITY_AUDIT.md](./SECURITY_AUDIT.md).
+For technical details on the security architecture, see [SECURITY_AUDIT.md](./docs/internal/SECURITY_AUDIT.md).
 
 ## Disclosure Policy
 

@@ -43,6 +43,10 @@
 
 ## Building Release Packages
 
+For users with 8 GB RAM machines, use **GitHub Actions** instead of building locally. Push to `main` or manually trigger the "Build Kovix IDE" workflow -- it produces Windows (.exe), Linux (.deb/.rpm/.tar.gz), and macOS (.zip) packages that you can download as artifacts from the Actions tab.
+
+To build locally:
+
 ```bash
 # Windows installer:
 node ./node_modules/gulp/bin/gulp.js vscode-win32-x64-inno-updater

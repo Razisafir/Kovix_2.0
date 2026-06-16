@@ -1,4 +1,4 @@
-name: Build Construct IDE
+name: Build Kovix IDE
 
 on:
   push:
@@ -106,6 +106,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build Windows user setup (.exe)
+        run: npx gulp vscode-win32-x64-user-setup
+        timeout-minutes: 15
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
       - name: Generate SHA256 checksum
         run: |
           $exe = Get-ChildItem .build\win32-x64\system-setup\*.exe | Select-Object -First 1
@@ -116,9 +123,10 @@ jobs:
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
-          name: construct-ide-windows-x64
+          name: kovix-windows-x64
           path: |
             .build/win32-x64/system-setup/*.exe
+            .build/win32-x64/user-setup/*.exe
             .build/win32-x64/checksums-sha256.txt
           retention-days: 30
 
@@ -168,18 +176,39 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build Linux RPM
+        run: |
+          npx gulp vscode-linux-x64-prepare-rpm
+          npx gulp vscode-linux-x64-build-rpm
+        timeout-minutes: 30
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Linux tar.gz
+        run: |
+          npx gulp vscode-linux-x64-build-tar-gz
+        timeout-minutes: 30
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Generate SHA256 checksums
         run: |
           cd .build/linux
           sha256sum deb/amd64/**/*.deb > checksums-sha256.txt 2>/dev/null || true
+          find . -name "*.rpm" -exec sha256sum {} \; >> checksums-sha256.txt 2>/dev/null || true
+          find . -name "*.tar.gz" -exec sha256sum {} \; >> checksums-sha256.txt 2>/dev/null || true
           cat checksums-sha256.txt
 
       - name: Upload Linux packages
         uses: actions/upload-artifact@v4
         with:
-          name: construct-ide-linux-x64
+          name: kovix-linux-x64
           path: |
             .build/linux/deb/amd64/**/*.deb
+            .build/linux/**/*.rpm
+            .build/linux/**/*.tar.gz
             .build/linux/checksums-sha256.txt
           retention-days: 30
 
@@ -189,7 +218,7 @@ jobs:
   build-macos:
     needs: compile
     name: macOS x64 Build
-    if: github.event.inputs.build_macos == 'true'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.build_macos == 'true'
     runs-on: macos-latest
     timeout-minutes: 120
     steps:
@@ -224,19 +253,19 @@ jobs:
             cd VSCode-darwin-x64
             APP_NAME=$(ls -d *.app 2>/dev/null | head -1)
             if [ -n "$APP_NAME" ]; then
-              zip -r "../construct-ide-darwin-x64.zip" "$APP_NAME"
+              zip -r "../kovix-darwin-x64.zip" "$APP_NAME"
             else
               cd ..
-              zip -r "construct-ide-darwin-x64.zip" "VSCode-darwin-x64/"
+              zip -r "kovix-darwin-x64.zip" "VSCode-darwin-x64/"
             fi
           elif [ -d ".build/darwin/x64" ]; then
             cd .build/darwin/x64
             APP_NAME=$(ls -d *.app 2>/dev/null | head -1)
             if [ -n "$APP_NAME" ]; then
-              zip -r "../construct-ide-darwin-x64.zip" "$APP_NAME"
+              zip -r "../kovix-darwin-x64.zip" "$APP_NAME"
             else
               cd ..
-              zip -r "construct-ide-darwin-x64.zip" x64/
+              zip -r "kovix-darwin-x64.zip" x64/
             fi
           else
             echo "ERROR: Cannot find macOS build output directory"
@@ -247,14 +276,14 @@ jobs:
 
       - name: Generate SHA256 checksums
         run: |
-          shasum -a 256 construct-ide-darwin-x64.zip > checksums-sha256.txt
+          shasum -a 256 kovix-darwin-x64.zip > checksums-sha256.txt
           cat checksums-sha256.txt
 
       - name: Upload macOS packages
         uses: actions/upload-artifact@v4
         with:
-          name: construct-ide-macos-x64
+          name: kovix-macos-x64
           path: |
-            construct-ide-darwin-x64.zip
+            kovix-darwin-x64.zip
             checksums-sha256.txt
           retention-days: 30

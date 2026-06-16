@@ -1,16 +1,44 @@
-MIT License
+PROPRIETARY LICENSE
 
-Copyright (c) 2025-2026 Razisafir
+Copyright (c) 2024 - present Razisafir. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This software and associated documentation files (the "Software") are the
+exclusive property of Razisafir. The Software is licensed, not sold.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+RESTRICTED RIGHTS NOTICE:
+
+1. NO COPY PERMISSION — You may not copy, reproduce, or duplicate the Software
+   in whole or in part, except as expressly authorized in writing by Razisafir.
+
+2. NO MODIFICATION PERMISSION — You may not modify, adapt, alter, translate, or
+   create derivative works based upon the Software, except as expressly
+   authorized in writing by Razisafir.
+
+3. NO DISTRIBUTION PERMISSION — You may not distribute, publish, sublicense,
+   rent, lease, lend, or transfer the Software to any third party, except as
+   expressly authorized in writing by Razisafir.
+
+4. NO REVERSE ENGINEERING — You may not reverse engineer, decompile,
+   disassemble, or otherwise attempt to derive the source code of the Software,
+   in whole or in part.
+
+5. NO SALE PERMISSION — You may not sell, resell, or commercially exploit the
+   Software in any manner without the express written permission of Razisafir.
+
+6. LICENSED, NOT SOLD — This license grants you a limited, non-exclusive,
+   non-transferable right to use the Software solely as expressly authorized
+   in writing by Razisafir. You do not acquire any ownership or intellectual
+   property rights in the Software.
+
+7. VIOLATIONS — Any unauthorized use, copying, modification, distribution,
+   reverse engineering, or other violation of the terms of this license shall
+   constitute a breach of this agreement and may result in immediate termination
+   of your license. Violators will be subject to legal action, including but not
+   limited to claims for damages, injunctive relief, and attorneys' fees.
+
+8. TERMINATION — Razisafir reserves the right to terminate this license at any
+   time for any reason. Upon termination, you must immediately destroy all
+   copies of the Software in your possession.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -19,3 +47,5 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+For licensing inquiries or to report violations: security@kovix.dev

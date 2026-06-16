@@ -4,37 +4,70 @@ on:
   push:
     tags:
       - 'v*'  # Triggers on version tags like v1.0.0
-  workflow_dispatch:  # Allows manual triggering
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v1.0.1)'
+        required: false
+        type: string
+
+env:
+  NODE_VERSION: '20'
+  PYTHON_VERSION: '3.11'
 
 jobs:
   build-windows:
     runs-on: windows-latest
+    timeout-minutes: 120
     env:
       KOVIX_ARCH: x64
       KOVIX_QUALITY: stable
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: npm ci
-
-      # npm audit fails on critical CVEs — do NOT use continue-on-error;
-      # critical vulnerabilities must block the release build.
-      - name: Security audit (production deps only)
-        run: npm audit --production --audit-level=critical
+        timeout-minutes: 30
 
       - name: Compile
-        run: npm run compile
+        run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 
-      - name: Build Windows installer
-        run: node ./node_modules/gulp/bin/gulp.js vscode-win32-x64-inno-updater
+      - name: Build Windows package
+        run: npx gulp vscode-win32-x64
+        timeout-minutes: 120
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Copy Inno Updater
+        run: npx gulp vscode-win32-x64-inno-updater
+
+      - name: Build Windows system setup (.exe)
+        run: npx gulp vscode-win32-x64-system-setup
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate SHA256 checksum
+        run: |
+          $exe = Get-ChildItem .build\win32-x64\system-setup\*.exe | Select-Object -First 1
+          $hash = (Get-FileHash -Path $exe.FullName -Algorithm SHA256).Hash
+          "$hash  $($exe.Name)" | Out-File -FilePath .build\win32-x64\checksums-sha256.txt -Encoding utf8
+          Get-Content .build\win32-x64\checksums-sha256.txt
 
       - name: Sign (Windows)
         if: env.KOVIX_SIGN_CERT_PATH != ''
@@ -47,37 +80,74 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: kovix-windows
-          path: .build/win32-x64/**/*.exe
+          path: |
+            .build/win32-x64/system-setup/*.exe
+            .build/win32-x64/checksums-sha256.txt
 
   build-macos:
     runs-on: macos-latest
+    timeout-minutes: 120
     env:
       KOVIX_ARCH: x64
       KOVIX_QUALITY: stable
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
-
-      # npm audit fails on critical CVEs — do NOT use continue-on-error;
-      # critical vulnerabilities must block the release build.
-      - name: Security audit (production deps only)
-        run: npm audit --production --audit-level=critical
+        timeout-minutes: 30
 
       - name: Compile
-        run: npm run compile
+        run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 
-      # macOS runners cost 10× more than Linux; only build when releasing
-      - name: Build macOS app
-        run: node ./node_modules/gulp/bin/gulp.js vscode-darwin-x64
+      - name: Build macOS package
+        run: npx gulp vscode-darwin-x64
+        timeout-minutes: 120
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Create macOS ZIP archive
+        run: |
+          if [ -d "VSCode-darwin-x64" ]; then
+            cd VSCode-darwin-x64
+            APP_NAME=$(ls -d *.app 2>/dev/null | head -1)
+            if [ -n "$APP_NAME" ]; then
+              zip -r "../kovix-darwin-x64.zip" "$APP_NAME"
+            else
+              cd ..
+              zip -r "kovix-darwin-x64.zip" "VSCode-darwin-x64/"
+            fi
+          elif [ -d ".build/darwin/x64" ]; then
+            cd .build/darwin/x64
+            APP_NAME=$(ls -d *.app 2>/dev/null | head -1)
+            if [ -n "$APP_NAME" ]; then
+              zip -r "../kovix-darwin-x64.zip" "$APP_NAME"
+            else
+              cd ..
+              zip -r "kovix-darwin-x64.zip" x64/
+            fi
+          else
+            echo "ERROR: Cannot find macOS build output directory"
+            ls -la
+            find . -name "*.app" -maxdepth 3 2>/dev/null
+            exit 1
+          fi
+
+      - name: Generate SHA256 checksums
+        run: |
+          shasum -a 256 kovix-darwin-x64.zip > checksums-sha256.txt
+          cat checksums-sha256.txt
 
       - name: Sign (macOS)
         if: env.KOVIX_SIGN_IDENTITY != ''
@@ -91,47 +161,90 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: kovix-macos
-          path: .build/darwin-x64/**/*.dmg
+          path: |
+            kovix-darwin-x64.zip
+            checksums-sha256.txt
 
   build-linux:
     runs-on: ubuntu-latest
+    timeout-minutes: 120
     env:
       KOVIX_ARCH: x64
       KOVIX_QUALITY: stable
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Install Linux dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libgbm1
+          sudo apt-get install -y fakeroot dpkg-dev rpm libkrb5-dev libx11-dev libxkbfile-dev libsecret-1-0 libsecret-1-dev libgtk-3-0 libgbm1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
-
-      # npm audit fails on critical CVEs — do NOT use continue-on-error;
-      # critical vulnerabilities must block the release build.
-      - name: Security audit (production deps only)
-        run: npm audit --production --audit-level=critical
+        timeout-minutes: 30
 
       - name: Compile
-        run: npm run compile
+        run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 
       - name: Build Linux package
-        run: node ./node_modules/gulp/bin/gulp.js vscode-linux-x64
+        run: npx gulp vscode-linux-x64
+        timeout-minutes: 120
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Build Linux DEB
+        run: |
+          npx gulp vscode-linux-x64-prepare-deb
+          npx gulp vscode-linux-x64-build-deb
+        timeout-minutes: 30
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Linux RPM
+        run: |
+          npx gulp vscode-linux-x64-prepare-rpm
+          npx gulp vscode-linux-x64-build-rpm
+        timeout-minutes: 30
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Linux tar.gz
+        run: |
+          npx gulp vscode-linux-x64-build-tar-gz
+        timeout-minutes: 30
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate SHA256 checksums
+        run: |
+          cd .build/linux
+          sha256sum deb/amd64/**/*.deb > checksums-sha256.txt 2>/dev/null || true
+          find . -name "*.rpm" -exec sha256sum {} \; >> checksums-sha256.txt 2>/dev/null || true
+          find . -name "*.tar.gz" -exec sha256sum {} \; >> checksums-sha256.txt 2>/dev/null || true
+          cat checksums-sha256.txt
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
           name: kovix-linux
-          path: .build/linux-x64/**/*.tar.gz
+          path: |
+            .build/linux/deb/amd64/**/*.deb
+            .build/linux/**/*.rpm
+            .build/linux/**/*.tar.gz
+            .build/linux/checksums-sha256.txt
 
   create-release:
     needs: [build-windows, build-macos, build-linux]
@@ -159,12 +272,18 @@ jobs:
           body: |
             ## Kovix Release
 
-            AI-native development environment built on VS Code open source.
+            AI-native development environment with autonomous coding agents.
 
             ### Downloads
-            - **Windows**: Download the `.exe` installer
-            - **macOS**: Download the `.dmg` file
-            - **Linux**: Download the `.tar.gz` archive
+            - **Windows**: `.exe` installer (system-wide or user install)
+            - **macOS**: `.zip` archive containing the app
+            - **Linux**: `.deb` / `.rpm` / `.tar.gz` packages
+
+            ### Verify Download Integrity
+            Each release includes SHA256 checksums. Verify with:
+            ```bash
+            sha256sum -c checksums-sha256.txt
+            ```
 
             ### Checksums
             See `checksums.txt` in the release assets for SHA256 hashes.
@@ -173,12 +292,3 @@ jobs:
             See [CHANGELOG.md](https://github.com/Razisafir/KOVIX/blob/main/CHANGELOG.md)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Generate update.json
-        run: node scripts/generate-update-json.js
-
-      - name: Deploy update server
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs

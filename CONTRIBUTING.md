@@ -1,64 +1,15 @@
 # Contributing to Kovix
 
-Thank you for your interest in contributing! This guide covers the essentials for getting started.
+Kovix is a proprietary project developed by Razisafir. The source code is made available for review and educational purposes, but **contributions are not accepted** unless you have a prior written agreement with Razisafir.
 
-## Development Setup
+## No Outside Contributions
 
-```bash
-git clone https://github.com/Razisafir/KOVIX
-cd KOVIX
-npm install
-NODE_OPTIONS="--max-old-space-size=8192" npm run compile
-./scripts/code.sh        # Linux/macOS
-.\scripts\code.bat       # Windows
-```
+We do not accept pull requests, patches, or code contributions from individuals who do not have a signed contributor agreement with Razisafir. This policy exists to protect the project's intellectual property and licensing integrity.
 
-## Branch Naming
+## Reporting Issues
 
-All branches must follow these conventions:
+If you discover a bug or security vulnerability, please report it by emailing **security@kovix.dev**. Do not open public issues for security-related findings.
 
-| Prefix | Use | Example |
-|---|---|---|
-| `feature/` | New features and enhancements | `feature/agent-memory` |
-| `fix/` | Bug fixes | `fix/ipc-schema-validation` |
-| `security/` | Security-related changes | `security/path-traversal-hardening` |
+## License
 
-## Code Standards
-
-- **TypeScript strict mode is required** — No implicit `any`, full strict mode enabled
-- **JSDoc comments on all new services** — Every public method and class must have JSDoc documentation
-- **All new tools must implement `IConstructTool`** — See the MCP tool registry for the interface definition
-
-## Pull Requests
-
-- All PRs target the **`main-dev`** branch (not `main`)
-- Include a clear description of what changed and why
-- Ensure `npm run compile` passes before submitting
-- Keep PRs focused — one concern per PR
-
-## Reporting Bugs
-
-Open a GitHub issue with:
-
-- Kovix version
-- Operating system
-- Steps to reproduce
-- Expected vs. actual behavior
-- Relevant log output (secrets will be redacted automatically)
-
-## Security Vulnerabilities
-
-**Do NOT open a public issue for security vulnerabilities.**
-
-Instead, email **security@kovix.dev** with:
-
-- Description of the vulnerability
-- Steps to reproduce
-- Affected versions
-- Potential impact
-
-See [SECURITY.md](./SECURITY.md) for the full security policy and response timeline.
-
-## Thank You
-
-Your contributions — whether code, bug reports, or feature suggestions — make Kovix better. Thank you for taking the time to contribute.
+This project is licensed under the terms described in [LICENSE.txt](./LICENSE.txt). All rights not explicitly granted are reserved by Razisafir.

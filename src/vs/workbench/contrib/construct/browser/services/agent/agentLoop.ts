@@ -170,6 +170,9 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
         private readonly _onFileChange = this._register(new Emitter<FileChangeEntry>());
         readonly onFileChange = this._onFileChange.event;
 
+        private readonly _onDidMilestonePause = this._register(new Emitter<IMilestone>());
+        readonly onDidMilestonePause = this._onDidMilestonePause.event;
+
         /** Active snapshot ID for the current task (for undo support). */
         private _activeSnapshotId: string | null = null;
 
@@ -179,7 +182,6 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
         private _approvedPlan: IApprovedPlan | null = null;
         private _executionConfig: { mode: ExecutionMode; selectedMilestoneIds?: string[] } | null = null;
         private _milestoneResumeResolver: (() => void) | null = null;
-        private _currentPlanContext: string | null = null;
         private _completedMilestoneIds: Set<string> = new Set();
 
         constructor(
@@ -658,7 +660,6 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                 };
                 this._completedMilestoneIds = new Set();
                 this._executionState = ExecutionState.Executing;
-                this._currentPlanContext = approvedPlan.task;
 
                 // Run the execution in the background
                 const runAsync = async () => {
@@ -674,7 +675,7 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                                 const shouldPause = this.shouldPauseAtMilestone(event);
                                                 if (shouldPause && this._currentMilestone) {
                                                         this._executionState = ExecutionState.PausedAtMilestone;
-                                                        yield { type: 'milestone_paused', milestone: this._currentMilestone } as AgentLoopEvent;
+                                                        this._onDidMilestonePause.fire(this._currentMilestone);
                                                         // Wait for resume
                                                         await this._waitForResume();
                                                 }
@@ -1116,5 +1117,11 @@ Guidelines:
 
         override dispose(): void {
                 super.dispose();
+        }
+
+        clearConversationHistory(): void {
+                // Conversation messages are local to each run() / runPlanningPhase() call,
+                // so there is no persistent history to clear.  The method exists to
+                // satisfy the IAgentLoop contract used by the UI layer.
         }
 }
