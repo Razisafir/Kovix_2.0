@@ -245,13 +245,13 @@ registerAction2(class FocusConstructPanelAction extends Action2 {
                 constructor() {
                                 super({
                                                 id: 'construct.focusPanel',
-                                                title: localize2('focusConstructPanel', "Show Construct Agent"),
+                                                title: localize2('focusConstructPanel', "Kovix: Open Agent Panel"),
                                                 keybinding: {
-                                                                primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyL,
+                                                                primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyK,
                                                                 weight: KeybindingWeight.WorkbenchContrib,
                                                 },
                                                 f1: true,
-                                                category: localize2('constructCategory', "Construct"),
+                                                category: localize2('constructCategory', "Kovix"),
                                 });
                 }
                 run(accessor: ServicesAccessor): void {
@@ -263,9 +263,9 @@ registerAction2(class NewConstructChatAction extends Action2 {
                 constructor() {
                                 super({
                                                 id: 'construct.newChat',
-                                                title: localize2('newConstructChat', "New Construct Chat"),
+                                                title: localize2('newConstructChat', "Kovix: New Chat"),
                                                 f1: true,
-                                                category: localize2('constructCategory2', "Construct"),
+                                                category: localize2('constructCategory2', "Kovix"),
                                 });
                 }
                 run(accessor: ServicesAccessor): void {
@@ -277,13 +277,13 @@ registerAction2(class ShowInlineAgentAction extends Action2 {
                 constructor() {
                                 super({
                                                 id: 'construct.showInlineAgent',
-                                                title: localize2('showInlineAgent', "Show Inline Agent"),
+                                                title: localize2('showInlineAgent', "Kovix: Show Inline Agent"),
                                                 keybinding: {
                                                                 primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyI,
                                                                 weight: KeybindingWeight.WorkbenchContrib,
                                                 },
                                                 f1: true,
-                                                category: localize2('constructCategory3', "Construct"),
+                                                category: localize2('constructCategory3', "Kovix"),
                                 });
                 }
                 run(accessor: ServicesAccessor): void {
@@ -297,9 +297,9 @@ registerAction2(class OpenMemoryPanelAction extends Action2 {
                 constructor() {
                                 super({
                                                 id: 'construct.openMemoryPanel',
-                                                title: localize2('openMemoryPanel', "Open Memory Panel"),
+                                                title: localize2('openMemoryPanel', "Kovix: Open Memory Panel"),
                                                 f1: true,
-                                                category: localize2('constructCategory4', "Construct"),
+                                                category: localize2('constructCategory4', "Kovix"),
                                 });
                 }
                 run(accessor: ServicesAccessor): void {
@@ -311,9 +311,9 @@ registerAction2(class SearchMemoriesAction extends Action2 {
                 constructor() {
                                 super({
                                                 id: 'construct.searchMemories',
-                                                title: localize2('searchMemories', "Search Memories"),
+                                                title: localize2('searchMemories', "Kovix: Search Memories"),
                                                 f1: true,
-                                                category: localize2('constructCategory5', "Construct"),
+                                                category: localize2('constructCategory5', "Kovix"),
                                 });
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
@@ -361,9 +361,9 @@ registerAction2(class AddMemoryAction extends Action2 {
                 constructor() {
                                 super({
                                                 id: 'construct.addMemory',
-                                                title: localize2('addMemory', "Add Memory"),
+                                                title: localize2('addMemory', "Kovix: Add Memory"),
                                                 f1: true,
-                                                category: localize2('constructCategory6', "Construct"),
+                                                category: localize2('constructCategory6', "Kovix"),
                                 });
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
@@ -400,9 +400,9 @@ registerAction2(class TestLLMConnectionAction extends Action2 {
                 constructor() {
                                 super({
                                                 id: 'construct.testMemoryConnection',
-                                                title: localize2('testMemoryConnection', "Test Memory Connection"),
+                                                title: localize2('testMemoryConnection', "Kovix: Test Memory Connection"),
                                                 f1: true,
-                                                category: localize2('constructCategory7', "Construct"),
+                                                category: localize2('constructCategory7', "Kovix"),
                                 });
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
@@ -429,9 +429,9 @@ registerAction2(class OpenApiSettingsAction extends Action2 {
                 constructor() {
                                 super({
                                                 id: 'construct.openApiSettings',
-                                                title: localize2('openApiSettings', "Open API Settings"),
+                                                title: localize2('openApiSettings', "Kovix: Open API Settings"),
                                                 f1: true,
-                                                category: localize2('constructCategoryApi', "Construct"),
+                                                category: localize2('constructCategoryApi', "Kovix"),
                                 });
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
@@ -445,7 +445,7 @@ registerAction2(class SetApiKeyAction extends Action2 {
                                                 id: 'construct.setApiKey',
                                                 title: localize2('setApiKey', "Set API Key"),
                                                 f1: true,
-                                                category: localize2('constructCategoryApiKey', "Construct"),
+                                                category: localize2('constructCategoryApiKey', "Kovix"),
                                 });
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
@@ -473,9 +473,9 @@ registerAction2(class ClearApiKeyAction extends Action2 {
                 constructor() {
                                 super({
                                                 id: 'construct.clearApiKey',
-                                                title: localize2('clearApiKey', "Clear API Key"),
+                                                title: localize2('clearApiKey', "Kovix: Clear API Key"),
                                                 f1: true,
-                                                category: localize2('constructCategoryApiKey2', "Construct"),
+                                                category: localize2('constructCategoryApiKey2', "Kovix"),
                                 });
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
@@ -492,7 +492,7 @@ registerAction2(class TestCloudConnectionAction extends Action2 {
                                                 id: 'construct.testCloudConnection',
                                                 title: localize2('testCloudConnection', "Test Cloud AI Connection"),
                                                 f1: true,
-                                                category: localize2('constructCategoryCloud', "Construct"),
+                                                category: localize2('constructCategoryCloud', "Kovix"),
                                 });
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
@@ -571,7 +571,7 @@ registerAction2(class SwitchAIProviderAction extends Action2 {
                         id: 'construct.switchProvider',
                         title: localize2('switchAIProvider', "Switch AI Provider"),
                         f1: true,
-                        category: localize2('constructCategoryAI', "Construct"),
+                        category: localize2('constructCategoryAI', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -615,9 +615,9 @@ registerAction2(class SelectModelAction extends Action2 {
         constructor() {
                 super({
                         id: 'construct.selectModel',
-                        title: localize2('selectModel', "Select AI Model"),
+                        title: localize2('selectModel', "Kovix: Select Model"),
                         f1: true,
-                        category: localize2('constructCategoryModel', "Construct"),
+                        category: localize2('constructCategoryModel', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -673,9 +673,9 @@ registerAction2(class NewProjectAction extends Action2 {
                 constructor() {
                         super({
                                 id: 'construct.newProject',
-                                title: localize2('newConstructProject', "New Kovix Project"),
+                                title: localize2('newConstructProject', "Kovix: New Project"),
                                 f1: true,
-                                category: localize2('constructCategoryProject', "Construct"),
+                                category: localize2('constructCategoryProject', "Kovix"),
                         });
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
@@ -690,7 +690,7 @@ registerAction2(class OpenProjectWizardAction extends Action2 {
                                 id: 'construct.openProjectWizard',
                                 title: localize2('openProjectWizard', "Open Project Wizard"),
                                 f1: true,
-                                category: localize2('constructCategoryWizard', "Construct"),
+                                category: localize2('constructCategoryWizard', "Kovix"),
                         });
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
@@ -703,9 +703,9 @@ registerAction2(class LoadProjectAction extends Action2 {
                 constructor() {
                         super({
                                 id: 'construct.loadProject',
-                                title: localize2('loadProject', "Load Kovix Project"),
+                                title: localize2('loadProject', "Kovix: Load Project"),
                                 f1: true,
-                                category: localize2('constructCategoryLoadProject', "Construct"),
+                                category: localize2('constructCategoryLoadProject', "Kovix"),
                         });
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
@@ -739,9 +739,9 @@ registerAction2(class UndoTaskAction extends Action2 {
                 constructor() {
                                 super({
                                                 id: 'construct.undoTask',
-                                                title: localize2('undoTask', "Undo Last Task"),
+                                                title: localize2('undoTask', "Kovix: Undo Last Task"),
                                                 f1: true,
-                                                category: localize2('constructCategoryUndo', "Construct"),
+                                                category: localize2('constructCategoryUndo', "Kovix"),
                                 });
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
@@ -780,7 +780,7 @@ registerAction2(class AcceptAllDiffsAction extends Action2 {
                         id: 'construct.acceptAllDiffs',
                         title: localize2('acceptAllDiffs', "Accept All Pending Diffs"),
                         f1: true,
-                        category: localize2('constructCategoryDiff', "Construct"),
+                        category: localize2('constructCategoryDiff', "Kovix"),
                         keybinding: {
                                 primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.Enter,
                                 weight: KeybindingWeight.WorkbenchContrib,
@@ -806,7 +806,7 @@ registerAction2(class RejectAllDiffsAction extends Action2 {
                         id: 'construct.rejectAllDiffs',
                         title: localize2('rejectAllDiffs', "Reject All Pending Diffs"),
                         f1: true,
-                        category: localize2('constructCategoryDiff2', "Construct"),
+                        category: localize2('constructCategoryDiff2', "Kovix"),
                         keybinding: {
                                 primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.Escape,
                                 weight: KeybindingWeight.WorkbenchContrib,
@@ -834,7 +834,7 @@ registerAction2(class OpenOnboardingWizardAction extends Action2 {
                         id: 'construct.openOnboarding',
                         title: localize2('openOnboarding', "Open Setup Wizard"),
                         f1: true,
-                        category: localize2('constructCategoryOnboarding', "Construct"),
+                        category: localize2('constructCategoryOnboarding', "Kovix"),
                 });
         }
         run(accessor: ServicesAccessor): void {
@@ -850,9 +850,9 @@ registerAction2(class IndexWorkspaceAction extends Action2 {
         constructor() {
                 super({
                         id: 'construct.indexWorkspace',
-                        title: localize2('indexWorkspace', "Index Workspace for Semantic Search"),
+                        title: localize2('indexWorkspace', "Kovix: Index Workspace"),
                         f1: true,
-                        category: localize2('constructCategoryMemory', "Construct"),
+                        category: localize2('constructCategoryMemory', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -876,7 +876,7 @@ registerAction2(class StartMCPServerAction extends Action2 {
                         id: 'construct.mcp.startServer',
                         title: localize2('startMCPServer', "Start MCP Server"),
                         f1: true,
-                        category: localize2('constructCategoryMCP', "Construct"),
+                        category: localize2('constructCategoryMCP', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -920,7 +920,7 @@ registerAction2(class StopMCPServerAction extends Action2 {
                         id: 'construct.mcp.stopServer',
                         title: localize2('stopMCPServer', "Stop MCP Server"),
                         f1: true,
-                        category: localize2('constructCategoryMCP2', "Construct"),
+                        category: localize2('constructCategoryMCP2', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -966,7 +966,7 @@ registerAction2(class ProviderStatusAction extends Action2 {
                         id: 'construct.providerStatus',
                         title: localize2('providerStatus', "Show AI Provider Status"),
                         f1: true,
-                        category: localize2('constructCategoryProvider', "Construct"),
+                        category: localize2('constructCategoryProvider', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1027,7 +1027,7 @@ registerAction2(class FileToUrlAction extends Action2 {
                         id: 'construct.fileToUrl',
                         title: localize2('fileToUrl', "Convert File to URL (f2u)"),
                         f1: true,
-                        category: localize2('constructCategoryF2U', "Construct"),
+                        category: localize2('constructCategoryF2U', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1057,7 +1057,7 @@ registerAction2(class GoclawDashboardAction extends Action2 {
                         id: 'construct.goclawDashboard',
                         title: localize2('goclawDashboard', "Open GoClaw Dashboard"),
                         f1: true,
-                        category: localize2('constructCategoryGoclaw', "Construct"),
+                        category: localize2('constructCategoryGoclaw', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1087,7 +1087,7 @@ registerAction2(class CheckAgentReachAction extends Action2 {
                         id: 'construct.checkAgentReach',
                         title: localize2('checkAgentReach', "Check Agent Reach Health"),
                         f1: true,
-                        category: localize2('constructCategoryAgentReach', "Construct"),
+                        category: localize2('constructCategoryAgentReach', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1116,7 +1116,7 @@ registerAction2(class InstallAgentReachAction extends Action2 {
                         id: 'construct.installAgentReach',
                         title: localize2('installAgentReach', "Install Agent Reach"),
                         f1: true,
-                        category: localize2('constructCategoryAgentReach2', "Construct"),
+                        category: localize2('constructCategoryAgentReach2', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1153,7 +1153,7 @@ registerAction2(class ConfigureAgentReachAction extends Action2 {
                         id: 'construct.configureAgentReach',
                         title: localize2('configureAgentReach', "Configure Agent Reach Channels"),
                         f1: true,
-                        category: localize2('constructCategoryAgentReach3', "Construct"),
+                        category: localize2('constructCategoryAgentReach3', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1171,7 +1171,7 @@ registerAction2(class SearchWebExaAction extends Action2 {
                         id: 'construct.searchWebExa',
                         title: localize2('searchWebExa', "Search Web (Exa)"),
                         f1: true,
-                        category: localize2('constructCategoryAgentReach4', "Construct"),
+                        category: localize2('constructCategoryAgentReach4', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1208,7 +1208,7 @@ registerAction2(class ReadWebpageAction extends Action2 {
                         id: 'construct.readWebpage',
                         title: localize2('readWebpage', "Read Webpage"),
                         f1: true,
-                        category: localize2('constructCategoryAgentReach5', "Construct"),
+                        category: localize2('constructCategoryAgentReach5', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1254,7 +1254,7 @@ registerAction2(class PonytailSetModeAction extends Action2 {
                         id: 'construct.ponytailSetMode',
                         title: localize2('ponytailSetMode', "Set Ponytail Mode"),
                         f1: true,
-                        category: localize2('constructCategoryPonytail', "Construct"),
+                        category: localize2('constructCategoryPonytail', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1294,7 +1294,7 @@ registerAction2(class PonytailReviewAction extends Action2 {
                         id: 'construct.ponytailReview',
                         title: localize2('ponytailReview', "Review Current File for Over-Engineering"),
                         f1: true,
-                        category: localize2('constructCategoryPonytail2', "Construct"),
+                        category: localize2('constructCategoryPonytail2', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1318,7 +1318,7 @@ registerAction2(class PonytailHelpAction extends Action2 {
                         id: 'construct.ponytailHelp',
                         title: localize2('ponytailHelp', "Show Ponytail Help"),
                         f1: true,
-                        category: localize2('constructCategoryPonytail3', "Construct"),
+                        category: localize2('constructCategoryPonytail3', "Kovix"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1362,7 +1362,7 @@ registerAction2(class UiuxSearchStyleAction extends Action2 {
                         id: 'construct.uiuxSearchStyle',
                         title: localize2('uiuxSearchStyle', "Search UI Styles"),
                         f1: true,
-                        category: localize2('constructCategoryUiux', "Construct: Design"),
+                        category: localize2('constructCategoryUiux', "Kovix: Design"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1388,7 +1388,7 @@ registerAction2(class UiuxSearchColorAction extends Action2 {
                         id: 'construct.uiuxSearchColor',
                         title: localize2('uiuxSearchColor', "Search Color Palettes"),
                         f1: true,
-                        category: localize2('constructCategoryUiux2', "Construct: Design"),
+                        category: localize2('constructCategoryUiux2', "Kovix: Design"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1414,7 +1414,7 @@ registerAction2(class UiuxGenerateDesignSystemAction extends Action2 {
                         id: 'construct.uiuxGenerateDesignSystem',
                         title: localize2('uiuxGenerateDesignSystem', "Generate Design System"),
                         f1: true,
-                        category: localize2('constructCategoryUiux3', "Construct: Design"),
+                        category: localize2('constructCategoryUiux3', "Kovix: Design"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1448,7 +1448,7 @@ registerAction2(class UiuxStackGuidelinesAction extends Action2 {
                         id: 'construct.uiuxStackGuidelines',
                         title: localize2('uiuxStackGuidelines', "Get Stack Guidelines"),
                         f1: true,
-                        category: localize2('constructCategoryUiux4', "Construct: Design"),
+                        category: localize2('constructCategoryUiux4', "Kovix: Design"),
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
