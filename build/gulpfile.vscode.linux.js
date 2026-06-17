@@ -40,10 +40,10 @@ function prepareDebPackage(arch) {
 	const destination = '.build/linux/deb/' + debArch + '/' + product.applicationName + '-' + debArch;
 
 	return function () {
-		const desktop = gulp.src('resources/linux/construct.desktop', { base: '.' })
+		const desktop = gulp.src('resources/linux/kovix.desktop', { base: '.' })
 			.pipe(rename('usr/share/applications/' + product.applicationName + '.desktop'));
 
-		const desktopUrlHandler = gulp.src('resources/linux/construct-url-handler.desktop', { base: '.' })
+		const desktopUrlHandler = gulp.src('resources/linux/kovix-url-handler.desktop', { base: '.' })
 			.pipe(rename('usr/share/applications/' + product.applicationName + '-url-handler.desktop'));
 
 		const desktops = es.merge(desktop, desktopUrlHandler)
@@ -54,13 +54,13 @@ function prepareDebPackage(arch) {
 			.pipe(replace('@@ICON@@', product.linuxIconName))
 			.pipe(replace('@@URLPROTOCOL@@', product.urlProtocol));
 
-		const appdata = gulp.src('resources/linux/construct.appdata.xml', { base: '.' })
+		const appdata = gulp.src('resources/linux/kovix.appdata.xml', { base: '.' })
 			.pipe(replace('@@NAME_LONG@@', product.nameLong))
 			.pipe(replace('@@NAME@@', product.applicationName))
 			.pipe(replace('@@LICENSE@@', product.licenseName))
 			.pipe(rename('usr/share/appdata/' + product.applicationName + '.appdata.xml'));
 
-		const workspaceMime = gulp.src('resources/linux/construct-workspace.xml', { base: '.' })
+		const workspaceMime = gulp.src('resources/linux/kovix-workspace.xml', { base: '.' })
 			.pipe(replace('@@NAME_LONG@@', product.nameLong))
 			.pipe(replace('@@NAME@@', product.applicationName))
 			.pipe(rename('usr/share/mime/packages/' + product.applicationName + '-workspace.xml'));
@@ -68,11 +68,11 @@ function prepareDebPackage(arch) {
 		const icon = gulp.src('resources/linux/kovix.png', { base: '.' })
 			.pipe(rename('usr/share/pixmaps/' + product.linuxIconName + '.png'));
 
-		const bash_completion = gulp.src('resources/completions/bash/construct')
+		const bash_completion = gulp.src('resources/completions/bash/kovix')
 			.pipe(replace('@@APPNAME@@', product.applicationName))
 			.pipe(rename('usr/share/bash-completion/completions/' + product.applicationName));
 
-		const zsh_completion = gulp.src('resources/completions/zsh/_construct')
+		const zsh_completion = gulp.src('resources/completions/zsh/_kovix')
 			.pipe(replace('@@APPNAME@@', product.applicationName))
 			.pipe(rename('usr/share/zsh/vendor-completions/_' + product.applicationName));
 
@@ -155,10 +155,10 @@ function prepareRpmPackage(arch) {
 	const stripBinary = process.env['STRIP'] ?? '/usr/bin/strip';
 
 	return function () {
-		const desktop = gulp.src('resources/linux/construct.desktop', { base: '.' })
+		const desktop = gulp.src('resources/linux/kovix.desktop', { base: '.' })
 			.pipe(rename('BUILD/usr/share/applications/' + product.applicationName + '.desktop'));
 
-		const desktopUrlHandler = gulp.src('resources/linux/construct-url-handler.desktop', { base: '.' })
+		const desktopUrlHandler = gulp.src('resources/linux/kovix-url-handler.desktop', { base: '.' })
 			.pipe(rename('BUILD/usr/share/applications/' + product.applicationName + '-url-handler.desktop'));
 
 		const desktops = es.merge(desktop, desktopUrlHandler)
@@ -169,13 +169,13 @@ function prepareRpmPackage(arch) {
 			.pipe(replace('@@ICON@@', product.linuxIconName))
 			.pipe(replace('@@URLPROTOCOL@@', product.urlProtocol));
 
-		const appdata = gulp.src('resources/linux/construct.appdata.xml', { base: '.' })
+		const appdata = gulp.src('resources/linux/kovix.appdata.xml', { base: '.' })
 			.pipe(replace('@@NAME_LONG@@', product.nameLong))
 			.pipe(replace('@@NAME@@', product.applicationName))
 			.pipe(replace('@@LICENSE@@', product.licenseName))
 			.pipe(rename('BUILD/usr/share/appdata/' + product.applicationName + '.appdata.xml'));
 
-		const workspaceMime = gulp.src('resources/linux/construct-workspace.xml', { base: '.' })
+		const workspaceMime = gulp.src('resources/linux/kovix-workspace.xml', { base: '.' })
 			.pipe(replace('@@NAME_LONG@@', product.nameLong))
 			.pipe(replace('@@NAME@@', product.applicationName))
 			.pipe(rename('BUILD/usr/share/mime/packages/' + product.applicationName + '-workspace.xml'));
@@ -183,11 +183,11 @@ function prepareRpmPackage(arch) {
 		const icon = gulp.src('resources/linux/kovix.png', { base: '.' })
 			.pipe(rename('BUILD/usr/share/pixmaps/' + product.linuxIconName + '.png'));
 
-		const bash_completion = gulp.src('resources/completions/bash/construct')
+		const bash_completion = gulp.src('resources/completions/bash/kovix')
 			.pipe(replace('@@APPNAME@@', product.applicationName))
 			.pipe(rename('BUILD/usr/share/bash-completion/completions/' + product.applicationName));
 
-		const zsh_completion = gulp.src('resources/completions/zsh/_construct')
+		const zsh_completion = gulp.src('resources/completions/zsh/_kovix')
 			.pipe(replace('@@APPNAME@@', product.applicationName))
 			.pipe(rename('BUILD/usr/share/zsh/site-functions/_' + product.applicationName));
 
@@ -255,11 +255,11 @@ function prepareSnapPackage(arch) {
 
 	return function () {
 		// A desktop file that is placed in snap/gui will be placed into meta/gui verbatim.
-		const desktop = gulp.src('resources/linux/construct.desktop', { base: '.' })
+		const desktop = gulp.src('resources/linux/kovix.desktop', { base: '.' })
 			.pipe(rename(`snap/gui/${product.applicationName}.desktop`));
 
 		// A desktop file that is placed in snap/gui will be placed into meta/gui verbatim.
-		const desktopUrlHandler = gulp.src('resources/linux/construct-url-handler.desktop', { base: '.' })
+		const desktopUrlHandler = gulp.src('resources/linux/kovix-url-handler.desktop', { base: '.' })
 			.pipe(rename(`snap/gui/${product.applicationName}-url-handler.desktop`));
 
 		const desktops = es.merge(desktop, desktopUrlHandler)

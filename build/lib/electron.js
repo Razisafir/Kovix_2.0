@@ -88,7 +88,7 @@ exports.config = {
     productAppName: product.nameLong,
     companyName: 'CONSTRUCT',
     copyright: 'Copyright (C) 2024 CONSTRUCT. All rights reserved',
-    darwinIcon: 'resources/darwin/construct.icns',
+    darwinIcon: 'resources/darwin/kovix.icns',
     darwinBundleIdentifier: product.darwinBundleIdentifier,
     darwinApplicationCategoryType: 'public.app-category.developer-tools',
     darwinHelpBookFolder: 'CONSTRUCT IDE HelpBook',
