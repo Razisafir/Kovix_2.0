@@ -69,6 +69,10 @@ export interface IToolResult {
                 exitCode?: number;
                 /** Name of the tool that was executed (for MCP/agent-reach tools) */
                 tool?: string;
+                /** Whether the underlying MCP server was configured at execution time */
+                configured?: boolean;
+                /** Mode the tool was run in (e.g. ponytail 'strict' | 'minimal' | 'review') */
+                mode?: string;
         };
 }
 
