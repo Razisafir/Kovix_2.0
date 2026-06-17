@@ -1223,12 +1223,12 @@ registerAction2(class ReadWebpageAction extends Action2 {
                 const url = await quickInput.input({
                         prompt: 'Enter webpage URL to read',
                         placeHolder: 'https://example.com',
-                        validateInput: (value) => {
+                        validateInput: async (value): Promise<string | undefined> => {
                                 if (!value) { return 'URL cannot be empty'; }
                                 if (!value.startsWith('http://') && !value.startsWith('https://')) {
                                         return 'URL must start with http:// or https://';
                                 }
-                                return undefined as unknown as string;
+                                return undefined;
                         },
                 });
 

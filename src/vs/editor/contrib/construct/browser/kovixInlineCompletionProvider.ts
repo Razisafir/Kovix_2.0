@@ -6,11 +6,11 @@
 
 import { Disposable } from '../../../../base/common/lifecycle.js';
 import { CancellationToken } from '../../../../base/common/cancellation.js';
-import { Range, IRange } from '../../../common/core/range.js';
+import { IRange } from '../../../common/core/range.js';
 import { Position } from '../../../common/core/position.js';
 import { ITextModel } from '../../../common/model.js';
 import { InlineCompletion, InlineCompletionContext, InlineCompletions, InlineCompletionsProvider } from '../../../common/languages.js';
-import { ILanguageFeaturesService } from '../../../common/languages/languageFeatures.js';
+import { ILanguageFeaturesService } from '../../../common/services/languageFeatures.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { IConstructAIService } from '../../../../platform/construct/common/llm/constructAIService.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
@@ -36,7 +36,6 @@ export class KovixInlineCompletionProvider extends Disposable implements InlineC
         static readonly ID = 'kovix.inlineCompletionProvider';
 
         private _lastRequestTime = 0;
-        private _lastRequestToken: CancellationToken | undefined;
         private _lastRequestAborter: AbortController | undefined;
 
         constructor(
@@ -73,11 +72,8 @@ export class KovixInlineCompletionProvider extends Disposable implements InlineC
          */
         private buildPrefixSuffix(model: ITextModel, position: Position): { prefix: string; suffix: string } {
                 const lineCount = model.getLineCount();
-                const offset = model.getOffsetAt(position);
-
                 // Use 5 lines before + current line up to cursor as prefix
                 const startLine = Math.max(1, position.lineNumber - 8);
-                const startOffset = model.getOffsetAt(new Position(startLine, 1));
                 const prefix = model.getValueInRange({
                         startLineNumber: startLine,
                         startColumn: 1,
@@ -202,12 +198,23 @@ export class KovixInlineCompletionProvider extends Disposable implements InlineC
                 // No-op; could be used for telemetry
         }
 
-        handleItemDidPartiallyAccept?(
+        handlePartialAccept?(
                 completions: InlineCompletions,
                 item: InlineCompletion,
-                acceptedLength: number,
+                acceptedCharacters: number,
         ): void {
                 // No-op
+        }
+
+        handleRejection?(
+                completions: InlineCompletions,
+                item: InlineCompletion,
+        ): void {
+                // No-op
+        }
+
+        freeInlineCompletions(completions: InlineCompletions): void {
+                // No-op; our completions hold no external resources
         }
 
         override dispose(): void {
@@ -235,7 +242,8 @@ export function registerKovixAutocomplete(
                 [{ scheme: 'file' }, { scheme: 'untitled' }],
                 provider,
         );
-        provider._register(disposable);
+        // Attach disposable to provider; _register is protected so we cast to access.
+        (provider as unknown as { _register<T extends { dispose(): void }>(o: T): T })._register(disposable);
 
         logService.info('[Kovix.Autocomplete] Provider registered.');
         return provider;

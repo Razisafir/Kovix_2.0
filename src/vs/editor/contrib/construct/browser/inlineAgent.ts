@@ -12,14 +12,14 @@ import * as dom from '../../../../base/browser/dom.js';
 import { Disposable } from '../../../../base/common/lifecycle.js';
 import { Position } from '../../../common/core/position.js';
 import { Range } from '../../../common/core/range.js';
-import { ITextModel, IModelDeltaDecoration } from '../../../common/model.js';
+import { IModelDeltaDecoration } from '../../../common/model.js';
 import { localize } from '../../../../nls';
 import { IThemeService } from '../../../../platform/theme/common/themeService.js';
 import { editorBackground, editorForeground, inputBackground, inputForeground, inputBorder, editorWarningForeground, editorInfoForeground } from '../../../../platform/theme/common/colorRegistry.js';
 import { KeybindingWeight } from '../../../../platform/keybinding/common/keybindingsRegistry.js';
 import { KeyMod, KeyCode } from '../../../../base/common/keyCodes';
-import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
-import { IConstructAIService, IChatMessage } from '../../../../platform/construct/common/llm/constructAIService.js';
+import { IConstructAIService } from '../../../../platform/construct/common/llm/constructAIService.js';
+import { IChatMessage } from '../../../../platform/construct/common/llm/constructAIProvider.js';
 import { INotificationService } from '../../../../platform/notification/common/notification.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
 
@@ -157,7 +157,6 @@ export class KovixInlineAgentController extends Disposable implements IEditorCon
 
         constructor(
                 private readonly _editor: ICodeEditor,
-                @IInstantiationService private readonly _instaService: IInstantiationService,
                 @IConstructAIService private readonly _aiService: IConstructAIService,
                 @IThemeService private readonly _themeService: IThemeService,
                 @INotificationService private readonly _notificationService: INotificationService,
