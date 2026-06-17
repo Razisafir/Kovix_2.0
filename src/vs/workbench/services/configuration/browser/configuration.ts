@@ -1007,7 +1007,6 @@ export class FolderConfiguration extends Disposable {
         private readonly scopes: ConfigurationScope[];
         private configurationFolder: URI;
         private readonly cachedFolderConfiguration: CachedFolderConfiguration;
-        private readonly _initializationPromise: Promise<void>;
 
         constructor(
                 useCache: boolean,
@@ -1030,7 +1029,7 @@ export class FolderConfiguration extends Disposable {
                 // any early call to loadConfiguration() would throw "cannot read property
                 // 'loadConfiguration' of undefined".
                 this.folderConfiguration = this.cachedFolderConfiguration;
-                this._initializationPromise = this.resolveConfigFolderAndInitialize(fileService, uriIdentityService, logService, configFolderRelativePath, useCache);
+                this.resolveConfigFolderAndInitialize(fileService, uriIdentityService, logService, configFolderRelativePath, useCache);
         }
 
         private async resolveConfigFolderAndInitialize(fileService: IFileService, uriIdentityService: IUriIdentityService, logService: ILogService, configFolderRelativePath: string, useCache: boolean): Promise<void> {
