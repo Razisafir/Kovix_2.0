@@ -1320,4 +1320,23 @@ export class ConstructOnboardingWizard extends Disposable {
                                 case 'agentReachSkipped':
                                         break;
                                 case 'configSaved':
-                                        // Config saved — co
+                                        // Config saved — confirm to user and advance to next step
+                                        const confirmDiv = document.createElement('div');
+                                        confirmDiv.className = 'config-saved-confirmation';
+                                        confirmDiv.textContent = 'Settings saved. Continuing...';
+                                        document.body.appendChild(confirmDiv);
+                                        setTimeout(() => confirmDiv.remove(), 1500);
+                                        break;
+                                default:
+                                        break;
+                        }
+                });
+
+                // ---- Initial render ----
+                renderOllamaStatus({ running: false, models: [] });
+        </script>
+</body>
+
+</html>`;
+        }
+}
