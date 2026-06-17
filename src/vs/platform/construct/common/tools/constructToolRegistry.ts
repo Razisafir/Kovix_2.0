@@ -46,7 +46,7 @@ export interface IToolDefinition {
         /** Whether this tool requires network access */
         requiresNetwork: boolean;
         /** Category for UI grouping */
-        category: 'file' | 'terminal' | 'search' | 'network' | 'system' | 'security';
+        category: 'file' | 'terminal' | 'search' | 'network' | 'system' | 'security' | 'design' | 'behavior' | 'mcp';
 }
 
 /**
@@ -60,14 +60,18 @@ export interface IToolResult {
         /** Whether the output is truncated due to size limits */
         truncated: boolean;
         /** Additional metadata about the execution */
-        metadata?: {
-                /** Duration of execution in milliseconds */
-                durationMs?: number;
-                /** Number of bytes read/written */
-                bytesProcessed?: number;
-                /** Exit code for terminal commands */
-                exitCode?: number;
-        };
+        		metadata?: {
+			/** Duration of execution in milliseconds */
+			durationMs?: number;
+			/** Number of bytes read/written */
+			bytesProcessed?: number;
+			/** Exit code for terminal commands */
+			exitCode?: number;
+			/** Tool name that produced this result (for MCP and routed tools) */
+			tool?: string;
+			/** Whether the tool was configured / available */
+			configured?: boolean;
+		};
 }
 
 /**

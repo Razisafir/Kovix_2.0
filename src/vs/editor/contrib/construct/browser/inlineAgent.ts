@@ -30,6 +30,7 @@ import { ILogService } from '../../../../platform/log/common/log.js';
  * Has a status line that shows "Thinking..." / "Streaming..." / "Tab to accept · Esc to cancel".
  */
 class KovixInlineAgentWidget implements IContentWidget {
+        private static readonly ID = 'kovix.inlineAgent';
         private readonly _domNode: HTMLElement;
         private readonly _input: HTMLInputElement;
         private readonly _statusLine: HTMLElement;
@@ -123,6 +124,8 @@ class KovixInlineAgentWidget implements IContentWidget {
                 `;
                 this._statusLine.style.cssText = `margin-top:4px;font-size:11px;opacity:0.85;`;
         }
+
+        getId(): string { return KovixInlineAgentWidget.ID; }
 
         getPosition(): IContentWidgetPosition | null {
                 return {
@@ -324,7 +327,7 @@ export class KovixInlineAgentController extends Disposable implements IEditorCon
                         options: {
                                 className: 'kovix-inline-agent-preview-remove',
                                 isWholeLine: false,
-                                comments: 'Kovix inline edit — to be replaced',
+                                description: 'Kovix inline edit: range being replaced',
                         },
                 });
 
@@ -334,6 +337,7 @@ export class KovixInlineAgentController extends Disposable implements IEditorCon
                 decorations.push({
                         range: { startLineNumber: range.startLineNumber, startColumn: range.startColumn, endLineNumber: range.startLineNumber, endColumn: range.startColumn } as Range,
                         options: {
+                                description: 'Kovix inline edit: preview marker',
                                 hoverMessage: { value: `\`\`\`\n${text}\n\`\`\`\n\n*Kovix proposed edit — press Tab to apply, Esc to cancel*` },
                                 className: 'kovix-inline-agent-preview-marker',
                         },
@@ -398,7 +402,7 @@ export class KovixInlineAgentController extends Disposable implements IEditorCon
                 this._isStreaming = false;
         }
 
-        static get(editor: ICodeEditor): KovixInlineAgentController | undefined {
+        static get(editor: ICodeEditor): KovixInlineAgentController | null {
                 return editor.getContribution<KovixInlineAgentController>(KovixInlineAgentController.ID);
         }
 

@@ -42,7 +42,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { promisify } from 'util';
 
-const execFileAsync = promisify(execFile);
+const _execFileAsync = promisify(execFile);
 
 // ─── JSON-RPC 2.0 Types ─────────────────────────────────────────────────────
 

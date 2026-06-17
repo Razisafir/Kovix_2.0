@@ -29,7 +29,7 @@
  * - ponytail_help: Quick reference
  */
 
-import { spawn } from 'child_process';
+import { } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -75,7 +75,7 @@ interface PonytailModeConfig {
 
 const SERVER_NAME = 'ponytail-mcp-server';
 const SERVER_VERSION = '1.0.0';
-const DEFAULT_TIMEOUT = 30000;  // 30s — matches KOVIX's MCP_DEFAULT_TOOL_TIMEOUT_MS
+const _DEFAULT_TIMEOUT = 30000;  // 30s — matches KOVIX's MCP_DEFAULT_TOOL_TIMEOUT_MS
 
 // Skill file paths (relative to ponytail checkout)
 const SKILL_PATHS: Record<string, string> = {
@@ -439,7 +439,7 @@ const TOOLS: McpTool[] = [
 
 // ─── JSON-RPC Message Handling ──────────────────────────────────────────────
 
-let requestCounter = 0;
+let _requestCounter = 0;
 
 function sendResponse(response: JsonRpcResponse): void {
 	const json = JSON.stringify(response);
