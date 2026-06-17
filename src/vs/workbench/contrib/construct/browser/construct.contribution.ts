@@ -87,6 +87,9 @@ import { ConstructOnboardingWizard } from './constructOnboarding.js';
 import './constructMemoryConfig';
 import './constructApiConfig';
 import './constructApiSettings';
+import { ILanguageFeaturesService } from '../../../../editor/common/languages/languageFeatures.js';
+import { registerKovixAutocomplete } from '../../../../editor/contrib/construct/browser/kovixInlineCompletionProvider.js';
+import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 
 const constructViewIcon = registerIcon('construct-view-icon', Codicon.robot, localize('constructViewIcon', 'View icon of the Kovix Agent view.'));
 const constructMemoryIcon = registerIcon('construct-memory-icon', Codicon.symbolEvent, localize('constructMemoryIcon', 'View icon of the Kovix Memory view.'));
@@ -1493,3 +1496,28 @@ registerAction2(class UiuxStackGuidelinesAction extends Action2 {
                 }
         }
 });
+
+// --- Patch A: Register Kovix tab autocomplete provider ---
+
+class KovixAutocompleteContribution extends Disposable implements IWorkbenchContribution {
+        static readonly ID = 'workbench.contrib.kovixAutocomplete';
+
+        constructor(
+                @ILanguageFeaturesService languageFeaturesService: ILanguageFeaturesService,
+                @IConstructAIService aiService: IConstructAIService,
+                @IConfigurationService configService: IConfigurationService,
+                @ILogService logService: ILogService,
+        ) {
+                super();
+                try {
+                        this._register(registerKovixAutocomplete(languageFeaturesService, aiService, configService, logService));
+                } catch (err) {
+                        logService.error('[Kovix.Autocomplete] Failed to register provider:', err instanceof Error ? err.message : String(err));
+                }
+        }
+}
+
+Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(
+        KovixAutocompleteContribution,
+        LifecyclePhase.Restored
+);
