@@ -1,0 +1,47 @@
+/*---------------------------------------------------------------------------------------------
+ *  Kovix - Inline Agent decorations (Patch B)
+ *  Styles for the preview decorations shown when the inline edit widget has a
+ *  proposed edit pending acceptance.
+ *--------------------------------------------------------------------------------------------*/
+
+/* Dim the text about to be replaced */
+.kovix-inline-agent-preview-remove {
+	opacity: 0.55;
+	text-decoration: line-through;
+	text-decoration-color: var(--vscode-editorWarning-foreground, #FFB300);
+}
+
+/* Subtle marker at the cursor position when a proposal is pending */
+.kovix-inline-agent-preview-marker {
+	border-left: 2px solid var(--vscode-editorInfo-foreground, #00E5FF);
+	margin-left: -2px;
+}
+
+/* The inline agent widget itself — most styling is inline (theme-aware) */
+.kovix-inline-agent {
+	font-family: var(--vscode-editor-font-family, -apple-system, BlinkMacSystemFont, sans-serif);
+}
+
+.kovix-inline-agent .kovix-inline-header {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 6px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.kovix-inline-agent .kovix-inline-input {
+	width: 100%;
+	box-sizing: border-box;
+	border-radius: 4px;
+	padding: 6px 8px;
+	font-size: 13px;
+	outline: none;
+}
+
+.kovix-inline-agent .kovix-inline-status {
+	margin-top: 4px;
+	font-size: 11px;
+	opacity: 0.85;
+}
