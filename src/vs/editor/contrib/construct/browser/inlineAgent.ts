@@ -36,11 +36,11 @@ class InlineAgentWidget implements IContentWidget {
                         display: flex; align-items: center; gap: 6px;
                         margin-bottom: 6px; color: #00E5FF; font-size: 12px; font-weight: 600;
                 `;
-                header.textContent = '⬡ Construct Agent';
+                header.textContent = '⬡ Kovix Agent';
 
                 const input = dom.$('input.construct-inline-input') as HTMLInputElement;
                 input.type = 'text';
-                input.placeholder = localize('constructAgentPlaceholder', "Ask Construct to edit code...");
+                input.placeholder = localize('constructAgentPlaceholder', "Ask Kovix to edit code...");
                 input.style.cssText = `
                         width: 100%; background: #0A0E1A; border: 1px solid #1A1F2E;
                         border-radius: 4px; padding: 6px 8px; color: #E0E7FF;
