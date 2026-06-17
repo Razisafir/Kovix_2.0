@@ -87,7 +87,7 @@ import { ConstructOnboardingWizard } from './constructOnboarding.js';
 import './constructMemoryConfig';
 import './constructApiConfig';
 import './constructApiSettings';
-import { ILanguageFeaturesService } from '../../../../editor/common/languages/languageFeatures.js';
+import { ILanguageFeaturesService } from '../../../../editor/common/services/languageFeatures.js';
 import { registerKovixAutocomplete } from '../../../../editor/contrib/construct/browser/kovixInlineCompletionProvider.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 

@@ -130,8 +130,7 @@ export class KovixInlineCompletionProvider extends Disposable implements InlineC
                 }
                 const aborter = new AbortController();
                 this._lastRequestAborter = aborter;
-                this._lastRequestToken = token;
-
+                
                 // Wire token cancellation to the aborter
                 token.onCancellationRequested(() => aborter.abort());
 

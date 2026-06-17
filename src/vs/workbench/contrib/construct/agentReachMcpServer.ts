@@ -35,14 +35,12 @@
  * - doctor: Run agent-reach diagnostics
  */
 
-import { spawn, execFile } from 'child_process';
+import { spawn } from 'child_process';
 import * as readline from 'readline';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { promisify } from 'util';
 
-const _execFileAsync = promisify(execFile);
 
 // ─── JSON-RPC 2.0 Types ─────────────────────────────────────────────────────
 

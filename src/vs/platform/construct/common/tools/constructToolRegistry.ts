@@ -71,6 +71,10 @@ export interface IToolResult {
 			tool?: string;
 			/** Whether the tool was configured / available */
 			configured?: boolean;
+			/** Execution mode (e.g. 'git', 'file', 'kali') */
+			mode?: string;
+			/** Severity level for findings (e.g. 'critical', 'high', 'low') */
+			severity?: string;
 		};
 }
 
