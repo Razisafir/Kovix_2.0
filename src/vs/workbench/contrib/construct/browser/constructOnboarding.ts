@@ -1320,4 +1320,22 @@ export class ConstructOnboardingWizard extends Disposable {
                                 case 'agentReachSkipped':
                                         break;
                                 case 'configSaved':
-                                        // Config saved — co
+                                        // Config saved — could show a success toast or advance step
+                                        break;
+                                default:
+                                        break;
+                        }
+                });
+
+                // ---- Initialize on load ----
+                window.addEventListener('DOMContentLoaded', () => {
+                        goToStep(0);
+                        renderProviders();
+                        checkOllama();
+                        checkKali();
+                });
+        </script>
+</body>
+</html>`;
+        }
+}
