@@ -1628,6 +1628,13 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                 const target = input.target as string;
                 if (!target) { return { success: false, output: 'Error: target is required', truncated: false }; }
 
+                // QA-8: Safety gate — refuse external targets unless explicitly allowed
+                const refuseReason = this.checkExternalTargetAllowed(target);
+                if (refuseReason) {
+                        this.logService.warn(`[Construct] nmap refused: external target '${target}' and allowExternalTargets=false`);
+                        return { success: false, output: refuseReason, truncated: false };
+                }
+
                 const flags = (input.flags as string[]) ?? [];
                 const portRange = input.port_range as string;
                 const flagStr = flags.join(' ');
@@ -1652,6 +1659,23 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
         private async executeGhidraDecompile(input: Record<string, unknown>): Promise<IToolResult> {
                 const binaryPath = input.binary_path as string;
                 if (!binaryPath) { return { success: false, output: 'Error: binary_path is required', truncated: false }; }
+
+                // QA-8: Safety gate — restrict Ghidra to binaries inside the workspace
+                const workspaceRoot = this.workspaceContextService.getWorkspace().folders[0]?.uri.fsPath;
+                if (workspaceRoot) {
+                        try {
+                                assertWithinWorkspace(binaryPath, workspaceRoot);
+                        } catch (err) {
+                                this.logService.warn(`[Construct] ghidra refused: binary_path '${binaryPath}' outside workspace`);
+                                return {
+                                    success: false,
+                                    output: `Refusing to decompile '${binaryPath}': path is outside the workspace.\n` +
+                                        'Ghidra decompilation is restricted to workspace-local binaries for safety.\n' +
+                                        'Copy the binary into your workspace and try again.',
+                                    truncated: false,
+                                };
+                        }
+                }
 
                 const functionName = (input.function_name as string) ?? '';
 
@@ -1685,6 +1709,13 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                 const target = input.target as string;
                 if (!target) { return { success: false, output: 'Error: target is required', truncated: false }; }
 
+                // QA-8: Safety gate — refuse external targets unless explicitly allowed
+                const refuseReason = this.checkExternalTargetAllowed(target);
+                if (refuseReason) {
+                        this.logService.warn(`[Construct] nuclei refused: external target '${target}' and allowExternalTargets=false`);
+                        return { success: false, output: refuseReason, truncated: false };
+                }
+
                 const templateTags = (input.template_tags as string[]) ?? [];
                 const severity = (input.severity as string[]) ?? [];
                 const tagsArg = templateTags.length > 0 ? `-tags ${templateTags.join(',')}` : '';
@@ -1704,6 +1735,50 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                         }
                         return { success: false, output: `nuclei error: ${msg}`, truncated: false };
                 }
+        }
+
+        // --- Security: external-target guard (QA-8) ---
+
+        /**
+         * Returns true if the target is NOT loopback and NOT in a private RFC1918 range.
+         * Used to gate nmap/nuclei scans behind an explicit user opt-in setting.
+         */
+        private isExternalTarget(target: string): boolean {
+                const t = target.trim().toLowerCase();
+                if (t === 'localhost' || t === '::1' || t === '127.0.0.1') { return false; }
+                const host = t.split(':')[0];
+                const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+                if (ipv4) {
+                        const a = +ipv4[1], b = +ipv4[2];
+                        if (a === 10) { return false; }
+                        if (a === 172 && b >= 16 && b <= 31) { return false; }
+                        if (a === 192 && b === 168) { return false; }
+                        if (a === 127) { return false; }
+                        return true;
+                }
+                return true;
+        }
+
+        /**
+         * Returns an error message if the scan should be refused, or undefined if it may proceed.
+         */
+        private checkExternalTargetAllowed(target: string): string | undefined {
+                if (!this.isExternalTarget(target)) { return undefined; }
+                const allowed = this._configurationService.getValue<boolean>(
+                        'construct.security.allowExternalTargets'
+                );
+                if (allowed) { return undefined; }
+                return [
+                        `Refusing to scan external target '${target}'.`,
+                        '',
+                        'This is a safety guard: scanning external hosts without explicit permission',
+                        'may be illegal and is blocked by default.',
+                        '',
+                        'To allow external scans, enable the setting:',
+                        '  Settings -> Kovix — Security Tools -> Allow External Targets',
+                        'Or in settings.json:',
+                        '  "construct.security.allowExternalTargets": true',
+                ].join('\n');
         }
 
         // --- Private Helpers ---
