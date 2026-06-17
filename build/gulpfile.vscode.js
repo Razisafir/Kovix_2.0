@@ -367,7 +367,7 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
                                 'resources/win32/construct_150x150.png'
                         ], { base: '.' }));
                 } else if (platform === 'linux') {
-                        all = es.merge(all, gulp.src('resources/linux/construct.png', { base: '.' }));
+                        all = es.merge(all, gulp.src('resources/linux/kovix.png', { base: '.' }));
                 } else if (platform === 'darwin') {
                         const shortcut = gulp.src('resources/darwin/bin/construct.sh')
                                 .pipe(replace('@@APPNAME@@', product.applicationName))
