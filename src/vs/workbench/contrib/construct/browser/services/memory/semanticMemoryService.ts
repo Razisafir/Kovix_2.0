@@ -9,7 +9,7 @@ import { Emitter } from '../../../../../../base/common/event.js';
 import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { ISemanticMemoryService } from '../../../../../../platform/construct/common/memory/semanticMemory.js';
-import { ISemanticMemoryEntry, IMemorySearchResult, MemoryLayer } from '../../../../../../platform/construct/common/memory/memoryTypes';
+import { ISemanticMemoryEntry, IMemorySearchResult, MemoryLayer } from '../../../../../../platform/construct/common/memory/memoryTypes.js';
 import { IEmbeddingService } from '../../../../../../platform/construct/common/memory/embeddingService.js';
 
 export class SemanticMemoryService extends Disposable implements ISemanticMemoryService {

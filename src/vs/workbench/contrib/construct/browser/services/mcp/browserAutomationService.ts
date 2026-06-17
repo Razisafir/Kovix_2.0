@@ -10,7 +10,7 @@ import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { IInstantiationService } from '../../../../../../platform/instantiation/common/instantiation.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { IMCPServerManager } from '../../../../../../platform/construct/common/mcp/mcpServerManager.js';
-import { IMCPServerDefinition, MCPTransportType } from '../../../../../../platform/construct/common/mcp/mcpTypes';
+import { IMCPServerDefinition, MCPTransportType } from '../../../../../../platform/construct/common/mcp/mcpTypes.js';
 import {
         IBrowserAutomationService,
         IBrowserSession,

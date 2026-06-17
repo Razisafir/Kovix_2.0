@@ -15,7 +15,7 @@ import { IMCPServerDefinition, IMCPMarketplaceItem, MCPTransportType,
         MCP_REGISTRY_URL,
         MCP_MARKETPLACE_CACHE_KEY,
         MCP_MARKETPLACE_CACHE_TTL_MS
-} from '../../../../../../platform/construct/common/mcp/mcpTypes';
+} from '../../../../../../platform/construct/common/mcp/mcpTypes.js';
 
 export class MCPMarketplaceService extends Disposable implements IMCPMarketplace {
         declare readonly _serviceBrand: undefined;

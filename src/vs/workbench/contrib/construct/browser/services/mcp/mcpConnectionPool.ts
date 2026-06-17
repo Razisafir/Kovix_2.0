@@ -20,7 +20,7 @@ import {
         MCP_DEFAULT_TOOL_TIMEOUT_MS,
         MCP_MAX_RESTART_BACKOFF_MS,
         MCP_RESTART_BACKOFF_BASE_MS
-} from '../../../../../../platform/construct/common/mcp/mcpTypes';
+} from '../../../../../../platform/construct/common/mcp/mcpTypes.js';
 
 interface IConnectionEntry {
         client: any; // MCP Client instance

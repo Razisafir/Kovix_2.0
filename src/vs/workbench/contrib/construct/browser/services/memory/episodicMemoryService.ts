@@ -9,7 +9,7 @@ import { Emitter } from '../../../../../../base/common/event.js';
 import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { IEpisodicMemoryService } from '../../../../../../platform/construct/common/memory/episodicMemory.js';
-import { IEpisodicMemoryEntry, MemoryLayer } from '../../../../../../platform/construct/common/memory/memoryTypes';
+import { IEpisodicMemoryEntry, MemoryLayer } from '../../../../../../platform/construct/common/memory/memoryTypes.js';
 
 interface IInMemoryEpisode {
         entry: IEpisodicMemoryEntry;

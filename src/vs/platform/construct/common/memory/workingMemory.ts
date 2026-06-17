@@ -8,7 +8,7 @@
 import { createDecorator } from '../../../instantiation/common/instantiation.js';
 import { Event } from '../../../../base/common/event.js';
 import { IDisposable } from '../../../../base/common/lifecycle.js';
-import { IWorkingMemoryEntry } from './memoryTypes';
+import { IWorkingMemoryEntry } from './memoryTypes.js';
 
 export const IWorkingMemoryService = createDecorator<IWorkingMemoryService>('construct.workingMemory');
 

@@ -17,7 +17,7 @@ import {
         IMCPConnectionEvent,
         IMCPExecutionResult,
         IMCPResourceResult
-} from './mcpTypes';
+} from './mcpTypes.js';
 
 export const IMCPServerManager = createDecorator<IMCPServerManager>('construct.mcpServerManager');
 

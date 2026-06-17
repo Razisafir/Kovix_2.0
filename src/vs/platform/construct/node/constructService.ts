@@ -24,7 +24,7 @@ import { IFileWatcherService } from '../common/watcher/fileWatcherService.js';
 import { FileWatcherNodeService } from './constructFileWatcherService.js';
 import { ITerminalExecutor } from '../common/terminal/terminalExecutor.js';
 import { TerminalNodeService } from './constructTerminalService.js';
-import { registerSingleton, InstantiationType } from '../../instantiation/common/extensions';
+import { registerSingleton, InstantiationType } from '../../instantiation/common/extensions.js';
 
 class ConstructService implements IConstructService {
         declare readonly _serviceBrand: undefined;

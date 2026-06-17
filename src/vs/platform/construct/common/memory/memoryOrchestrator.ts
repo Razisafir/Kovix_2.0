@@ -8,7 +8,7 @@
 import { createDecorator } from '../../../instantiation/common/instantiation.js';
 import { Event } from '../../../../base/common/event.js';
 import { IDisposable } from '../../../../base/common/lifecycle.js';
-import { IMemoryQuery, IMemorySearchResult, IMemoryStats } from './memoryTypes';
+import { IMemoryQuery, IMemorySearchResult, IMemoryStats } from './memoryTypes.js';
 
 export const IMemoryOrchestrator = createDecorator<IMemoryOrchestrator>('construct.memoryOrchestrator');
 

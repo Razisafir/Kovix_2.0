@@ -14,7 +14,7 @@
         //#region Utilities
 
         function validateIPC(channel: string): true | never {
-                if (!channel || !channel.startsWith('vscode:')) {
+                if (!channel || (!channel.startsWith('vscode:') && !channel.startsWith('construct:'))) {
                         throw new Error(`Unsupported event IPC channel '${channel}'`);
                 }
 
@@ -38,9 +38,9 @@
         let configuration: ISandboxConfiguration | undefined = undefined;
 
         const resolveConfiguration: Promise<ISandboxConfiguration> = (async () => {
-                const windowConfigIpcChannel = parseArgv('vscode-window-config');
+                const windowConfigIpcChannel = parseArgv('construct-window-config') ?? parseArgv('vscode-window-config');
                 if (!windowConfigIpcChannel) {
-                        throw new Error('Preload: did not find expected vscode-window-config in renderer process arguments list.');
+                        throw new Error('Preload: did not find expected construct-window-config in renderer process arguments list.');
                 }
 
                 try {
@@ -62,7 +62,7 @@
 
                         return resolvedConfiguration;
                 } catch (error) {
-                        throw new Error(`Preload: unable to fetch vscode-window-config: ${error}`);
+                        throw new Error(`Preload: unable to fetch construct-window-config: ${error}`);
                 }
         })();
 

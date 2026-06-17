@@ -8,14 +8,14 @@
 import { Emitter } from '../../../../../../base/common/event.js';
 import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
-import { IFileService } from '../../../../../../platform/files/common/files';
+import { IFileService } from '../../../../../../platform/files/common/files.js';
 import { IWorkspaceContextService } from '../../../../../../platform/workspace/common/workspace.js';
 import { IMCPProcess } from '../../../../../../platform/construct/common/mcp/mcpProcess.js';
 import { IMCPProcessNodeService } from '../../../../../../platform/construct/common/mcp/mcpProcessNode.js';
 import { IInstantiationService } from '../../../../../../platform/instantiation/common/instantiation.js';
 import { URI } from '../../../../../../base/common/uri.js';
 import { VSBuffer } from '../../../../../../base/common/buffer.js';
-import { joinPath } from '../../../../../../base/common/resources';
+import { joinPath } from '../../../../../../base/common/resources.js';
 
 /**
  * Browser-layer MCP process service.

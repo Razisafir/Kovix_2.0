@@ -23,7 +23,7 @@ import {
         MCPHealthStatus,
         MCPTransportType,
         MCP_RESOURCE_CACHE_TTL_MS
-} from '../../../../../../platform/construct/common/mcp/mcpTypes';
+} from '../../../../../../platform/construct/common/mcp/mcpTypes.js';
 import { MCPConnectionPool } from './mcpConnectionPool.js';
 import { ITerminalExecutor } from '../../../../../../platform/construct/common/terminal/terminalExecutor.js';
 import { MCPServerRegistry } from './mcpServerRegistry.js';

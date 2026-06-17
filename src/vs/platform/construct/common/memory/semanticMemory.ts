@@ -8,7 +8,7 @@
 import { createDecorator } from '../../../instantiation/common/instantiation.js';
 import { Event } from '../../../../base/common/event.js';
 import { IDisposable } from '../../../../base/common/lifecycle.js';
-import { ISemanticMemoryEntry, IMemorySearchResult } from './memoryTypes';
+import { ISemanticMemoryEntry, IMemorySearchResult } from './memoryTypes.js';
 
 export const ISemanticMemoryService = createDecorator<ISemanticMemoryService>('construct.semanticMemory');
 

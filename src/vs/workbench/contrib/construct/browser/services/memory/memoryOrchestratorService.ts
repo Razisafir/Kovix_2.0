@@ -19,7 +19,7 @@ import {
         IEpisodicMemoryEntry,
         ISemanticMemoryEntry,
         IProceduralMemoryEntry
-} from '../../../../../../platform/construct/common/memory/memoryTypes';
+} from '../../../../../../platform/construct/common/memory/memoryTypes.js';
 import { IWorkingMemoryService } from '../../../../../../platform/construct/common/memory/workingMemory.js';
 import { IEpisodicMemoryService } from '../../../../../../platform/construct/common/memory/episodicMemory.js';
 import { ISemanticMemoryService } from '../../../../../../platform/construct/common/memory/semanticMemory.js';

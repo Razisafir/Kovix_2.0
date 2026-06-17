@@ -21,8 +21,8 @@ import { ITerminalExecutor } from '../../../../../../platform/construct/common/t
 import { IDiffApplier } from '../../../../../../platform/construct/common/editor/diffApplier.js';
 import { IMemoryOrchestrator } from '../../../../../../platform/construct/common/memory/memoryOrchestrator.js';
 import { IConstructMemoryService } from '../../../../../../platform/construct/common/memory/constructMemory.js';
-import { ICommandService } from '../../../../../../platform/commands/common/commands';
-import { IFileService } from '../../../../../../platform/files/common/files';
+import { ICommandService } from '../../../../../../platform/commands/common/commands.js';
+import { IFileService } from '../../../../../../platform/files/common/files.js';
 import { URI } from '../../../../../../base/common/uri.js';
 import { IAgentErrorRecovery } from '../../../../../../platform/construct/common/recovery/agentErrorRecovery.js';
 import { ISnapshotManager, IRestoreResult } from '../../../../../../platform/construct/common/snapshot/snapshotManager.js';

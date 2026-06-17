@@ -5,25 +5,25 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { localize, localize2 } from '../../../../nls';
+import { localize, localize2 } from '../../../../nls.js';
 import { Registry } from '../../../../platform/registry/common/platform.js';
-import { IViewsRegistry, Extensions as ViewExtensions, IViewContainersRegistry, ViewContainerLocation } from '../../../../workbench/common/views';
-import { SyncDescriptor } from '../../../../platform/instantiation/common/descriptors';
-import { Codicon } from '../../../../base/common/codicons';
+import { IViewsRegistry, Extensions as ViewExtensions, IViewContainersRegistry, ViewContainerLocation } from '../../../../workbench/common/views.js';
+import { SyncDescriptor } from '../../../../platform/instantiation/common/descriptors.js';
+import { Codicon } from '../../../../base/common/codicons.js';
 import { registerIcon } from '../../../../platform/theme/common/iconRegistry.js';
 import { ViewPaneContainer } from '../../../../workbench/browser/parts/views/viewPaneContainer.js';
 import { ConstructAgentViewPane } from './constructAgentView.js';
 import { ConstructMemoryViewPane } from './constructMemoryView.js';
 import { IStatusbarService, StatusbarAlignment, IStatusbarEntryAccessor } from '../../../../workbench/services/statusbar/browser/statusbar.js';
-import { IWorkbenchContribution, Extensions as WorkbenchExtensions, IWorkbenchContributionsRegistry } from '../../../../workbench/common/contributions';
+import { IWorkbenchContribution, Extensions as WorkbenchExtensions, IWorkbenchContributionsRegistry } from '../../../../workbench/common/contributions.js';
 import { LifecyclePhase } from '../../../../workbench/services/lifecycle/common/lifecycle.js';
 import { Disposable } from '../../../../base/common/lifecycle.js';
-import { Action2, registerAction2 } from '../../../../platform/actions/common/actions';
+import { Action2, registerAction2 } from '../../../../platform/actions/common/actions.js';
 import { ServicesAccessor } from '../../../../platform/instantiation/common/instantiation.js';
 import { IViewsService } from '../../../../workbench/services/views/common/viewsService.js';
 import { KeybindingWeight } from '../../../../platform/keybinding/common/keybindingsRegistry.js';
-import { KeyMod, KeyCode } from '../../../../base/common/keyCodes';
-import { registerSingleton, InstantiationType } from '../../../../platform/instantiation/common/extensions';
+import { KeyMod, KeyCode } from '../../../../base/common/keyCodes.js';
+import { registerSingleton, InstantiationType } from '../../../../platform/instantiation/common/extensions.js';
 import { IMCPServerManager } from '../../../../platform/construct/common/mcp/mcpServerManager.js';
 import { IMCPMarketplace } from '../../../../platform/construct/common/mcp/mcpMarketplace.js';
 import { IBrowserAutomationService } from '../../../../platform/construct/common/mcp/browserAutomation.js';
@@ -47,7 +47,7 @@ import { ConstructMemoryService } from './services/memory/constructMemoryService
 import { INotificationService } from '../../../../platform/notification/common/notification.js';
 import { IQuickInputService } from '../../../../platform/quickinput/common/quickInput.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
-import { ICommandService } from '../../../../platform/commands/common/commands';
+import { ICommandService } from '../../../../platform/commands/common/commands.js';
 import { IConstructAIService } from '../../../../platform/construct/common/llm/constructAIService.js';
 import { AIProviderType } from '../../../../platform/construct/common/llm/constructAIProvider.js';
 import { IConstructToolRegistry } from '../../../../platform/construct/common/tools/constructToolRegistry.js';
@@ -84,9 +84,9 @@ import { ConstructSessionServiceImpl } from './services/session/constructSession
 import { showProjectWizard } from './constructProjectWizard.js';
 import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
 import { ConstructOnboardingWizard } from './constructOnboarding.js';
-import './constructMemoryConfig';
-import './constructApiConfig';
-import './constructApiSettings';
+import './constructMemoryConfig.js';
+import './constructApiConfig.js';
+import './constructApiSettings.js';
 
 const constructViewIcon = registerIcon('construct-view-icon', Codicon.robot, localize('constructViewIcon', 'View icon of the Kovix Agent view.'));
 const constructMemoryIcon = registerIcon('construct-memory-icon', Codicon.symbolEvent, localize('constructMemoryIcon', 'View icon of the Kovix Memory view.'));

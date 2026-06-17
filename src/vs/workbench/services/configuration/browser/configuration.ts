@@ -1003,10 +1003,11 @@ export class FolderConfiguration extends Disposable {
         protected readonly _onDidChange: Emitter<void> = this._register(new Emitter<void>());
         readonly onDidChange: Event<void> = this._onDidChange.event;
 
-        private folderConfiguration!: CachedFolderConfiguration | FileServiceBasedConfiguration;
+        private folderConfiguration: CachedFolderConfiguration | FileServiceBasedConfiguration;
         private readonly scopes: ConfigurationScope[];
         private configurationFolder: URI;
-        private cachedFolderConfiguration: CachedFolderConfiguration;
+        private readonly cachedFolderConfiguration: CachedFolderConfiguration;
+        private readonly _initializationPromise: Promise<void>;
 
         constructor(
                 useCache: boolean,
@@ -1024,18 +1025,28 @@ export class FolderConfiguration extends Disposable {
                 this.scopes = WorkbenchState.WORKSPACE === this.workbenchState ? FOLDER_SCOPES : WORKSPACE_SCOPES;
                 this.configurationFolder = uriIdentityService.extUri.joinPath(workspaceFolder.uri, configFolderRelativePath);
                 this.cachedFolderConfiguration = new CachedFolderConfiguration(workspaceFolder.uri, configFolderRelativePath, { scopes: this.scopes, skipRestricted: this.isUntrusted() }, configurationCache, logService);
-                if (useCache && this.configurationCache.needsCaching(workspaceFolder.uri)) {
-                        this.folderConfiguration = this.cachedFolderConfiguration;
-                        whenProviderRegistered(workspaceFolder.uri, fileService)
+                // IMPORTANT: always start with the cached folder configuration as a fallback.
+                // resolveConfigFolderAndInitialize() runs asynchronously, so without this
+                // any early call to loadConfiguration() would throw "cannot read property
+                // 'loadConfiguration' of undefined".
+                this.folderConfiguration = this.cachedFolderConfiguration;
+                this._initializationPromise = this.resolveConfigFolderAndInitialize(fileService, uriIdentityService, logService, configFolderRelativePath, useCache);
+        }
+
+        private async resolveConfigFolderAndInitialize(fileService: IFileService, uriIdentityService: IUriIdentityService, logService: ILogService, configFolderRelativePath: string, useCache: boolean): Promise<void> {
+                // Only defer initialization if caching is actually needed for this folder.
+                // Otherwise we can resolve synchronously and avoid the race condition.
+                if (useCache && this.configurationCache.needsCaching(this.workspaceFolder.uri)) {
+                        whenProviderRegistered(this.workspaceFolder.uri, fileService)
                                 .then(() => {
-                                        this.resolveConfigFolderAndInitialize(fileService, uriIdentityService, logService, configFolderRelativePath);
+                                        this.initializeFileServiceBasedConfiguration(fileService, uriIdentityService, logService, configFolderRelativePath);
                                 });
                 } else {
-                        this.resolveConfigFolderAndInitialize(fileService, uriIdentityService, logService, configFolderRelativePath);
+                        await this.initializeFileServiceBasedConfiguration(fileService, uriIdentityService, logService, configFolderRelativePath);
                 }
         }
 
-        private async resolveConfigFolderAndInitialize(fileService: IFileService, uriIdentityService: IUriIdentityService, logService: ILogService, configFolderRelativePath: string): Promise<void> {
+        private async initializeFileServiceBasedConfiguration(fileService: IFileService, uriIdentityService: IUriIdentityService, logService: ILogService, configFolderRelativePath: string): Promise<void> {
                 // Try .construct/ first, fall back to .vscode/ if it doesn't exist
                 const constructFolder = uriIdentityService.extUri.joinPath(this.workspaceFolder.uri, configFolderRelativePath);
                 try {
@@ -1051,12 +1062,15 @@ export class FolderConfiguration extends Disposable {
                         // If we can't check, default to .construct
                 }
 
-                this.folderConfiguration = this._register(this.createFileServiceBasedConfiguration(fileService, uriIdentityService, logService));
-                this._register(this.folderConfiguration.onDidChange(e => this.onDidFolderConfigurationChange()));
+                const fileConfig = this._register(this.createFileServiceBasedConfiguration(fileService, uriIdentityService, logService));
+                this._register(fileConfig.onDidChange(e => this.onDidFolderConfigurationChange()));
+                this.folderConfiguration = fileConfig;
                 this.onDidFolderConfigurationChange();
         }
 
         loadConfiguration(): Promise<ConfigurationModel> {
+                // Always have a fallback (cachedFolderConfiguration) so we never throw
+                // when called before async initialization completes.
                 return this.folderConfiguration.loadConfiguration();
         }
 

@@ -8,7 +8,7 @@
 import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { Emitter } from '../../../../../../base/common/event.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
-import { IFileService } from '../../../../../../platform/files/common/files';
+import { IFileService } from '../../../../../../platform/files/common/files.js';
 import { IPendingChangesService, PendingChangeEntry } from '../../../../../../platform/construct/common/diff/pendingChanges.js';
 import { URI } from '../../../../../../base/common/uri.js';
 import { VSBuffer } from '../../../../../../base/common/buffer.js';

@@ -8,7 +8,7 @@
 import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { Emitter, Event } from '../../../../../../base/common/event.js';
 import { IConfigurationService } from '../../../../../../platform/configuration/common/configuration.js';
-import { ISecretStorageService } from '../../../../../../platform/secrets/common/secrets';
+import { ISecretStorageService } from '../../../../../../platform/secrets/common/secrets.js';
 import { IStorageService, StorageScope, StorageTarget } from '../../../../../../platform/storage/common/storage.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
 import {
@@ -18,7 +18,7 @@ import {
         MCP_CREDENTIALS_PREFIX,
         MCP_MARKETPLACE_RATINGS_KEY,
         MCP_INSTALLED_MARKETPLACE_KEY
-} from '../../../../../../platform/construct/common/mcp/mcpTypes';
+} from '../../../../../../platform/construct/common/mcp/mcpTypes.js';
 
 /** Cline-compatible .claude-mcp/settings.json format */
 export interface IClineMcpSettings {

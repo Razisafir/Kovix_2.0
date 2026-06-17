@@ -9,7 +9,7 @@ import { Emitter } from '../../../../../../base/common/event.js';
 import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { IProceduralMemoryService } from '../../../../../../platform/construct/common/memory/proceduralMemory.js';
-import { IProceduralMemoryEntry, MemoryLayer } from '../../../../../../platform/construct/common/memory/memoryTypes';
+import { IProceduralMemoryEntry, MemoryLayer } from '../../../../../../platform/construct/common/memory/memoryTypes.js';
 
 export class ProceduralMemoryService extends Disposable implements IProceduralMemoryService {
         readonly _serviceBrand: undefined;

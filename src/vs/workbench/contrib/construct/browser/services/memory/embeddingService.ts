@@ -9,7 +9,7 @@ import { Emitter } from '../../../../../../base/common/event.js';
 import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { IEmbeddingService } from '../../../../../../platform/construct/common/memory/embeddingService.js';
-import { IEmbeddingConfig } from '../../../../../../platform/construct/common/memory/memoryTypes';
+import { IEmbeddingConfig } from '../../../../../../platform/construct/common/memory/memoryTypes.js';
 
 const OLLAMA_EMBED_URL = 'http://localhost:11434/api/embeddings';
 const OLLAMA_MODEL = 'nomic-embed-text';

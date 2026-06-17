@@ -10,7 +10,7 @@ import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { IStorageService, StorageScope, StorageTarget } from '../../../../../../platform/storage/common/storage.js';
 import { IWorkingMemoryService } from '../../../../../../platform/construct/common/memory/workingMemory.js';
-import { IWorkingMemoryEntry, MemoryLayer } from '../../../../../../platform/construct/common/memory/memoryTypes';
+import { IWorkingMemoryEntry, MemoryLayer } from '../../../../../../platform/construct/common/memory/memoryTypes.js';
 
 const WORKING_MEMORY_PREFIX = 'construct.memory.working.';
 const DEFAULT_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
