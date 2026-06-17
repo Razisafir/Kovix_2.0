@@ -37,7 +37,7 @@ import { redactSecrets } from '../../../../../../platform/construct/common/secur
 import { IPendingChangesService } from '../../../../../../platform/construct/common/diff/pendingChanges.js';
 import { IUniversalMemoryService } from '../../../../../../platform/construct/common/memory/universalMemoryService.js';
 
-const MAX_ROUNDS = 15;
+const MAX_ROUNDS = 50;
 
 /**
  * Cached result of a tool execution, used to avoid double-execution
