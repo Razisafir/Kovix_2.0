@@ -198,8 +198,8 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
                                 this.modelEntryAccessor.update({
                                                 name: localize('constructModel', "Kovix Model"),
                                                 text: `${icon} ${modelName} ${suffix}`,
-                                                ariaLabel: localize('constructModelAria', `Active LLM: ${modelName} (${suffix})`),
-                                                tooltip: localize('constructModelTooltip', `Active LLM: ${modelName} (${suffix}) — click to change`),
+                                                ariaLabel: localize('constructModelAria', "Active LLM: {0} ({1})", modelName, suffix),
+                                                tooltip: localize('constructModelTooltip', "Active LLM: {0} ({1}) — click to change", modelName, suffix),
                                                 command: 'construct.selectModel',
                                 });
                 }
@@ -211,8 +211,8 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
                                 this.agentReachEntryAccessor.update({
                                                 name: localize('constructAgentReach', "Agent Reach"),
                                                 text: `${icon} ${message || 'Agent Reach'}`,
-                                                ariaLabel: localize('constructAgentReachAria', `Agent Reach: ${message || status}`),
-                                                tooltip: localize('constructAgentReachTooltip', `Agent Reach status: ${message || status} — click to check`),
+                                                ariaLabel: localize('constructAgentReachAria', "Agent Reach: {0}", message || status),
+                                                tooltip: localize('constructAgentReachTooltip', "Agent Reach status: {0} — click to check", message || status),
                                                 command: 'construct.checkAgentReach',
                                 });
                 }
@@ -230,8 +230,8 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
                                 this.ponytailEntryAccessor.update({
                                                 name: localize('constructPonytail', "Ponytail"),
                                                 text: `${icon} PONYTAIL ${label}`,
-                                                ariaLabel: localize('constructPonytailAria', `Ponytail lazy-dev mode: ${mode}`),
-                                                tooltip: localize('constructPonytailTooltip', `Ponytail: ${mode} mode — click to change`),
+                                                ariaLabel: localize('constructPonytailAria', "Ponytail lazy-dev mode: {0}", mode),
+                                                tooltip: localize('constructPonytailTooltip', "Ponytail: {0} mode — click to change", mode),
                                                 command: 'construct.ponytailSetMode',
                                 });
                 }
