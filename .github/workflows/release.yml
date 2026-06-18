@@ -70,6 +70,7 @@ jobs:
           npm_config_build_from_source: "true"
 
       - name: Compile
+        shell: bash
         run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 
       - name: Build Windows package
@@ -133,6 +134,7 @@ jobs:
         timeout-minutes: 30
 
       - name: Compile
+        shell: bash
         run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 
       - name: Build macOS package
@@ -219,6 +221,7 @@ jobs:
         timeout-minutes: 30
 
       - name: Compile
+        shell: bash
         run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 
       - name: Build Linux package
