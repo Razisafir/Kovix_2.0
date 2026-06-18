@@ -8,12 +8,12 @@
 .kovix-inline-agent-preview-remove {
 	opacity: 0.55;
 	text-decoration: line-through;
-	text-decoration-color: var(--vscode-editorWarning-foreground, #FFB300);
+	text-decoration-color: var(--vscode-editorWarning-foreground, var(--kovix-state-pending));
 }
 
 /* Subtle marker at the cursor position when a proposal is pending */
 .kovix-inline-agent-preview-marker {
-	border-left: 2px solid var(--vscode-editorInfo-foreground, #00E5FF);
+	border-left: 2px solid var(--vscode-editorInfo-foreground, var(--kovix-volt-400));
 	margin-left: -2px;
 }
 

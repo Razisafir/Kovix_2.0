@@ -264,25 +264,25 @@
 }
 
 .construct-browser-status-idle::before {
-        background: #22c55e;
+        background: var(--kovix-state-running);
 }
 
 .construct-browser-status-navigating::before {
-        background: #f59e0b;
+        background: var(--kovix-state-pending);
         animation: construct-browser-pulse 1s ease-in-out infinite;
 }
 
 .construct-browser-status-interacting::before {
-        background: #3b82f6;
+        background: var(--kovix-state-info);
         animation: construct-browser-pulse 0.5s ease-in-out infinite;
 }
 
 .construct-browser-status-error::before {
-        background: #ef4444;
+        background: var(--kovix-state-error);
 }
 
 .construct-browser-status-closed::before {
-        background: #6b7280;
+        background: var(--kovix-text-tertiary);
 }
 
 /* ===========================================================================
@@ -346,17 +346,17 @@
 }
 
 .construct-browser-diff-badge.high {
-        background: #ef4444;
+        background: var(--kovix-state-error);
         color: white;
 }
 
 .construct-browser-diff-badge.medium {
-        background: #f59e0b;
+        background: var(--kovix-state-pending);
         color: white;
 }
 
 .construct-browser-diff-badge.low {
-        background: #22c55e;
+        background: var(--kovix-state-running);
         color: white;
 }
 

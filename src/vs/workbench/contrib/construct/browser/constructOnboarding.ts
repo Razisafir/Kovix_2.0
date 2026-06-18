@@ -393,19 +393,56 @@ export class ConstructOnboardingWizard extends Disposable {
         <title>Kovix Setup</title>
         <style>
                 :root {
-                        --accent: #00E5FF;
-                        --accent-dim: #00E5FF40;
-                        --bg-primary: #0A0E1A;
-                        --bg-secondary: #0D1117;
-                        --bg-card: #141B2D;
-                        --bg-input: #0A0E1A;
-                        --border: #1A1F2E;
-                        --text-primary: #E0E7FF;
-                        --text-secondary: #8B949E;
-                        --text-muted: #4A5568;
-                        --success: #00C853;
-                        --error: #FF4444;
-                        --warning: #FFB300;
+				/* Kovix design tokens — mirrored from kovix-tokens.css so the
+				   webview (sandboxed from the parent workbench CSS) renders
+				   against the same single source of truth. */
+				--kovix-bg-ink: #0B0D10;
+				--kovix-bg-surface: #13161B;
+				--kovix-bg-raised: #1B1F26;
+				--kovix-border: #2A2F38;
+				--kovix-border-subtle: #1F232B;
+				--kovix-text-primary: #E8EAED;
+				--kovix-text-secondary: #9A9DA6;
+				--kovix-text-tertiary: #5A5E68;
+				--kovix-volt-400: #8A63FF;
+				--kovix-volt-500: #6E42FF;
+				--kovix-volt-600: #4F2BCC;
+				--kovix-ignite-400: #FF8A5C;
+				--kovix-ignite-500: #FF5A36;
+				--kovix-gradient: linear-gradient(135deg, #8A63FF 0%, #FF5A36 100%);
+				--kovix-state-running: #21D3A8;
+				--kovix-state-pending: #FFC233;
+				--kovix-state-error: #FF4D5E;
+				--kovix-state-info: #3DA9FC;
+				--kovix-badge-running-bg: rgba(33, 211, 168, 0.16);
+				--kovix-badge-running-fg: #5FE8C6;
+				--kovix-badge-pending-bg: rgba(255, 194, 51, 0.16);
+				--kovix-badge-pending-fg: #FFD466;
+				--kovix-badge-error-bg: rgba(255, 77, 94, 0.16);
+				--kovix-badge-error-fg: #FF8A96;
+				--kovix-badge-info-bg: rgba(61, 169, 252, 0.16);
+				--kovix-badge-info-fg: #7CC4FD;
+				--kovix-radius-sm: 5px;
+				--kovix-radius-md: 7px;
+				--kovix-radius-lg: 10px;
+				--kovix-font-ui: "Inter", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+				--kovix-font-mono: "JetBrains Mono", "Cascadia Code", "SF Mono", Consolas, monospace;
+
+				--accent: var(--kovix-volt-500);
+				--accent-dim: rgba(110, 66, 255, 0.40);
+				--bg-primary: var(--kovix-bg-ink);
+				--bg-secondary: var(--kovix-bg-surface);
+				--bg-card: var(--kovix-bg-raised);
+				--bg-input: var(--kovix-bg-ink);
+				--border: var(--kovix-border);
+				--border-subtle: var(--kovix-border-subtle);
+				--text-primary: var(--kovix-text-primary);
+				--text-secondary: var(--kovix-text-secondary);
+				--text-muted: var(--kovix-text-tertiary);
+				--success: var(--kovix-state-running);
+				--error: var(--kovix-state-error);
+				--warning: var(--kovix-state-pending);
+				--info: var(--kovix-state-info)
                 }
 
                 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -520,9 +557,9 @@ export class ConstructOnboardingWizard extends Disposable {
                         border-radius: 8px;
                         flex-shrink: 0;
                 }
-                .card-icon.success { background: #00C85320; color: var(--success); }
-                .card-icon.error { background: #FF444420; color: var(--error); }
-                .card-icon.pending { background: #FFB30020; color: var(--warning); }
+                .card-icon.success { background: var(--kovix-badge-running-bg); color: var(--success); }
+                .card-icon.error { background: var(--kovix-badge-error-bg); color: var(--error); }
+                .card-icon.pending { background: var(--kovix-badge-pending-bg); color: var(--warning); }
                 .card-icon.info { background: var(--accent-dim); color: var(--accent); }
                 .card-title {
                         font-size: 14px;
@@ -554,11 +591,11 @@ export class ConstructOnboardingWizard extends Disposable {
                 }
                 .model-item:hover {
                         border-color: var(--accent);
-                        background: #1A2744;
+                        background: var(--kovix-bg-raised);
                 }
                 .model-item.selected {
                         border-color: var(--accent);
-                        background: #1A2744;
+                        background: var(--kovix-bg-raised);
                 }
                 .model-name {
                         font-size: 13px;
@@ -584,31 +621,32 @@ export class ConstructOnboardingWizard extends Disposable {
                 }
                 .btn:active { transform: scale(0.97); }
                 .btn-primary {
-                        background: var(--accent);
-                        color: var(--bg-primary);
-                }
-                .btn-primary:hover { background: #33ECFF; }
-                .btn-primary:disabled {
-                        opacity: 0.4;
-                        cursor: not-allowed;
-                }
-                .btn-secondary {
-                        background: var(--bg-card);
-                        color: var(--text-primary);
-                        border: 1px solid var(--border);
-                }
-                .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+				background: var(--kovix-gradient);
+				color: #FFFFFF;
+				font-weight: 500;
+			}
+			.btn-primary:hover { filter: brightness(1.08); }
+			.btn-primary:disabled {
+				opacity: 0.4;
+				cursor: not-allowed;
+			}
+			.btn-secondary {
+				background: transparent;
+				color: var(--text-secondary);
+				border: 1px solid var(--border);
+			}
+			.btn-secondary:hover { border-color: var(--accent); color: var(--text-primary); }
                 .btn-success {
                         background: var(--success);
                         color: white;
                 }
-                .btn-success:hover { background: #00D85A; }
+                .btn-success:hover { background: var(--kovix-state-running); }
                 .btn-danger {
                         background: transparent;
                         color: var(--error);
                         border: 1px solid var(--error);
                 }
-                .btn-danger:hover { background: #FF444420; }
+                .btn-danger:hover { background: var(--kovix-badge-error-bg); }
 
                 .btn-row {
                         display: flex;
@@ -629,15 +667,15 @@ export class ConstructOnboardingWizard extends Disposable {
                         border-radius: 12px;
                 }
                 .status-badge.running {
-                        background: #00C85320;
+                        background: var(--kovix-badge-running-bg);
                         color: var(--success);
                 }
                 .status-badge.offline {
-                        background: #FF444420;
+                        background: var(--kovix-badge-error-bg);
                         color: var(--error);
                 }
                 .status-badge.checking {
-                        background: #FFB30020;
+                        background: var(--kovix-badge-pending-bg);
                         color: var(--warning);
                 }
 

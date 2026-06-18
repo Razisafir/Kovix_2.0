@@ -14,8 +14,8 @@
   "contributes": {
     "themes": [
       {
-        "id": "Construct Dark",
-        "label": "Construct Dark",
+        "id": "Kovix Dark",
+        "label": "Kovix Dark",
         "uiTheme": "vs-dark",
         "path": "./themes/construct-dark.json"
       },
