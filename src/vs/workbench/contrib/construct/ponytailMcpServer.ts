@@ -33,10 +33,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-// spawn is used lazily via dynamic require in runPonytailCommand; keep the import
-// for type compatibility with the rest of the codebase.
-void spawn;
-
 // ─── JSON-RPC 2.0 Types ─────────────────────────────────────────────────────
 
 interface JsonRpcRequest {
