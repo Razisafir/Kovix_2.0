@@ -12,7 +12,7 @@ import { IConfigurationRegistry, Extensions as ConfigurationExtensions, IConfigu
 const apiConfiguration: IConfigurationNode = {
                 id: 'construct.anthropic',
                 order: 99,
-                title: localize('construct.anthropic', "Construct -- Anthropic API"),
+                title: localize('construct.anthropic', "Kovix — Anthropic API"),
                 type: 'object',
                 properties: {
                                 'construct.anthropic.apiKey': {
@@ -48,7 +48,7 @@ Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).regis
 const ollamaConfiguration: IConfigurationNode = {
                 id: 'construct.ollama',
                 order: 100,
-                title: localize('construct.ollama', "Construct -- Ollama (Local)"),
+                title: localize('construct.ollama', "Kovix — Ollama (Local)"),
                 type: 'object',
                 properties: {
                                 'construct.ollama.baseUrl': {
@@ -69,7 +69,7 @@ const ollamaConfiguration: IConfigurationNode = {
 const xenovaConfiguration: IConfigurationNode = {
                 id: 'construct.xenova',
                 order: 101,
-                title: localize('construct.xenova', "Construct -- Xenova (In-Process)"),
+                title: localize('construct.xenova', "Kovix — Xenova (In-Process)"),
                 type: 'object',
                 properties: {
                                 'construct.xenova.model': {
@@ -89,7 +89,7 @@ const xenovaConfiguration: IConfigurationNode = {
 const cloudConfiguration: IConfigurationNode = {
                 id: 'construct.cloud',
                 order: 102,
-                title: localize('construct.cloud', "Construct -- Cloud (OpenAI-Compatible)"),
+                title: localize('construct.cloud', "Kovix — Cloud (OpenAI-Compatible)"),
                 type: 'object',
                 properties: {
                                 'construct.cloud.baseUrl': {
@@ -121,7 +121,7 @@ Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).regis
 const securityConfiguration: IConfigurationNode = {
         id: 'construct.security',
         order: 103,
-        title: localize('construct.security', "Construct -- Security Tools"),
+        title: localize('construct.security', "Kovix — Security Tools"),
         type: 'object',
         properties: {
                 'construct.enableSecurityTools': {
@@ -129,6 +129,12 @@ const securityConfiguration: IConfigurationNode = {
                         default: true,
                         description: localize('construct.enableSecurityTools', "Enable security scanning tools (nmap, Ghidra, Nuclei). When disabled, security tools are not registered."),
                         scope: 4 /* ConfigurationScope.WINDOW */
+                },
+                'construct.security.allowExternalTargets': {
+                	type: 'boolean',
+                	default: false,
+                	description: localize('construct.security.allowExternalTargets', "Allow nmap and Nuclei to scan non-loopback / non-private (RFC1918) targets. Default false for safety. Enable only if you understand the legal and ethical implications of scanning external hosts."),
+                	scope: 4 /* ConfigurationScope.WINDOW */
                 }
         }
 };
@@ -140,7 +146,7 @@ Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).regis
 const mcpConfiguration: IConfigurationNode = {
         id: 'construct.mcp',
         order: 104,
-        title: localize('construct.mcp', "Construct -- MCP Servers"),
+        title: localize('construct.mcp', "Kovix — MCP Servers"),
         type: 'object',
         properties: {
                 'construct.mcp.servers': {
@@ -182,3 +188,47 @@ const mcpConfiguration: IConfigurationNode = {
 };
 
 Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).registerConfiguration(mcpConfiguration);
+
+// --- Phase 4 Patch A: Tab Autocomplete Configuration ---
+
+const autocompleteConfiguration: IConfigurationNode = {
+	id: 'kovix.autocomplete',
+	order: 105,
+	title: localize('kovix.autocomplete', "Kovix — Tab Autocomplete"),
+	type: 'object',
+	properties: {
+		'construct.autocomplete.enabled': {
+			type: 'boolean',
+			default: true,
+			description: localize('construct.autocomplete.enabled', "Enable Kovix tab autocomplete. When enabled, the editor shows ghost-text suggestions as you type. Press Tab to accept."),
+			scope: 4 /* ConfigurationScope.WINDOW */
+		},
+		'construct.autocomplete.debounceMs': {
+			type: 'number',
+			default: 200,
+			minimum: 50,
+			maximum: 2000,
+			description: localize('construct.autocomplete.debounceMs', "Delay in milliseconds between the last keystroke and the autocomplete request. Higher values reduce API calls but feel slower; lower values feel snappier but may overload the provider."),
+			scope: 4 /* ConfigurationScope.WINDOW */
+		},
+		'construct.autocomplete.maxTokens': {
+			type: 'number',
+			default: 32,
+			minimum: 8,
+			maximum: 256,
+			description: localize('construct.autocomplete.maxTokens', "Maximum number of tokens to generate per autocomplete request. Higher values allow longer suggestions but take more time."),
+			scope: 4 /* ConfigurationScope.WINDOW */
+		},
+		'construct.autocomplete.temperature': {
+			type: 'number',
+			default: 0.2,
+			minimum: 0,
+			maximum: 1,
+			description: localize('construct.autocomplete.temperature', "Sampling temperature for autocomplete. Lower values (0.0-0.2) produce more deterministic suggestions; higher values (0.5-1.0) produce more varied suggestions."),
+			scope: 4 /* ConfigurationScope.WINDOW */
+		}
+	}
+};
+
+Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).registerConfiguration(autocompleteConfiguration);
+

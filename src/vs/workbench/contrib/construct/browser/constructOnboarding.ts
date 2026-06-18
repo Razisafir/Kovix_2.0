@@ -194,7 +194,6 @@ export class ConstructOnboardingWizard extends Disposable {
 
                         case 'installAgentReach': {
                                 try {
-                                        await import('../../../../platform/construct/common/terminal/terminalExecutor.js');
                                         // Since we can't easily get the service accessor here, just notify
                                         this.notificationService.info('Agent Reach: Starting installation. Run "Construct: Install Agent Reach" from the command palette for automated setup.');
                                         this.postMessage({ type: 'agentReachInstalled' });
@@ -1332,8 +1331,13 @@ export class ConstructOnboardingWizard extends Disposable {
                         }
                 });
 
-                // ---- Initial render ----
-                renderOllamaStatus({ running: false, models: [] });
+                // ---- Initialize on load ----
+                window.addEventListener('DOMContentLoaded', () => {
+                        goToStep(0);
+                        renderProviders();
+                        checkOllama();
+                        checkKali();
+                });
         </script>
 </body>
 

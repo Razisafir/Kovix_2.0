@@ -46,7 +46,7 @@ export interface IToolDefinition {
         /** Whether this tool requires network access */
         requiresNetwork: boolean;
         /** Category for UI grouping */
-        category: 'file' | 'terminal' | 'search' | 'network' | 'system' | 'security' | 'design' | 'behavior';
+        category: 'file' | 'terminal' | 'search' | 'network' | 'system' | 'security' | 'design' | 'behavior' | 'mcp';
 }
 
 /**
@@ -71,8 +71,10 @@ export interface IToolResult {
                 tool?: string;
                 /** Whether the underlying MCP server was configured at execution time */
                 configured?: boolean;
-                /** Mode the tool was run in (e.g. ponytail 'strict' | 'minimal' | 'review') */
+                /** Mode the tool was run in (e.g. ponytail 'strict' | 'minimal' | 'review', 'git', 'file', 'kali') */
                 mode?: string;
+                /** Severity level for findings (e.g. 'critical', 'high', 'low') */
+                severity?: string;
         };
 }
 

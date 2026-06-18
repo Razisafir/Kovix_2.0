@@ -29,7 +29,6 @@
  * - ponytail_help: Quick reference
  */
 
-import { spawn } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -79,8 +78,6 @@ interface PonytailModeConfig {
 
 const SERVER_NAME = 'ponytail-mcp-server';
 const SERVER_VERSION = '1.0.0';
-const DEFAULT_TIMEOUT = 30000;  // 30s — matches KOVIX's MCP_DEFAULT_TOOL_TIMEOUT_MS
-void DEFAULT_TIMEOUT; // kept for documentation; actual timeout comes from MCP layer
 
 // Skill file paths (relative to ponytail checkout)
 const SKILL_PATHS: Record<string, string> = {
@@ -443,13 +440,6 @@ const TOOLS: McpTool[] = [
 ];
 
 // ─── JSON-RPC Message Handling ──────────────────────────────────────────────
-
-// Counter is reserved for future use when extending the protocol to support
-// async notifications alongside request/response. Currently the JSON-RPC
-// server uses request.id directly, but the counter is kept here to make
-// the upgrade path obvious.
-let requestCounter = 0;
-void requestCounter;
 
 function sendResponse(response: JsonRpcResponse): void {
         const json = JSON.stringify(response);

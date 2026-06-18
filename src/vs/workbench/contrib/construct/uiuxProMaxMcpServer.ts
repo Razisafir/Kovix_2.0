@@ -117,8 +117,6 @@ function executeSearch(
         return new Promise((resolve) => {
                 const startTime = Date.now();
                 const scriptPath = path.join(skillPath, 'scripts', 'search.py');
-                const dataPath = path.join(skillPath, 'data');
-                void dataPath; // reserved for future use as PYTHONPATH/data lookup root
 
                 log('info', `Executing: python3 ${scriptPath} ${args.join(' ')} (timeout: ${timeout}ms)`);
 
