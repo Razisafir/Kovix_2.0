@@ -15,6 +15,15 @@ env:
   NODE_VERSION: '20'
   PYTHON_VERSION: '3.11'
 
+# The default GITHUB_TOKEN is read-only on repos with restricted default
+# permissions. Without this block, `softprops/action-gh-release@v2` fails
+# with HTTP 403 "Resource not accessible by integration" when creating the
+# release. contents:write is required to create the release; packages:write
+# is included for future npm/GHCR publishing parity.
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   build-windows:
     runs-on: windows-2022
