@@ -41,17 +41,33 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Setup Visual Studio Build Tools
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          toolset: '14.3'
+      - name: Install setuptools (for node-gyp compatibility)
+        run: python -m pip install --upgrade setuptools wheel
+
+      - name: Upgrade node-gyp to support VS 18
+        shell: pwsh
+        run: |
+          # The bundled node-gyp v10.1.0 in Node 20 doesn't recognize VS 18 (preview)
+          # Install latest node-gyp globally and tell npm to use it
+          npm install -g node-gyp@latest
+          $gypPath = "$(npm root -g)\node-gyp\bin\node-gyp.js"
+          Write-Host "node-gyp path: $gypPath"
+          "npm_config_node_gyp=$gypPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+          # Find any available VS installation
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (Test-Path $vswhere) {
+            Write-Host "Available VS installations:"
+            & $vswhere -prerelease -all -property displayName
+          }
 
       - name: Install dependencies
         run: npm ci
-        timeout-minutes: 30
+        timeout-minutes: 45
         env:
-          npm_config_build_from_source: "true"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GYP_MSVS_VERSION: '2022'
+          npm_config_msvs_version: '2022'
+          npm_config_build_from_source: "true"
 
       - name: Compile
         run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile
