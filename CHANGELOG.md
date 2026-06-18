@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.1.0] - 2026-06-19
+
+### Added
+- **Luxury Chromium chrome** — title bar, status bar, and right-side auxiliary bar restyled with deep ink surfaces, brand-tinted hairlines, and crisp typography (Antigravity-IDE inspired)
+- Right-hand-side agent panel placement confirmed (ViewContainerLocation.AuxiliaryBar) — Kovix Agent dock now matches the Antigravity reference layout
+- Diagnostic console logging in ConstructAgentViewPane to surface any silent view-instantiation failures
+- Status bar running state — solid Volt-500 background with white text pulses while the agent is actively working
+
+### Fixed
+- Empty Kovix Agent panel on first launch ("Drag a view here") — view container now opens by default
+- "Construct Agent" → "Kovix Agent" rename completed across view container title, status bar entries, and command palette
+- Model picker, agent status, and pending-diff count status bar entries now render with live values from the AI service
+- MAX_ROUNDS raised from 15 to 50 for long-running agent tasks
+- Tab Autocomplete added as a first-class tool category
+- Security gate added before destructive tool execution
+
+### Branding
+- `kovix-tokens.css` (348 lines) loaded globally via `src/vs/workbench/browser/style.ts` — single source of truth for all surfaces, badges, gradients, radii
+- Kovix badge utility classes (`--running`, `--pending`, `--error`, `--info`, `--idle`) available workbench-wide
+- Kovix button utilities (gradient `--primary`, ghost `--ghost`) for consistent Approve/Reject CTAs
+- Kovix action card utility (with `--pending` amber tint) for diff-review cards
+- Activity bar Kovix icon gets a permanent subtle Volt-500 highlight, even when inactive
+- `product.json` branding finalized: nameShort="Kovix", nameLong="Kovix IDE", applicationName="kovix", dataFolderName=".kovix", darwinBundleIdentifier="ai.kovix.ide", urlProtocol="kovix"
+
 ## [1.0.0] - 2026-06-10
 
 ### Renamed
