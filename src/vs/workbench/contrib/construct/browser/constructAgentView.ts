@@ -272,7 +272,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 this.inputBox = document.createElement('textarea');
                 this.inputBox.className = 'construct-chat-input';
                 this.inputBox.rows = 1;
-                this.inputBox.placeholder = 'Ask Kovix anything...';
+                this.inputBox.placeholder = 'Ask anything, @ to mention, / for actions';
                 this.inputBox.style.cssText = `
                         flex: 1; background: var(--kovix-bg-ink); border: 1px solid var(--kovix-border);
                         border-radius: 4px; padding: 8px 10px; color: var(--kovix-text-primary);
@@ -998,7 +998,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 }
 
                 if (state === 'idle') {
-                        this.inputBox.placeholder = 'Ask Kovix anything...';
+                        this.inputBox.placeholder = 'Ask anything, @ to mention, / for actions';
                         // Clean up progress panel
                         if (this.progressPanel) {
                                 this.progressPanel.dispose();
