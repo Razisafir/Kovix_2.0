@@ -11,6 +11,7 @@ import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { INotificationService } from '../../../../../../platform/notification/common/notification.js';
 import { IConfigurationService } from '../../../../../../platform/configuration/common/configuration.js';
 import { IStorageService } from '../../../../../../platform/storage/common/storage.js';
+import { IInstantiationService } from '../../../../../../platform/instantiation/common/instantiation.js';
 import {
         IConstructAIProvider, AIProviderType, AIStreamEvent, IChatMessage,
         IChatOptions, ICompleteOptions, ICompleteResult, IModelInfo,
@@ -59,23 +60,41 @@ export class ConstructAIService extends Disposable implements IConstructAIServic
         private readonly _onDidChangeActiveModel = this._register(new Emitter<IModelInfo | undefined>());
         readonly onDidChangeActiveModel = this._onDidChangeActiveModel.event;
 
+        /** Cached lazy reference to ISecureKeyManager (resolved post-ctor to break DI cycle). */
+        private _keyManager: ISecureKeyManager | undefined;
+
         constructor(
                 @ILogService private readonly logService: ILogService,
                 @INotificationService private readonly notificationService: INotificationService,
                 @IConfigurationService configurationService: IConfigurationService,
                 @IStorageService private readonly storageService: IStorageService,
-                @ISecureKeyManager private readonly _keyManager: ISecureKeyManager,
+                // BUGFIX (v1.2.0): break the constructor-time DI cycle
+                // construct.aiService ↔ construct.secureKeyManager.
+                // Previously @ISecureKeyManager was injected here directly, and
+                // SecureKeyManager injected @IConstructAIService — the
+                // instantiator cannot satisfy a cycle and throws
+                // "Error: cyclic dependency between services", which crashed
+                // every Construct workbench contribution (status bar, autocomplete,
+                // and the agent panel itself) on Kovix v1.1.0.
+                // Fix: take IInstantiationService instead and lazily resolve
+                // ISecureKeyManager on first use. Both services still see each
+                // other at runtime — just not during construction.
+                @IInstantiationService private readonly _instantiationService: IInstantiationService,
         ) {
                 super();
 
-                // Instantiate all providers
+                // Instantiate the providers that don't need the key manager synchronously.
                 const ollama = new OllamaProvider(logService, configurationService);
                 const xenova = new XenovaProvider(logService, configurationService);
-                const cloud = new CloudProvider(logService, configurationService, storageService, this._keyManager);
 
                 this._providers.set('ollama', ollama);
                 this._providers.set('xenova', xenova);
-                this._providers.set('cloud', cloud);
+
+                // CloudProvider needs ISecureKeyManager — register it lazily so we
+                // don't trigger SecureKeyManager construction (which would re-enter
+                // IConstructAIService and trip the cycle). The CloudProvider is
+                // instantiated on first use of getProvider('cloud') or autoSelect.
+                this._providers.set('cloud', new LazyCloudProvider(() => this._resolveKeyManager(), logService, configurationService, storageService));
 
                 // Listen for provider status changes
                 for (const [type, provider] of this._providers) {
@@ -244,6 +263,18 @@ export class ConstructAIService extends Disposable implements IConstructAIServic
 
         // --- Private helpers ---
 
+        /**
+         * Lazily resolve ISecureKeyManager on first use. This MUST NOT be called
+         * from the constructor — only from runtime methods. Breaking this rule
+         * re-introduces the cyclic dependency that crashed Kovix v1.1.0.
+         */
+        private _resolveKeyManager(): ISecureKeyManager {
+                if (!this._keyManager) {
+                        this._keyManager = this._instantiationService.invokeFunction(accessor => accessor.get(ISecureKeyManager));
+                }
+                return this._keyManager;
+        }
+
         private _setActiveProvider(type: AIProviderType): void {
                 // Bug 4 fix: Abort any in-flight stream before switching providers
                 if (this._activeStreamController) {
@@ -263,6 +294,91 @@ export class ConstructAIService extends Disposable implements IConstructAIServic
                         provider.dispose();
                 }
                 this._providers.clear();
+                super.dispose();
+        }
+}
+
+/**
+ * LazyCloudProvider — proxy that defers construction of the real CloudProvider
+ * until the first method call. This breaks the constructor-time DI cycle
+ * between IConstructAIService and ISecureKeyManager in Kovix v1.2.0.
+ *
+ * The proxy implements the full IConstructAIProvider surface, forwarding every
+ * call to a real CloudProvider that is created on first use with a freshly
+ * resolved ISecureKeyManager.
+ */
+class LazyCloudProvider extends Disposable implements IConstructAIProvider {
+        readonly _serviceBrand: undefined;
+
+        private _inner: CloudProvider | undefined;
+        private readonly _onDidChangeActiveModel = this._register(new Emitter<IModelInfo | undefined>());
+        readonly onDidChangeActiveModel = this._onDidChangeActiveModel.event;
+        private readonly _onDidChangeStatus = this._register(new Emitter<ProviderStatus>());
+        readonly onDidChangeStatus = this._onDidChangeStatus.event;
+
+        constructor(
+                private readonly _keyManagerResolver: () => ISecureKeyManager,
+                private readonly _logService: ILogService,
+                private readonly _configurationService: IConfigurationService,
+                private readonly _storageService: IStorageService,
+        ) {
+                super();
+        }
+
+        readonly providerType: AIProviderType = 'cloud';
+
+        private _innerProvider(): CloudProvider {
+                if (!this._inner) {
+                        this._inner = new CloudProvider(
+                                this._logService,
+                                this._configurationService,
+                                this._storageService,
+                                this._keyManagerResolver(),
+                        );
+                        this._register(this._inner.onDidChangeActiveModel(m => this._onDidChangeActiveModel.fire(m)));
+                        this._register(this._inner.onDidChangeStatus(s => this._onDidChangeStatus.fire(s)));
+                }
+                return this._inner;
+        }
+
+        async *chat(messages: IChatMessage[], tools: IToolDefinition[], options?: IChatOptions): AsyncIterable<AIStreamEvent> {
+                yield* this._innerProvider().chat(messages, tools, options);
+        }
+
+        async complete(prefix: string, suffix: string, options?: ICompleteOptions): Promise<ICompleteResult> {
+                return this._innerProvider().complete(prefix, suffix, options);
+        }
+
+        async listModels(): Promise<IModelInfo[]> {
+                return this._innerProvider().listModels();
+        }
+
+        getActiveModel(): IModelInfo | undefined {
+                if (!this._inner) {
+                        return undefined;
+                }
+                return this._inner.getActiveModel();
+        }
+
+        async setActiveModel(modelId: string): Promise<boolean> {
+                return this._innerProvider().setActiveModel(modelId);
+        }
+
+        isOffline(): boolean {
+                return false;
+        }
+
+        async checkStatus(): Promise<ProviderStatus> {
+                try {
+                        return await this._innerProvider().checkStatus();
+                } catch (err) {
+                        this._logService.warn('[LazyCloudProvider] checkStatus failed: ' + (err as Error).message);
+                        return ProviderStatus.Unreachable;
+                }
+        }
+
+        override dispose(): void {
+                this._inner?.dispose();
                 super.dispose();
         }
 }

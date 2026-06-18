@@ -12,6 +12,7 @@ import { IStorageService, StorageScope, StorageTarget } from '../../../../../../
 import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { ISecureKeyManager, LLMProvider, IProviderConfig, IProviderHealthResult, IMaskedKey } from '../../../../../../platform/construct/common/security/secureKeyManager.js';
 import { IConstructAIService } from '../../../../../../platform/construct/common/llm/constructAIService.js';
+import { IInstantiationService } from '../../../../../../platform/instantiation/common/instantiation.js';
 import { AIProviderType } from '../../../../../../platform/construct/common/llm/constructAIProvider.js';
 
 // Storage keys for non-sensitive configuration
@@ -67,11 +68,25 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
         /** In-memory cache of decrypted keys to avoid repeated keychain reads. */
         private keyCache: Map<LLMProvider, string> = new Map();
 
+        /** Cached lazy reference to IConstructAIService (resolved post-ctor to break DI cycle). */
+        private _aiService: IConstructAIService | undefined;
+
         constructor(
                 @ISecretStorageService private readonly secretStorageService: ISecretStorageService,
                 @IStorageService private readonly storageService: IStorageService,
                 @ILogService private readonly logService: ILogService,
-                @IConstructAIService private readonly aiService: IConstructAIService,
+                // BUGFIX (v1.2.0): break the constructor-time DI cycle
+                // construct.aiService ↔ construct.secureKeyManager.
+                // Previously @IConstructAIService was injected here directly, and
+                // ConstructAIService injected @ISecureKeyManager — the VS Code
+                // instantiator cannot satisfy a cycle and throws
+                // "Error: cyclic dependency between services", which crashed
+                // every Construct workbench contribution (status bar, autocomplete,
+                // and the agent panel itself) on Kovix v1.1.0.
+                // Fix: take IInstantiationService and lazily resolve
+                // IConstructAIService on first use (here only for subscribing to
+                // onDidChangeActiveProvider, which we can safely defer).
+                @IInstantiationService private readonly _instantiationService: IInstantiationService,
         ) {
                 super();
 
@@ -89,26 +104,49 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
                 // Bridge: when IConstructAIService switches provider, sync the active
                 // provider in key manager. This eliminates the split-brain where one
                 // system shows "cloud" and the other still shows "ollama".
-                this._register(this.aiService.onDidChangeActiveProvider((providerType: AIProviderType) => {
-                        const mapping: Partial<Record<AIProviderType, LLMProvider>> = {
-                                ollama: 'ollama',
-                                cloud: 'openai',
-                                xenova: 'ollama', // xenova doesn't need keys; map to ollama
-                        };
-                        const llmProvider = mapping[providerType];
-                        if (llmProvider) {
-                                const config: IProviderConfig = {
-                                        id: `construct-${llmProvider}`,
-                                        name: PROVIDER_LABELS[llmProvider],
-                                        provider: llmProvider,
-                                        endpoint: DEFAULT_ENDPOINTS[llmProvider],
-                                        isActive: true,
-                                };
-                                // Update storage without re-firing the event (avoid infinite loop)
-                                this.storageService.store(ACTIVE_PROVIDER_STORAGE_KEY, JSON.stringify(config), StorageScope.APPLICATION, StorageTarget.USER);
-                                this.logService.info(`[SecureKeyManager] Synced active provider from AIService: ${providerType} -> ${llmProvider}`);
+                //
+                // BUGFIX (v1.2.0): This subscription is deferred to a microtask so the
+                // SecureKeyManager constructor returns before trying to resolve
+                // IConstructAIService. The instantiator will have finished wiring both
+                // services by the time the microtask runs.
+                setTimeout(() => {
+                        try {
+                                const aiService = this._resolveAIService();
+                                this._register(aiService.onDidChangeActiveProvider((providerType: AIProviderType) => {
+                                        const mapping: Partial<Record<AIProviderType, LLMProvider>> = {
+                                                ollama: 'ollama',
+                                                cloud: 'openai',
+                                                xenova: 'ollama', // xenova doesn't need keys; map to ollama
+                                        };
+                                        const llmProvider = mapping[providerType];
+                                        if (llmProvider) {
+                                                const config: IProviderConfig = {
+                                                        id: `construct-${llmProvider}`,
+                                                        name: PROVIDER_LABELS[llmProvider],
+                                                        provider: llmProvider,
+                                                        endpoint: DEFAULT_ENDPOINTS[llmProvider],
+                                                        isActive: true,
+                                                };
+                                                // Update storage without re-firing the event (avoid infinite loop)
+                                                this.storageService.store(ACTIVE_PROVIDER_STORAGE_KEY, JSON.stringify(config), StorageScope.APPLICATION, StorageTarget.USER);
+                                                this.logService.info(`[SecureKeyManager] Synced active provider from AIService: ${providerType} -> ${llmProvider}`);
+                                        }
+                                }));
+                        } catch (err) {
+                                this.logService.warn('[SecureKeyManager] Deferred AIService bridge subscription failed: ' + (err as Error).message);
                         }
-                }));
+                }, 0);
+        }
+
+        /**
+         * Lazily resolve IConstructAIService on first use. This MUST NOT be called
+         * from the constructor — only from runtime methods or deferred callbacks.
+         */
+        private _resolveAIService(): IConstructAIService {
+                if (!this._aiService) {
+                        this._aiService = this._instantiationService.invokeFunction(accessor => accessor.get(IConstructAIService));
+                }
+                return this._aiService;
         }
 
         // ─── Key CRUD ────────────────────────────────────────────────────────────────
@@ -316,7 +354,7 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
                 const aiProviderType = providerToAIType[providerConfig.provider];
                 if (aiProviderType) {
                         try {
-                                await this.aiService.switchProvider(aiProviderType);
+                                await this._resolveAIService().switchProvider(aiProviderType);
                         } catch (e) {
                                 this.logService.warn(`[SecureKeyManager] Could not sync AIService provider: ${e instanceof Error ? e.message : String(e)}`);
                         }
