@@ -90,8 +90,6 @@ import './constructApiSettings.js';
 import { ILanguageFeaturesService } from '../../../../editor/common/services/languageFeatures.js';
 import { registerKovixAutocomplete } from '../../../../editor/contrib/construct/browser/kovixInlineCompletionProvider.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
-import { Event } from '../../../../base/common/event.js';
-import { IStorageService, StorageScope, StorageTarget } from '../../../../platform/storage/common/storage.js';
 
 const constructViewIcon = registerIcon('construct-view-icon', Codicon.robot, localize('constructViewIcon', 'View icon of the Kovix Agent view.'));
 const constructMemoryIcon = registerIcon('construct-memory-icon', Codicon.symbolEvent, localize('constructMemoryIcon', 'View icon of the Kovix Memory view.'));
@@ -260,23 +258,15 @@ class ConstructAutoOpenContribution extends Disposable implements IWorkbenchCont
 
                 constructor(
                                 @IViewsService private readonly viewsService: IViewsService,
-                                @IStorageService private readonly storageService: IStorageService,
                 ) {
                                 super();
-                                // Defer until Restored phase to avoid racing with layout restoration.
-                                Event.once(this.storageService.onWillSaveState)(() => {
-                                                const seenKey = 'construct.autoOpened.v2';
-                                                const hasOpened = this.storageService.getBoolean(seenKey, StorageScope.APPLICATION, false);
-                                                // Always attempt to open — openView is idempotent.
-                                                try {
-                                                                this.viewsService.openView('construct.agentPanel', false);
-                                                } catch (err) {
-                                                                console.error('[Kovix] Failed to auto-open agent panel:', err);
-                                                }
-                                                if (!hasOpened) {
-                                                                this.storageService.store(seenKey, true, StorageScope.APPLICATION, StorageTarget.MACHINE);
-                                                }
-                                });
+                                // This contribution is registered at LifecyclePhase.Restored, so by the time
+                                // the constructor runs the workbench layout is ready. Just call openView directly.
+                                try {
+                                                this.viewsService.openView('construct.agentPanel', false);
+                                } catch (err) {
+                                                console.error('[Kovix] Failed to auto-open agent panel:', err);
+                                }
                 }
 }
 
