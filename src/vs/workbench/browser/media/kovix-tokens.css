@@ -1,0 +1,258 @@
+/*---------------------------------------------------------------------------------------------
+ *  Kovix Design Tokens — single source of truth for the Kovix visual identity.
+ *
+ *  These custom properties are scoped to .monaco-workbench so they are
+ *  available everywhere in the workbench DOM (activity bar, sidebar, editor,
+ *  panel, status bar, and all Construct/Kovix contribution views).
+ *
+ *  Color values are mirrored from the "Kovix Dark" VS Code color theme so
+ *  CSS authored against these tokens and the theme JSON never drift apart.
+ *
+ *  No UI code should hardcode hex values — reference these tokens instead.
+ *--------------------------------------------------------------------------------------------*/
+
+.monaco-workbench {
+        /* ──────────────────────────────────────────────────────────────
+           SURFACES (dark theme — default and only theme at launch)
+           ────────────────────────────────────────────────────────────── */
+        --kovix-bg-ink: #0B0D10;          /* editor background, deepest layer */
+        --kovix-bg-surface: #13161B;      /* panels: sidebar, agent panel, status bar idle */
+        --kovix-bg-raised: #1B1F26;       /* cards, hover states, dropdowns */
+        --kovix-border: #2A2F38;          /* all hairline borders, 0.5-1px */
+        --kovix-border-subtle: #1F232B;   /* quieter dividers, e.g. tab separators */
+
+        /* ──────────────────────────────────────────────────────────────
+           TEXT
+           ────────────────────────────────────────────────────────────── */
+        --kovix-text-primary: #E8EAED;
+        --kovix-text-secondary: #9A9DA6;
+        --kovix-text-tertiary: #5A5E68;   /* line numbers, disabled, placeholder */
+
+        /* ──────────────────────────────────────────────────────────────
+           BRAND — Volt (violet) + Ignite (orange)
+           ────────────────────────────────────────────────────────────── */
+        --kovix-volt-400: #8A63FF;
+        --kovix-volt-500: #6E42FF;        /* primary brand color, agent accent */
+        --kovix-volt-600: #4F2BCC;        /* pressed/active states */
+
+        --kovix-ignite-400: #FF8A5C;
+        --kovix-ignite-500: #FF5A36;      /* CTA buttons, primary actions, energy accent */
+
+        --kovix-gradient: linear-gradient(135deg, #8A63FF 0%, #FF5A36 100%);
+
+        /* ──────────────────────────────────────────────────────────────
+           FUNCTION / AGENT STATE
+           These map directly to agent lifecycle states — use them
+           consistently everywhere the agent surfaces status.
+           ────────────────────────────────────────────────────────────── */
+        --kovix-state-running: #21D3A8;   /* agent actively working */
+        --kovix-state-pending: #FFC233;   /* awaiting user approval — diff review */
+        --kovix-state-error: #FF4D5E;     /* blocked, failed, rejected */
+        --kovix-state-info: #3DA9FC;      /* local/offline model indicator, neutral info */
+
+        /* Paired low-opacity backgrounds + bright foregrounds for badges/chips */
+        --kovix-badge-running-bg: rgba(33, 211, 168, 0.16);
+        --kovix-badge-running-fg: #5FE8C6;
+
+        --kovix-badge-pending-bg: rgba(255, 194, 51, 0.16);
+        --kovix-badge-pending-fg: #FFD466;
+
+        --kovix-badge-error-bg: rgba(255, 77, 94, 0.16);
+        --kovix-badge-error-fg: #FF8A96;
+
+        --kovix-badge-info-bg: rgba(61, 169, 252, 0.16);
+        --kovix-badge-info-fg: #7CC4FD;
+
+        /* Pending diff card tints (softer than badge bg, used as card fill) */
+        --kovix-pending-card-bg: rgba(255, 194, 51, 0.08);
+        --kovix-pending-card-border: rgba(255, 194, 51, 0.30);
+
+        /* ──────────────────────────────────────────────────────────────
+           TYPOGRAPHY
+           ────────────────────────────────────────────────────────────── */
+        --kovix-font-ui: "Inter", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --kovix-font-mono: "JetBrains Mono", "Cascadia Code", "SF Mono", Consolas, monospace;
+
+        /* ──────────────────────────────────────────────────────────────
+           RADIUS
+           ────────────────────────────────────────────────────────────── */
+        --kovix-radius-sm: 5px;           /* badges, chips, small buttons */
+        --kovix-radius-md: 7px;           /* buttons, inputs, list items */
+        --kovix-radius-lg: 10px;          /* cards, panels, modals */
+
+        /* ──────────────────────────────────────────────────────────────
+           ALIASES — `--construct-*` tokens already referenced by existing
+           Construct/Kovix CSS files. Mapping them here means all existing
+           `var(--construct-*)` references resolve to the new Kovix palette
+           without a file-by-file rewrite.
+           ────────────────────────────────────────────────────────────── */
+        --construct-editor-background: var(--kovix-bg-ink);
+        --construct-foreground: var(--kovix-text-primary);
+        --construct-descriptionForeground: var(--kovix-text-secondary);
+        --construct-errorForeground: var(--kovix-state-error);
+        --construct-focusBorder: var(--kovix-volt-400);
+        --construct-panel-border: var(--kovix-border);
+        --construct-input-background: var(--kovix-bg-raised);
+        --construct-input-foreground: var(--kovix-text-primary);
+        --construct-input-placeholderForeground: var(--kovix-text-tertiary);
+        --construct-button-background: var(--kovix-ignite-500);
+        --construct-button-foreground: #FFFFFF;
+        --construct-button-hoverBackground: var(--kovix-ignite-400);
+        --construct-button-secondaryBackground: var(--kovix-bg-raised);
+        --construct-button-secondaryForeground: var(--kovix-text-secondary);
+        --construct-sideBar-background: var(--kovix-bg-surface);
+        --construct-tab-activeBackground: var(--kovix-bg-ink);
+        --construct-tab-activeForeground: var(--kovix-volt-400);
+        --construct-tab-inactiveBackground: var(--kovix-bg-surface);
+        --construct-tab-inactiveForeground: var(--kovix-text-tertiary);
+        --construct-progressBar-background: var(--kovix-volt-500);
+        --construct-editor-font-family: var(--kovix-font-mono);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   Kovix badge utility classes — use these directly in TS-built DOM
+   for status pills so badge styling stays consistent everywhere.
+   ────────────────────────────────────────────────────────────────── */
+.monaco-workbench .kovix-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 8px;
+        border-radius: var(--kovix-radius-sm);
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1.4;
+        letter-spacing: 0.01em;
+        white-space: nowrap;
+}
+
+.monaco-workbench .kovix-badge::before {
+        content: '';
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+        flex-shrink: 0;
+}
+
+.monaco-workbench .kovix-badge.kovix-badge--running {
+        background: var(--kovix-badge-running-bg);
+        color: var(--kovix-badge-running-fg);
+}
+
+.monaco-workbench .kovix-badge.kovix-badge--pending {
+        background: var(--kovix-badge-pending-bg);
+        color: var(--kovix-badge-pending-fg);
+}
+
+.monaco-workbench .kovix-badge.kovix-badge--error {
+        background: var(--kovix-badge-error-bg);
+        color: var(--kovix-badge-error-fg);
+}
+
+.monaco-workbench .kovix-badge.kovix-badge--info {
+        background: var(--kovix-badge-info-bg);
+        color: var(--kovix-badge-info-fg);
+}
+
+/* Idle state — no badge background, just tertiary text */
+.monaco-workbench .kovix-badge.kovix-badge--idle {
+        background: transparent;
+        color: var(--kovix-text-tertiary);
+}
+.monaco-workbench .kovix-badge.kovix-badge--idle::before { display: none; }
+
+/* ──────────────────────────────────────────────────────────────────
+   Kovix button utilities — Approve (gradient) and Reject (ghost).
+   The Approve button is always visually heavier than Reject; this is
+   the safe-default visual hierarchy for an approval-gated agent.
+   ────────────────────────────────────────────────────────────────── */
+.monaco-workbench .kovix-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 6px 14px;
+        font-size: 12px;
+        font-weight: 500;
+        font-family: var(--kovix-font-ui);
+        border-radius: var(--kovix-radius-md);
+        border: 1px solid transparent;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        white-space: nowrap;
+}
+
+.monaco-workbench .kovix-btn--primary {
+        background: var(--kovix-gradient);
+        color: #FFFFFF;
+        border: none;
+        font-weight: 500;
+}
+.monaco-workbench .kovix-btn--primary:hover {
+        filter: brightness(1.08);
+}
+
+.monaco-workbench .kovix-btn--ghost {
+        background: transparent;
+        color: var(--kovix-text-secondary);
+        border: 1px solid var(--kovix-border);
+}
+.monaco-workbench .kovix-btn--ghost:hover {
+        background: var(--kovix-bg-raised);
+        color: var(--kovix-text-primary);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   Kovix action card — used by agent panel + security tooling panels.
+   Pending state adds the amber tint + amber border for awaiting-approval.
+   ────────────────────────────────────────────────────────────────── */
+.monaco-workbench .kovix-action-card {
+        background: var(--kovix-bg-raised);
+        border: 1px solid var(--kovix-border-subtle);
+        border-radius: var(--kovix-radius-md);
+        padding: 8px 10px;
+}
+
+.monaco-workbench .kovix-action-card.kovix-action-card--pending {
+        background: var(--kovix-pending-card-bg);
+        border-color: var(--kovix-pending-card-border);
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   Status bar running state — when an agent task is actively running,
+   the status bar shifts to solid Volt-500 with white text. This class
+   is added/removed programmatically by ConstructProgressPanel.
+   ────────────────────────────────────────────────────────────────── */
+.monaco-workbench .part.statusbar.kovix-status-running {
+        background: var(--kovix-volt-500) !important;
+        color: #FFFFFF !important;
+        transition: background 0.25s ease, color 0.25s ease;
+}
+.monaco-workbench .part.statusbar.kovix-status-running .statusbar-item,
+.monaco-workbench .part.statusbar.kovix-status-running .statusbar-item span {
+        color: #FFFFFF !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   Kovix Agent activity-bar icon — permanent subtle highlight, even
+   when inactive, so the agent reads as the main feature of the product.
+   Targets the view container whose icon is registered as
+   `construct-view-icon` (CSS class `.codicon-construct-view-icon`).
+   ────────────────────────────────────────────────────────────────── */
+.monaco-workbench .activitybar .action-item:has(.codicon-construct-view-icon) .action-label {
+        background: rgba(110, 66, 255, 0.12);
+        border-radius: 6px;
+}
+.monaco-workbench .activitybar .action-item.checked:has(.codicon-construct-view-icon) .action-label {
+        background: rgba(110, 66, 255, 0.22);
+}
+/* Fallback for browsers without :has() — apply via the icon class itself */
+.monaco-workbench .activitybar .action-label.codicon-construct-view-icon {
+        background: rgba(110, 66, 255, 0.12);
+        border-radius: 6px;
+}
+.monaco-workbench .activitybar .action-item.checked .action-label.codicon-construct-view-icon {
+        background: rgba(110, 66, 255, 0.22);
+}

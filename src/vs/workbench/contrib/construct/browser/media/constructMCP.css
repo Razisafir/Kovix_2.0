@@ -27,30 +27,30 @@
 }
 
 .construct-mcp-status-dot.connected {
-	background-color: #4ade80;
-	box-shadow: 0 0 6px #4ade80;
+	background-color: var(--kovix-badge-running-fg);
+	box-shadow: 0 0 6px var(--kovix-badge-running-fg);
 }
 
 .construct-mcp-status-dot.connecting {
-	background-color: #fbbf24;
+	background-color: var(--kovix-state-pending);
 	animation: mcp-pulse 1.5s ease-in-out infinite;
 }
 
 .construct-mcp-status-dot.error {
-	background-color: #f87171;
+	background-color: var(--kovix-badge-error-fg);
 }
 
 .construct-mcp-status-dot.disconnected {
-	background-color: #9ca3af;
+	background-color: var(--kovix-text-secondary);
 }
 
 .construct-mcp-status-dot.reconnecting {
-	background-color: #fb923c;
+	background-color: var(--kovix-ignite-400);
 	animation: mcp-pulse 1.5s ease-in-out infinite;
 }
 
 .construct-mcp-status-dot.stopping {
-	background-color: #9ca3af;
+	background-color: var(--kovix-text-secondary);
 	animation: mcp-fadeout 0.5s ease-out forwards;
 }
 
@@ -104,7 +104,7 @@
 	position: absolute;
 	top: 8px;
 	right: 8px;
-	background: linear-gradient(135deg, #f59e0b, #d97706);
+	background: linear-gradient(135deg, var(--kovix-state-pending), var(--kovix-state-pending));
 	color: white;
 	font-size: 10px;
 	font-weight: 700;
@@ -182,7 +182,7 @@
 }
 
 .construct-mcp-rating-stars {
-	color: #fbbf24;
+	color: var(--kovix-state-pending);
 }
 
 /* ─── Install Button ──────────────────────────────────────────────────────── */
@@ -216,13 +216,13 @@
 
 .construct-mcp-install-btn.uninstall {
 	background: transparent;
-	color: #f87171;
-	border: 1px solid #f8717140;
+	color: var(--kovix-badge-error-fg);
+	border: 1px solid rgba(255, 138, 150, 0.40);
 }
 
 .construct-mcp-install-btn.uninstall:hover {
-	background: #f8717115;
-	border-color: #f8717160;
+	background: rgba(255, 138, 150, 0.15);
+	border-color: rgba(255, 138, 150, 0.60);
 }
 
 /* ─── Server List View ──────────────────────────────────────────────────── */
@@ -294,13 +294,13 @@
 }
 
 .construct-mcp-server-action-btn.stop {
-	color: #f87171;
-	border-color: #f8717140;
+	color: var(--kovix-badge-error-fg);
+	border-color: rgba(255, 138, 150, 0.40);
 }
 
 .construct-mcp-server-action-btn.stop:hover {
-	border-color: #f87171;
-	background: #f8717115;
+	border-color: var(--kovix-badge-error-fg);
+	background: rgba(255, 138, 150, 0.15);
 }
 
 /* ─── Health Status Bar ──────────────────────────────────────────────────── */
@@ -312,10 +312,10 @@
 	font-size: 11px;
 }
 
-.construct-mcp-health.healthy { color: #4ade80; }
-.construct-mcp-health.degraded { color: #fbbf24; }
-.construct-mcp-health.unhealthy { color: #f87171; }
-.construct-mcp-health.unknown { color: #9ca3af; }
+.construct-mcp-health.healthy { color: var(--kovix-badge-running-fg); }
+.construct-mcp-health.degraded { color: var(--kovix-state-pending); }
+.construct-mcp-health.unhealthy { color: var(--kovix-badge-error-fg); }
+.construct-mcp-health.unknown { color: var(--kovix-text-secondary); }
 
 .construct-mcp-health-bar {
 	height: 3px;
@@ -332,17 +332,17 @@
 }
 
 .construct-mcp-health-bar-fill.healthy {
-	background: #4ade80;
+	background: var(--kovix-badge-running-fg);
 	width: 100%;
 }
 
 .construct-mcp-health-bar-fill.degraded {
-	background: #fbbf24;
+	background: var(--kovix-state-pending);
 	width: 60%;
 }
 
 .construct-mcp-health-bar-fill.unhealthy {
-	background: #f87171;
+	background: var(--kovix-badge-error-fg);
 	width: 30%;
 	animation: mcp-health-pulse 1s ease-in-out infinite;
 }
@@ -424,21 +424,21 @@
 }
 
 .construct-mcp-tool-result.success {
-	background: #4ade8010;
-	border-left: 2px solid #4ade80;
+	background: rgba(95, 232, 198, 0.10);
+	border-left: 2px solid var(--kovix-badge-running-fg);
 	color: var(--construct-foreground);
 }
 
 .construct-mcp-tool-result.error {
-	background: #f8717110;
-	border-left: 2px solid #f87171;
-	color: #f87171;
+	background: rgba(255, 138, 150, 0.10);
+	border-left: 2px solid var(--kovix-badge-error-fg);
+	color: var(--kovix-badge-error-fg);
 }
 
 .construct-mcp-tool-result.timeout {
-	background: #fbbf2410;
-	border-left: 2px solid #fbbf24;
-	color: #fbbf24;
+	background: rgba(255, 194, 51, 0.10);
+	border-left: 2px solid var(--kovix-state-pending);
+	color: var(--kovix-state-pending);
 }
 
 /* ─── Rating Stars ──────────────────────────────────────────────────────── */
@@ -449,18 +449,18 @@
 }
 
 .construct-mcp-rating-star {
-	color: #4a5568;
+	color: var(--kovix-text-tertiary);
 	font-size: 14px;
 	cursor: pointer;
 	transition: color 0.1s ease;
 }
 
 .construct-mcp-rating-star.filled {
-	color: #fbbf24;
+	color: var(--kovix-state-pending);
 }
 
 .construct-mcp-rating-star:hover {
-	color: #fcd34d;
+	color: var(--kovix-badge-pending-fg);
 }
 
 /* ─── Empty State ──────────────────────────────────────────────────────── */

@@ -24,7 +24,7 @@ export class SpinnerIndicator extends Disposable {
                 this.element = dom.$('.construct-spinner-char');
                 this.element.style.cssText = `
                         display: inline-block; width: 1.2em; text-align: center;
-                        color: #00E5FF; font-size: 13px;
+                        color: var(--kovix-volt-400); font-size: 13px;
                 `;
                 parent.appendChild(this.element);
         }
@@ -71,12 +71,12 @@ export class ProgressBar {
 
                 this.barElement = dom.$('.construct-progress-bar-fill');
                 this.barElement.style.cssText = `
-                        color: #00E5FF; white-space: pre;
+                        color: var(--kovix-volt-400); white-space: pre;
                 `;
 
                 this.labelElement = dom.$('.construct-progress-bar-label');
                 this.labelElement.style.cssText = `
-                        color: #4A5568;
+                        color: var(--kovix-text-tertiary);
                 `;
 
                 this.element.appendChild(this.barElement);
@@ -115,7 +115,7 @@ export class ElapsedTimer extends Disposable {
                 this.element = dom.$('.construct-elapsed-timer');
                 this.element.style.cssText = `
                         display: inline-block; font-size: 11px;
-                        color: #4A5568; font-family: monospace;
+                        color: var(--kovix-text-tertiary); font-family: monospace;
                         margin-left: 6px;
                 `;
                 this.update();
@@ -159,20 +159,20 @@ export class FileTreeDiff extends Disposable {
                 this.element = dom.$('.construct-file-tree-diff');
                 this.element.style.cssText = `
                         margin: 8px 0; padding: 6px 8px;
-                        background: #0A0E1A; border: 1px solid #1A1F2E;
+                        background: var(--kovix-bg-ink); border: 1px solid var(--kovix-border);
                         border-radius: 4px; font-size: 11px;
                         font-family: monospace; display: none;
                 `;
 
                 this.headerElement = dom.$('.construct-file-tree-header');
                 this.headerElement.style.cssText = `
-                        font-weight: 600; color: #E0E7FF; margin-bottom: 4px;
+                        font-weight: 600; color: var(--kovix-text-primary); margin-bottom: 4px;
                 `;
                 this.headerElement.textContent = 'Files changed:';
 
                 this.treeElement = dom.$('.construct-file-tree-body');
                 this.treeElement.style.cssText = `
-                        white-space: pre-wrap; color: #C0C0C0;
+                        white-space: pre-wrap; color: var(--kovix-text-secondary);
                 `;
 
                 this.element.appendChild(this.headerElement);
@@ -287,7 +287,7 @@ export class ConstructProgressPanel extends Disposable {
 
                 this.container = dom.$('.construct-progress-panel');
                 this.container.style.cssText = `
-                        background: #141B2D; border: 1px solid #1A1F2E;
+                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border);
                         border-radius: 6px; padding: 10px 12px; margin: 6px 0;
                         font-size: 12px; display: none;
                 `;
@@ -299,7 +299,7 @@ export class ConstructProgressPanel extends Disposable {
                 this.spinner = this._register(new SpinnerIndicator(phaseLine));
 
                 this.phaseLabel = dom.$('.construct-phase-label');
-                this.phaseLabel.style.cssText = `color: #E0E7FF; font-weight: 500; flex: 1;`;
+                this.phaseLabel.style.cssText = `color: var(--kovix-text-primary); font-weight: 500; flex: 1;`;
 
                 const timerContainer = dom.$('.construct-phase-timer');
                 timerContainer.style.cssText = `display: inline-block;`;
@@ -311,7 +311,7 @@ export class ConstructProgressPanel extends Disposable {
                 // Step line: "Step 2 of 4: Creating components"
                 this.stepLine = dom.$('.construct-step-line');
                 this.stepLine.style.cssText = `
-                        color: #C0C0C0; padding-left: 22px; margin-bottom: 2px;
+                        color: var(--kovix-text-secondary); padding-left: 22px; margin-bottom: 2px;
                         font-size: 11px;
                 `;
                 this.container.appendChild(this.stepLine);
@@ -319,7 +319,7 @@ export class ConstructProgressPanel extends Disposable {
                 // Tool detail: "📖 Reading: src/App.tsx"
                 this.toolDetail = dom.$('.construct-tool-detail');
                 this.toolDetail.style.cssText = `
-                        color: #8892A8; padding-left: 22px; font-size: 11px;
+                        color: var(--kovix-text-secondary); padding-left: 22px; font-size: 11px;
                         font-family: monospace; margin-bottom: 2px;
                 `;
                 this.container.appendChild(this.toolDetail);
@@ -334,8 +334,8 @@ export class ConstructProgressPanel extends Disposable {
                 this.errorPanel = dom.$('.construct-error-panel');
                 this.errorPanel.style.cssText = `
                         margin-top: 6px; padding: 6px 8px;
-                        background: #2D1414; border: 1px solid #5C1A1A;
-                        border-radius: 4px; color: #FF6666;
+                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-state-error);
+                        border-radius: 4px; color: var(--kovix-badge-error-fg);
                         font-size: 11px; display: none;
                 `;
                 this.container.appendChild(this.errorPanel);
@@ -344,8 +344,8 @@ export class ConstructProgressPanel extends Disposable {
                 this.metricsPanel = dom.$('.construct-metrics-panel');
                 this.metricsPanel.style.cssText = `
                         margin-top: 6px; padding: 6px 8px;
-                        background: #0D1F0D; border: 1px solid #1A3D1A;
-                        border-radius: 4px; color: #66FF66;
+                        background: var(--kovix-bg-ink); border: 1px solid var(--kovix-bg-raised);
+                        border-radius: 4px; color: var(--kovix-badge-running-fg);
                         font-size: 11px; font-family: monospace;
                         white-space: pre-wrap; display: none;
                 `;

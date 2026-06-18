@@ -83,8 +83,8 @@ const WIZARD_STYLES = `
                 to { opacity: 1; }
         }
         .kovix-wizard-modal {
-                background: #0D1117;
-                border: 1px solid #1A1F2E;
+                background: var(--kovix-bg-ink);
+                border: 1px solid var(--kovix-border);
                 border-radius: 12px;
                 width: 720px;
                 max-height: 85vh;
@@ -99,7 +99,7 @@ const WIZARD_STYLES = `
         }
         .kovix-wizard-header {
                 padding: 20px 24px 16px;
-                border-bottom: 1px solid #1A1F2E;
+                border-bottom: 1px solid var(--kovix-border);
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
@@ -107,20 +107,20 @@ const WIZARD_STYLES = `
         .kovix-wizard-title {
                 font-size: 18px;
                 font-weight: 700;
-                color: #E0E7FF;
+                color: var(--kovix-text-primary);
                 letter-spacing: -0.3px;
         }
         .kovix-wizard-close {
                 background: transparent;
                 border: none;
-                color: #4A5568;
+                color: var(--kovix-text-tertiary);
                 font-size: 20px;
                 cursor: pointer;
                 padding: 4px 8px;
                 border-radius: 4px;
                 transition: color 0.15s ease;
         }
-        .kovix-wizard-close:hover { color: #FF4444; }
+        .kovix-wizard-close:hover { color: var(--kovix-state-error); }
         .kovix-wizard-progress {
                 display: flex;
                 align-items: center;
@@ -131,19 +131,19 @@ const WIZARD_STYLES = `
                 flex: 1;
                 height: 3px;
                 border-radius: 2px;
-                background: #1A1F2E;
+                background: var(--kovix-border);
                 transition: background 0.3s ease;
         }
         .kovix-wizard-progress-step.active {
-                background: #00E5FF;
+                background: var(--kovix-volt-400);
                 box-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
         }
         .kovix-wizard-progress-step.completed {
-                background: #00C853;
+                background: var(--kovix-state-running);
         }
         .kovix-wizard-step-label {
                 font-size: 11px;
-                color: #4A5568;
+                color: var(--kovix-text-tertiary);
                 margin-right: 12px;
                 white-space: nowrap;
         }
@@ -159,12 +159,12 @@ const WIZARD_STYLES = `
                 background: transparent;
         }
         .kovix-wizard-body::-webkit-scrollbar-thumb {
-                background: #1A1F2E;
+                background: var(--kovix-border);
                 border-radius: 3px;
         }
         .kovix-wizard-footer {
                 padding: 16px 24px;
-                border-top: 1px solid #1A1F2E;
+                border-top: 1px solid var(--kovix-border);
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
@@ -183,25 +183,25 @@ const WIZARD_STYLES = `
         }
         .kovix-wizard-btn:active { transform: scale(0.97); }
         .kovix-wizard-btn-primary {
-                background: #00E5FF;
-                color: #0D1117;
+                background: var(--kovix-volt-400);
+                color: var(--kovix-bg-ink);
         }
-        .kovix-wizard-btn-primary:hover { background: #33ECFF; }
+        .kovix-wizard-btn-primary:hover { background: var(--kovix-state-info); }
         .kovix-wizard-btn-primary:disabled {
                 opacity: 0.4;
                 cursor: not-allowed;
         }
         .kovix-wizard-btn-secondary {
-                background: #141B2D;
-                color: #E0E7FF;
-                border: 1px solid #1A1F2E;
+                background: var(--kovix-bg-raised);
+                color: var(--kovix-text-primary);
+                border: 1px solid var(--kovix-border);
         }
-        .kovix-wizard-btn-secondary:hover { border-color: #00E5FF; color: #00E5FF; }
+        .kovix-wizard-btn-secondary:hover { border-color: var(--kovix-volt-400); color: var(--kovix-volt-400); }
         .kovix-wizard-btn-create {
-                background: #00C853;
+                background: var(--kovix-state-running);
                 color: white;
         }
-        .kovix-wizard-btn-create:hover { background: #00D85A; }
+        .kovix-wizard-btn-create:hover { background: var(--kovix-state-running); }
         .kovix-wizard-btn-create:disabled {
                 opacity: 0.4;
                 cursor: not-allowed;
@@ -211,26 +211,26 @@ const WIZARD_STYLES = `
                 display: block;
                 font-size: 12px;
                 font-weight: 600;
-                color: #8B949E;
+                color: var(--kovix-text-secondary);
                 margin-bottom: 6px;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
         }
         .kovix-wizard-input {
                 width: 100%;
-                background: #0A0E1A;
-                border: 1px solid #1A1F2E;
+                background: var(--kovix-bg-ink);
+                border: 1px solid var(--kovix-border);
                 border-radius: 6px;
                 padding: 10px 14px;
-                color: #E0E7FF;
+                color: var(--kovix-text-primary);
                 font-size: 14px;
                 outline: none;
                 transition: border-color 0.15s ease;
                 font-family: inherit;
                 resize: vertical;
         }
-        .kovix-wizard-input:focus { border-color: #00E5FF; }
-        .kovix-wizard-input::placeholder { color: #4A5568; }
+        .kovix-wizard-input:focus { border-color: var(--kovix-volt-400); }
+        .kovix-wizard-input::placeholder { color: var(--kovix-text-tertiary); }
         .kovix-wizard-field { margin-bottom: 20px; }
         /* Step 2: Template Grid */
         .kovix-wizard-template-grid {
@@ -239,8 +239,8 @@ const WIZARD_STYLES = `
                 gap: 10px;
         }
         .kovix-wizard-template-card {
-                background: #141B2D;
-                border: 1px solid #1A1F2E;
+                background: var(--kovix-bg-raised);
+                border: 1px solid var(--kovix-border);
                 border-radius: 8px;
                 padding: 16px;
                 cursor: pointer;
@@ -250,12 +250,12 @@ const WIZARD_STYLES = `
                 gap: 12px;
         }
         .kovix-wizard-template-card:hover {
-                border-color: #00E5FF40;
-                background: #1A2744;
+                border-color: rgba(138, 99, 255, 0.25);
+                background: var(--kovix-bg-raised);
         }
         .kovix-wizard-template-card.selected {
-                border-color: #00E5FF;
-                background: #1A2744;
+                border-color: var(--kovix-volt-400);
+                background: var(--kovix-bg-raised);
                 box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
         }
         .kovix-wizard-template-icon {
@@ -267,7 +267,7 @@ const WIZARD_STYLES = `
                 align-items: center;
                 justify-content: center;
                 border-radius: 8px;
-                background: #0A0E1A;
+                background: var(--kovix-bg-ink);
         }
         .kovix-wizard-template-info {
                 flex: 1;
@@ -276,12 +276,12 @@ const WIZARD_STYLES = `
         .kovix-wizard-template-name {
                 font-size: 13px;
                 font-weight: 600;
-                color: #E0E7FF;
+                color: var(--kovix-text-primary);
                 margin-bottom: 3px;
         }
         .kovix-wizard-template-desc {
                 font-size: 11px;
-                color: #8B949E;
+                color: var(--kovix-text-secondary);
                 line-height: 1.4;
         }
         /* Step 3: Tech Stack & Goals */
@@ -292,31 +292,31 @@ const WIZARD_STYLES = `
                 margin-bottom: 20px;
         }
         .kovix-wizard-tech-chip {
-                background: #141B2D;
-                border: 1px solid #1A1F2E;
+                background: var(--kovix-bg-raised);
+                border: 1px solid var(--kovix-border);
                 border-radius: 16px;
                 padding: 5px 12px;
                 font-size: 12px;
                 cursor: pointer;
                 transition: all 0.15s ease;
-                color: #8B949E;
+                color: var(--kovix-text-secondary);
                 display: inline-flex;
                 align-items: center;
                 gap: 4px;
         }
         .kovix-wizard-tech-chip:hover {
-                border-color: #00E5FF40;
-                color: #E0E7FF;
+                border-color: rgba(138, 99, 255, 0.25);
+                color: var(--kovix-text-primary);
         }
         .kovix-wizard-tech-chip.selected {
-                border-color: #00E5FF;
-                background: #1A2744;
-                color: #00E5FF;
+                border-color: var(--kovix-volt-400);
+                background: var(--kovix-bg-raised);
+                color: var(--kovix-volt-400);
         }
         .kovix-wizard-section-title {
                 font-size: 13px;
                 font-weight: 600;
-                color: #E0E7FF;
+                color: var(--kovix-text-primary);
                 margin-bottom: 10px;
         }
         .kovix-wizard-goals-input {
@@ -325,7 +325,7 @@ const WIZARD_STYLES = `
         }
         .kovix-wizard-goals-hint {
                 font-size: 11px;
-                color: #4A5568;
+                color: var(--kovix-text-tertiary);
                 margin-top: 4px;
         }
         /* Step 4: Review */
@@ -335,14 +335,14 @@ const WIZARD_STYLES = `
         .kovix-wizard-review-label {
                 font-size: 11px;
                 font-weight: 600;
-                color: #4A5568;
+                color: var(--kovix-text-tertiary);
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
                 margin-bottom: 4px;
         }
         .kovix-wizard-review-value {
                 font-size: 14px;
-                color: #E0E7FF;
+                color: var(--kovix-text-primary);
                 line-height: 1.5;
         }
         .kovix-wizard-review-tags {
@@ -351,16 +351,16 @@ const WIZARD_STYLES = `
                 gap: 4px;
         }
         .kovix-wizard-review-tag {
-                background: #141B2D;
-                border: 1px solid #1A1F2E;
+                background: var(--kovix-bg-raised);
+                border: 1px solid var(--kovix-border);
                 border-radius: 4px;
                 padding: 2px 8px;
                 font-size: 11px;
-                color: #00E5FF;
+                color: var(--kovix-volt-400);
         }
         .kovix-wizard-divider {
                 border: none;
-                border-top: 1px solid #1A1F2E;
+                border-top: 1px solid var(--kovix-border);
                 margin: 16px 0;
         }
         .kovix-wizard-success {
@@ -369,7 +369,7 @@ const WIZARD_STYLES = `
         }
         .kovix-wizard-success-icon {
                 font-size: 48px;
-                color: #00C853;
+                color: var(--kovix-state-running);
                 margin-bottom: 12px;
                 animation: kovix-wizard-scaleIn 0.5s ease;
         }
@@ -380,12 +380,12 @@ const WIZARD_STYLES = `
         .kovix-wizard-success-title {
                 font-size: 18px;
                 font-weight: 700;
-                color: #E0E7FF;
+                color: var(--kovix-text-primary);
                 margin-bottom: 4px;
         }
         .kovix-wizard-success-subtitle {
                 font-size: 13px;
-                color: #8B949E;
+                color: var(--kovix-text-secondary);
         }
 `;
 
@@ -538,10 +538,10 @@ class ProjectWizard extends Disposable {
 
         private renderStep1(): void {
                 const heading = dom.$('div');
-                heading.style.cssText = 'font-size: 16px; font-weight: 700; color: #E0E7FF; margin-bottom: 4px;';
+                heading.style.cssText = 'font-size: 16px; font-weight: 700; color: var(--kovix-text-primary); margin-bottom: 4px;';
                 heading.textContent = 'Project Information';
                 const subtitle = dom.$('div');
-                subtitle.style.cssText = 'font-size: 12px; color: #8B949E; margin-bottom: 24px;';
+                subtitle.style.cssText = 'font-size: 12px; color: var(--kovix-text-secondary); margin-bottom: 24px;';
                 subtitle.textContent = 'Give your project a name and description.';
                 this.body.appendChild(heading);
                 this.body.appendChild(subtitle);
@@ -589,10 +589,10 @@ class ProjectWizard extends Disposable {
 
         private renderStep2(): void {
                 const heading = dom.$('div');
-                heading.style.cssText = 'font-size: 16px; font-weight: 700; color: #E0E7FF; margin-bottom: 4px;';
+                heading.style.cssText = 'font-size: 16px; font-weight: 700; color: var(--kovix-text-primary); margin-bottom: 4px;';
                 heading.textContent = 'Choose a Template';
                 const subtitle = dom.$('div');
-                subtitle.style.cssText = 'font-size: 12px; color: #8B949E; margin-bottom: 24px;';
+                subtitle.style.cssText = 'font-size: 12px; color: var(--kovix-text-secondary); margin-bottom: 24px;';
                 subtitle.textContent = 'Select a project template to get started.';
                 this.body.appendChild(heading);
                 this.body.appendChild(subtitle);
@@ -638,10 +638,10 @@ class ProjectWizard extends Disposable {
 
         private renderStep3(): void {
                 const heading = dom.$('div');
-                heading.style.cssText = 'font-size: 16px; font-weight: 700; color: #E0E7FF; margin-bottom: 4px;';
+                heading.style.cssText = 'font-size: 16px; font-weight: 700; color: var(--kovix-text-primary); margin-bottom: 4px;';
                 heading.textContent = 'Tech Stack & Goals';
                 const subtitle = dom.$('div');
-                subtitle.style.cssText = 'font-size: 12px; color: #8B949E; margin-bottom: 24px;';
+                subtitle.style.cssText = 'font-size: 12px; color: var(--kovix-text-secondary); margin-bottom: 24px;';
                 subtitle.textContent = 'Select your technologies and define project goals.';
                 this.body.appendChild(heading);
                 this.body.appendChild(subtitle);
@@ -707,10 +707,10 @@ class ProjectWizard extends Disposable {
 
         private renderStep4(): void {
                 const heading = dom.$('div');
-                heading.style.cssText = 'font-size: 16px; font-weight: 700; color: #E0E7FF; margin-bottom: 4px;';
+                heading.style.cssText = 'font-size: 16px; font-weight: 700; color: var(--kovix-text-primary); margin-bottom: 4px;';
                 heading.textContent = 'Review & Create';
                 const subtitle = dom.$('div');
-                subtitle.style.cssText = 'font-size: 12px; color: #8B949E; margin-bottom: 24px;';
+                subtitle.style.cssText = 'font-size: 12px; color: var(--kovix-text-secondary); margin-bottom: 24px;';
                 subtitle.textContent = 'Confirm your project settings before creating.';
                 this.body.appendChild(heading);
                 this.body.appendChild(subtitle);

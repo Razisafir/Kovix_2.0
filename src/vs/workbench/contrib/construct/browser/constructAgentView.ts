@@ -152,14 +152,14 @@ export class ConstructAgentViewPane extends ViewPane {
                 const modelPickerBar = dom.$('.construct-model-picker-bar');
                 modelPickerBar.style.cssText = `
                         display: flex; align-items: center; justify-content: space-between;
-                        padding: 6px 10px; border-bottom: 1px solid #1A1F2E;
-                        background: #0D1117;
+                        padding: 6px 10px; border-bottom: 1px solid var(--kovix-border);
+                        background: var(--kovix-bg-ink);
                 `;
 
                 this.modelPickerBtn = dom.$('button.construct-model-picker') as HTMLButtonElement;
                 this.modelPickerBtn.style.cssText = `
-                        background: #141B2D; border: 1px solid #1A1F2E; border-radius: 4px;
-                        color: #E0E7FF; font-size: 11px; padding: 4px 10px; cursor: pointer;
+                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border); border-radius: 4px;
+                        color: var(--kovix-text-primary); font-size: 11px; padding: 4px 10px; cursor: pointer;
                         display: flex; align-items: center; gap: 6px;
                 `;
                 this.updateModelPickerLabel();
@@ -168,14 +168,14 @@ export class ConstructAgentViewPane extends ViewPane {
                 };
 
                 const providerLabel = dom.$('.construct-provider-label');
-                providerLabel.style.cssText = `font-size: 10px; color: #4A5568;`;
+                providerLabel.style.cssText = `font-size: 10px; color: var(--kovix-text-tertiary);`;
                 providerLabel.textContent = this.currentModelInfo.isLocal ? 'local' : 'cloud';
 
                 // --- Phase 4: Settings gear icon ---
                 const settingsBtn = dom.$('button.construct-settings-btn') as HTMLButtonElement;
                 settingsBtn.textContent = '\u2699'; // ⚙
                 settingsBtn.style.cssText = `
-                        background: transparent; border: none; color: #4A5568;
+                        background: transparent; border: none; color: var(--kovix-text-tertiary);
                         cursor: pointer; font-size: 14px; padding: 2px 4px;
                         border-radius: 3px;
                 `;
@@ -190,7 +190,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 const sessionHistoryBtn = dom.$('button.construct-session-history-btn') as HTMLButtonElement;
                 sessionHistoryBtn.textContent = '\uD83D\uDCDC'; // 📜
                 sessionHistoryBtn.style.cssText = `
-                        background: transparent; border: none; color: #4A5568;
+                        background: transparent; border: none; color: var(--kovix-text-tertiary);
                         cursor: pointer; font-size: 13px; padding: 2px 4px;
                         border-radius: 3px;
                 `;
@@ -213,15 +213,15 @@ export class ConstructAgentViewPane extends ViewPane {
                 welcome.style.cssText = `padding: 16px; text-align: center;`;
 
                 const logo = dom.$('.construct-logo');
-                logo.style.cssText = `font-size: 32px; margin-bottom: 8px; color: #00E5FF;`;
+                logo.style.cssText = `font-size: 32px; margin-bottom: 8px; color: var(--kovix-volt-400);`;
                 logo.textContent = '\u2B21'; // Hexagon
 
                 const title = dom.$('.construct-title');
-                title.style.cssText = `font-size: 14px; font-weight: 600; color: #E0E7FF; margin-bottom: 4px;`;
+                title.style.cssText = `font-size: 14px; font-weight: 600; color: var(--kovix-text-primary); margin-bottom: 4px;`;
                 title.textContent = 'Kovix Agent';
 
                 const subtitle = dom.$('.construct-subtitle');
-                subtitle.style.cssText = `font-size: 12px; color: #4A5568; margin-bottom: 12px;`;
+                subtitle.style.cssText = `font-size: 12px; color: var(--kovix-text-tertiary); margin-bottom: 12px;`;
                 subtitle.textContent = 'AI-powered coding assistant';
 
                 // Status indicator
@@ -230,13 +230,15 @@ export class ConstructAgentViewPane extends ViewPane {
 
                 // Memory status indicator
                 const memoryStatus = dom.$('.construct-memory-status');
-                memoryStatus.style.cssText = `font-size: 10px; color: ${this.constructMemory.isInitialized ? '#00E5FF' : '#4A5568'}; margin-bottom: 8px;`;
+                memoryStatus.classList.add('kovix-badge');
+                memoryStatus.classList.add(this.constructMemory.isInitialized ? 'kovix-badge--info' : 'kovix-badge--idle');
+                memoryStatus.style.marginBottom = '8px';
                 memoryStatus.textContent = this.constructMemory.isInitialized
-                        ? '[MEMORY] Connected'
-                        : '[MEMORY] Local only';
+                        ? 'Vector search'
+                        : 'Keyword fallback';
 
                 const hint = dom.$('.construct-hint');
-                hint.style.cssText = `font-size: 11px; color: #4A5568; font-family: monospace; background: #0A0E1A; border-radius: 4px; padding: 6px 10px; display: inline-block;`;
+                hint.style.cssText = `font-size: 11px; color: var(--kovix-text-tertiary); font-family: monospace; background: var(--kovix-bg-ink); border-radius: 4px; padding: 6px 10px; display: inline-block;`;
                 hint.textContent = 'Ctrl+Shift+I  Inline edit  |  Ctrl+Shift+C  Focus panel';
 
                 welcome.appendChild(logo);
@@ -251,15 +253,15 @@ export class ConstructAgentViewPane extends ViewPane {
 
                 // Input area
                 const inputArea = dom.$('.construct-input-area');
-                inputArea.style.cssText = `padding: 8px; border-top: 1px solid #1A1F2E; display: flex; gap: 6px; align-items: center;`;
+                inputArea.style.cssText = `padding: 8px; border-top: 1px solid var(--kovix-border); display: flex; gap: 6px; align-items: center;`;
 
                 this.inputBox = document.createElement('textarea');
                 this.inputBox.className = 'construct-chat-input';
                 this.inputBox.rows = 1;
                 this.inputBox.placeholder = 'Ask Kovix anything...';
                 this.inputBox.style.cssText = `
-                        flex: 1; background: #0A0E1A; border: 1px solid #1A1F2E;
-                        border-radius: 4px; padding: 8px 10px; color: #E0E7FF;
+                        flex: 1; background: var(--kovix-bg-ink); border: 1px solid var(--kovix-border);
+                        border-radius: 4px; padding: 8px 10px; color: var(--kovix-text-primary);
                         font-size: 13px; outline: none; resize: none;
                         min-height: 36px; max-height: 200px;
                         font-family: inherit; line-height: 1.4;
@@ -272,16 +274,16 @@ export class ConstructAgentViewPane extends ViewPane {
                 this.sendBtn = dom.$('button.construct-send-btn') as HTMLButtonElement;
                 this.sendBtn.textContent = '\u2192'; // Right arrow
                 this.sendBtn.style.cssText = `
-                        background: #00E5FF; color: #0A0E1A; border: none;
-                        border-radius: 4px; padding: 6px 12px; cursor: pointer;
-                        font-size: 14px; font-weight: bold;
+                        background: var(--kovix-gradient); color: #FFFFFF; border: none;
+                        border-radius: var(--kovix-radius-md); padding: 6px 12px; cursor: pointer;
+                        font-size: 14px; font-weight: 500;
                 `;
 
                 this.stopBtn = dom.$('button.construct-stop-btn') as HTMLButtonElement;
                 this.stopBtn.textContent = '\u25A0'; // Stop square
                 this.stopBtn.style.cssText = `
-                        background: #FF4444; color: white; border: none;
-                        border-radius: 4px; padding: 6px 10px; cursor: pointer;
+                        background: transparent; color: var(--kovix-state-error); border: 1px solid var(--kovix-state-error);
+                        border-radius: var(--kovix-radius-md); padding: 6px 10px; cursor: pointer;
                         font-size: 12px; display: none;
                 `;
 
@@ -347,7 +349,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 this.clearBtn = dom.$('button.construct-clear-btn') as HTMLButtonElement;
                 this.clearBtn.textContent = '\uD83D\uDDB1'; // 🗑
                 this.clearBtn.style.cssText = `
-                        background: transparent; color: #4A5568; border: none;
+                        background: transparent; color: var(--kovix-text-tertiary); border: none;
                         cursor: pointer; font-size: 14px; padding: 4px 6px;
                         display: none; border-radius: 3px;
                 `;
@@ -384,12 +386,12 @@ export class ConstructAgentViewPane extends ViewPane {
                 // --- Phase 2: Context Selector Bar ---
                 const contextBar = dom.$('.construct-context-bar');
                 contextBar.style.cssText = `
-                        padding: 4px 8px 6px; border-top: 1px solid #1A1F2E;
+                        padding: 4px 8px 6px; border-top: 1px solid var(--kovix-border);
                         display: flex; align-items: center; gap: 4px;
                 `;
 
                 const contextLabel = dom.$('.construct-context-label');
-                contextLabel.style.cssText = `font-size: 10px; color: #4A5568; margin-right: 2px;`;
+                contextLabel.style.cssText = `font-size: 10px; color: var(--kovix-text-tertiary); margin-right: 2px;`;
                 contextLabel.textContent = 'Context:';
 
                 const scopeOptions: Array<{ scope: ContextScope; label: string; icon: string }> = [
@@ -403,9 +405,9 @@ export class ConstructAgentViewPane extends ViewPane {
                 for (const opt of scopeOptions) {
                         const btn = dom.$('button.construct-context-scope-btn') as HTMLButtonElement;
                         btn.style.cssText = `
-                                background: ${this.contextScope === opt.scope ? '#1A2744' : '#0A0E1A'};
-                                border: 1px solid ${this.contextScope === opt.scope ? '#00E5FF' : '#1A1F2E'};
-                                border-radius: 3px; color: ${this.contextScope === opt.scope ? '#00E5FF' : '#4A5568'};
+                                background: ${this.contextScope === opt.scope ? 'var(--kovix-bg-raised)' : 'var(--kovix-bg-ink)'};
+                                border: 1px solid ${this.contextScope === opt.scope ? 'var(--kovix-volt-400)' : 'var(--kovix-border)'};
+                                border-radius: 3px; color: ${this.contextScope === opt.scope ? 'var(--kovix-volt-400)' : 'var(--kovix-text-tertiary)'};
                                 font-size: 10px; padding: 2px 8px; cursor: pointer;
                         `;
                         btn.textContent = `${opt.icon} ${opt.label}`;
@@ -415,9 +417,9 @@ export class ConstructAgentViewPane extends ViewPane {
                                 const buttons = contextBar.querySelectorAll('button.construct-context-scope-btn');
                                 buttons.forEach((b, i) => {
                                         const isActive = scopeOptions[i].scope === this.contextScope;
-                                        (b as HTMLButtonElement).style.background = isActive ? '#1A2744' : '#0A0E1A';
-                                        (b as HTMLButtonElement).style.borderColor = isActive ? '#00E5FF' : '#1A1F2E';
-                                        (b as HTMLButtonElement).style.color = isActive ? '#00E5FF' : '#4A5568';
+                                        (b as HTMLButtonElement).style.background = isActive ? 'var(--kovix-bg-raised)' : 'var(--kovix-bg-ink)';
+                                        (b as HTMLButtonElement).style.borderColor = isActive ? 'var(--kovix-volt-400)' : 'var(--kovix-border)';
+                                        (b as HTMLButtonElement).style.color = isActive ? 'var(--kovix-volt-400)' : 'var(--kovix-text-tertiary)';
                                 });
                         };
                         contextBar.appendChild(btn);
@@ -427,10 +429,11 @@ export class ConstructAgentViewPane extends ViewPane {
 
                 // Listen for memory initialization changes
                 this._register(this.constructMemory.onDidChangeInitialization((initialized) => {
-                        memoryStatus.style.color = initialized ? '#00E5FF' : '#4A5568';
+                        memoryStatus.classList.toggle('kovix-badge--info', initialized);
+                        memoryStatus.classList.toggle('kovix-badge--idle', !initialized);
                         memoryStatus.textContent = initialized
-                                ? '[MEMORY] Connected'
-                                : '[MEMORY] Local only';
+                                ? 'Vector search'
+                                : 'Keyword fallback';
                 }));
 
                 // Listen for provider errors via IConstructAIService
@@ -607,13 +610,13 @@ export class ConstructAgentViewPane extends ViewPane {
 
                 this.planContainer = dom.$('.construct-plan');
                 this.planContainer.style.cssText = `
-                        background: #141B2D; border: 1px solid #1A1F2E;
+                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border);
                         border-radius: 6px; padding: 12px; margin: 8px 0;
                 `;
 
                 // Plan header
                 const header = dom.$('.construct-plan-header');
-                header.style.cssText = `font-weight: 600; color: #E0E7FF; margin-bottom: 8px; font-size: 13px;`;
+                header.style.cssText = `font-weight: 600; color: var(--kovix-text-primary); margin-bottom: 8px; font-size: 13px;`;
                 header.textContent = `\uD83D\uDCA1 Plan ready \u2014 ${plan.steps.length} steps`;
                 this.planContainer.appendChild(header);
 
@@ -625,8 +628,8 @@ export class ConstructAgentViewPane extends ViewPane {
                         const selectAllBtn = dom.$('button') as HTMLButtonElement;
                         selectAllBtn.textContent = 'Select All';
                         selectAllBtn.style.cssText = `
-                                background: #1A2744; border: 1px solid #2D3A5C; border-radius: 3px;
-                                color: #E0E7FF; font-size: 11px; padding: 3px 8px; cursor: pointer;
+                                background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border); border-radius: 3px;
+                                color: var(--kovix-text-primary); font-size: 11px; padding: 3px 8px; cursor: pointer;
                         `;
                         selectAllBtn.onclick = () => {
                                 this.selectableSteps.forEach(s => s.selected = true);
@@ -637,8 +640,8 @@ export class ConstructAgentViewPane extends ViewPane {
                         const deselectAllBtn = dom.$('button') as HTMLButtonElement;
                         deselectAllBtn.textContent = 'Deselect All';
                         deselectAllBtn.style.cssText = `
-                                background: #1A2744; border: 1px solid #2D3A5C; border-radius: 3px;
-                                color: #E0E7FF; font-size: 11px; padding: 3px 8px; cursor: pointer;
+                                background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border); border-radius: 3px;
+                                color: var(--kovix-text-primary); font-size: 11px; padding: 3px 8px; cursor: pointer;
                         `;
                         deselectAllBtn.onclick = () => {
                                 this.selectableSteps.forEach(s => s.selected = false);
@@ -661,19 +664,19 @@ export class ConstructAgentViewPane extends ViewPane {
                                 checkbox.type = 'checkbox';
                                 checkbox.checked = step.selected;
                                 checkbox.className = 'construct-step-checkbox';
-                                checkbox.style.cssText = `accent-color: #00E5FF; cursor: pointer;`;
+                                checkbox.style.cssText = `accent-color: var(--kovix-volt-400); cursor: pointer;`;
                                 checkbox.onchange = () => {
                                         step.selected = checkbox.checked;
                                         const textEl = stepRow.querySelector('.construct-step-text') as HTMLElement;
                                         if (textEl) {
                                                 textEl.style.textDecoration = checkbox.checked ? 'none' : 'line-through';
-                                                textEl.style.color = checkbox.checked ? '#C0C0C0' : '#666';
+                                                textEl.style.color = checkbox.checked ? 'var(--kovix-text-secondary)' : 'var(--kovix-text-tertiary)';
                                         }
                                 };
 
                                 const icon = this.getActionIcon(step.action);
                                 const stepText = dom.$('.construct-step-text');
-                                stepText.style.cssText = `color: #C0C0C0;`;
+                                stepText.style.cssText = `color: var(--kovix-text-secondary);`;
                                 stepText.textContent = `${icon} ${step.action}: ${step.target}`;
 
                                 stepRow.appendChild(checkbox);
@@ -683,7 +686,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 } else {
                         // No structured steps -- show the raw summary
                         const summaryEl = dom.$('.construct-plan-summary');
-                        summaryEl.style.cssText = `font-size: 12px; color: #C0C0C0; white-space: pre-wrap; max-height: 150px; overflow-y: auto;`;
+                        summaryEl.style.cssText = `font-size: 12px; color: var(--kovix-text-secondary); white-space: pre-wrap; max-height: 150px; overflow-y: auto;`;
                         summaryEl.textContent = plan.summary.substring(0, 500);
                         this.planContainer.appendChild(summaryEl);
                 }
@@ -695,17 +698,17 @@ export class ConstructAgentViewPane extends ViewPane {
                 const approveBtn = dom.$('button') as HTMLButtonElement;
                 approveBtn.textContent = '\u2705 Approve';
                 approveBtn.style.cssText = `
-                        background: #00C853; color: white; border: none;
-                        border-radius: 4px; padding: 6px 14px; cursor: pointer;
-                        font-size: 12px; font-weight: 600;
+                        background: var(--kovix-gradient); color: #FFFFFF; border: none;
+                        border-radius: var(--kovix-radius-md); padding: 6px 14px; cursor: pointer;
+                        font-size: 12px; font-weight: 500;
                 `;
 
                 const cancelBtn = dom.$('button') as HTMLButtonElement;
                 cancelBtn.textContent = '\u274C Cancel';
                 cancelBtn.style.cssText = `
-                        background: #FF4444; color: white; border: none;
-                        border-radius: 4px; padding: 6px 14px; cursor: pointer;
-                        font-size: 12px; font-weight: 600;
+                        background: transparent; color: var(--kovix-text-secondary); border: 1px solid var(--kovix-border);
+                        border-radius: var(--kovix-radius-md); padding: 6px 14px; cursor: pointer;
+                        font-size: 12px; font-weight: 500;
                 `;
 
                 approveBtn.onclick = async () => {
@@ -927,9 +930,9 @@ export class ConstructAgentViewPane extends ViewPane {
         private addUserMessage(text: string): void {
                 const msg = dom.$('.construct-user-msg');
                 msg.style.cssText = `
-                        background: #00E5FF20; border-left: 2px solid #00E5FF;
+                        background: rgba(138, 99, 255, 0.13); border-left: 2px solid var(--kovix-volt-400);
                         padding: 8px 10px; margin: 8px 0; border-radius: 0 4px 4px 0;
-                        font-size: 13px; color: #E0E7FF; white-space: pre-wrap;
+                        font-size: 13px; color: var(--kovix-text-primary); white-space: pre-wrap;
                 `;
                 msg.textContent = text;
                 this.messageContainer.appendChild(msg);
@@ -940,15 +943,15 @@ export class ConstructAgentViewPane extends ViewPane {
                 const msg = dom.$('.construct-agent-msg');
 
                 const borderColors: Record<string, string> = {
-                        info: '#4A5568',
-                        error: '#FF4444',
-                        streaming: '#00E5FF',
+                        info: 'var(--kovix-text-tertiary)',
+                        error: 'var(--kovix-state-error)',
+                        streaming: 'var(--kovix-volt-400)',
                 };
 
                 msg.style.cssText = `
-                        background: #141B2D; border-left: 2px solid ${borderColors[type] ?? '#4A5568'};
+                        background: var(--kovix-bg-raised); border-left: 2px solid ${borderColors[type] ?? 'var(--kovix-text-tertiary)'};
                         padding: 8px 10px; margin: 8px 0; border-radius: 0 4px 4px 0;
-                        font-size: 13px; color: ${type === 'error' ? '#FF6666' : '#E0E7FF'};
+                        font-size: 13px; color: ${type === 'error' ? 'var(--kovix-badge-error-fg)' : 'var(--kovix-text-primary)'};
                         white-space: pre-wrap; font-family: inherit;
                 `;
                 msg.textContent = text;
@@ -970,6 +973,16 @@ export class ConstructAgentViewPane extends ViewPane {
                 this.stopBtn.style.display = isRunning ? 'inline-block' : 'none';
                 this.inputBox.disabled = isRunning;
 
+                // ── Kovix brand: shift status bar to solid Volt-500 while the agent is
+                // actively running. This is the highest-frequency brand touchpoint a user
+                // sees — it should feel alive, not decorative. The CSS class is defined
+                // in kovix-tokens.css and toggled here for the duration of the run only.
+                const isAgentRunning = state === 'planning' || state === 'refining' || state === 'executing';
+                const statusbar = document.querySelector('.monaco-workbench .part.statusbar');
+                if (statusbar) {
+                        statusbar.classList.toggle('kovix-status-running', isAgentRunning);
+                }
+
                 if (state === 'idle') {
                         this.inputBox.placeholder = 'Ask Kovix anything...';
                         // Clean up progress panel
@@ -988,15 +1001,15 @@ export class ConstructAgentViewPane extends ViewPane {
 
         private updateStatusIndicator(): void {
                 const stateConfig: Record<ExecutionState, { text: string; color: string }> = {
-                        idle: { text: '\u25CF Ready', color: '#00C853' },
-                        planning: { text: '\u25CF Planning...', color: '#FFB300' },
-                        refining: { text: '\u25CF Refining...', color: '#FFB300' },
-                        awaiting_approval: { text: '\u25CF Awaiting Approval', color: '#FFB300' },
-                        executing: { text: '\u25CF Executing...', color: '#00E5FF' },
-                        paused_at_milestone: { text: '\u25CF Paused at Milestone', color: '#FF9800' },
-                        complete: { text: '\u25CF Complete', color: '#00C853' },
-                        error: { text: '\u25CF Error', color: '#FF4444' },
-                        stopped: { text: '\u25CF Stopped', color: '#FF9800' },
+                        idle: { text: '\u25CF Ready', color: 'var(--kovix-state-running)' },
+                        planning: { text: '\u25CF Planning...', color: 'var(--kovix-state-pending)' },
+                        refining: { text: '\u25CF Refining...', color: 'var(--kovix-state-pending)' },
+                        awaiting_approval: { text: '\u25CF Awaiting Approval', color: 'var(--kovix-state-pending)' },
+                        executing: { text: '\u25CF Executing...', color: 'var(--kovix-volt-400)' },
+                        paused_at_milestone: { text: '\u25CF Paused at Milestone', color: 'var(--kovix-ignite-500)' },
+                        complete: { text: '\u25CF Complete', color: 'var(--kovix-state-running)' },
+                        error: { text: '\u25CF Error', color: 'var(--kovix-state-error)' },
+                        stopped: { text: '\u25CF Stopped', color: 'var(--kovix-ignite-500)' },
                 };
                 const config = stateConfig[this.executionState] ?? stateConfig.idle;
                 this.statusIndicator.style.cssText = `font-size: 11px; color: ${config.color}; margin-bottom: 6px;`;
@@ -1037,41 +1050,43 @@ export class ConstructAgentViewPane extends ViewPane {
                 welcome.style.cssText = `padding: 16px; text-align: center;`;
 
                 const logo = dom.$('.construct-logo');
-                logo.style.cssText = `font-size: 32px; margin-bottom: 8px; color: #00E5FF;`;
+                logo.style.cssText = `font-size: 32px; margin-bottom: 8px; color: var(--kovix-volt-400);`;
                 logo.textContent = '\u2B21';
 
                 const title = dom.$('.construct-title');
-                title.style.cssText = `font-size: 14px; font-weight: 600; color: #E0E7FF; margin-bottom: 4px;`;
+                title.style.cssText = `font-size: 14px; font-weight: 600; color: var(--kovix-text-primary); margin-bottom: 4px;`;
                 title.textContent = 'Kovix Agent';
 
                 const subtitle = dom.$('.construct-subtitle');
-                subtitle.style.cssText = `font-size: 12px; color: #4A5568; margin-bottom: 12px;`;
+                subtitle.style.cssText = `font-size: 12px; color: var(--kovix-text-tertiary); margin-bottom: 12px;`;
                 subtitle.textContent = 'AI-powered coding assistant';
 
                 const statusEl = dom.$('.construct-status');
                 const stateConfig: Record<ExecutionState, { text: string; color: string }> = {
-                        idle: { text: '\u25CF Ready', color: '#00C853' },
-                        planning: { text: '\u25CF Planning...', color: '#FFB300' },
-                        refining: { text: '\u25CF Refining...', color: '#FFB300' },
-                        awaiting_approval: { text: '\u25CF Awaiting Approval', color: '#FFB300' },
-                        executing: { text: '\u25CF Executing...', color: '#00E5FF' },
-                        paused_at_milestone: { text: '\u25CF Paused at Milestone', color: '#FF9800' },
-                        complete: { text: '\u25CF Complete', color: '#00C853' },
-                        error: { text: '\u25CF Error', color: '#FF4444' },
-                        stopped: { text: '\u25CF Stopped', color: '#FF9800' },
+                        idle: { text: '\u25CF Ready', color: 'var(--kovix-state-running)' },
+                        planning: { text: '\u25CF Planning...', color: 'var(--kovix-state-pending)' },
+                        refining: { text: '\u25CF Refining...', color: 'var(--kovix-state-pending)' },
+                        awaiting_approval: { text: '\u25CF Awaiting Approval', color: 'var(--kovix-state-pending)' },
+                        executing: { text: '\u25CF Executing...', color: 'var(--kovix-volt-400)' },
+                        paused_at_milestone: { text: '\u25CF Paused at Milestone', color: 'var(--kovix-ignite-500)' },
+                        complete: { text: '\u25CF Complete', color: 'var(--kovix-state-running)' },
+                        error: { text: '\u25CF Error', color: 'var(--kovix-state-error)' },
+                        stopped: { text: '\u25CF Stopped', color: 'var(--kovix-ignite-500)' },
                 };
                 const cfg = stateConfig.idle;
                 statusEl.style.cssText = `font-size: 11px; color: ${cfg.color}; margin-bottom: 6px;`;
                 statusEl.textContent = cfg.text;
 
                 const memoryStatus = dom.$('.construct-memory-status');
-                memoryStatus.style.cssText = `font-size: 10px; color: ${this.constructMemory.isInitialized ? '#00E5FF' : '#4A5568'}; margin-bottom: 8px;`;
+                memoryStatus.classList.add('kovix-badge');
+                memoryStatus.classList.add(this.constructMemory.isInitialized ? 'kovix-badge--info' : 'kovix-badge--idle');
+                memoryStatus.style.marginBottom = '8px';
                 memoryStatus.textContent = this.constructMemory.isInitialized
-                        ? '[MEMORY] Connected'
-                        : '[MEMORY] Local only';
+                        ? 'Vector search'
+                        : 'Keyword fallback';
 
                 const hint = dom.$('.construct-hint');
-                hint.style.cssText = `font-size: 11px; color: #4A5568; font-family: monospace; background: #0A0E1A; border-radius: 4px; padding: 6px 10px; display: inline-block;`;
+                hint.style.cssText = `font-size: 11px; color: var(--kovix-text-tertiary); font-family: monospace; background: var(--kovix-bg-ink); border-radius: 4px; padding: 6px 10px; display: inline-block;`;
                 hint.textContent = 'Ctrl+Shift+I  Inline edit  |  Ctrl+Shift+C  Focus panel';
 
                 welcome.appendChild(logo);
@@ -1183,7 +1198,7 @@ export class ConstructAgentViewPane extends ViewPane {
 
                 this.toolLogContainer = dom.$('.construct-tool-log');
                 this.toolLogContainer.style.cssText = `
-                        background: #141B2D; border: 1px solid #1A1F2E;
+                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border);
                         border-radius: 6px; margin: 8px 0; font-size: 11px;
                 `;
 
@@ -1191,13 +1206,13 @@ export class ConstructAgentViewPane extends ViewPane {
                 const header = dom.$('.construct-tool-log-header');
                 header.style.cssText = `
                         display: flex; align-items: center; justify-content: space-between;
-                        padding: 6px 10px; cursor: pointer; color: #E0E7FF;
+                        padding: 6px 10px; cursor: pointer; color: var(--kovix-text-primary);
                         font-weight: 600;
                 `;
                 header.textContent = `\uD83D\uDD27 Tool Activity (${this.toolLogEntries.length} calls)`;
 
                 const toggle = dom.$('.construct-tool-log-toggle');
-                toggle.style.cssText = `color: #4A5568; font-size: 10px;`;
+                toggle.style.cssText = `color: var(--kovix-text-tertiary); font-size: 10px;`;
                 toggle.textContent = this.toolLogCollapsed ? '[+]' : '[-]';
 
                 header.appendChild(toggle);
@@ -1215,8 +1230,8 @@ export class ConstructAgentViewPane extends ViewPane {
                                 ? `${(entry.durationMs / 1000).toFixed(1)}s`
                                 : `${entry.durationMs}ms`;
                         row.style.cssText = `
-                                padding: 3px 0; color: #C0C0C0; font-family: monospace;
-                                border-bottom: 1px solid #1A1F2E;
+                                padding: 3px 0; color: var(--kovix-text-secondary); font-family: monospace;
+                                border-bottom: 1px solid var(--kovix-border);
                         `;
                         row.textContent = `${statusIcon} ${entry.toolName}${entry.target ? ': ' + entry.target : ''} (${duration})`;
                         body.appendChild(row);
@@ -1241,16 +1256,16 @@ export class ConstructAgentViewPane extends ViewPane {
 
                 const diffContainer = dom.$(`.construct-diff-${diffId}`);
                 diffContainer.style.cssText = `
-                        background: #141B2D; border: 1px solid #2D3A4D;
+                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border);
                         border-radius: 6px; margin: 8px 0; overflow: hidden;
                 `;
 
                 // File path header
                 const pathHeader = dom.$('.construct-diff-path');
                 pathHeader.style.cssText = `
-                        padding: 6px 10px; background: #0D1117; color: #00E5FF;
+                        padding: 6px 10px; background: var(--kovix-bg-ink); color: var(--kovix-volt-400);
                         font-size: 11px; font-family: monospace;
-                        border-bottom: 1px solid #1A1F2E;
+                        border-bottom: 1px solid var(--kovix-border);
                         display: flex; align-items: center; justify-content: space-between;
                 `;
                 const changeLabel = changeType === 'write' ? '[NEW]' : '[EDIT]';
@@ -1260,8 +1275,8 @@ export class ConstructAgentViewPane extends ViewPane {
                 const contentArea = dom.$('.construct-diff-content');
                 contentArea.style.cssText = `
                         padding: 8px 10px; max-height: 200px; overflow-y: auto;
-                        font-family: monospace; font-size: 11px; color: #C0C0C0;
-                        white-space: pre-wrap; background: #0A0E1A;
+                        font-family: monospace; font-size: 11px; color: var(--kovix-text-secondary);
+                        white-space: pre-wrap; background: var(--kovix-bg-ink);
                 `;
                 contentArea.textContent = 'Loading file content...';
 
@@ -1282,29 +1297,29 @@ export class ConstructAgentViewPane extends ViewPane {
                 const btnRow = dom.$('.construct-diff-buttons');
                 btnRow.style.cssText = `
                         display: flex; gap: 6px; padding: 6px 10px;
-                        border-top: 1px solid #1A1F2E; background: #0D1117;
+                        border-top: 1px solid var(--kovix-border); background: var(--kovix-bg-ink);
                 `;
 
                 const acceptBtn = dom.$('button') as HTMLButtonElement;
                 acceptBtn.textContent = '\u2705 Accept';
                 acceptBtn.style.cssText = `
-                        background: #00C853; color: white; border: none;
-                        border-radius: 3px; padding: 4px 10px; cursor: pointer;
-                        font-size: 11px; font-weight: 600;
+                        background: var(--kovix-gradient); color: #FFFFFF; border: none;
+                        border-radius: var(--kovix-radius-sm); padding: 4px 12px; cursor: pointer;
+                        font-size: 11px; font-weight: 500;
                 `;
 
                 const rejectBtn = dom.$('button') as HTMLButtonElement;
                 rejectBtn.textContent = '\u274C Reject';
                 rejectBtn.style.cssText = `
-                        background: #FF4444; color: white; border: none;
-                        border-radius: 3px; padding: 4px 10px; cursor: pointer;
-                        font-size: 11px; font-weight: 600;
+                        background: transparent; color: var(--kovix-text-secondary); border: 1px solid var(--kovix-border);
+                        border-radius: var(--kovix-radius-sm); padding: 4px 12px; cursor: pointer;
+                        font-size: 11px; font-weight: 500;
                 `;
 
                 acceptBtn.onclick = () => {
                         const entry = this.pendingDiffs.find(d => d.id === diffId);
                         if (entry) { entry.accepted = true; }
-                        diffContainer.style.borderLeft = '3px solid #00C853';
+                        diffContainer.style.borderLeft = '3px solid var(--kovix-state-running)';
                         acceptBtn.disabled = true;
                         rejectBtn.disabled = true;
                         acceptBtn.style.opacity = '0.5';
@@ -1322,7 +1337,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 rejectBtn.onclick = () => {
                         const entry = this.pendingDiffs.find(d => d.id === diffId);
                         if (entry) { entry.accepted = false; }
-                        diffContainer.style.borderLeft = '3px solid #FF4444';
+                        diffContainer.style.borderLeft = '3px solid var(--kovix-state-error)';
                         acceptBtn.disabled = true;
                         rejectBtn.disabled = true;
                         acceptBtn.style.opacity = '0.5';
@@ -1418,12 +1433,12 @@ export class ConstructAgentViewPane extends ViewPane {
         private renderRefinementQuestions(questions: IRefinementQuestion[], idea: string): void {
                 const container = dom.$('.construct-refinement');
                 container.style.cssText = `
-                        background: #141B2D; border: 1px solid #1A1F2E;
+                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border);
                         border-radius: 6px; padding: 12px; margin: 8px 0;
                 `;
 
                 const header = dom.$('.construct-refinement-header');
-                header.style.cssText = `font-weight: 600; color: #E0E7FF; margin-bottom: 10px; font-size: 13px;`;
+                header.style.cssText = `font-weight: 600; color: var(--kovix-text-primary); margin-bottom: 10px; font-size: 13px;`;
                 header.textContent = `\uD83D\uDCA1 Idea Refinement \u2014 ${questions.length} questions`;
                 container.appendChild(header);
 
@@ -1432,27 +1447,27 @@ export class ConstructAgentViewPane extends ViewPane {
                 for (const q of questions) {
                         const qCard = dom.$('.construct-refinement-question');
                         qCard.style.cssText = `
-                                background: #0D1117; border: 1px solid #1A1F2E;
+                                background: var(--kovix-bg-ink); border: 1px solid var(--kovix-border);
                                 border-radius: 4px; padding: 8px 10px; margin-bottom: 8px;
                         `;
 
                         const categoryBadge = dom.$('.construct-refinement-category');
                         categoryBadge.style.cssText = `
-                                font-size: 10px; background: #1A2744; color: #00E5FF;
+                                font-size: 10px; background: var(--kovix-bg-raised); color: var(--kovix-volt-400);
                                 border-radius: 3px; padding: 1px 6px; display: inline-block; margin-bottom: 4px;
                         `;
                         categoryBadge.textContent = q.category;
 
                         const qText = dom.$('.construct-refinement-text');
-                        qText.style.cssText = `font-size: 12px; color: #E0E7FF; margin-bottom: 6px;`;
+                        qText.style.cssText = `font-size: 12px; color: var(--kovix-text-primary); margin-bottom: 6px;`;
                         qText.textContent = q.text;
 
                         const input = document.createElement('input');
                         input.type = 'text';
                         input.placeholder = q.suggestions?.[0] ?? 'Your answer...';
                         input.style.cssText = `
-                                width: 100%; background: #0A0E1A; border: 1px solid #1A1F2E;
-                                border-radius: 3px; padding: 6px 8px; color: #E0E7FF;
+                                width: 100%; background: var(--kovix-bg-ink); border: 1px solid var(--kovix-border);
+                                border-radius: 3px; padding: 6px 8px; color: var(--kovix-text-primary);
                                 font-size: 12px; outline: none; box-sizing: border-box;
                         `;
                         input.oninput = () => { answers.set(q.id, input.value); };
@@ -1469,8 +1484,8 @@ export class ConstructAgentViewPane extends ViewPane {
                                         const chip = dom.$('button') as HTMLButtonElement;
                                         chip.textContent = suggestion;
                                         chip.style.cssText = `
-                                                background: #1A2744; border: 1px solid #2D3A5C; border-radius: 12px;
-                                                color: #E0E7FF; font-size: 10px; padding: 2px 8px; cursor: pointer;
+                                                background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border); border-radius: 12px;
+                                                color: var(--kovix-text-primary); font-size: 10px; padding: 2px 8px; cursor: pointer;
                                         `;
                                         chip.onclick = () => {
                                                 input.value = suggestion;
@@ -1491,7 +1506,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 const submitBtn = dom.$('button') as HTMLButtonElement;
                 submitBtn.textContent = 'Submit Answers';
                 submitBtn.style.cssText = `
-                        background: #00E5FF; color: #0A0E1A; border: none;
+                        background: var(--kovix-volt-400); color: var(--kovix-bg-ink); border: none;
                         border-radius: 4px; padding: 6px 14px; cursor: pointer;
                         font-size: 12px; font-weight: 600;
                 `;
@@ -1499,7 +1514,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 const skipBtn = dom.$('button') as HTMLButtonElement;
                 skipBtn.textContent = 'Skip to Planning';
                 skipBtn.style.cssText = `
-                        background: #1A2744; border: 1px solid #2D3A5C; color: #E0E7FF;
+                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border); color: var(--kovix-text-primary);
                         border-radius: 4px; padding: 6px 14px; cursor: pointer;
                         font-size: 12px;
                 `;
@@ -1559,13 +1574,13 @@ export class ConstructAgentViewPane extends ViewPane {
         private async proceedWithRefinedIdea(refinedIdea: IRefinedIdea, originalIdea: string): Promise<void> {
                 const summaryEl = dom.$('.construct-refined-summary');
                 summaryEl.style.cssText = `
-                        background: #141B2D; border: 1px solid #00E5FF;
+                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-volt-400);
                         border-radius: 6px; padding: 12px; margin: 8px 0;
                 `;
                 summaryEl.innerHTML = `
-                        <div style="font-weight:600;color:#E0E7FF;margin-bottom:6px;font-size:13px">\u2705 Refined Idea</div>
-                        <div style="font-size:12px;color:#C0C0C0;margin-bottom:8px">${this.escapeHtml(refinedIdea.refinedDescription)}</div>
-                        <div style="font-size:11px;color:#00E5FF">Confidence: ${Math.round(refinedIdea.confidence * 100)}%</div>
+                        <div style="font-weight:600;color:var(--kovix-text-primary);margin-bottom:6px;font-size:13px">\u2705 Refined Idea</div>
+                        <div style="font-size:12px;color:var(--kovix-text-secondary);margin-bottom:8px">${this.escapeHtml(refinedIdea.refinedDescription)}</div>
+                        <div style="font-size:11px;color:var(--kovix-volt-400)">Confidence: ${Math.round(refinedIdea.confidence * 100)}%</div>
                 `;
                 this.messageContainer.appendChild(summaryEl);
                 this.scrollToBottom();
@@ -1581,17 +1596,17 @@ export class ConstructAgentViewPane extends ViewPane {
         private renderMilestonePauseControls(milestone: IMilestone): void {
                 const container = dom.$('.construct-milestone-pause');
                 container.style.cssText = `
-                        background: #1A2744; border: 1px solid #00E5FF;
+                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-volt-400);
                         border-radius: 6px; padding: 12px; margin: 8px 0;
                 `;
 
                 const header = dom.$('.construct-milestone-header');
-                header.style.cssText = `font-weight: 600; color: #00E5FF; margin-bottom: 6px; font-size: 13px;`;
+                header.style.cssText = `font-weight: 600; color: var(--kovix-volt-400); margin-bottom: 6px; font-size: 13px;`;
                 header.textContent = `\u23F8 Paused at: ${milestone.name}`;
                 container.appendChild(header);
 
                 const desc = dom.$('.construct-milestone-desc');
-                desc.style.cssText = `font-size: 12px; color: #C0C0C0; margin-bottom: 10px;`;
+                desc.style.cssText = `font-size: 12px; color: var(--kovix-text-secondary); margin-bottom: 10px;`;
                 desc.textContent = milestone.description;
                 container.appendChild(desc);
 
@@ -1601,9 +1616,9 @@ export class ConstructAgentViewPane extends ViewPane {
                 const continueBtn = dom.$('button') as HTMLButtonElement;
                 continueBtn.textContent = '\u25B6 Continue';
                 continueBtn.style.cssText = `
-                        background: #00C853; color: white; border: none;
-                        border-radius: 4px; padding: 6px 14px; cursor: pointer;
-                        font-size: 12px; font-weight: 600;
+                        background: var(--kovix-gradient); color: #FFFFFF; border: none;
+                        border-radius: var(--kovix-radius-md); padding: 6px 14px; cursor: pointer;
+                        font-size: 12px; font-weight: 500;
                 `;
                 continueBtn.onclick = () => {
                         container.remove();
@@ -1614,9 +1629,9 @@ export class ConstructAgentViewPane extends ViewPane {
                 const skipBtn = dom.$('button') as HTMLButtonElement;
                 skipBtn.textContent = '\u23ED Skip';
                 skipBtn.style.cssText = `
-                        background: #FF9800; color: white; border: none;
-                        border-radius: 4px; padding: 6px 14px; cursor: pointer;
-                        font-size: 12px; font-weight: 600;
+                        background: transparent; color: var(--kovix-text-secondary); border: 1px solid var(--kovix-border);
+                        border-radius: var(--kovix-radius-md); padding: 6px 14px; cursor: pointer;
+                        font-size: 12px; font-weight: 500;
                 `;
                 skipBtn.onclick = () => {
                         container.remove();
@@ -1627,9 +1642,9 @@ export class ConstructAgentViewPane extends ViewPane {
                 const stopBtn = dom.$('button') as HTMLButtonElement;
                 stopBtn.textContent = '\u25A0 Stop';
                 stopBtn.style.cssText = `
-                        background: #FF4444; color: white; border: none;
-                        border-radius: 4px; padding: 6px 14px; cursor: pointer;
-                        font-size: 12px; font-weight: 600;
+                        background: transparent; color: var(--kovix-state-error); border: 1px solid var(--kovix-state-error);
+                        border-radius: var(--kovix-radius-md); padding: 6px 14px; cursor: pointer;
+                        font-size: 12px; font-weight: 500;
                 `;
                 stopBtn.onclick = () => {
                         container.remove();
