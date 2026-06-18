@@ -17,11 +17,12 @@ env:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     timeout-minutes: 120
     env:
       KOVIX_ARCH: x64
       KOVIX_QUALITY: stable
+      GYP_MSVS_VERSION: '2022'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,12 +43,15 @@ jobs:
 
       - name: Setup Visual Studio Build Tools
         uses: ilammy/msvc-dev-cmd@v1
+        with:
+          toolset: '14.3'
 
       - name: Install dependencies
         run: npm ci
         timeout-minutes: 30
         env:
           npm_config_build_from_source: "true"
+          GYP_MSVS_VERSION: '2022'
 
       - name: Compile
         run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile
