@@ -256,3 +256,93 @@
 .monaco-workbench .activitybar .action-item.checked .action-label.codicon-construct-view-icon {
         background: rgba(110, 66, 255, 0.22);
 }
+
+/* ──────────────────────────────────────────────────────────────────
+   LUXURY CHROMIUM CHROME — title bar, status bar, auxiliary bar
+   Inspired by Antigravity IDE: dark surfaces with brand-tinted accents,
+   hairline borders, and a permanent subtle brand presence.
+   ────────────────────────────────────────────────────────────────── */
+
+/* Title bar — deeper ink, brand-tinted bottom hairline, crisper text */
+.monaco-workbench .part.titlebar {
+        background: var(--kovix-bg-ink) !important;
+        border-bottom: 1px solid var(--kovix-border-subtle) !important;
+        color: var(--kovix-text-primary) !important;
+        font-family: var(--kovix-font-ui);
+        -webkit-font-smoothing: antialiased;
+}
+.monaco-workbench .part.titlebar .window-title,
+.monaco-workbench .part.titlebar .monaco-actionbar .action-label {
+        color: var(--kovix-text-secondary) !important;
+}
+.monaco-workbench .part.titlebar.active .window-title,
+.monaco-workbench .part.titlebar.active .monaco-actionbar .action-label {
+        color: var(--kovix-text-primary) !important;
+}
+
+/* Status bar — Kovix brand surface (Volt-600 dark pressed) with bright text.
+   Reads as a luxury chrome footer even when the agent is idle. */
+.monaco-workbench .part.statusbar {
+        background: var(--kovix-volt-600) !important;
+        color: #FFFFFF !important;
+        border-top: 1px solid rgba(138, 99, 255, 0.35) !important;
+        font-family: var(--kovix-font-ui);
+}
+.monaco-workbench .part.statusbar .statusbar-item,
+.monaco-workbench .part.statusbar .statusbar-item span {
+        color: rgba(255, 255, 255, 0.92) !important;
+}
+.monaco-workbench .part.statusbar .statusbar-item a:hover {
+        background: rgba(255, 255, 255, 0.10) !important;
+}
+
+/* Auxiliary bar (right-hand panel — Antigravity-style agent dock)
+   Slightly raised surface, brand-tinted header, hairline left border. */
+.monaco-workbench .part.auxiliarybar {
+        background: var(--kovix-bg-surface) !important;
+        border-left: 1px solid var(--kovix-border-subtle) !important;
+}
+.monaco-workbench .part.auxiliarybar .composite.title {
+        background: var(--kovix-bg-ink) !important;
+        border-bottom: 1px solid var(--kovix-border-subtle) !important;
+}
+.monaco-workbench .part.auxiliarybar .title-label h2 {
+        color: var(--kovix-text-primary) !important;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+}
+
+/* Sidebar (left) — slightly darker than editor for depth */
+.monaco-workbench .part.sidebar {
+        background: var(--kovix-bg-surface) !important;
+        border-right: 1px solid var(--kovix-border-subtle) !important;
+}
+
+/* Activity bar — match sidebar, no extra border */
+.monaco-workbench .part.activitybar {
+        background: var(--kovix-bg-ink) !important;
+        border-right: 1px solid var(--kovix-border-subtle) !important;
+}
+
+/* Editor area — keep the deepest ink for focus */
+.monaco-workbench .editor-group-container,
+.monaco-workbench .editor-group-container .editor-container {
+        background: var(--kovix-bg-ink) !important;
+}
+
+/* Tab strip — flatter, brand-tinted active tab */
+.monaco-workbench .tabs-container .tab {
+        background: var(--kovix-bg-surface) !important;
+        border-top: 1px solid transparent !important;
+}
+.monaco-workbench .tabs-container .tab.active {
+        background: var(--kovix-bg-ink) !important;
+        border-top: 2px solid var(--kovix-volt-500) !important;
+        color: var(--kovix-text-primary) !important;
+}
+.monaco-workbench .tabs-container .tab.active .tab-label {
+        color: var(--kovix-text-primary) !important;
+}
+.monaco-workbench .tabs-container .tab .tab-label {
+        color: var(--kovix-text-tertiary) !important;
+}

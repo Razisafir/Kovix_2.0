@@ -144,6 +144,20 @@ export class ConstructAgentViewPane extends ViewPane {
         protected override renderBody(container: HTMLElement): void {
                 super.renderBody(container);
 
+                try {
+                        this._renderBody(container);
+                } catch (err) {
+                        this.logService.error('[Kovix] ConstructAgentViewPane.renderBody failed:', err);
+                        console.error('[Kovix] ConstructAgentViewPane.renderBody failed:', err);
+                        // Render a visible error placeholder so silent failures are obvious.
+                        const errDiv = document.createElement('div');
+                        errDiv.style.cssText = 'padding: 16px; color: #ff6b6b; background: #2a1414; border: 1px solid #ff6b6b; border-radius: 6px; margin: 12px; font-family: var(--kovix-font-mono, monospace); font-size: 12px; white-space: pre-wrap;';
+                        errDiv.textContent = `[Kovix Agent] Failed to render panel:\n${err instanceof Error ? err.stack || err.message : String(err)}\n\nCheck Developer Tools console for details. The agent backend services may have failed to initialize.`;
+                        container.appendChild(errDiv);
+                }
+        }
+
+        private _renderBody(container: HTMLElement): void {
                 container.style.display = 'flex';
                 container.style.flexDirection = 'column';
                 container.style.height = '100%';

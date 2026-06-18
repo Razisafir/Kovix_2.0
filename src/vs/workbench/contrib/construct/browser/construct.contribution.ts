@@ -90,18 +90,31 @@ import './constructApiSettings.js';
 import { ILanguageFeaturesService } from '../../../../editor/common/services/languageFeatures.js';
 import { registerKovixAutocomplete } from '../../../../editor/contrib/construct/browser/kovixInlineCompletionProvider.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
+import { Event } from '../../../../base/common/event.js';
+import { IStorageService, StorageScope, StorageTarget } from '../../../../platform/storage/common/storage.js';
 
 const constructViewIcon = registerIcon('construct-view-icon', Codicon.robot, localize('constructViewIcon', 'View icon of the Kovix Agent view.'));
 const constructMemoryIcon = registerIcon('construct-memory-icon', Codicon.symbolEvent, localize('constructMemoryIcon', 'View icon of the Kovix Memory view.'));
 
-// Register the Kovix view container in the sidebar
+// Register the Kovix view container in the AUXILIARY BAR (right-hand side, Antigravity-style)
 const constructViewContainer = Registry.as<IViewContainersRegistry>(ViewExtensions.ViewContainersRegistry).registerViewContainer({
                 id: 'construct',
                 title: localize2('construct', "Kovix Agent"),
                 ctorDescriptor: new SyncDescriptor(ViewPaneContainer, ['construct', { mergeViewWithContainerWhenSingleView: true }]),
                 icon: constructViewIcon,
                 order: 100,
-}, ViewContainerLocation.Sidebar, { doNotRegisterOpenCommand: false });
+                // Open the right-hand panel by default on first launch so the agent is immediately visible.
+                openCommandActionDescriptor: {
+                                id: 'construct.focusPanel',
+                                title: { value: localize('focusConstructPanel', "Open Kovix Agent"), original: 'Open Kovix Agent' },
+                                mnemonicTitle: undefined,
+                                keybindings: {
+                                                primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyK,
+                                                weight: KeybindingWeight.WorkbenchContrib,
+                                },
+                                order: 1,
+                },
+}, ViewContainerLocation.AuxiliaryBar, { doNotRegisterOpenCommand: false });
 
 // Register the agent panel view inside the container
 Registry.as<IViewsRegistry>(ViewExtensions.ViewsRegistry).registerViews([{
@@ -240,27 +253,40 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
                 }
 }
 
-Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(ConstructStatusBarContribution, LifecyclePhase.Restored);
+// Auto-open the Kovix Agent panel on the right-hand side after the workbench restores.
+// This ensures the agent is visible on first launch (matching the Antigravity IDE UX).
+class ConstructAutoOpenContribution extends Disposable implements IWorkbenchContribution {
+                static readonly ID = 'workbench.contrib.constructAutoOpen';
 
-// --- Construct Commands --------------------------------------------------------
-
-registerAction2(class FocusConstructPanelAction extends Action2 {
-                constructor() {
-                                super({
-                                                id: 'construct.focusPanel',
-                                                title: localize2('focusConstructPanel', "Kovix: Open Agent Panel"),
-                                                keybinding: {
-                                                                primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyK,
-                                                                weight: KeybindingWeight.WorkbenchContrib,
-                                                },
-                                                f1: true,
-                                                category: localize2('constructCategory', "Kovix"),
+                constructor(
+                                @IViewsService private readonly viewsService: IViewsService,
+                                @IStorageService private readonly storageService: IStorageService,
+                ) {
+                                super();
+                                // Defer until Restored phase to avoid racing with layout restoration.
+                                Event.once(this.storageService.onWillSaveState)(() => {
+                                                const seenKey = 'construct.autoOpened.v2';
+                                                const hasOpened = this.storageService.getBoolean(seenKey, StorageScope.APPLICATION, false);
+                                                // Always attempt to open — openView is idempotent.
+                                                try {
+                                                                this.viewsService.openView('construct.agentPanel', false);
+                                                } catch (err) {
+                                                                console.error('[Kovix] Failed to auto-open agent panel:', err);
+                                                }
+                                                if (!hasOpened) {
+                                                                this.storageService.store(seenKey, true, StorageScope.APPLICATION, StorageTarget.MACHINE);
+                                                }
                                 });
                 }
-                run(accessor: ServicesAccessor): void {
-                                accessor.get(IViewsService).openView('construct.agentPanel', true);
-                }
-});
+}
+
+Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(ConstructStatusBarContribution, LifecyclePhase.Restored);
+Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(ConstructAutoOpenContribution, LifecyclePhase.Restored);
+
+// --- Construct Commands --------------------------------------------------------
+// NOTE: The `construct.focusPanel` command is auto-registered by the container's
+// `openCommandActionDescriptor` (see above). We keep `construct.newChat` and
+// `construct.showInlineAgent` as additional entry points that also focus the panel.
 
 registerAction2(class NewConstructChatAction extends Action2 {
                 constructor() {
