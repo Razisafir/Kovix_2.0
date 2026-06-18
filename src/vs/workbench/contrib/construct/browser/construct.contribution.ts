@@ -108,7 +108,6 @@ const constructViewContainer = Registry.as<IViewContainersRegistry>(ViewExtensio
                                 mnemonicTitle: undefined,
                                 keybindings: {
                                                 primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyK,
-                                                weight: KeybindingWeight.WorkbenchContrib,
                                 },
                                 order: 1,
                 },
