@@ -139,6 +139,8 @@ export class ConstructAgentViewPane extends ViewPane {
                 @IQuickInputService private readonly quickInputService: IQuickInputService,
         ) {
                 super(options, keybindingService, contextMenuService, configurationService, contextKeyService, viewDescriptorService, instantiationService, openerService, themeService, telemetryService, hoverService);
+                // DIAGNOSTIC: confirm the constructor ran (i.e. super() completed without throwing)
+                console.log('[Kovix Agent] ConstructAgentViewPane constructor completed — instance created');
         }
 
         protected override renderBody(container: HTMLElement): void {

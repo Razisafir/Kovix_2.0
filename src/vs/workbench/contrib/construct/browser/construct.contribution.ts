@@ -7,7 +7,7 @@
 
 import { localize, localize2 } from '../../../../nls.js';
 import { Registry } from '../../../../platform/registry/common/platform.js';
-import { IViewsRegistry, Extensions as ViewExtensions, IViewContainersRegistry, ViewContainerLocation } from '../../../../workbench/common/views.js';
+import { IViewsRegistry, Extensions as ViewExtensions, IViewContainersRegistry, ViewContainerLocation, IViewDescriptorService } from '../../../../workbench/common/views.js';
 import { SyncDescriptor } from '../../../../platform/instantiation/common/descriptors.js';
 import { Codicon } from '../../../../base/common/codicons.js';
 import { registerIcon } from '../../../../platform/theme/common/iconRegistry.js';
@@ -257,12 +257,25 @@ class ConstructAutoOpenContribution extends Disposable implements IWorkbenchCont
 
                 constructor(
                                 @IViewsService private readonly viewsService: IViewsService,
+                                @IViewDescriptorService private readonly viewDescriptorService: IViewDescriptorService,
                 ) {
                                 super();
                                 // This contribution is registered at LifecyclePhase.Restored, so by the time
                                 // the constructor runs the workbench layout is ready. Just call openView directly.
                                 try {
-                                                this.viewsService.openView('construct.agentPanel', false);
+                                                // DIAGNOSTIC: log view registration state before opening
+                                                const container = this.viewDescriptorService.getViewContainerByViewId('construct.agentPanel');
+                                                console.log('[Kovix AutoOpen] container for construct.agentPanel:', container?.id, 'location:', container ? this.viewDescriptorService.getViewContainerLocation(container) : 'N/A');
+                                                if (container) {
+                                                                const model = this.viewDescriptorService.getViewContainerModel(container);
+                                                                const all = model.allViewDescriptors;
+                                                                const active = model.activeViewDescriptors;
+                                                                console.log('[Kovix AutoOpen] allViewDescriptors:', all.map(v => v.id));
+                                                                console.log('[Kovix AutoOpen] activeViewDescriptors:', active.map(v => v.id));
+                                                }
+                                                const result = this.viewsService.openView('construct.agentPanel', false);
+                                                console.log('[Kovix AutoOpen] openView returned:', result);
+                                                result.then(v => console.log('[Kovix AutoOpen] openView resolved:', v)).catch(err => console.error('[Kovix AutoOpen] openView rejected:', err));
                                 } catch (err) {
                                                 console.error('[Kovix] Failed to auto-open agent panel:', err);
                                 }
