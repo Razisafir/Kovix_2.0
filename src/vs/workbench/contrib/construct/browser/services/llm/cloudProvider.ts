@@ -601,6 +601,21 @@ export class CloudProvider extends Disposable implements IConstructAIProvider {
 
                 if (tools.length > 0 && this._activeModel!.supportsTools) {
                         body.tools = this.convertTools(tools);
+                        // Kovix v1.3.1 FIX: NVIDIA NIM (Llama 3.1 family and similar) rejects
+                        // requests whose prior assistant turn contains multiple tool_calls
+                        // with HTTP 400 "This model only supports single tool-calls at once!".
+                        // Setting parallel_tool_calls=false instructs the model to emit at most
+                        // one tool call per response, sidestepping the error at the source.
+                        // This is also a safe default for OpenRouter, Together, Groq, LM Studio,
+                        // and other OpenAI-compatible backends that wrap Llama/Mistral/Qwen models.
+                        if (this._activeLLMProvider === 'nvidia' ||
+                                this._activeLLMProvider === 'groq' ||
+                                this._activeLLMProvider === 'together' ||
+                                this._activeLLMProvider === 'openrouter' ||
+                                this._activeLLMProvider === 'lmstudio' ||
+                                this._activeLLMProvider === 'litellm') {
+                                body.parallel_tool_calls = false;
+                        }
                 }
 
                 let retryCount = 0;
