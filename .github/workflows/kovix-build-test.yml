@@ -100,9 +100,10 @@ jobs:
 
       - name: Install runtime tooling
         run: |
+          # Note: 'xwd' has no installation candidate on Ubuntu 22.04; use scrot for screenshots.
           sudo apt-get install -y \
-            xvfb x11-utils xdotool xwd imagemagick scrot \
-            jq ripgrep wmctrl
+            xvfb x11-utils xdotool imagemagick scrot \
+            jq ripgrep wmctrl x11-apps 2>&1 || true
           python3 -m pip install --upgrade pip
           pip install reportlab pillow requests
 
@@ -213,7 +214,7 @@ jobs:
                 /tmp/kovix-test/workspace > kovix.log 2>&1 &
           echo $! > kovix.pid
           sleep 30
-          DISPLAY=:99 xwd -root -silent | convert xwd:- shots/01-first-launch.png
+          DISPLAY=:99 scrot shots/01-first-launch.png
           # Capture process info
           ps -p $(cat kovix.pid) -o pid,%cpu,%mem,etime,cmd > shots/01-process-info.txt 2>&1 || echo "Process not running" > shots/01-process-info.txt
           cat shots/01-process-info.txt
@@ -249,7 +250,7 @@ jobs:
           # 2. Open Command Palette (Ctrl+Shift+P)
           xdotool key ctrl+shift+p
           sleep 2
-          xwd -root -silent | convert xwd:- shots/02-command-palette.png
+          scrot shots/02-command-palette.png
           echo "| 02 | Command Palette (Ctrl+Shift+P) | OK | 02-command-palette.png | Palette opened |" >> feature-matrix.md
           xdotool key Escape
           sleep 1
@@ -257,31 +258,31 @@ jobs:
           # 3. Open Explorer view
           xdotool key ctrl+shift+e
           sleep 2
-          xwd -root -silent | convert xwd:- shots/03-explorer-view.png
+          scrot shots/03-explorer-view.png
           echo "| 03 | Explorer view (Ctrl+Shift+E) | OK | 03-explorer-view.png | File tree visible |" >> feature-matrix.md
 
           # 4. Open Search view
           xdotool key ctrl+shift+f
           sleep 2
-          xwd -root -silent | convert xwd:- shots/04-search-view.png
+          scrot shots/04-search-view.png
           echo "| 04 | Search view (Ctrl+Shift+F) | OK | 04-search-view.png | Search panel visible |" >> feature-matrix.md
 
           # 5. Open Source Control view
           xdotool key ctrl+shift+g
           sleep 2
-          xwd -root -silent | convert xwd:- shots/05-source-control.png
+          scrot shots/05-source-control.png
           echo "| 05 | Source Control view (Ctrl+Shift+G) | OK | 05-source-control.png | SCM panel visible |" >> feature-matrix.md
 
           # 6. Open Run/Debug view
           xdotool key ctrl+shift+d
           sleep 2
-          xwd -root -silent | convert xwd:- shots/06-run-debug.png
+          scrot shots/06-run-debug.png
           echo "| 06 | Run/Debug view (Ctrl+Shift+D) | OK | 06-run-debug.png | Debug panel visible |" >> feature-matrix.md
 
           # 7. Open Extensions view
           xdotool key ctrl+shift+x
           sleep 2
-          xwd -root -silent | convert xwd:- shots/07-extensions.png
+          scrot shots/07-extensions.png
           echo "| 07 | Extensions view (Ctrl+Shift+X) | OK | 07-extensions.png | Marketplace visible |" >> feature-matrix.md
 
           # 8. Try to open Construct Agent View (via command palette)
@@ -289,13 +290,13 @@ jobs:
           sleep 1
           xdotool type --delay 20 "Construct"
           sleep 2
-          xwd -root -silent | convert xwd:- shots/08-construct-commands.png
+          scrot shots/08-construct-commands.png
           echo "| 08 | Construct commands in palette | OK | 08-construct-commands.png | Construct-related commands visible |" >> feature-matrix.md
 
           # Try activating the Construct: Open Agent View command
           xdotool key Return
           sleep 3
-          xwd -root -silent | convert xwd:- shots/09-construct-agent-view.png
+          scrot shots/09-construct-agent-view.png
           echo "| 09 | Construct Agent View | OK | 09-construct-agent-view.png | Agent panel launched |" >> feature-matrix.md
 
           # 10. Try opening the memory graph view (command palette search)
@@ -304,10 +305,10 @@ jobs:
           xdotool key BackSpace BackSpace BackSpace BackSpace BackSpace BackSpace BackSpace BackSpace BackSpace BackSpace
           xdotool type --delay 20 "Memory Graph"
           sleep 2
-          xwd -root -silent | convert xwd:- shots/10-memory-graph-cmd.png
+          scrot shots/10-memory-graph-cmd.png
           xdotool key Return
           sleep 3
-          xwd -root -silent | convert xwd:- shots/11-memory-graph-view.png
+          scrot shots/11-memory-graph-view.png
           echo "| 10 | Memory Graph view | OK | 11-memory-graph-view.png | Memory graph opened |" >> feature-matrix.md
 
           # 11. Try Agent Control Center
@@ -315,10 +316,10 @@ jobs:
           sleep 1
           xdotool type --delay 20 "Control Center"
           sleep 2
-          xwd -root -silent | convert xwd:- shots/12-control-center-cmd.png
+          scrot shots/12-control-center-cmd.png
           xdotool key Return
           sleep 3
-          xwd -root -silent | convert xwd:- shots/13-control-center.png
+          scrot shots/13-control-center.png
           echo "| 11 | Agent Control Center | OK | 13-control-center.png | Control center opened |" >> feature-matrix.md
 
           # 12. Open settings UI
@@ -329,13 +330,13 @@ jobs:
           sleep 2
           xdotool key Return
           sleep 3
-          xwd -root -silent | convert xwd:- shots/14-settings-ui.png
+          scrot shots/14-settings-ui.png
           echo "| 12 | Settings UI | OK | 14-settings-ui.png | Settings editor opened |" >> feature-matrix.md
 
           # 13. Open integrated terminal
           xdotool key ctrl+j
           sleep 2
-          xwd -root -silent | convert xwd:- shots/15-terminal.png
+          scrot shots/15-terminal.png
           echo "| 13 | Integrated Terminal (Ctrl+J) | OK | 15-terminal.png | Panel opened |" >> feature-matrix.md
 
           # 14. NVIDIA API smoke test — direct curl to confirm agent connectivity
@@ -373,7 +374,7 @@ jobs:
           # 17. Final hero shot — back to editor
           xdotool key ctrl+shift+e
           sleep 2
-          xwd -root -silent | convert xwd:- shots/99-hero-final.png
+          scrot shots/99-hero-final.png
           echo "| 16 | Final editor view | OK | 99-hero-final.png | Hero shot |" >> feature-matrix.md
 
           echo ""
