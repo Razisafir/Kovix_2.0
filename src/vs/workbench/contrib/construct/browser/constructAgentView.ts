@@ -87,7 +87,6 @@ export class ConstructAgentViewPane extends ViewPane {
 	private modeBadgeEl!: HTMLElement;
 	private memoryPillEl!: HTMLElement;
 	private ponytailBadgeEl!: HTMLElement;
-	private _statusLineEl!: HTMLElement;
 	private chipsRowEl!: HTMLElement;
 	private inputRowEl!: HTMLElement;
 	private inputHintEl!: HTMLElement;
@@ -151,7 +150,6 @@ export class ConstructAgentViewPane extends ViewPane {
 		@IIdeaRefinementService private readonly ideaRefinementService: IIdeaRefinementService,
 		@IConstructSessionService private readonly sessionService: IConstructSessionService,
 		@IQuickInputService private readonly quickInputService: IQuickInputService,
-		@IAgentModeService private readonly _agentModeService: IAgentModeService,
 	) {
 		super(options, keybindingService, contextMenuService, configurationService, contextKeyService, viewDescriptorService, instantiationService, openerService, themeService, telemetryService, hoverService);
 		// DIAGNOSTIC: confirm the constructor ran (i.e. super() completed without throwing)

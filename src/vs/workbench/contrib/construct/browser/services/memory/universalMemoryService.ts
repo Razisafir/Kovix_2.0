@@ -253,7 +253,7 @@ export class UniversalMemoryService extends Disposable implements IUniversalMemo
 		if (Array.isArray(changes.tags)) {
 			(entry as { tags: string[] }).tags = changes.tags;
 		}
-		entry.lastAccessedAt = Date.now();
+		(entry as { lastAccessedAt: number }).lastAccessedAt = Date.now();
 		await this.saveStore(store);
 		this.logService.info(`[UniversalMemory] Updated entry: ${id}`);
 		return entry;

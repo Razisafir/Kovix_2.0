@@ -68,11 +68,20 @@ interface GraphEdge {
 }
 
 const CATEGORY_COLORS: Record<UniversalMemoryCategory, string> = {
+	// Five-layer memory model (used by the v1.3.0 graph view)
 	[UniversalMemoryCategory.Working]: '#569CD6',
 	[UniversalMemoryCategory.Episodic]: '#4EC9B0',
 	[UniversalMemoryCategory.Semantic]: '#C586C0',
 	[UniversalMemoryCategory.Procedural]: '#D7BA7D',
 	[UniversalMemoryCategory.Universal]: '#6E42FF',
+	// Original seven categories (kept for completeness — Record<K,V> requires all keys)
+	[UniversalMemoryCategory.Preference]: '#569CD6',
+	[UniversalMemoryCategory.Pattern]: '#4EC9B0',
+	[UniversalMemoryCategory.Convention]: '#C586C0',
+	[UniversalMemoryCategory.Architecture]: '#D7BA7D',
+	[UniversalMemoryCategory.ToolUsage]: '#9CDCFE',
+	[UniversalMemoryCategory.ProjectContext]: '#CE9178',
+	[UniversalMemoryCategory.ErrorSolution]: '#F44747',
 };
 
 const CATEGORY_LABELS: Record<UniversalMemoryCategory, string> = {
@@ -81,6 +90,13 @@ const CATEGORY_LABELS: Record<UniversalMemoryCategory, string> = {
 	[UniversalMemoryCategory.Semantic]: 'Semantic',
 	[UniversalMemoryCategory.Procedural]: 'Procedural',
 	[UniversalMemoryCategory.Universal]: 'Universal',
+	[UniversalMemoryCategory.Preference]: 'Preference',
+	[UniversalMemoryCategory.Pattern]: 'Pattern',
+	[UniversalMemoryCategory.Convention]: 'Convention',
+	[UniversalMemoryCategory.Architecture]: 'Architecture',
+	[UniversalMemoryCategory.ToolUsage]: 'Tool Usage',
+	[UniversalMemoryCategory.ProjectContext]: 'Project Context',
+	[UniversalMemoryCategory.ErrorSolution]: 'Error Solution',
 };
 
 export class KovixMemoryGraphPane extends ViewPane {
