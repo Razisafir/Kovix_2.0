@@ -6,6 +6,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { localize, localize2 } from '../../../../nls.js';
+import { URI } from '../../../../base/common/uri.js';
 import { Registry } from '../../../../platform/registry/common/platform.js';
 import { IViewsRegistry, Extensions as ViewExtensions, IViewContainersRegistry, ViewContainerLocation, IViewDescriptorService } from '../../../../workbench/common/views.js';
 import { SyncDescriptor } from '../../../../platform/instantiation/common/descriptors.js';
