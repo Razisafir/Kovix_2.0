@@ -2,9 +2,14 @@ name: Build Kovix IDE
 
 on:
   push:
-    branches: [main]
+    branches: [main, release/*]
+    tags: ['v*']
   workflow_dispatch:
     inputs:
+      ref:
+        description: 'Git ref (branch/tag/sha) to build'
+        required: false
+        default: 'main'
       build_macos:
         description: 'Build macOS (expensive runner)'
         required: false
@@ -13,6 +18,14 @@ on:
         options:
           - 'false'
           - 'true'
+      attach_to_release:
+        description: 'Attach artifacts to matching GitHub Release (if tag)'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
 
 env:
   NODE_VERSION: '20'
@@ -164,6 +177,7 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+          ref: ${{ inputs.ref || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -308,3 +322,50 @@ jobs:
             kovix-darwin-x64.zip
             checksums-sha256.txt
           retention-days: 30
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # ATTACH TO RELEASE — uploads .deb + checksums
+  # to the matching GitHub Release when building a tag.
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  attach-to-release:
+    needs: [build-linux]
+    name: Attach .deb to GitHub Release
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.attach_to_release != 'false' && (startsWith(github.ref, 'refs/tags/v') || startsWith(inputs.ref, 'v') || startsWith(inputs.ref, 'refs/tags/v')) }}
+    permissions:
+      contents: write
+    steps:
+      - name: Resolve tag name
+        id: tag
+        run: |
+          if [ -n "${{ inputs.ref }}" ]; then
+            REF="${{ inputs.ref }}"
+          else
+            REF="${GITHUB_REF#refs/}"
+          fi
+          # Strip leading "tags/" or "heads/"
+          TAG="${REF#tags/}"
+          TAG="${TAG#heads/}"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Resolved tag: $TAG"
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: kovix-linux-x64
+          path: ./linux-artifacts
+
+      - name: Inspect downloaded artifacts
+        run: |
+          find ./linux-artifacts -type f -exec ls -la {} \;
+
+      - name: Upload .deb to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          files: |
+            ./linux-artifacts/**/*.deb
+            ./linux-artifacts/**/checksums-sha256.txt
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
