@@ -199,25 +199,42 @@ jobs:
       - name: Launch KOVIX under Xvfb
         run: |
           export DISPLAY=:99
-          Xvfb :99 -screen 0 1920x1080x24 >/tmp/xvfb.log 2>&1 &
+          Xvfb :99 -screen 0 1920x1080x24 +extension RANDR +extension GLX >/tmp/xvfb.log 2>&1 &
           sleep 2
-          # Start a simple window manager so we can move windows
-          # (openbox is the lightest, but fluxbox/jwm also work; skip if not installed)
-          (sudo apt-get install -y openbox 2>/dev/null && openbox & sleep 1) || true
+          # Start a simple window manager so windows can be focused/moved
+          (sudo apt-get install -y openbox 2>/dev/null && (openbox >/tmp/openbox.log 2>&1 &) && sleep 2) || true
           cd /tmp/kovix-test
           BIN="${{ steps.deb.outputs.binary }}"
           echo "Launching: $BIN"
+          # Flags needed for Electron on Xvfb in CI:
+          #   --no-sandbox              : required when running as root in CI
+          #   --disable-gpu             : no GPU on headless runners
+          #   --disable-dev-shm-usage   : avoid /dev/shm exhaustion (use /tmp instead)
+          #   --enable-logging=stderr   : print renderer logs to stderr (-> kovix.log)
+          #   --ozone-platform=x11      : force X11 backend (not Wayland)
+          #   --use-gl=swiftshader      : software GL renderer so UI actually paints
           "$BIN" --user-data-dir=/tmp/kovix-test/userdata \
                 --extensions-dir=/tmp/kovix-test/exts \
                 --disable-gpu \
+                --disable-dev-shm-usage \
                 --no-sandbox \
+                --enable-logging=stderr \
+                --ozone-platform=x11 \
+                --use-gl=swiftshader \
+                --password-store=basic \
                 /tmp/kovix-test/workspace > kovix.log 2>&1 &
           echo $! > kovix.pid
-          sleep 30
+          sleep 45
           DISPLAY=:99 scrot shots/01-first-launch.png
           # Capture process info
           ps -p $(cat kovix.pid) -o pid,%cpu,%mem,etime,cmd > shots/01-process-info.txt 2>&1 || echo "Process not running" > shots/01-process-info.txt
           cat shots/01-process-info.txt
+          # List X windows to verify KOVIX has a visible window
+          (DISPLAY=:99 wmctrl -l 2>&1 || DISPLAY=:99 xdotool search --name "" 2>&1 | head -5) > shots/01-x-windows.txt
+          cat shots/01-x-windows.txt
+          # Print first 30 lines of kovix.log to see if there are errors
+          echo "---kovix.log first 30 lines---"
+          head -30 kovix.log 2>&1 || true
 
       - name: Run feature matrix
         env:
