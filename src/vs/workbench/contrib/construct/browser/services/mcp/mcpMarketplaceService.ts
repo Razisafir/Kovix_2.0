@@ -241,6 +241,96 @@ export class MCPMarketplaceService extends Disposable implements IMCPMarketplace
                                 transport: MCPTransportType.Stdio,
                                 featured: true,
                                 repositoryUrl: 'https://github.com/modelcontextprotocol/servers/tree/main/src/figma'
+                        },
+                        // --- 21st.dev MCP — install and scaffold components/shadcn-style blocks ---
+                        {
+                                id: '21st-dev/magic',
+                                name: '21st.dev',
+                                description: '21st.dev (Magic) — search, install, and scaffold beautiful shadcn-style UI components and blocks directly from the 21st.dev registry. Requires a free API key from https://21st.dev.',
+                                author: '21st-dev',
+                                version: '0.4.0',
+                                categories: ['design', 'frontend', 'component'],
+                                tags: ['shadcn', 'ui', 'components', 'react', 'tailwind', '21st', 'magic', 'design', 'frontend'],
+                                rating: 4.6,
+                                downloadCount: 28000,
+                                command: 'npx',
+                                args: ['-y', '@21st-dev/magic@latest'],
+                                env: { API_KEY: '' },
+                                transport: MCPTransportType.Stdio,
+                                featured: true,
+                                repositoryUrl: 'https://github.com/21st-dev/magic-mcp'
+                        },
+                        // --- Ponytail MCP — lazy senior developer mode (https://github.com/DietrichGebert/ponytail) ---
+                        {
+                                id: 'dietrichgebert/ponytail',
+                                name: 'ponytail',
+                                description: 'Ponytail — Lazy Senior Developer Mode. Enforces the YAGNI → stdlib → native → deps → one-line → minimum decision ladder to prevent over-engineering. Modes: lite / full / ultra / off.',
+                                author: 'dietrichgebert',
+                                version: '0.1.0',
+                                categories: ['code-quality', 'workflow'],
+                                tags: ['yagni', 'lazy', 'review', 'quality', 'over-engineering', 'ponytail'],
+                                rating: 4.4,
+                                downloadCount: 5200,
+                                command: 'npx',
+                                args: ['-y', 'ponytail-mcp@latest'],
+                                env: {},
+                                transport: MCPTransportType.Stdio,
+                                featured: false,
+                                repositoryUrl: 'https://github.com/DietrichGebert/ponytail'
+                        },
+                        // --- Supermemory — Obsidian-style persistent memory ---
+                        {
+                                id: 'supermemory/mcp',
+                                name: 'supermemory',
+                                description: 'Supermemory — persistent cross-session memory for AI agents. Store facts, decisions, and document snippets; retrieve them automatically on every prompt. Pairs with Kovix\'s built-in Memory view.',
+                                author: 'supermemory',
+                                version: '1.0.0',
+                                categories: ['memory', 'rag'],
+                                tags: ['memory', 'obsidian', 'rag', 'context', 'recall'],
+                                rating: 4.5,
+                                downloadCount: 18000,
+                                command: 'npx',
+                                args: ['-y', 'supermemory-mcp@latest'],
+                                env: { SUPERMEMORY_API_KEY: '' },
+                                transport: MCPTransportType.Stdio,
+                                featured: true,
+                                repositoryUrl: 'https://github.com/supermemoryai/supermemory-mcp'
+                        },
+                        // --- Browserbase — cloud browser automation ---
+                        {
+                                id: 'browserbase/mcp',
+                                name: 'browserbase',
+                                description: 'Cloud browser automation for scraping, testing, and form-filling. Runs Playwright scripts in the cloud without local browser installs.',
+                                author: 'browserbase',
+                                version: '0.5.0',
+                                categories: ['browser', 'automation'],
+                                tags: ['browser', 'playwright', 'cloud', 'scraping', 'testing'],
+                                rating: 4.2,
+                                downloadCount: 9300,
+                                command: 'npx',
+                                args: ['-y', '@browserbasehq/mcp@latest'],
+                                env: { BROWSERBASE_API_KEY: '', BROWSERBASE_PROJECT_ID: '' },
+                                transport: MCPTransportType.Stdio,
+                                featured: false,
+                                repositoryUrl: 'https://github.com/browserbase/mcp-server'
+                        },
+                        // --- Memory MCP — Obsidian vault bridge ---
+                        {
+                                id: 'smithery/obsidian-mcp',
+                                name: 'obsidian',
+                                description: 'Read and search an Obsidian vault from the agent. Bring your markdown notes, daily logs, and Zettelkasten into the agent context. Set OBSIDIAN_VAULT_PATH to your vault root.',
+                                author: 'smithery',
+                                version: '0.3.0',
+                                categories: ['memory', 'notes'],
+                                tags: ['obsidian', 'notes', 'markdown', 'zettelkasten', 'vault'],
+                                rating: 4.3,
+                                downloadCount: 7400,
+                                command: 'npx',
+                                args: ['-y', '@smithery/obsidian-mcp@latest'],
+                                env: { OBSIDIAN_VAULT_PATH: '' },
+                                transport: MCPTransportType.Stdio,
+                                featured: false,
+                                repositoryUrl: 'https://github.com/smithery-ai/obsidian-mcp'
                         }
                 ];
 

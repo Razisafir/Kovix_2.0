@@ -1,0 +1,540 @@
+/*---------------------------------------------------------------------------------------------
+ *  Kovix Agent Settings — luxury chromium styling
+ *  Matches the look-and-feel of kovixAgent.css and kovixControlCenter.css.
+ *--------------------------------------------------------------------------------------------*/
+
+.kovix-settings {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--kovix-bg, #0d0d12);
+	color: var(--kovix-fg, #e8e8ee);
+	font-family: var(--kovix-font-sans, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+	font-size: 12px;
+	overflow: hidden;
+}
+
+.kovix-settings__header {
+	padding: 14px 16px 8px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	flex-shrink: 0;
+}
+
+.kovix-settings__title {
+	font-size: 16px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	color: var(--kovix-fg, #e8e8ee);
+}
+
+.kovix-settings__subtitle {
+	font-size: 11px;
+	color: var(--kovix-muted, #888);
+	margin-top: 2px;
+	letter-spacing: 0.02em;
+}
+
+/* --- Tab bar --- */
+.kovix-settings__tabs {
+	display: flex;
+	gap: 2px;
+	padding: 8px 12px 0;
+	overflow-x: auto;
+	flex-shrink: 0;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+	scrollbar-width: thin;
+}
+
+.kovix-tab {
+	background: transparent;
+	border: none;
+	color: var(--kovix-muted, #888);
+	padding: 6px 12px;
+	font-size: 11px;
+	font-family: inherit;
+	cursor: pointer;
+	border-radius: 6px 6px 0 0;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	white-space: nowrap;
+	transition: all 120ms ease;
+	border-bottom: 2px solid transparent;
+	margin-bottom: -1px;
+}
+
+.kovix-tab:hover {
+	color: var(--kovix-fg, #e8e8ee);
+	background: rgba(255, 255, 255, 0.03);
+}
+
+.kovix-tab.is-active {
+	color: var(--kovix-accent, #7c5cff);
+	border-bottom-color: var(--kovix-accent, #7c5cff);
+	background: rgba(124, 92, 255, 0.05);
+}
+
+.kovix-tab .codicon {
+	font-size: 13px;
+}
+
+/* --- Tab content --- */
+.kovix-settings__content {
+	flex: 1;
+	overflow-y: auto;
+	padding: 14px 16px 24px;
+	scrollbar-width: thin;
+}
+
+.kovix-tab-pane {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	max-width: 720px;
+}
+
+.kovix-tab-desc {
+	padding: 10px 12px;
+	background: rgba(124, 92, 255, 0.06);
+	border-left: 3px solid var(--kovix-accent, #7c5cff);
+	border-radius: 4px;
+	font-size: 11.5px;
+	line-height: 1.55;
+	color: var(--kovix-fg, #e8e8ee);
+}
+
+.kovix-tab-desc code {
+	background: rgba(255, 255, 255, 0.08);
+	padding: 1px 5px;
+	border-radius: 3px;
+	font-family: var(--kovix-font-mono, 'SF Mono', Menlo, monospace);
+	font-size: 10.5px;
+	color: var(--kovix-accent, #b3a4ff);
+}
+
+.kovix-posture {
+	padding: 8px 12px;
+	background: rgba(80, 200, 120, 0.08);
+	border: 1px solid rgba(80, 200, 120, 0.2);
+	border-radius: 6px;
+	font-size: 11px;
+	color: #7ed99c;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.kovix-posture .codicon {
+	font-size: 14px;
+}
+
+/* --- Action bar --- */
+.kovix-actionbar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding: 6px 0;
+}
+
+.kovix-btn {
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	color: var(--kovix-fg, #e8e8ee);
+	padding: 6px 12px;
+	font-size: 11px;
+	font-family: inherit;
+	border-radius: 6px;
+	cursor: pointer;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	transition: all 120ms ease;
+}
+
+.kovix-btn:hover:not(:disabled) {
+	background: rgba(124, 92, 255, 0.18);
+	border-color: var(--kovix-accent, #7c5cff);
+	color: #fff;
+}
+
+.kovix-btn:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.kovix-btn .codicon {
+	font-size: 12px;
+}
+
+/* --- List header --- */
+.kovix-listheader {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 10px 4px 4px;
+	font-size: 10.5px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--kovix-muted, #888);
+	font-weight: 600;
+	margin-top: 6px;
+}
+
+/* --- Empty state --- */
+.kovix-empty {
+	padding: 16px;
+	text-align: center;
+	color: var(--kovix-muted, #888);
+	font-size: 11.5px;
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px dashed rgba(255, 255, 255, 0.1);
+	border-radius: 6px;
+}
+
+/* --- Cards --- */
+.kovix-card {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	padding: 10px 12px;
+	background: rgba(255, 255, 255, 0.025);
+	border: 1px solid rgba(255, 255, 255, 0.05);
+	border-radius: 8px;
+	transition: all 120ms ease;
+}
+
+.kovix-card:hover {
+	background: rgba(255, 255, 255, 0.045);
+	border-color: rgba(124, 92, 255, 0.25);
+}
+
+.kovix-card.is-disabled {
+	opacity: 0.5;
+}
+
+.kovix-card.is-active {
+	border-color: rgba(124, 92, 255, 0.5);
+	background: rgba(124, 92, 255, 0.06);
+}
+
+.kovix-card__icon {
+	flex-shrink: 0;
+	width: 28px;
+	height: 28px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(124, 92, 255, 0.12);
+	border-radius: 6px;
+	color: var(--kovix-accent, #b3a4ff);
+}
+
+.kovix-card__icon .codicon {
+	font-size: 14px;
+}
+
+.kovix-card__body {
+	flex: 1;
+	min-width: 0;
+}
+
+.kovix-card__title {
+	font-size: 11.5px;
+	font-weight: 500;
+	color: var(--kovix-fg, #e8e8ee);
+	margin-bottom: 3px;
+	line-height: 1.4;
+}
+
+.kovix-card__title code {
+	background: rgba(255, 255, 255, 0.08);
+	padding: 1px 5px;
+	border-radius: 3px;
+	font-family: var(--kovix-font-mono, 'SF Mono', Menlo, monospace);
+	font-size: 10.5px;
+	color: var(--kovix-accent, #b3a4ff);
+}
+
+.kovix-card__desc {
+	font-size: 11px;
+	color: var(--kovix-muted, #999);
+	line-height: 1.5;
+	word-break: break-word;
+}
+
+.kovix-card__desc code {
+	background: rgba(255, 255, 255, 0.06);
+	padding: 1px 4px;
+	border-radius: 3px;
+	font-family: var(--kovix-font-mono, monospace);
+	font-size: 10px;
+	color: var(--kovix-accent, #b3a4ff);
+}
+
+.kovix-card__tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-top: 6px;
+}
+
+.kovix-chip {
+	font-size: 9.5px;
+	padding: 1px 6px;
+	border-radius: 10px;
+	background: rgba(255, 255, 255, 0.06);
+	color: var(--kovix-muted, #aaa);
+	text-transform: lowercase;
+	letter-spacing: 0.02em;
+}
+
+.kovix-card__actions {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	flex-shrink: 0;
+}
+
+.kovix-iconbtn {
+	background: transparent;
+	border: none;
+	color: var(--kovix-muted, #888);
+	padding: 5px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 13px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 120ms ease;
+}
+
+.kovix-iconbtn:hover {
+	background: rgba(255, 255, 255, 0.08);
+	color: var(--kovix-fg, #fff);
+}
+
+.kovix-iconbtn:disabled {
+	opacity: 0.3;
+	cursor: default;
+}
+
+.kovix-badge {
+	display: inline-block;
+	padding: 0 6px;
+	font-size: 9px;
+	background: var(--kovix-accent, #7c5cff);
+	color: #fff;
+	border-radius: 8px;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	margin-left: 4px;
+	vertical-align: middle;
+}
+
+.kovix-muted {
+	color: var(--kovix-muted, #888);
+}
+
+.kovix-link {
+	color: var(--kovix-accent, #b3a4ff);
+	text-decoration: none;
+}
+
+.kovix-link:hover {
+	text-decoration: underline;
+}
+
+/* --- Toggle row --- */
+.kovix-toggle {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	padding: 10px 12px;
+	background: rgba(255, 255, 255, 0.025);
+	border: 1px solid rgba(255, 255, 255, 0.05);
+	border-radius: 8px;
+}
+
+.kovix-toggle__text {
+	flex: 1;
+	min-width: 0;
+}
+
+.kovix-toggle__label {
+	font-size: 11.5px;
+	font-weight: 500;
+	color: var(--kovix-fg, #e8e8ee);
+	margin-bottom: 2px;
+}
+
+.kovix-toggle__desc {
+	font-size: 10.5px;
+	color: var(--kovix-muted, #999);
+	line-height: 1.45;
+}
+
+/* --- Switch --- */
+.kovix-switch {
+	position: relative;
+	display: inline-block;
+	width: 32px;
+	height: 18px;
+	flex-shrink: 0;
+}
+
+.kovix-switch input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.kovix-switch__slider {
+	position: absolute;
+	cursor: pointer;
+	inset: 0;
+	background: rgba(255, 255, 255, 0.1);
+	transition: 200ms;
+	border-radius: 18px;
+}
+
+.kovix-switch__slider::before {
+	position: absolute;
+	content: '';
+	height: 14px;
+	width: 14px;
+	left: 2px;
+	bottom: 2px;
+	background: #fff;
+	transition: 200ms;
+	border-radius: 50%;
+}
+
+.kovix-switch input:checked + .kovix-switch__slider {
+	background: var(--kovix-accent, #7c5cff);
+}
+
+.kovix-switch input:checked + .kovix-switch__slider::before {
+	transform: translateX(14px);
+}
+
+/* --- Select / Input --- */
+.kovix-select,
+.kovix-input {
+	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	color: var(--kovix-fg, #e8e8ee);
+	padding: 4px 8px;
+	font-size: 11px;
+	font-family: inherit;
+	border-radius: 4px;
+	outline: none;
+	min-width: 140px;
+}
+
+.kovix-select:focus,
+.kovix-input:focus {
+	border-color: var(--kovix-accent, #7c5cff);
+}
+
+.kovix-select option {
+	background: #1a1a22;
+	color: #e8e8ee;
+}
+
+/* --- Danger zone --- */
+.kovix-dangerzone {
+	margin-top: 12px;
+	padding: 12px;
+	border: 1px solid rgba(255, 80, 80, 0.2);
+	border-radius: 8px;
+	background: rgba(255, 80, 80, 0.04);
+}
+
+.kovix-dangerzone__title {
+	font-size: 10.5px;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: #ff8080;
+	font-weight: 600;
+	margin-bottom: 8px;
+}
+
+/* --- CTA (autonomous) --- */
+.kovix-cta {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 16px 18px;
+	background: linear-gradient(135deg, rgba(124, 92, 255, 0.15), rgba(124, 92, 255, 0.05));
+	border: 1px solid rgba(124, 92, 255, 0.35);
+	border-radius: 10px;
+	cursor: pointer;
+	transition: all 200ms ease;
+}
+
+.kovix-cta:hover {
+	background: linear-gradient(135deg, rgba(124, 92, 255, 0.25), rgba(124, 92, 255, 0.1));
+	border-color: var(--kovix-accent, #7c5cff);
+	transform: translateY(-1px);
+}
+
+.kovix-cta__icon {
+	width: 44px;
+	height: 44px;
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(124, 92, 255, 0.2);
+	border-radius: 10px;
+	color: var(--kovix-accent, #b3a4ff);
+}
+
+.kovix-cta__icon .codicon {
+	font-size: 22px;
+}
+
+.kovix-cta__title {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--kovix-fg, #fff);
+}
+
+.kovix-cta__sub {
+	font-size: 11px;
+	color: var(--kovix-muted, #bbb);
+	margin-top: 2px;
+	line-height: 1.5;
+}
+
+/* --- Tab link --- */
+.kovix-tablink {
+	padding: 8px 12px;
+	font-size: 11px;
+	color: var(--kovix-muted, #aaa);
+}
+
+.kovix-tablink a {
+	color: var(--kovix-accent, #b3a4ff);
+	cursor: pointer;
+}
+
+/* --- Scrollbar --- */
+.kovix-settings__content::-webkit-scrollbar,
+.kovix-settings__tabs::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+.kovix-settings__content::-webkit-scrollbar-thumb,
+.kovix-settings__tabs::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.1);
+	border-radius: 3px;
+}
+
+.kovix-settings__content::-webkit-scrollbar-thumb:hover,
+.kovix-settings__tabs::-webkit-scrollbar-thumb:hover {
+	background: rgba(255, 255, 255, 0.18);
+}

@@ -16,6 +16,7 @@ import { ConstructAgentViewPane } from './constructAgentView.js';
 import { ConstructMemoryViewPane } from './constructMemoryView.js';
 import { KovixMemoryGraphPane } from './kovixMemoryGraph.js';
 import { KovixAgentControlCenter } from './kovixAgentControlCenter.js';
+import { KovixAgentSettingsPane } from './kovixAgentSettings.js';
 import { IStatusbarService, StatusbarAlignment, IStatusbarEntryAccessor } from '../../../../workbench/services/statusbar/browser/statusbar.js';
 import { IWorkbenchContribution, Extensions as WorkbenchExtensions, IWorkbenchContributionsRegistry } from '../../../../workbench/common/contributions.js';
 import { LifecyclePhase } from '../../../../workbench/services/lifecycle/common/lifecycle.js';
@@ -92,14 +93,20 @@ import './constructApiConfig.js';
 import './constructApiSettings.js';
 import './kovixAccessibilityConfig.js';
 import './kovixAccessibilityContribution.js';
+import './kovixAutonomousConfig.js';
 import { ILanguageFeaturesService } from '../../../../editor/common/services/languageFeatures.js';
 import { registerKovixAutocomplete } from '../../../../editor/contrib/construct/browser/kovixInlineCompletionProvider.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
+import { ISkillRegistry } from '../../../../platform/construct/common/skills/skillRegistry.js';
+import { SkillRegistryService } from './services/skills/skillRegistryService.js';
+import { IEditorService } from '../../../services/editor/common/editorService.js';
+import { IFileService } from '../../../../platform/files/common/files.js';
 
 const constructViewIcon = registerIcon('construct-view-icon', Codicon.robot, localize('constructViewIcon', 'View icon of the Kovix Agent view.'));
 const constructMemoryIcon = registerIcon('construct-memory-icon', Codicon.symbolEvent, localize('constructMemoryIcon', 'View icon of the Kovix Memory view.'));
 const constructGraphIcon = registerIcon('construct-graph-icon', Codicon.graph, localize('constructGraphIcon', 'View icon of the Kovix Memory Graph view.'));
 const constructControlIcon = registerIcon('construct-control-icon', Codicon.dashboard, localize('constructControlIcon', 'View icon of the Kovix Control Center view.'));
+const constructSettingsIcon = registerIcon('construct-settings-icon', Codicon.settings, localize('constructSettingsIcon', 'View icon of the Kovix Agent Settings view.'));
 
 // Register the Kovix view container in the AUXILIARY BAR (right-hand side, Antigravity-style)
 const constructViewContainer = Registry.as<IViewContainersRegistry>(ViewExtensions.ViewContainersRegistry).registerViewContainer({
@@ -153,6 +160,14 @@ Registry.as<IViewsRegistry>(ViewExtensions.ViewsRegistry).registerViews([{
                 canToggleVisibility: true,
                 canMoveView: true,
                 order: 4,
+}, {
+                id: 'construct.agentSettings',
+                name: localize2('agentSettings', "Agent Settings"),
+                containerIcon: constructSettingsIcon,
+                ctorDescriptor: new SyncDescriptor(KovixAgentSettingsPane),
+                canToggleVisibility: true,
+                canMoveView: true,
+                order: 5,
 }], constructViewContainer);
 
 // Status Bar Integration
@@ -645,6 +660,12 @@ registerSingleton(IConstructAIService, ConstructAIService, InstantiationType.Del
 // Built-in tools (read_file, write_file, run_terminal, search_codebase, web_search)
 // + Kali WSL2 integration + command safety blocklist
 registerSingleton(IConstructToolRegistry, ConstructToolRegistryService, InstantiationType.Delayed);
+
+// --- Kovix v1.4.0: Skill Registry ---------------------------------------------
+// Loads skills from ~/.kovix/skills/<slug>/SKILL.md and
+// <workspace>/.kovix/skills/<slug>/SKILL.md. Ranks skills against each task
+// and injects the top-K into the agent's system prompt.
+registerSingleton(ISkillRegistry, SkillRegistryService, InstantiationType.Delayed);
 
 // --- Phase 5: Agent Modes + Swarm (Kovix v1.2.0) ------------------------------
 // Per-agent model selection (Roo Code custom modes pattern) + sub-agent spawning
@@ -1772,6 +1793,404 @@ registerAction2(class UiuxStackGuidelinesAction extends Action2 {
                 } catch (error) {
                         notificationService.error(`Search failed: ${error instanceof Error ? error.message : String(error)}`);
                 }
+        }
+});
+
+// --- Kovix v1.4.0: Agent Settings Pane Commands -------------------------------
+
+registerAction2(class OpenAgentSettingsAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.openAgentSettings',
+                        title: localize2('openAgentSettings', "Kovix: Open Agent Settings"),
+                        f1: true,
+                        category: localize2('constructCategorySettings', "Kovix"),
+                });
+        }
+        run(accessor: ServicesAccessor): void {
+                accessor.get(IViewsService).openView('construct.agentSettings', true);
+        }
+});
+
+registerAction2(class OpenMemorySettingsAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.openMemorySettings',
+                        title: localize2('openMemorySettings', "Kovix: Open Memory Settings"),
+                        f1: true,
+                        category: localize2('constructCategorySettings2', "Kovix"),
+                });
+        }
+        run(accessor: ServicesAccessor): void {
+                accessor.get(IViewsService).openView('construct.agentSettings', true).then(() => {
+                        // The view auto-selects the skills tab; we expose memory as a
+                        // separate command for discoverability — users land on the
+                        // settings pane and can click the Memory tab.
+                });
+        }
+});
+
+registerAction2(class OpenSwarmAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.openSwarm',
+                        title: localize2('openSwarm', "Kovix: Open Swarm"),
+                        f1: true,
+                        category: localize2('constructCategorySwarm', "Kovix"),
+                });
+        }
+        run(accessor: ServicesAccessor): void {
+                // Open the control center (which shows live sub-agents) and prompt
+                // the user to spawn a sub-agent.
+                accessor.get(IViewsService).openView('construct.controlCenter', true);
+                accessor.get(ICommandService).executeCommand('construct.spawnSubAgent');
+        }
+});
+
+// --- Kovix v1.4.0: Skill Management Commands ----------------------------------
+
+registerAction2(class CreateSkillFromDocumentAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.createSkillFromDocument',
+                        title: localize2('createSkillFromDocument', "Kovix: Create Skill from Document"),
+                        f1: true,
+                        category: localize2('constructCategorySkills', "Kovix"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const skillRegistry = accessor.get(ISkillRegistry);
+                const quickInput = accessor.get(IQuickInputService);
+                const notificationService = accessor.get(INotificationService);
+                const editorService = accessor.get(IEditorService);
+
+                // Try to use the active editor's content as the body
+                let body = '';
+                const activeEditor = editorService.activeEditor;
+                if (activeEditor) {
+                        const resource = (activeEditor as any).resource;
+                        if (resource) {
+                                try {
+                                        const fileService = accessor.get(IFileService);
+                                        const content = await fileService.readFile(resource);
+                                        body = content.value.toString();
+                                } catch { /* ignore */ }
+                        }
+                }
+                if (!body) {
+                        // Fall back to a multi-line input
+                        body = await quickInput.input({
+                                prompt: 'Paste the skill body (markdown). Tip: open the document in the editor first and Kovix will use it automatically.',
+                                value: '',
+                        }) || '';
+                        if (!body) { return; }
+                }
+
+                const slug = await quickInput.input({
+                        prompt: 'Skill slug (lowercase, hyphens only). This becomes /<slug> in the chat.',
+                        placeHolder: 'e.g. api-security-audit',
+                        validateInput: async (v: string) => {
+                                if (!v) { return 'Slug is required'; }
+                                if (!/^[a-z][a-z0-9-]*$/.test(v)) { return 'Lowercase letters, numbers, hyphens only'; }
+                                return undefined;
+                        },
+                });
+                if (!slug) { return; }
+
+                const title = await quickInput.input({
+                        prompt: 'Display title',
+                        value: slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+                });
+
+                const description = await quickInput.input({
+                        prompt: 'Short description (1 sentence)',
+                        placeHolder: 'What does this skill do?',
+                });
+                if (!description) { return; }
+
+                const scopePick = await quickInput.pick(
+                        [
+                                { label: 'User-global (~/.kovix/skills/)', description: 'Available in every project', scope: 'user' as const },
+                                { label: 'Project-scoped (.kovix/skills/)', description: 'Only this workspace', scope: 'project' as const },
+                        ],
+                        { placeHolder: 'Where should this skill be installed?' },
+                );
+                if (!scopePick) { return; }
+
+                try {
+                        const skill = await skillRegistry.createSkillFromDocument({
+                                slug,
+                                title: title || slug,
+                                description,
+                                body,
+                                scope: scopePick.scope,
+                        });
+                        notificationService.info(`Skill created: /${skill.slug}`);
+                        accessor.get(IViewsService).openView('construct.agentSettings', true);
+                } catch (error) {
+                        notificationService.error(`Failed to create skill: ${error instanceof Error ? error.message : String(error)}`);
+                }
+        }
+});
+
+registerAction2(class ImportSkillFromUrlAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.importSkillFromUrl',
+                        title: localize2('importSkillFromUrl', "Kovix: Import Skill from URL"),
+                        f1: true,
+                        category: localize2('constructCategorySkills2', "Kovix"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const skillRegistry = accessor.get(ISkillRegistry);
+                const quickInput = accessor.get(IQuickInputService);
+                const notificationService = accessor.get(INotificationService);
+
+                const url = await quickInput.input({
+                        prompt: 'URL to a raw SKILL.md file',
+                        placeHolder: 'https://raw.githubusercontent.com/user/repo/main/SKILL.md',
+                        validateInput: async (v: string) => {
+                                if (!v) { return 'URL is required'; }
+                                if (!/^https?:\/\//.test(v)) { return 'Must start with http:// or https://'; }
+                                return undefined;
+                        },
+                });
+                if (!url) { return; }
+
+                try {
+                        const skill = await skillRegistry.importFromUrl(url, 'user');
+                        notificationService.info(`Skill imported: /${skill.slug}`);
+                        accessor.get(IViewsService).openView('construct.agentSettings', true);
+                } catch (error) {
+                        notificationService.error(`Import failed: ${error instanceof Error ? error.message : String(error)}`);
+                }
+        }
+});
+
+registerAction2(class ViewSkillAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.viewSkill',
+                        title: localize2('viewSkill', "Kovix: View Skill"),
+                        f1: true,
+                        category: localize2('constructCategorySkills3', "Kovix"),
+                });
+        }
+        async run(accessor: ServicesAccessor, slugArg?: string): Promise<void> {
+                const skillRegistry = accessor.get(ISkillRegistry);
+                const quickInput = accessor.get(IQuickInputService);
+                const notificationService = accessor.get(INotificationService);
+
+                let slug = slugArg;
+                if (!slug) {
+                        const skills = await skillRegistry.getAllSkills();
+                        const pick = await quickInput.pick(
+                                skills.map(s => ({ label: `/${s.slug}`, description: s.title, detail: s.description, slug: s.slug })),
+                                { placeHolder: 'Select a skill to view' },
+                        );
+                        if (!pick) { return; }
+                        slug = pick.slug;
+                }
+
+                const skill = await skillRegistry.getSkill(slug);
+                if (!skill) {
+                        notificationService.warn(`Skill not found: /${slug}`);
+                        return;
+                }
+
+                // Open the SKILL.md file in the editor (if it's a real file)
+                if (skill.scope !== 'builtin') {
+                        const editorService = accessor.get(IEditorService);
+                        editorService.openEditor({ resource: URI.file(skill.filePath) });
+                } else {
+                        notificationService.info(`/${skill.slug}: ${skill.description}\n\nBuiltin skills don't have an editable file. Use /${skill.slug} <args> in the chat to invoke.`);
+                }
+        }
+});
+
+registerAction2(class OpenSkillsFolderAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.openSkillsFolder',
+                        title: localize2('openSkillsFolder', "Kovix: Open Skills Folder"),
+                        f1: true,
+                        category: localize2('constructCategorySkills4', "Kovix"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const notificationService = accessor.get(INotificationService);
+                const os = await import('os');
+                const path = await import('path');
+                const fs = await import('fs');
+                const dir = path.join(os.homedir(), '.kovix', 'skills');
+                try {
+                        if (!fs.existsSync(dir)) {
+                                fs.mkdirSync(dir, { recursive: true });
+                        }
+                        const { shell } = await import('electron');
+                        shell.openPath(dir);
+                } catch (error) {
+                        notificationService.error(`Failed to open skills folder: ${error instanceof Error ? error.message : String(error)}`);
+                }
+        }
+});
+
+// --- Kovix v1.4.0: Memory Privacy Commands -----------------------------------
+
+registerAction2(class ForgetAllMemoriesAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.forgetAllMemories',
+                        title: localize2('forgetAllMemories', "Kovix: Forget All Memories"),
+                        f1: true,
+                        category: localize2('constructCategoryMemory2', "Kovix"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const memoryService = accessor.get(IConstructMemoryService);
+                const notificationService = accessor.get(INotificationService);
+                const logService = accessor.get(ILogService);
+                try {
+                        // clearAllMemories is not on the interface yet — cast to any
+                        // and call if present. Otherwise disconnect() to disable
+                        // all storage going forward.
+                        const anyMem = memoryService as any;
+                        if (typeof anyMem.clearAllMemories === 'function') {
+                                await anyMem.clearAllMemories();
+                                notificationService.info('All memories forgotten. The agent starts fresh.');
+                        } else {
+                                // Fallback: fetch recent and forget each
+                                const recent = await memoryService.getRecentMemories(200);
+                                for (const m of recent) {
+                                        try { await memoryService.forgetMemory(m.id); } catch { /* ignore */ }
+                                }
+                                notificationService.info(`Forgot ${recent.length} recent memories. Older memories may persist in Supermemory — visit supermemory.ai to wipe fully.`);
+                        }
+                        logService.info('[Kovix] All memories cleared by user request.');
+                } catch (error) {
+                        // clearAllMemories may not exist on the interface yet — fall back
+                        // to a notification that explains the manual path.
+                        logService.warn('[Kovix] clearAllMemories not available:', error);
+                        notificationService.info('Memory clearing is handled by the Supermemory integration. Open the Memory panel to delete individual memories, or unset your Supermemory API key to disable all storage.');
+                }
+        }
+});
+
+// --- Kovix v1.4.0: MCP Marketplace Commands ----------------------------------
+
+registerAction2(class OpenMcpMarketplaceAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.mcp.openMarketplace',
+                        title: localize2('openMcpMarketplace', "Kovix: Browse MCP Marketplace"),
+                        f1: true,
+                        category: localize2('constructCategoryMCP3', "Kovix"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const marketplace = accessor.get(IMCPMarketplace);
+                const quickInput = accessor.get(IQuickInputService);
+                const notificationService = accessor.get(INotificationService);
+
+                const query = await quickInput.input({
+                        prompt: 'Search the MCP marketplace (leave empty to browse featured)',
+                        placeHolder: 'e.g. filesystem, figma, 21st, ponytail',
+                });
+
+                let items;
+                if (query && query.trim()) {
+                        items = await marketplace.searchCatalog(query);
+                } else {
+                        items = await marketplace.getFeaturedServers();
+                }
+
+                if (items.length === 0) {
+                        notificationService.info('No MCP servers found.');
+                        return;
+                }
+
+                const picks = items.map(item => ({
+                        label: `$(${item.featured ? 'star' : 'package'}) ${item.name}`,
+                        description: `★ ${item.rating} · ${item.author}`,
+                        detail: item.description,
+                        itemId: item.id,
+                        installed: marketplace.isInstalled(item.id),
+                }));
+
+                const pick = await quickInput.pick(picks, {
+                        placeHolder: `${items.length} MCP servers — select one to install`,
+                });
+
+                if (!pick) { return; }
+
+                if (pick.installed) {
+                        notificationService.info(`${pick.label} is already installed.`);
+                        return;
+                }
+
+                try {
+                        await marketplace.installFromMarketplace((pick as any).itemId);
+                        notificationService.info(`Installed: ${pick.label}`);
+                } catch (error) {
+                        notificationService.error(`Install failed: ${error instanceof Error ? error.message : String(error)}`);
+                }
+        }
+});
+
+// --- Kovix v1.4.0: Autonomous Idea→App Wizard --------------------------------
+
+registerAction2(class AutonomousBuildAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.autonomousBuild',
+                        title: localize2('autonomousBuild', "Kovix: Autonomous Idea → App"),
+                        f1: true,
+                        category: localize2('constructCategoryAutonomous', "Kovix"),
+                });
+        }
+        async run(accessor: ServicesAccessor, ideaArg?: string): Promise<void> {
+                const quickInput = accessor.get(IQuickInputService);
+                const notificationService = accessor.get(INotificationService);
+                const commandService = accessor.get(ICommandService);
+                const aiService = accessor.get(IConstructAIService);
+
+                // 1. Make sure an AI provider is configured
+                if (!aiService.activeProvider) {
+                        notificationService.warn('No AI provider configured. Add an API key first (NVIDIA NIM, OpenAI, Anthropic, etc.).');
+                        commandService.executeCommand('construct.manageApiKeys');
+                        return;
+                }
+
+                // 2. Get the idea
+                let idea = ideaArg;
+                if (!idea) {
+                        idea = await quickInput.input({
+                                prompt: 'Describe your app idea in one line. Kovix will refine it, plan it, build it, and ship it.',
+                                placeHolder: 'e.g. A markdown note app with tags and full-text search',
+                        });
+                }
+                if (!idea) { return; }
+
+                // 3. Open the agent panel and inject the idea
+                await commandService.executeCommand('construct.focusPanel');
+
+                // 4. If idea refinement is on, the agent panel's normal flow
+                // will pick up the idea and run refinement → plan → act.
+                // We dispatch the idea as if the user typed it.
+                // The agent panel listens for the `construct.newChat` event,
+                // so we first clear, then dispatch via a custom command.
+                //
+                // The simplest reliable path: tell the user we've armed the
+                // agent and they should press Enter (or we can call the
+                // internal runPlanActFlow via a side-channel). For now, we
+                // surface a notification and route through the project
+                // wizard which already exists for this purpose.
+                notificationService.info(`Autonomous build armed: "${idea.slice(0, 60)}${idea.length > 60 ? '…' : ''}"`);
+
+                // Route to the existing project wizard, which already does
+                // idea refinement → plan → milestone-gated execution.
+                commandService.executeCommand('construct.openProjectWizard', idea);
         }
 });
 

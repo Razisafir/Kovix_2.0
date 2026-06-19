@@ -36,6 +36,7 @@ import { redactSecrets } from '../../../../../../platform/construct/common/secur
 // P0-5: In-memory staging for agent-proposed changes
 import { IPendingChangesService } from '../../../../../../platform/construct/common/diff/pendingChanges.js';
 import { IUniversalMemoryService } from '../../../../../../platform/construct/common/memory/universalMemoryService.js';
+import { ISkillRegistry } from '../../../../../../platform/construct/common/skills/skillRegistry.js';
 
 const MAX_ROUNDS = 50;
 
@@ -201,9 +202,10 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                 @IPendingChangesService private readonly pendingChanges: IPendingChangesService,
                 @IMCPServerManager private readonly mcpServerManager: IMCPServerManager,
                 @IUniversalMemoryService private readonly universalMemory: IUniversalMemoryService,
+                @ISkillRegistry private readonly skillRegistry: ISkillRegistry,
         ) {
                 super();
-                this.logService.info('[AgentLoop] Service created with error recovery, snapshots, file watcher, pending changes, and universal memory');
+                this.logService.info('[AgentLoop] Service created with error recovery, snapshots, file watcher, pending changes, universal memory, and skill registry');
         }
 
         get isRunning(): boolean {
@@ -1045,6 +1047,22 @@ Guidelines:
                                 }
                         } catch (error) {
                                 this.logService.warn('[AgentLoop] Universal memory context injection failed:', error instanceof Error ? error.message : String(error));
+                        }
+                }
+
+                // Inject auto-discovered skills (Kovix v1.4.0)
+                // The skill registry ranks all enabled skills against the task
+                // description and returns the top-K as a single string. This
+                // lets the agent invoke /<slug> or follow the playbook inline
+                // without the user having to remember which skill exists.
+                if (this.skillRegistry) {
+                        try {
+                                const skillContext = await this.skillRegistry.getContextForTask(task, 3);
+                                if (skillContext) {
+                                        prompt += skillContext;
+                                }
+                        } catch (error) {
+                                this.logService.warn('[AgentLoop] Skill context injection failed:', error instanceof Error ? error.message : String(error));
                         }
                 }
 
