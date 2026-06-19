@@ -107,6 +107,59 @@
         --construct-tab-inactiveForeground: var(--kovix-text-tertiary);
         --construct-progressBar-background: var(--kovix-volt-500);
         --construct-editor-font-family: var(--kovix-font-mono);
+
+        /* ──────────────────────────────────────────────────────────────
+           EXTENDED TOKENS (v1.3.0) — needed by the new agent panel,
+           memory graph, control center, and accessibility contributions.
+           ────────────────────────────────────────────────────────────── */
+        --kovix-bg-overlay: #232730;        /* popovers, dropdowns, raised overlays */
+        --kovix-bg-input: #0F1217;          /* input fields, slightly darker than ink */
+
+        --kovix-volt-700: #4A22B8;          /* deeper pressed state */
+        --kovix-volt-glow: rgba(110, 66, 255, 0.35);
+        --kovix-volt-subtle: rgba(110, 66, 255, 0.12);
+
+        --kovix-ignite-600: #E03E1A;        /* deeper pressed state */
+        --kovix-ignite-glow: rgba(255, 90, 54, 0.30);
+
+        --kovix-cyber-500: #00E5FF;         /* tertiary accent — live state, info */
+        --kovix-cyber-400: #4DECFF;
+
+        --kovix-text-on-volt: #FFFFFF;
+        --kovix-text-on-ignite: #FFFFFF;
+        --kovix-text-inverse: #0B0D10;
+
+        --kovix-hairline: rgba(255, 255, 255, 0.06);
+        --kovix-hairline-bold: rgba(255, 255, 255, 0.10);
+        --kovix-hairline-volt: rgba(110, 66, 255, 0.30);
+
+        --kovix-state-success: var(--kovix-state-running);
+
+        --kovix-font-display: "Inter Display", "Inter", system-ui, sans-serif;
+
+        --kovix-radius-xs: 3px;
+        --kovix-radius-xl: 12px;
+        --kovix-radius-pill: 999px;
+
+        --kovix-space-1: 4px;
+        --kovix-space-2: 8px;
+        --kovix-space-3: 12px;
+        --kovix-space-4: 16px;
+        --kovix-space-5: 24px;
+        --kovix-space-6: 32px;
+
+        --kovix-motion-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
+        --kovix-motion-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+        --kovix-motion-slow: 320ms cubic-bezier(0.4, 0, 0.2, 1);
+
+        --kovix-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+        --kovix-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+        --kovix-shadow-volt: 0 0 0 1px var(--kovix-volt-glow), 0 4px 16px rgba(110, 66, 255, 0.3);
+
+        --kovix-gradient-volt: linear-gradient(135deg, #6E42FF 0%, #8A63FF 100%);
+        --kovix-gradient-ignite: linear-gradient(135deg, #FF5A36 0%, #FF8A5C 100%);
+        --kovix-gradient-ink: linear-gradient(180deg, #13161B 0%, #0B0D10 100%);
+        --kovix-gradient-statusbar: linear-gradient(90deg, #6E42FF 0%, #4F2BCC 100%);
 }
 
 /* ──────────────────────────────────────────────────────────────────
@@ -345,4 +398,80 @@
 }
 .monaco-workbench .tabs-container .tab .tab-label {
         color: var(--kovix-text-tertiary) !important;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   ACCESSIBILITY (v1.3.0) — toggled by KovixAccessibilityContribution
+   .kovix-font-scale-{sm|md|lg|xl}     — UI font scaling
+   .kovix-high-contrast                 — pure black + brighter Volt
+   .kovix-reduced-motion                — disable all animations
+   .kovix-colorblind-{protanopia|deuteranopia|tritanopia}
+   .kovix-statusbar-{volt|ink|gradient}
+   ────────────────────────────────────────────────────────────────── */
+.monaco-workbench.kovix-font-scale-sm { font-size: 12px; }
+.monaco-workbench.kovix-font-scale-md { font-size: 13px; }
+.monaco-workbench.kovix-font-scale-lg { font-size: 14px; }
+.monaco-workbench.kovix-font-scale-xl { font-size: 16px; }
+
+.monaco-workbench.kovix-high-contrast {
+        --kovix-bg-ink: #000000;
+        --kovix-bg-surface: #050507;
+        --kovix-bg-raised: #0A0A0F;
+        --kovix-bg-overlay: #14141C;
+        --kovix-volt-500: #8B6BFF;
+        --kovix-volt-400: #A88BFF;
+        --kovix-hairline: rgba(255, 255, 255, 0.20);
+        --kovix-hairline-bold: rgba(255, 255, 255, 0.35);
+        --kovix-border: rgba(255, 255, 255, 0.20);
+        --kovix-border-subtle: rgba(255, 255, 255, 0.15);
+        --kovix-text-primary: #FFFFFF;
+        --kovix-text-secondary: #C8CCD4;
+        --kovix-text-tertiary: #8A8F9C;
+}
+
+.monaco-workbench.kovix-reduced-motion * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+}
+
+.monaco-workbench.kovix-colorblind-protanopia {
+        --kovix-ignite-500: #E0A100;
+        --kovix-ignite-400: #FFC233;
+        --kovix-ignite-600: #B07F00;
+        --kovix-state-error: #E0A100;
+}
+
+.monaco-workbench.kovix-colorblind-deuteranopia {
+        --kovix-state-running: #3DA9FC;
+        --kovix-state-success: #3DA9FC;
+}
+
+.monaco-workbench.kovix-colorblind-tritanopia {
+        --kovix-volt-500: #C542FF;
+        --kovix-volt-400: #D670FF;
+        --kovix-volt-600: #A020E0;
+        --kovix-volt-glow: rgba(197, 66, 255, 0.35);
+        --kovix-volt-subtle: rgba(197, 66, 255, 0.12);
+        --kovix-hairline-volt: rgba(197, 66, 255, 0.30);
+}
+
+.monaco-workbench.kovix-statusbar-ink .part.statusbar {
+        background: var(--kovix-bg-ink) !important;
+        color: var(--kovix-text-primary) !important;
+        border-top: 1px solid var(--kovix-volt-500) !important;
+}
+
+.monaco-workbench.kovix-statusbar-gradient .part.statusbar {
+        background: linear-gradient(90deg, var(--kovix-volt-500) 0%, var(--kovix-ignite-500) 100%) !important;
+}
+
+.monaco-workbench.kovix-keyboard-nav .kovix-icon-btn,
+.monaco-workbench.kovix-keyboard-nav .kovix-btn,
+.monaco-workbench.kovix-keyboard-nav .kovix-send,
+.monaco-workbench.kovix-keyboard-nav .kovix-model-pill,
+.monaco-workbench.kovix-keyboard-nav .kovix-session-tab,
+.monaco-workbench.kovix-keyboard-nav .kovix-memory-pill,
+.monaco-workbench.kovix-keyboard-nav .kovix-ponytail-badge {
+        outline: 1px dashed var(--kovix-volt-400);
+        outline-offset: 1px;
 }

@@ -1,0 +1,864 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Kovix. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/* ===========================================================================
+   Kovix Agent Panel — Luxury Chromium
+   Matches kovix_ui_preview.png reference exactly.
+   All inline styles in constructAgentView.ts have been replaced with the
+   classes below so the design system owns the look end-to-end.
+   =========================================================================== */
+
+.kovix-agent {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	background: var(--kovix-bg-surface);
+	color: var(--kovix-text-primary);
+	font-family: var(--kovix-font-ui);
+	font-size: 13px;
+	overflow: hidden;
+}
+
+/* --- Header (avatar + name + model picker + actions) -------------------- */
+
+.kovix-agent__header {
+	display: flex;
+	align-items: center;
+	gap: var(--kovix-space-2);
+	padding: var(--kovix-space-3) var(--kovix-space-3);
+	background: var(--kovix-bg-surface);
+	border-bottom: 1px solid var(--kovix-hairline);
+}
+
+.kovix-agent__avatar {
+	width: 32px;
+	height: 32px;
+	border-radius: var(--kovix-radius-md);
+	background: var(--kovix-gradient-volt);
+	color: var(--kovix-text-on-volt);
+	font-weight: 700;
+	font-size: 14px;
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	box-shadow: var(--kovix-shadow-volt);
+}
+
+.kovix-agent__titles {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.kovix-agent__name {
+	font-weight: 600;
+	font-size: 13px;
+	color: var(--kovix-text-primary);
+	line-height: 1.1;
+}
+
+.kovix-agent__subline {
+	font-size: 11px;
+	color: var(--kovix-text-secondary);
+	line-height: 1.1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.kovix-agent__header-actions {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+}
+
+.kovix-icon-btn {
+	background: transparent;
+	border: none;
+	color: var(--kovix-text-secondary);
+	cursor: pointer;
+	padding: 4px 6px;
+	border-radius: var(--kovix-radius-sm);
+	font-size: 13px;
+	line-height: 1;
+	transition: background var(--kovix-motion-fast), color var(--kovix-motion-fast);
+}
+
+.kovix-icon-btn:hover {
+	background: var(--kovix-bg-raised);
+	color: var(--kovix-text-primary);
+}
+
+.kovix-icon-btn:focus-visible {
+	outline: 2px solid var(--kovix-volt-400);
+	outline-offset: -2px;
+}
+
+/* --- Session tabs ------------------------------------------------------- */
+
+.kovix-agent__sessions {
+	display: flex;
+	gap: 4px;
+	padding: 6px var(--kovix-space-3);
+	background: var(--kovix-bg-surface);
+	border-bottom: 1px solid var(--kovix-hairline);
+	overflow-x: auto;
+	scrollbar-width: thin;
+}
+
+.kovix-agent__sessions::-webkit-scrollbar {
+	height: 4px;
+}
+
+.kovix-agent__sessions::-webkit-scrollbar-thumb {
+	background: var(--kovix-hairline-bold);
+	border-radius: var(--kovix-radius-pill);
+}
+
+.kovix-session-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: var(--kovix-radius-pill);
+	font-size: 11px;
+	font-weight: 500;
+	color: var(--kovix-text-secondary);
+	background: transparent;
+	border: 1px solid var(--kovix-hairline);
+	cursor: pointer;
+	white-space: nowrap;
+	transition: all var(--kovix-motion-fast);
+}
+
+.kovix-session-tab:hover {
+	background: var(--kovix-bg-raised);
+	color: var(--kovix-text-primary);
+}
+
+.kovix-session-tab.is-active {
+	background: var(--kovix-volt-subtle);
+	color: var(--kovix-volt-400);
+	border-color: var(--kovix-hairline-volt);
+}
+
+.kovix-session-tab__close {
+	font-size: 13px;
+	line-height: 1;
+	opacity: 0;
+	margin-left: 2px;
+}
+
+.kovix-session-tab:hover .kovix-session-tab__close {
+	opacity: 0.8;
+}
+
+.kovix-session-tab__close:hover {
+	opacity: 1;
+	color: var(--kovix-ignite-500);
+}
+
+/* --- Model picker bar --------------------------------------------------- */
+
+.kovix-agent__modelbar {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px var(--kovix-space-3);
+	background: var(--kovix-bg-ink);
+	border-bottom: 1px solid var(--kovix-hairline);
+}
+
+.kovix-model-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 3px 10px;
+	border-radius: var(--kovix-radius-pill);
+	font-size: 11px;
+	font-weight: 500;
+	color: var(--kovix-text-on-volt);
+	background: var(--kovix-volt-500);
+	border: 1px solid var(--kovix-volt-600);
+	cursor: pointer;
+	white-space: nowrap;
+	transition: filter var(--kovix-motion-fast);
+}
+
+.kovix-model-pill:hover {
+	filter: brightness(1.1);
+}
+
+.kovix-model-pill__dot {
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--kovix-state-success);
+	box-shadow: 0 0 6px var(--kovix-state-success);
+}
+
+.kovix-model-pill__dot.is-cloud { background: var(--kovix-cyber-500); box-shadow: 0 0 6px var(--kovix-cyber-500); }
+.kovix-model-pill__dot.is-local { background: var(--kovix-state-running); box-shadow: 0 0 6px var(--kovix-state-running); }
+
+.kovix-model-pill__chevron {
+	opacity: 0.7;
+	font-size: 9px;
+}
+
+.kovix-mode-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 8px;
+	border-radius: var(--kovix-radius-pill);
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	background: var(--kovix-bg-raised);
+	color: var(--kovix-text-secondary);
+	border: 1px solid var(--kovix-hairline);
+}
+
+.kovix-mode-badge--architect { color: var(--kovix-volt-400); border-color: var(--kovix-hairline-volt); }
+.kovix-mode-badge--coder     { color: var(--kovix-ignite-400); border-color: rgba(255,90,54,0.30); }
+.kovix-mode-badge--reviewer  { color: var(--kovix-state-running); border-color: rgba(78,201,176,0.30); }
+.kovix-mode-badge--debugger  { color: var(--kovix-state-pending); border-color: rgba(215,186,125,0.30); }
+
+.kovix-modelbar__spacer { flex: 1; }
+
+/* --- Messages area ------------------------------------------------------ */
+
+.kovix-agent__messages {
+	flex: 1;
+	overflow-y: auto;
+	padding: var(--kovix-space-3);
+	scrollbar-width: thin;
+	scrollbar-color: var(--kovix-hairline-bold) transparent;
+}
+
+.kovix-agent__messages::-webkit-scrollbar {
+	width: 6px;
+}
+
+.kovix-agent__messages::-webkit-scrollbar-thumb {
+	background: var(--kovix-hairline-bold);
+	border-radius: var(--kovix-radius-pill);
+}
+
+.kovix-agent__messages::-webkit-scrollbar-thumb:hover {
+	background: var(--kovix-volt-500);
+}
+
+.kovix-msg {
+	margin-bottom: var(--kovix-space-3);
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.kovix-msg__row {
+	display: flex;
+	gap: var(--kovix-space-2);
+	align-items: flex-start;
+}
+
+.kovix-msg__avatar {
+	width: 24px;
+	height: 24px;
+	border-radius: 50%;
+	flex-shrink: 0;
+	display: grid;
+	place-items: center;
+	font-size: 10px;
+	font-weight: 700;
+	color: white;
+}
+
+.kovix-msg__avatar--user {
+	background: var(--kovix-cyber-500);
+	color: var(--kovix-text-inverse);
+}
+
+.kovix-msg__avatar--agent {
+	background: var(--kovix-gradient-volt);
+}
+
+.kovix-msg__body {
+	flex: 1;
+	min-width: 0;
+}
+
+.kovix-msg__head {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 4px;
+	font-size: 11px;
+}
+
+.kovix-msg__author {
+	font-weight: 600;
+	color: var(--kovix-text-primary);
+	font-size: 12px;
+}
+
+.kovix-msg__status {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.kovix-msg__status::before {
+	content: '';
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: currentColor;
+	box-shadow: 0 0 6px currentColor;
+}
+
+.kovix-msg__status--working  { color: var(--kovix-state-running); }
+.kovix-msg__status--thinking { color: var(--kovix-volt-400); }
+.kovix-msg__status--awaiting { color: var(--kovix-state-pending); }
+.kovix-msg__status--error    { color: var(--kovix-ignite-500); }
+.kovix-msg__status--done     { color: var(--kovix-state-success); }
+
+.kovix-msg__bubble {
+	padding: var(--kovix-space-2) var(--kovix-space-3);
+	border-radius: var(--kovix-radius-lg);
+	background: var(--kovix-bg-raised);
+	color: var(--kovix-text-primary);
+	font-size: 12px;
+	line-height: 1.5;
+	border: 1px solid var(--kovix-hairline);
+}
+
+.kovix-msg--user .kovix-msg__bubble {
+	background: var(--kovix-volt-subtle);
+	border-color: var(--kovix-hairline-volt);
+}
+
+.kovix-msg__bubble code {
+	font-family: var(--kovix-font-mono);
+	font-size: 11px;
+	background: rgba(0,0,0,0.3);
+	padding: 1px 5px;
+	border-radius: var(--kovix-radius-xs);
+}
+
+/* --- Tool chips --------------------------------------------------------- */
+
+.kovix-toolchips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-top: 4px;
+}
+
+.kovix-toolchip {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 8px;
+	border-radius: var(--kovix-radius-xs);
+	font-family: var(--kovix-font-mono);
+	font-size: 10px;
+	font-weight: 500;
+	color: var(--kovix-text-on-volt);
+	background: var(--kovix-volt-500);
+	border: 1px solid var(--kovix-volt-600);
+	transition: filter var(--kovix-motion-fast);
+}
+
+.kovix-toolchip:hover {
+	filter: brightness(1.1);
+}
+
+.kovix-toolchip--ok { background: var(--kovix-state-running); border-color: var(--kovix-state-running); }
+.kovix-toolchip--err { background: var(--kovix-ignite-500); border-color: var(--kovix-ignite-600); }
+.kovix-toolchip--running { background: var(--kovix-volt-500); border-color: var(--kovix-volt-600); animation: kovix-chip-pulse 1.4s ease-in-out infinite; }
+
+@keyframes kovix-chip-pulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.55; }
+}
+
+.kovix-toolchip__icon {
+	font-size: 9px;
+	opacity: 0.85;
+}
+
+/* --- Diff approval card ------------------------------------------------- */
+
+.kovix-diffcard {
+	margin-top: 8px;
+	border-radius: var(--kovix-radius-md);
+	background: var(--kovix-bg-raised);
+	border: 1px solid var(--kovix-hairline-bold);
+	overflow: hidden;
+}
+
+.kovix-diffcard__head {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px var(--kovix-space-3);
+	background: var(--kovix-bg-overlay);
+	border-bottom: 1px solid var(--kovix-hairline);
+	font-size: 11px;
+	color: var(--kovix-text-secondary);
+}
+
+.kovix-diffcard__file {
+	font-family: var(--kovix-font-mono);
+	font-size: 11px;
+	color: var(--kovix-text-primary);
+	font-weight: 500;
+	flex: 1;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.kovix-diffcard__status {
+	font-size: 10px;
+	font-weight: 600;
+	color: var(--kovix-state-pending);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.kovix-diffcard__status::before {
+	content: '';
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: currentColor;
+}
+
+.kovix-diffcard__body {
+	padding: var(--kovix-space-2) var(--kovix-space-3);
+	font-family: var(--kovix-font-mono);
+	font-size: 11px;
+	line-height: 1.5;
+	color: var(--kovix-text-primary);
+	max-height: 280px;
+	overflow-y: auto;
+	background: var(--kovix-bg-ink);
+}
+
+.kovix-diffcard__body::-webkit-scrollbar { width: 6px; }
+.kovix-diffcard__body::-webkit-scrollbar-thumb { background: var(--kovix-hairline-bold); border-radius: var(--kovix-radius-pill); }
+
+.kovix-diffcard__line--add { color: var(--kovix-state-running); background: rgba(78,201,176,0.08); }
+.kovix-diffcard__line--del { color: var(--kovix-ignite-500); background: rgba(255,90,54,0.08); }
+.kovix-diffcard__line--ctx { color: var(--kovix-text-secondary); }
+
+.kovix-diffcard__actions {
+	display: flex;
+	gap: 8px;
+	padding: var(--kovix-space-2) var(--kovix-space-3);
+	background: var(--kovix-bg-overlay);
+	border-top: 1px solid var(--kovix-hairline);
+}
+
+.kovix-btn {
+	padding: 5px 12px;
+	border-radius: var(--kovix-radius-md);
+	font-size: 11px;
+	font-weight: 600;
+	cursor: pointer;
+	border: 1px solid transparent;
+	transition: all var(--kovix-motion-fast);
+	font-family: var(--kovix-font-ui);
+}
+
+.kovix-btn--ghost {
+	background: transparent;
+	color: var(--kovix-text-secondary);
+	border-color: var(--kovix-hairline-bold);
+}
+
+.kovix-btn--ghost:hover {
+	background: var(--kovix-bg-raised);
+	color: var(--kovix-text-primary);
+}
+
+.kovix-btn--primary {
+	background: var(--kovix-gradient-volt);
+	color: var(--kovix-text-on-volt);
+}
+
+.kovix-btn--primary:hover {
+	filter: brightness(1.12);
+	transform: translateY(-1px);
+}
+
+.kovix-btn--destructive {
+	background: var(--kovix-gradient-ignite);
+	color: var(--kovix-text-on-ignite);
+}
+
+.kovix-btn--destructive:hover {
+	filter: brightness(1.12);
+}
+
+/* --- Plan progress ------------------------------------------------------ */
+
+.kovix-plan {
+	margin-top: 8px;
+	padding: var(--kovix-space-3);
+	background: var(--kovix-bg-raised);
+	border: 1px solid var(--kovix-hairline);
+	border-radius: var(--kovix-radius-md);
+}
+
+.kovix-plan__title {
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--kovix-text-secondary);
+	margin-bottom: var(--kovix-space-2);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+.kovix-plan__step {
+	display: flex;
+	align-items: flex-start;
+	gap: 8px;
+	padding: 6px 0;
+	font-size: 12px;
+	color: var(--kovix-text-primary);
+}
+
+.kovix-plan__step + .kovix-plan__step {
+	border-top: 1px dashed var(--kovix-hairline);
+}
+
+.kovix-plan__step-num {
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	background: var(--kovix-bg-overlay);
+	color: var(--kovix-text-secondary);
+	font-size: 10px;
+	font-weight: 700;
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+}
+
+.kovix-plan__step.is-done .kovix-plan__step-num {
+	background: var(--kovix-state-success);
+	color: var(--kovix-text-inverse);
+}
+
+.kovix-plan__step.is-active .kovix-plan__step-num {
+	background: var(--kovix-volt-500);
+	color: var(--kovix-text-on-volt);
+	box-shadow: 0 0 0 3px var(--kovix-volt-subtle);
+}
+
+.kovix-plan__step-label {
+	flex: 1;
+}
+
+.kovix-plan__step.is-done .kovix-plan__step-label {
+	color: var(--kovix-text-secondary);
+	text-decoration: line-through;
+	text-decoration-color: var(--kovix-text-tertiary);
+}
+
+.kovix-plan__step.is-active .kovix-plan__step-label {
+	color: var(--kovix-text-primary);
+	font-weight: 500;
+}
+
+/* --- Welcome / empty state ---------------------------------------------- */
+
+.kovix-welcome {
+	padding: var(--kovix-space-5) var(--kovix-space-4);
+	text-align: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--kovix-space-2);
+}
+
+.kovix-welcome__logo {
+	font-size: 40px;
+	color: var(--kovix-volt-500);
+	text-shadow: 0 0 24px var(--kovix-volt-glow);
+	line-height: 1;
+	margin-bottom: var(--kovix-space-2);
+}
+
+.kovix-welcome__title {
+	font-size: 16px;
+	font-weight: 700;
+	color: var(--kovix-text-primary);
+	letter-spacing: -0.01em;
+}
+
+.kovix-welcome__subtitle {
+	font-size: 12px;
+	color: var(--kovix-text-secondary);
+	margin-bottom: var(--kovix-space-3);
+}
+
+.kovix-welcome__hint {
+	font-family: var(--kovix-font-mono);
+	font-size: 10px;
+	color: var(--kovix-text-tertiary);
+	background: var(--kovix-bg-ink);
+	border: 1px solid var(--kovix-hairline);
+	border-radius: var(--kovix-radius-md);
+	padding: 6px 10px;
+	display: inline-block;
+}
+
+.kovix-welcome__hint kbd {
+	font-family: var(--kovix-font-mono);
+	background: var(--kovix-bg-raised);
+	color: var(--kovix-volt-400);
+	padding: 1px 5px;
+	border-radius: var(--kovix-radius-xs);
+	border: 1px solid var(--kovix-hairline-bold);
+	font-size: 10px;
+}
+
+/* --- Input area --------------------------------------------------------- */
+
+.kovix-inputarea {
+	padding: var(--kovix-space-2) var(--kovix-space-3);
+	background: var(--kovix-bg-surface);
+	border-top: 1px solid var(--kovix-hairline);
+}
+
+.kovix-inputchips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-bottom: 6px;
+	min-height: 0;
+}
+
+.kovix-inputchips:empty {
+	display: none;
+}
+
+.kovix-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 8px;
+	border-radius: var(--kovix-radius-pill);
+	font-family: var(--kovix-font-mono);
+	font-size: 10px;
+	font-weight: 500;
+	border: 1px solid;
+	cursor: pointer;
+}
+
+.kovix-chip--file {
+	background: var(--kovix-volt-subtle);
+	color: var(--kovix-volt-400);
+	border-color: var(--kovix-hairline-volt);
+}
+
+.kovix-chip--tag {
+	background: rgba(0,229,255,0.10);
+	color: var(--kovix-cyber-400);
+	border-color: rgba(0,229,255,0.30);
+}
+
+.kovix-chip__close {
+	font-size: 11px;
+	opacity: 0.6;
+	line-height: 1;
+}
+
+.kovix-chip__close:hover {
+	opacity: 1;
+	color: var(--kovix-ignite-500);
+}
+
+.kovix-inputrow {
+	display: flex;
+	align-items: flex-end;
+	gap: 6px;
+	background: var(--kovix-bg-input);
+	border: 1px solid var(--kovix-hairline-bold);
+	border-radius: var(--kovix-radius-md);
+	padding: 6px 6px 6px 10px;
+	transition: border-color var(--kovix-motion-fast), box-shadow var(--kovix-motion-fast);
+}
+
+.kovix-inputrow:focus-within {
+	border-color: var(--kovix-volt-500);
+	box-shadow: 0 0 0 3px var(--kovix-volt-subtle);
+}
+
+.kovix-inputrow textarea {
+	flex: 1;
+	background: transparent;
+	border: none;
+	outline: none;
+	resize: none;
+	color: var(--kovix-text-primary);
+	font-family: var(--kovix-font-ui);
+	font-size: 13px;
+	line-height: 1.4;
+	min-height: 28px;
+	max-height: 200px;
+	padding: 4px 0;
+}
+
+.kovix-inputrow textarea::placeholder {
+	color: var(--kovix-text-tertiary);
+}
+
+.kovix-send {
+	width: 28px;
+	height: 28px;
+	border-radius: var(--kovix-radius-md);
+	background: var(--kovix-gradient-volt);
+	color: var(--kovix-text-on-volt);
+	border: none;
+	cursor: pointer;
+	font-size: 13px;
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	transition: filter var(--kovix-motion-fast), transform var(--kovix-motion-fast);
+}
+
+.kovix-send:hover:not(:disabled) {
+	filter: brightness(1.12);
+	transform: translateY(-1px);
+}
+
+.kovix-send:disabled {
+	background: var(--kovix-bg-overlay);
+	color: var(--kovix-text-tertiary);
+	cursor: not-allowed;
+}
+
+.kovix-stop {
+	width: 28px;
+	height: 28px;
+	border-radius: var(--kovix-radius-md);
+	background: var(--kovix-gradient-ignite);
+	color: var(--kovix-text-on-ignite);
+	border: none;
+	cursor: pointer;
+	font-size: 11px;
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+}
+
+.kovix-inputhint {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 4px;
+	font-size: 10px;
+	color: var(--kovix-text-tertiary);
+}
+
+.kovix-inputhint kbd {
+	font-family: var(--kovix-font-mono);
+	background: var(--kovix-bg-raised);
+	padding: 1px 5px;
+	border-radius: var(--kovix-radius-xs);
+	border: 1px solid var(--kovix-hairline);
+	font-size: 10px;
+}
+
+/* --- Memory status pill (header chip) ----------------------------------- */
+
+.kovix-memory-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 7px;
+	border-radius: var(--kovix-radius-pill);
+	font-size: 10px;
+	font-family: var(--kovix-font-mono);
+	background: var(--kovix-bg-overlay);
+	color: var(--kovix-text-secondary);
+	border: 1px solid var(--kovix-hairline);
+}
+
+.kovix-memory-pill.is-connected {
+	color: var(--kovix-state-running);
+	border-color: rgba(78,201,176,0.30);
+	background: rgba(78,201,176,0.08);
+}
+
+/* --- Ponytail badge ----------------------------------------------------- */
+
+.kovix-ponytail-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 2px 7px;
+	border-radius: var(--kovix-radius-pill);
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	background: rgba(215,186,125,0.10);
+	color: var(--kovix-state-pending);
+	border: 1px solid rgba(215,186,125,0.30);
+	cursor: pointer;
+}
+
+.kovix-ponytail-badge.is-off {
+	opacity: 0.45;
+}
+
+/* --- Loading shimmer ---------------------------------------------------- */
+
+.kovix-shimmer {
+	background: linear-gradient(
+		90deg,
+		var(--kovix-bg-raised) 0%,
+		var(--kovix-bg-overlay) 50%,
+		var(--kovix-bg-raised) 100%
+	);
+	background-size: 200% 100%;
+	animation: kovix-shimmer 1.4s ease-in-out infinite;
+	border-radius: var(--kovix-radius-sm);
+}
+
+@keyframes kovix-shimmer {
+	0% { background-position: 200% 0; }
+	100% { background-position: -200% 0; }
+}
+
+/* --- Accessibility ------------------------------------------------------ */
+
+.kovix-agent:focus-within {
+	outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.kovix-toolchip--running,
+	.kovix-shimmer,
+	.kovix-agent .kovix-status--running {
+		animation: none !important;
+	}
+}

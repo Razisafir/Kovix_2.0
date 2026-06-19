@@ -1,0 +1,274 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Kovix. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.kovix-cc {
+	display: flex;
+	flex-direction: column;
+	gap: var(--kovix-space-3);
+	padding: var(--kovix-space-3);
+	color: var(--kovix-text-primary);
+	font-family: var(--kovix-font-ui);
+	font-size: 12px;
+}
+
+.kovix-cc-header {
+	padding: var(--kovix-space-2) 0 var(--kovix-space-3);
+	border-bottom: 1px solid var(--kovix-hairline);
+}
+
+.kovix-cc-title {
+	font-size: 16px;
+	font-weight: 700;
+	color: var(--kovix-text-primary);
+	letter-spacing: -0.01em;
+}
+
+.kovix-cc-sub {
+	font-size: 11px;
+	color: var(--kovix-text-secondary);
+	margin-top: 2px;
+}
+
+.kovix-cc-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: var(--kovix-space-3);
+}
+
+.kovix-cc-card {
+	background: var(--kovix-bg-surface);
+	border: 1px solid var(--kovix-hairline);
+	border-radius: var(--kovix-radius-lg);
+	overflow: hidden;
+}
+
+.kovix-cc-card--wide {
+	grid-column: 1 / -1;
+}
+
+.kovix-cc-card-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: var(--kovix-space-2) var(--kovix-space-3);
+	background: var(--kovix-bg-overlay);
+	border-bottom: 1px solid var(--kovix-hairline);
+}
+
+.kovix-cc-card-icon {
+	font-size: 13px;
+	opacity: 0.8;
+}
+
+.kovix-cc-card-title {
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--kovix-text-secondary);
+}
+
+.kovix-cc-card-body {
+	padding: var(--kovix-space-3);
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.kovix-cc-card-actions {
+	display: flex;
+	gap: 8px;
+	margin-top: var(--kovix-space-2);
+	padding-top: var(--kovix-space-2);
+	border-top: 1px solid var(--kovix-hairline);
+}
+
+.kovix-cc-kv {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 11px;
+}
+
+.kovix-cc-kv-key {
+	flex: 1;
+	color: var(--kovix-text-secondary);
+}
+
+.kovix-cc-kv-val {
+	font-family: var(--kovix-font-mono);
+	color: var(--kovix-text-primary);
+	font-weight: 500;
+}
+
+.kovix-cc-kv--total {
+	border-top: 1px dashed var(--kovix-hairline);
+	padding-top: 6px;
+	margin-top: 4px;
+}
+
+.kovix-cc-kv--total .kovix-cc-kv-val {
+	color: var(--kovix-volt-400);
+	font-weight: 700;
+}
+
+.kovix-cc-pill {
+	font-size: 9px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	padding: 1px 6px;
+	border-radius: var(--kovix-radius-pill);
+	background: var(--kovix-bg-raised);
+	color: var(--kovix-text-secondary);
+	border: 1px solid var(--kovix-hairline);
+}
+
+.kovix-cc-agent {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	gap: 8px;
+	align-items: center;
+	padding: 6px 0;
+	border-bottom: 1px dashed var(--kovix-hairline);
+}
+
+.kovix-cc-agent:last-child { border-bottom: none; }
+
+.kovix-cc-agent-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background: var(--kovix-text-tertiary);
+}
+
+.kovix-cc-agent-dot--running { background: var(--kovix-state-running); animation: kovix-dot-pulse 1.4s ease-in-out infinite; }
+.kovix-cc-agent-dot--pending { background: var(--kovix-state-pending); }
+.kovix-cc-agent-dot--done    { background: var(--kovix-state-success); }
+.kovix-cc-agent-dot--error   { background: var(--kovix-ignite-500); }
+
+@keyframes kovix-dot-pulse {
+	0%, 100% { opacity: 1; box-shadow: 0 0 0 0 currentColor; }
+	50%      { opacity: 0.6; box-shadow: 0 0 6px 1px currentColor; }
+}
+
+.kovix-cc-agent-name {
+	font-weight: 600;
+	color: var(--kovix-text-primary);
+	font-size: 12px;
+}
+
+.kovix-cc-agent-task {
+	font-size: 11px;
+	color: var(--kovix-text-secondary);
+	grid-column: 2;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.kovix-cc-agent-status {
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--kovix-text-tertiary);
+}
+
+.kovix-cc-token-row {
+	display: grid;
+	grid-template-columns: 60px 1fr 80px;
+	gap: var(--kovix-space-3);
+	align-items: center;
+	padding: 4px 0;
+}
+
+.kovix-cc-token-label {
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--kovix-text-secondary);
+}
+
+.kovix-cc-token-bar {
+	height: 6px;
+	background: var(--kovix-bg-raised);
+	border-radius: var(--kovix-radius-pill);
+	overflow: hidden;
+}
+
+.kovix-cc-token-bar-fill {
+	height: 100%;
+	border-radius: var(--kovix-radius-pill);
+	transition: width var(--kovix-motion-base);
+}
+
+.kovix-cc-token-bar-fill--input {
+	background: var(--kovix-gradient-volt);
+}
+
+.kovix-cc-token-bar-fill--output {
+	background: var(--kovix-gradient-ignite);
+}
+
+.kovix-cc-token-val {
+	font-family: var(--kovix-font-mono);
+	font-size: 11px;
+	color: var(--kovix-text-primary);
+	text-align: right;
+}
+
+.kovix-cc-totals {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--kovix-space-3);
+	margin-top: var(--kovix-space-3);
+	padding-top: var(--kovix-space-2);
+	border-top: 1px solid var(--kovix-hairline);
+	font-size: 11px;
+	color: var(--kovix-text-secondary);
+}
+
+.kovix-cc-totals strong {
+	color: var(--kovix-text-primary);
+	font-family: var(--kovix-font-mono);
+}
+
+.kovix-cc-empty {
+	font-size: 11px;
+	color: var(--kovix-text-tertiary);
+	font-style: italic;
+	padding: var(--kovix-space-3) 0;
+	text-align: center;
+}
+
+.kovix-cc-diff {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 0;
+	font-size: 11px;
+}
+
+.kovix-cc-diff-icon {
+	font-family: var(--kovix-font-mono);
+	font-weight: 700;
+	width: 16px;
+	text-align: center;
+	color: var(--kovix-state-running);
+}
+
+.kovix-cc-diff-path {
+	font-family: var(--kovix-font-mono);
+	color: var(--kovix-text-primary);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+	.kovix-cc-row {
+		grid-template-columns: 1fr;
+	}
+}

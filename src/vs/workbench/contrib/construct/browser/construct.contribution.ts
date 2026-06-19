@@ -14,6 +14,8 @@ import { registerIcon } from '../../../../platform/theme/common/iconRegistry.js'
 import { ViewPaneContainer } from '../../../../workbench/browser/parts/views/viewPaneContainer.js';
 import { ConstructAgentViewPane } from './constructAgentView.js';
 import { ConstructMemoryViewPane } from './constructMemoryView.js';
+import { KovixMemoryGraphPane } from './kovixMemoryGraph.js';
+import { KovixAgentControlCenter } from './kovixAgentControlCenter.js';
 import { IStatusbarService, StatusbarAlignment, IStatusbarEntryAccessor } from '../../../../workbench/services/statusbar/browser/statusbar.js';
 import { IWorkbenchContribution, Extensions as WorkbenchExtensions, IWorkbenchContributionsRegistry } from '../../../../workbench/common/contributions.js';
 import { LifecyclePhase } from '../../../../workbench/services/lifecycle/common/lifecycle.js';
@@ -88,12 +90,16 @@ import { ConstructOnboardingWizard } from './constructOnboarding.js';
 import './constructMemoryConfig.js';
 import './constructApiConfig.js';
 import './constructApiSettings.js';
+import './kovixAccessibilityConfig.js';
+import './kovixAccessibilityContribution.js';
 import { ILanguageFeaturesService } from '../../../../editor/common/services/languageFeatures.js';
 import { registerKovixAutocomplete } from '../../../../editor/contrib/construct/browser/kovixInlineCompletionProvider.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 
 const constructViewIcon = registerIcon('construct-view-icon', Codicon.robot, localize('constructViewIcon', 'View icon of the Kovix Agent view.'));
 const constructMemoryIcon = registerIcon('construct-memory-icon', Codicon.symbolEvent, localize('constructMemoryIcon', 'View icon of the Kovix Memory view.'));
+const constructGraphIcon = registerIcon('construct-graph-icon', Codicon.graph, localize('constructGraphIcon', 'View icon of the Kovix Memory Graph view.'));
+const constructControlIcon = registerIcon('construct-control-icon', Codicon.dashboard, localize('constructControlIcon', 'View icon of the Kovix Control Center view.'));
 
 // Register the Kovix view container in the AUXILIARY BAR (right-hand side, Antigravity-style)
 const constructViewContainer = Registry.as<IViewContainersRegistry>(ViewExtensions.ViewContainersRegistry).registerViewContainer({
@@ -131,6 +137,22 @@ Registry.as<IViewsRegistry>(ViewExtensions.ViewsRegistry).registerViews([{
                 canToggleVisibility: true,
                 canMoveView: true,
                 order: 2,
+}, {
+                id: 'construct.memoryGraph',
+                name: localize2('memoryGraph', "Memory Graph"),
+                containerIcon: constructGraphIcon,
+                ctorDescriptor: new SyncDescriptor(KovixMemoryGraphPane),
+                canToggleVisibility: true,
+                canMoveView: true,
+                order: 3,
+}, {
+                id: 'construct.controlCenter',
+                name: localize2('controlCenter', "Control Center"),
+                containerIcon: constructControlIcon,
+                ctorDescriptor: new SyncDescriptor(KovixAgentControlCenter),
+                canToggleVisibility: true,
+                canMoveView: true,
+                order: 4,
 }], constructViewContainer);
 
 // Status Bar Integration
@@ -336,6 +358,34 @@ registerAction2(class OpenMemoryPanelAction extends Action2 {
                 }
                 run(accessor: ServicesAccessor): void {
                                 accessor.get(IViewsService).openView('construct.memoryPanel', true);
+                }
+});
+
+registerAction2(class OpenMemoryGraphAction extends Action2 {
+                constructor() {
+                                super({
+                                                id: 'construct.openMemoryGraph',
+                                                title: localize2('openMemoryGraph', "Kovix: Open Memory Graph"),
+                                                f1: true,
+                                                category: localize2('constructCategory4', "Kovix"),
+                                });
+                }
+                run(accessor: ServicesAccessor): void {
+                                accessor.get(IViewsService).openView('construct.memoryGraph', true);
+                }
+});
+
+registerAction2(class OpenControlCenterAction extends Action2 {
+                constructor() {
+                                super({
+                                                id: 'construct.openControlCenter',
+                                                title: localize2('openControlCenter', "Kovix: Open Agent Control Center"),
+                                                f1: true,
+                                                category: localize2('constructCategory4', "Kovix"),
+                                });
+                }
+                run(accessor: ServicesAccessor): void {
+                                accessor.get(IViewsService).openView('construct.controlCenter', true);
                 }
 });
 

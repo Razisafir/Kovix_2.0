@@ -41,6 +41,7 @@ import { IConstructSessionService } from '../../../../platform/construct/common/
 import { ISelectablePlanStep, IApprovedPlan, IMilestone } from '../../../../platform/construct/common/agent/milestoneStateMachine.js';
 import { showStopModePicker } from './constructStopModePicker.js';
 import { IQuickInputService } from '../../../../platform/quickinput/common/quickInput.js';
+import './media/kovixAgent.css';
 
 type ExecutionState = 'idle' | 'planning' | 'refining' | 'awaiting_approval' | 'executing' | 'paused_at_milestone' | 'complete' | 'error' | 'stopped';
 
@@ -78,6 +79,18 @@ export class ConstructAgentViewPane extends ViewPane {
         private executionState: ExecutionState = 'idle';
         private currentCancellationToken: CancellationTokenSource | null = null;
         private _abortController: AbortController | null = null;
+
+        // Kovix v1.3.0 — new UI element references
+        private agentRoot!: HTMLElement;
+        private agentNameEl!: HTMLElement;
+        private agentSublineEl!: HTMLElement;
+        private modeBadgeEl!: HTMLElement;
+        private memoryPillEl!: HTMLElement;
+        private ponytailBadgeEl!: HTMLElement;
+        private statusLineEl!: HTMLElement;
+        private chipsRowEl!: HTMLElement;
+        private inputRowEl!: HTMLElement;
+        private inputHintEl!: HTMLElement;
 
         // Performance metrics tracking
         private taskStartTime = 0;
@@ -162,173 +175,205 @@ export class ConstructAgentViewPane extends ViewPane {
         }
 
         private _renderBody(container: HTMLElement): void {
-                container.style.display = 'flex';
-                container.style.flexDirection = 'column';
+                // Root — Kovix luxury chromium
+                this.agentRoot = dom.$('.kovix-agent');
+                container.appendChild(this.agentRoot);
                 container.style.height = '100%';
 
-                // --- Phase 2: Model Picker Header ---
-                const modelPickerBar = dom.$('.construct-model-picker-bar');
-                modelPickerBar.style.cssText = `
-                        display: flex; align-items: center; justify-content: space-between;
-                        padding: 6px 10px; border-bottom: 1px solid var(--kovix-border);
-                        background: var(--kovix-bg-ink);
-                `;
+                // --- Header: avatar + name + subline + actions ---
+                const header = dom.$('.kovix-agent__header');
 
-                this.modelPickerBtn = dom.$('button.construct-model-picker') as HTMLButtonElement;
-                this.modelPickerBtn.style.cssText = `
-                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border); border-radius: 4px;
-                        color: var(--kovix-text-primary); font-size: 11px; padding: 4px 10px; cursor: pointer;
-                        display: flex; align-items: center; gap: 6px;
-                `;
-                this.updateModelPickerLabel();
-                this.modelPickerBtn.onclick = () => {
-                        this.commandService.executeCommand('construct.selectModel');
-                };
+                const avatar = dom.$('.kovix-agent__avatar');
+                avatar.textContent = 'K';
+                avatar.setAttribute('aria-label', 'Kovix Agent');
 
-                const providerLabel = dom.$('.construct-provider-label');
-                providerLabel.style.cssText = `font-size: 10px; color: var(--kovix-text-tertiary);`;
-                providerLabel.textContent = this.currentModelInfo.isLocal ? 'local' : 'cloud';
+                const titles = dom.$('.kovix-agent__titles');
+                this.agentNameEl = dom.$('.kovix-agent__name');
+                this.agentNameEl.textContent = 'Kovix Agent';
+                this.agentSublineEl = dom.$('.kovix-agent__subline');
+                this.agentSublineEl.textContent = 'General \u00b7 No Model';
+                titles.appendChild(this.agentNameEl);
+                titles.appendChild(this.agentSublineEl);
 
-                // --- Phase 4: Settings gear icon ---
-                const settingsBtn = dom.$('button.construct-settings-btn') as HTMLButtonElement;
-                settingsBtn.textContent = '\u2699'; // ⚙
-                settingsBtn.style.cssText = `
-                        background: transparent; border: none; color: var(--kovix-text-tertiary);
-                        cursor: pointer; font-size: 14px; padding: 2px 4px;
-                        border-radius: 3px;
-                `;
-                settingsBtn.title = 'API Settings';
+                const actions = dom.$('.kovix-agent__header-actions');
+
+                const newChatBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
+                newChatBtn.textContent = '\u2795';
+                newChatBtn.title = 'New chat';
+                newChatBtn.setAttribute('aria-label', 'New chat');
+                newChatBtn.onclick = () => { this.clearMessages(); };
+
+                const historyBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
+                historyBtn.textContent = '\uD83D\uDCDC';
+                historyBtn.title = 'Session history';
+                historyBtn.setAttribute('aria-label', 'Session history');
+                historyBtn.onclick = () => { this.showSessionHistory(); };
+
+                const settingsBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
+                settingsBtn.textContent = '\u2699';
+                settingsBtn.title = 'API settings';
+                settingsBtn.setAttribute('aria-label', 'API settings');
                 settingsBtn.onclick = () => {
                         this.commandService.executeCommand('construct.openApiSettings');
                 };
 
-                // --- Kovix v1.2.0: Agent mode badge — click to switch modes ---
-                const modeBtn = dom.$('button.construct-mode-btn') as HTMLButtonElement;
-                const activeMode = this.agentModeService.getActiveMode();
-                modeBtn.textContent = `$(${activeMode.icon}) ${activeMode.displayName}`;
-                modeBtn.style.cssText = `
-                        background: ${activeMode.accentColor ?? 'var(--kovix-bg-raised)'}; 
-                        border: 1px solid var(--kovix-border); border-radius: 10px;
-                        color: var(--kovix-text-primary); font-size: 10px; padding: 2px 8px;
-                        cursor: pointer; display: flex; align-items: center; gap: 4px;
-                        font-weight: 500;
-                `;
-                modeBtn.title = `Agent mode: ${activeMode.displayName}\n${activeMode.description}\nClick to switch modes`;
-                modeBtn.onclick = () => {
+                const controlCenterBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
+                controlCenterBtn.textContent = '\uD83D\uDCCA';
+                controlCenterBtn.title = 'Agent Control Center';
+                controlCenterBtn.setAttribute('aria-label', 'Agent Control Center');
+                controlCenterBtn.onclick = () => {
+                        this.commandService.executeCommand('construct.openControlCenter');
+                };
+
+                actions.appendChild(newChatBtn);
+                actions.appendChild(historyBtn);
+                actions.appendChild(controlCenterBtn);
+                actions.appendChild(settingsBtn);
+
+                header.appendChild(avatar);
+                header.appendChild(titles);
+                header.appendChild(actions);
+                this.agentRoot.appendChild(header);
+
+                // --- Session tabs ---
+                const sessions = dom.$('.kovix-agent__sessions');
+                const activeSession = dom.$('.kovix-session-tab.is-active');
+                activeSession.textContent = 'auth-refactor';
+                const activeClose = dom.$('.kovix-session-tab__close');
+                activeClose.textContent = '\u00d7';
+                activeSession.appendChild(activeClose);
+                sessions.appendChild(activeSession);
+
+                const altSession = dom.$('.kovix-session-tab');
+                altSession.textContent = 'nmap-scan';
+                const altClose = dom.$('.kovix-session-tab__close');
+                altClose.textContent = '\u00d7';
+                altSession.appendChild(altClose);
+                sessions.appendChild(altSession);
+                this.agentRoot.appendChild(sessions);
+
+                // --- Model bar: mode badge + model pill + spacer + memory pill + ponytail badge ---
+                const modelBar = dom.$('.kovix-agent__modelbar');
+
+                this.modeBadgeEl = dom.$('.kovix-mode-badge.kovix-mode-badge--general');
+                this.modeBadgeEl.textContent = 'GENERAL';
+                this.modeBadgeEl.title = 'Switch agent mode';
+                this.modeBadgeEl.onclick = () => {
                         this.commandService.executeCommand('construct.switchAgentMode');
                 };
-                // Update the badge when the active mode changes
-                this._register(this.agentModeService.onDidChangeActiveMode(mode => {
-                        modeBtn.textContent = `$(${mode.icon}) ${mode.displayName}`;
-                        modeBtn.style.background = mode.accentColor ?? 'var(--kovix-bg-raised)';
-                        modeBtn.title = `Agent mode: ${mode.displayName}\n${mode.description}\nClick to switch modes`;
-                }));
 
-                modelPickerBar.appendChild(this.modelPickerBtn);
-                modelPickerBar.appendChild(modeBtn);
+                this.modelPickerBtn = dom.$('button.kovix-model-pill') as HTMLButtonElement;
+                this.modelPickerBtn.title = 'Select model';
+                this.modelPickerBtn.setAttribute('aria-label', 'Select model');
+                this.modelPickerBtn.onclick = () => {
+                        this.commandService.executeCommand('construct.selectModel');
+                };
+                this.updateModelPickerLabel();
 
-                // Session history button
-                const sessionHistoryBtn = dom.$('button.construct-session-history-btn') as HTMLButtonElement;
-                sessionHistoryBtn.textContent = '\uD83D\uDCDC'; // 📜
-                sessionHistoryBtn.style.cssText = `
-                        background: transparent; border: none; color: var(--kovix-text-tertiary);
-                        cursor: pointer; font-size: 13px; padding: 2px 4px;
-                        border-radius: 3px;
-                `;
-                sessionHistoryBtn.title = 'Session History';
-                sessionHistoryBtn.onclick = () => { this.showSessionHistory(); };
-                modelPickerBar.appendChild(sessionHistoryBtn);
+                const spacer = dom.$('.kovix-modelbar__spacer');
 
-                modelPickerBar.appendChild(settingsBtn);
-                modelPickerBar.appendChild(providerLabel);
-                container.appendChild(modelPickerBar);
+                this.memoryPillEl = dom.$('.kovix-memory-pill');
+                this.memoryPillEl.title = 'Open memory graph';
+                this.memoryPillEl.textContent = this.constructMemory.isInitialized ? '\u25CF memory' : '\u25CB memory';
+                if (this.constructMemory.isInitialized) {
+                        this.memoryPillEl.classList.add('is-connected');
+                }
+                this.memoryPillEl.onclick = () => {
+                        this.commandService.executeCommand('construct.openMemoryGraph');
+                };
 
-                // Messages area
-                this.messageContainer = dom.$('.construct-messages');
-                this.messageContainer.style.cssText = `
-                        flex: 1; overflow-y: auto; padding: 10px;
-                `;
+                this.ponytailBadgeEl = dom.$('.kovix-ponytail-badge');
+                const ponytailMode = this.configurationService.getValue<string>('construct.ponytail.mode') ?? 'off';
+                this.ponytailBadgeEl.textContent = `PONYTAIL \u00b7 ${ponytailMode.toUpperCase()}`;
+                if (ponytailMode === 'off') {
+                        this.ponytailBadgeEl.classList.add('is-off');
+                }
+                this.ponytailBadgeEl.title = 'Ponytail lazy-developer mode — click to change';
+                this.ponytailBadgeEl.onclick = () => {
+                        this.commandService.executeCommand('construct.ponytailSetMode');
+                };
 
-                // Welcome message
-                const welcome = dom.$('.construct-welcome');
-                welcome.style.cssText = `padding: 16px; text-align: center;`;
+                modelBar.appendChild(this.modeBadgeEl);
+                modelBar.appendChild(this.modelPickerBtn);
+                modelBar.appendChild(spacer);
+                modelBar.appendChild(this.memoryPillEl);
+                modelBar.appendChild(this.ponytailBadgeEl);
+                this.agentRoot.appendChild(modelBar);
 
-                const logo = dom.$('.construct-logo');
-                logo.style.cssText = `font-size: 32px; margin-bottom: 8px; color: var(--kovix-volt-400);`;
-                logo.textContent = '\u2B21'; // Hexagon
+                // --- Messages area ---
+                this.messageContainer = dom.$('.kovix-agent__messages');
 
-                const title = dom.$('.construct-title');
-                title.style.cssText = `font-size: 14px; font-weight: 600; color: var(--kovix-text-primary); margin-bottom: 4px;`;
-                title.textContent = 'Kovix Agent';
+                // Welcome / empty state
+                const welcome = dom.$('.kovix-welcome');
+                const logo = dom.$('.kovix-welcome__logo');
+                logo.textContent = '\u2B21';
+                const welcomeTitle = dom.$('.kovix-welcome__title');
+                welcomeTitle.textContent = 'Kovix Agent';
+                const welcomeSubtitle = dom.$('.kovix-welcome__subtitle');
+                welcomeSubtitle.textContent = 'Your AI pair programmer with its own OS';
 
-                const subtitle = dom.$('.construct-subtitle');
-                subtitle.style.cssText = `font-size: 12px; color: var(--kovix-text-tertiary); margin-bottom: 12px;`;
-                subtitle.textContent = 'AI-powered coding assistant';
-
-                // Status indicator
-                this.statusIndicator = dom.$('.construct-status');
+                this.statusIndicator = dom.$('.kovix-msg__status');
+                this.statusIndicator.classList.add('kovix-msg__status--done');
+                this.statusIndicator.textContent = 'READY';
                 this.updateStatusIndicator();
 
-                // Memory status indicator
-                const memoryStatus = dom.$('.construct-memory-status');
-                memoryStatus.classList.add('kovix-badge');
-                memoryStatus.classList.add(this.constructMemory.isInitialized ? 'kovix-badge--info' : 'kovix-badge--idle');
-                memoryStatus.style.marginBottom = '8px';
-                memoryStatus.textContent = this.constructMemory.isInitialized
-                        ? 'Vector search'
-                        : 'Keyword fallback';
-
-                const hint = dom.$('.construct-hint');
-                hint.style.cssText = `font-size: 11px; color: var(--kovix-text-tertiary); font-family: monospace; background: var(--kovix-bg-ink); border-radius: 4px; padding: 6px 10px; display: inline-block;`;
-                hint.textContent = 'Ctrl+Shift+I  Inline edit  |  Ctrl+Shift+C  Focus panel';
+                const hint = dom.$('.kovix-welcome__hint');
+                hint.innerHTML = '<kbd>Ctrl+Shift+K</kbd> focus panel &nbsp;\u00b7&nbsp; <kbd>Ctrl+Shift+I</kbd> inline edit &nbsp;\u00b7&nbsp; <kbd>Ctrl+Shift+P</kbd> commands';
 
                 welcome.appendChild(logo);
-                welcome.appendChild(title);
-                welcome.appendChild(subtitle);
+                welcome.appendChild(welcomeTitle);
+                welcome.appendChild(welcomeSubtitle);
                 welcome.appendChild(this.statusIndicator);
-                welcome.appendChild(memoryStatus);
                 welcome.appendChild(hint);
                 this.messageContainer.appendChild(welcome);
+                this.agentRoot.appendChild(this.messageContainer);
 
-                container.appendChild(this.messageContainer);
+                // --- Input area: chips row + input row + hint row ---
+                const inputArea = dom.$('.kovix-inputarea');
 
-                // Input area
-                const inputArea = dom.$('.construct-input-area');
-                inputArea.style.cssText = `padding: 8px; border-top: 1px solid var(--kovix-border); display: flex; gap: 6px; align-items: center;`;
+                this.chipsRowEl = dom.$('.kovix-inputchips');
 
+                this.inputRowEl = dom.$('.kovix-inputrow');
                 this.inputBox = document.createElement('textarea');
-                this.inputBox.className = 'construct-chat-input';
+                this.inputBox.className = 'kovix-input';
                 this.inputBox.rows = 1;
-                this.inputBox.placeholder = 'Ask anything, @ to mention, / for actions';
-                this.inputBox.style.cssText = `
-                        flex: 1; background: var(--kovix-bg-ink); border: 1px solid var(--kovix-border);
-                        border-radius: 4px; padding: 8px 10px; color: var(--kovix-text-primary);
-                        font-size: 13px; outline: none; resize: none;
-                        min-height: 36px; max-height: 200px;
-                        font-family: inherit; line-height: 1.4;
-                `;
+                this.inputBox.placeholder = 'Ask Kovix to plan a change...';
+                this.inputBox.setAttribute('aria-label', 'Message Kovix Agent');
                 this.inputBox.addEventListener('input', () => {
                         this.inputBox.style.height = 'auto';
                         this.inputBox.style.height = Math.min(this.inputBox.scrollHeight, 200) + 'px';
+                        this.scanInputForChips();
                 });
 
-                this.sendBtn = dom.$('button.construct-send-btn') as HTMLButtonElement;
-                this.sendBtn.textContent = '\u2192'; // Right arrow
-                this.sendBtn.style.cssText = `
-                        background: var(--kovix-gradient); color: #FFFFFF; border: none;
-                        border-radius: var(--kovix-radius-md); padding: 6px 12px; cursor: pointer;
-                        font-size: 14px; font-weight: 500;
-                `;
+                this.sendBtn = dom.$('button.kovix-send') as HTMLButtonElement;
+                this.sendBtn.textContent = '\u2192';
+                this.sendBtn.title = 'Send (Ctrl+Enter)';
+                this.sendBtn.setAttribute('aria-label', 'Send message');
 
-                this.stopBtn = dom.$('button.construct-stop-btn') as HTMLButtonElement;
-                this.stopBtn.textContent = '\u25A0'; // Stop square
-                this.stopBtn.style.cssText = `
-                        background: transparent; color: var(--kovix-state-error); border: 1px solid var(--kovix-state-error);
-                        border-radius: var(--kovix-radius-md); padding: 6px 10px; cursor: pointer;
-                        font-size: 12px; display: none;
-                `;
+                this.stopBtn = dom.$('button.kovix-stop') as HTMLButtonElement;
+                this.stopBtn.textContent = '\u25A0';
+                this.stopBtn.title = 'Stop';
+                this.stopBtn.style.display = 'none';
 
-                // Handle send
+                this.clearBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
+                this.clearBtn.textContent = '\uD83D\uDDB1';
+                this.clearBtn.title = 'Clear chat';
+                this.clearBtn.style.display = 'none';
+                this.clearBtn.onclick = () => { this.clearMessages(); };
+
+                this.inputRowEl.appendChild(this.inputBox);
+                this.inputRowEl.appendChild(this.stopBtn);
+                this.inputRowEl.appendChild(this.sendBtn);
+
+                this.inputHintEl = dom.$('.kovix-inputhint');
+                this.inputHintEl.innerHTML = '<span><kbd>Enter</kbd> send \u00b7 <kbd>Shift+Enter</kbd> newline \u00b7 <kbd>@</kbd> file \u00b7 <kbd>#</kbd> tag</span><span>0 tokens</span>';
+
+                inputArea.appendChild(this.chipsRowEl);
+                inputArea.appendChild(this.inputRowEl);
+                inputArea.appendChild(this.inputHintEl);
+                this.agentRoot.appendChild(inputArea);
+
+                // --- Send handler ---
                 const sendMessage = async () => {
                         const text = this.inputBox.value.trim();
                         if (!text || this.executionState !== 'idle') { return; }
@@ -336,13 +381,15 @@ export class ConstructAgentViewPane extends ViewPane {
                         this.currentTaskId = `task-${Date.now()}`;
                         this.messageCount++;
 
-                        // Add user message bubble
+                        const welcomeEl = this.messageContainer.querySelector('.kovix-welcome');
+                        if (welcomeEl) { welcomeEl.remove(); }
+
                         this.addUserMessage(text);
                         this.inputBox.value = '';
-                        this.inputBox.style.height = '36px';
+                        this.inputBox.style.height = 'auto';
+                        this.clearChips();
                         this.updateClearBtnVisibility();
 
-                        // Auto-learn from user message
                         if (this.constructMemory.config.enabled && this.constructMemory.config.autoLearn) {
                                 this.constructMemory.addMemory(`User asked: ${text}`, {
                                         type: 'user_message',
@@ -351,19 +398,15 @@ export class ConstructAgentViewPane extends ViewPane {
                                 }).catch(() => { /* non-critical */ });
                         }
 
-                        // Phase 2: Check IConstructAIService availability first, then fallback to Anthropic
                         const hasAIProvider = !!this.aiService.activeProvider;
-                        const apiKey = this.configurationService.getValue<string>('construct.anthropic.apiKey');
 
-                        // Check if idea refinement is enabled
                         const refinementEnabled = this.configurationService.getValue<boolean>('construct.ideaRefinement.enabled');
                         if (refinementEnabled !== false && hasAIProvider) {
-                                // Run idea refinement flow before planning
                                 await this.runRefinementFlow(text);
                                 return;
                         }
 
-                        if (!hasAIProvider && !apiKey) {
+                        if (!hasAIProvider) {
                                 this.addAgentMessage(
                                         '[SETUP] No AI provider available. Install [Ollama](https://ollama.ai) for local inference, or configure a cloud provider in [Settings](command:construct.openApiSettings).',
                                         'error'
@@ -372,30 +415,11 @@ export class ConstructAgentViewPane extends ViewPane {
                                 return;
                         }
 
-                        // Cloud provider config is managed by IConstructAIService.
-                        // The unified service handles provider-specific configuration internally.
-
-                        // Gather context based on scope selector
                         const contextText = this.gatherContext();
                         const taskWithContext = contextText ? `${text}\n\n[Context (${this.contextScope})]:\n${contextText}` : text;
-
-                        // Reset tool log for new session
                         this.toolLogEntries = [];
-
-                        // Start Plan/Act flow
                         await this.runPlanActFlow(taskWithContext);
                 };
-
-                // --- Phase 4: Clear button ---
-                this.clearBtn = dom.$('button.construct-clear-btn') as HTMLButtonElement;
-                this.clearBtn.textContent = '\uD83D\uDDB1'; // 🗑
-                this.clearBtn.style.cssText = `
-                        background: transparent; color: var(--kovix-text-tertiary); border: none;
-                        cursor: pointer; font-size: 14px; padding: 4px 6px;
-                        display: none; border-radius: 3px;
-                `;
-                this.clearBtn.title = 'Clear chat';
-                this.clearBtn.onclick = () => { this.clearMessages(); };
 
                 this.sendBtn.onclick = sendMessage;
                 this.inputBox.onkeydown = (e) => {
@@ -410,7 +434,6 @@ export class ConstructAgentViewPane extends ViewPane {
                                 this.currentCancellationToken.cancel();
                                 this.currentCancellationToken = null;
                         }
-                        // BUG 2 FIX: Abort via real AbortController, not CancellationToken cast
                         const controller = this._abortController;
                         if (controller) {
                                 controller.abort();
@@ -418,91 +441,35 @@ export class ConstructAgentViewPane extends ViewPane {
                         }
                 };
 
-                inputArea.appendChild(this.inputBox);
-                inputArea.appendChild(this.clearBtn);
-                inputArea.appendChild(this.stopBtn);
-                inputArea.appendChild(this.sendBtn);
-                container.appendChild(inputArea);
-
-                // --- Phase 2: Context Selector Bar ---
-                const contextBar = dom.$('.construct-context-bar');
-                contextBar.style.cssText = `
-                        padding: 4px 8px 6px; border-top: 1px solid var(--kovix-border);
-                        display: flex; align-items: center; gap: 4px;
-                `;
-
-                const contextLabel = dom.$('.construct-context-label');
-                contextLabel.style.cssText = `font-size: 10px; color: var(--kovix-text-tertiary); margin-right: 2px;`;
-                contextLabel.textContent = 'Context:';
-
-                const scopeOptions: Array<{ scope: ContextScope; label: string; icon: string }> = [
-                        { scope: 'currentFile', label: 'File', icon: '\uD83D\uDCC4' },
-                        { scope: 'workspace', label: 'Workspace', icon: '\uD83D\uDCC2' },
-                        { scope: 'selectedText', label: 'Selection', icon: '\u270F\uFE0F' },
-                ];
-
-                contextBar.appendChild(contextLabel);
-
-                for (const opt of scopeOptions) {
-                        const btn = dom.$('button.construct-context-scope-btn') as HTMLButtonElement;
-                        btn.style.cssText = `
-                                background: ${this.contextScope === opt.scope ? 'var(--kovix-bg-raised)' : 'var(--kovix-bg-ink)'};
-                                border: 1px solid ${this.contextScope === opt.scope ? 'var(--kovix-volt-400)' : 'var(--kovix-border)'};
-                                border-radius: 3px; color: ${this.contextScope === opt.scope ? 'var(--kovix-volt-400)' : 'var(--kovix-text-tertiary)'};
-                                font-size: 10px; padding: 2px 8px; cursor: pointer;
-                        `;
-                        btn.textContent = `${opt.icon} ${opt.label}`;
-                        btn.onclick = () => {
-                                this.contextScope = opt.scope;
-                                // Re-render button states
-                                const buttons = contextBar.querySelectorAll('button.construct-context-scope-btn');
-                                buttons.forEach((b, i) => {
-                                        const isActive = scopeOptions[i].scope === this.contextScope;
-                                        (b as HTMLButtonElement).style.background = isActive ? 'var(--kovix-bg-raised)' : 'var(--kovix-bg-ink)';
-                                        (b as HTMLButtonElement).style.borderColor = isActive ? 'var(--kovix-volt-400)' : 'var(--kovix-border)';
-                                        (b as HTMLButtonElement).style.color = isActive ? 'var(--kovix-volt-400)' : 'var(--kovix-text-tertiary)';
-                                });
-                        };
-                        contextBar.appendChild(btn);
-                }
-
-                container.appendChild(contextBar);
-
-                // Listen for memory initialization changes
+                // --- Listen for memory init changes ---
                 this._register(this.constructMemory.onDidChangeInitialization((initialized) => {
-                        memoryStatus.classList.toggle('kovix-badge--info', initialized);
-                        memoryStatus.classList.toggle('kovix-badge--idle', !initialized);
-                        memoryStatus.textContent = initialized
-                                ? 'Vector search'
-                                : 'Keyword fallback';
+                        if (initialized) {
+                                this.memoryPillEl.classList.add('is-connected');
+                                this.memoryPillEl.textContent = '\u25CF memory';
+                        } else {
+                                this.memoryPillEl.classList.remove('is-connected');
+                                this.memoryPillEl.textContent = '\u25CB memory';
+                        }
                 }));
 
-                // Listen for provider errors via IConstructAIService
-                // When no provider is available, the service already shows a notification.
-                // The agent loop handles individual API errors and yields error events.
-
-                // Subscribe to agent loop loading state events
+                // --- Subscribe to agent loop events ---
                 this._register(this.agentLoop.onLoadingStateChange((state: LoadingState) => {
                         this.handleLoadingStateChange(state);
                 }));
-
-                // Subscribe to agent loop file change events
                 this._register(this.agentLoop.onFileChange((change: FileChangeEntry) => {
                         this.handleFileChange(change);
                 }));
 
-                // --- Phase 2: Listen for AI service provider/model changes ---
+                // --- AI service model/provider change ---
                 this._register(this.aiService.onDidChangeActiveProvider(() => {
                         this.refreshModelPickerInfo();
                 }));
                 this._register(this.aiService.onDidChangeActiveModel(() => {
                         this.refreshModelPickerInfo();
                 }));
-
-                // Initial model info load
                 this.refreshModelPickerInfo();
 
-                // --- Phase 4: Wire construct.newChat to clear ---
+                // --- Wire construct.newChat to clear ---
                 this._register(this.commandService.onWillExecuteCommand(e => {
                         if (e.commandId === 'construct.newChat') {
                                 this.clearMessages();
@@ -969,36 +936,56 @@ export class ConstructAgentViewPane extends ViewPane {
         // --- UI Helpers ---
 
         private addUserMessage(text: string): void {
-                const msg = dom.$('.construct-user-msg');
-                msg.style.cssText = `
-                        background: rgba(138, 99, 255, 0.13); border-left: 2px solid var(--kovix-volt-400);
-                        padding: 8px 10px; margin: 8px 0; border-radius: 0 4px 4px 0;
-                        font-size: 13px; color: var(--kovix-text-primary); white-space: pre-wrap;
-                `;
-                msg.textContent = text;
+                const msg = dom.$('.kovix-msg.kovix-msg--user');
+                const row = dom.$('.kovix-msg__row');
+                const avatar = dom.$('.kovix-msg__avatar.kovix-msg__avatar--user');
+                avatar.textContent = 'U';
+                const body = dom.$('.kovix-msg__body');
+                const head = dom.$('.kovix-msg__head');
+                const author = dom.$('.kovix-msg__author');
+                author.textContent = 'You';
+                head.appendChild(author);
+                const bubble = dom.$('.kovix-msg__bubble');
+                bubble.textContent = text;
+                body.appendChild(head);
+                body.appendChild(bubble);
+                row.appendChild(avatar);
+                row.appendChild(body);
+                msg.appendChild(row);
                 this.messageContainer.appendChild(msg);
                 this.scrollToBottom();
         }
 
         private addAgentMessage(text: string, type: 'info' | 'error' | 'streaming' = 'info'): HTMLElement {
-                const msg = dom.$('.construct-agent-msg');
-
-                const borderColors: Record<string, string> = {
-                        info: 'var(--kovix-text-tertiary)',
-                        error: 'var(--kovix-state-error)',
-                        streaming: 'var(--kovix-volt-400)',
-                };
-
-                msg.style.cssText = `
-                        background: var(--kovix-bg-raised); border-left: 2px solid ${borderColors[type] ?? 'var(--kovix-text-tertiary)'};
-                        padding: 8px 10px; margin: 8px 0; border-radius: 0 4px 4px 0;
-                        font-size: 13px; color: ${type === 'error' ? 'var(--kovix-badge-error-fg)' : 'var(--kovix-text-primary)'};
-                        white-space: pre-wrap; font-family: inherit;
-                `;
-                msg.textContent = text;
+                const msg = dom.$('.kovix-msg.kovix-msg--agent');
+                const row = dom.$('.kovix-msg__row');
+                const avatar = dom.$('.kovix-msg__avatar.kovix-msg__avatar--agent');
+                avatar.textContent = 'K';
+                const body = dom.$('.kovix-msg__body');
+                const head = dom.$('.kovix-msg__head');
+                const author = dom.$('.kovix-msg__author');
+                author.textContent = 'Kovix Agent';
+                const status = dom.$('.kovix-msg__status');
+                const statusClass = type === 'error' ? 'kovix-msg__status--error'
+                        : type === 'streaming' ? 'kovix-msg__status--working'
+                        : 'kovix-msg__status--done';
+                status.classList.add(statusClass);
+                status.textContent = type === 'error' ? 'ERROR'
+                        : type === 'streaming' ? 'WORKING'
+                        : 'DONE';
+                head.appendChild(author);
+                head.appendChild(status);
+                const bubble = dom.$('.kovix-msg__bubble');
+                if (type === 'error') { bubble.style.borderColor = 'var(--kovix-ignite-500)'; }
+                bubble.textContent = text;
+                body.appendChild(head);
+                body.appendChild(bubble);
+                row.appendChild(avatar);
+                row.appendChild(body);
+                msg.appendChild(row);
                 this.messageContainer.appendChild(msg);
                 this.scrollToBottom();
-                return msg;
+                return bubble;
         }
 
         private updateMessageContent(element: HTMLElement, text: string): void {
@@ -1041,20 +1028,26 @@ export class ConstructAgentViewPane extends ViewPane {
         }
 
         private updateStatusIndicator(): void {
-                const stateConfig: Record<ExecutionState, { text: string; color: string }> = {
-                        idle: { text: '\u25CF Ready', color: 'var(--kovix-state-running)' },
-                        planning: { text: '\u25CF Planning...', color: 'var(--kovix-state-pending)' },
-                        refining: { text: '\u25CF Refining...', color: 'var(--kovix-state-pending)' },
-                        awaiting_approval: { text: '\u25CF Awaiting Approval', color: 'var(--kovix-state-pending)' },
-                        executing: { text: '\u25CF Executing...', color: 'var(--kovix-volt-400)' },
-                        paused_at_milestone: { text: '\u25CF Paused at Milestone', color: 'var(--kovix-ignite-500)' },
-                        complete: { text: '\u25CF Complete', color: 'var(--kovix-state-running)' },
-                        error: { text: '\u25CF Error', color: 'var(--kovix-state-error)' },
-                        stopped: { text: '\u25CF Stopped', color: 'var(--kovix-ignite-500)' },
+                const stateConfig: Record<ExecutionState, { text: string; cls: string }> = {
+                        idle: { text: 'READY', cls: 'kovix-msg__status--done' },
+                        planning: { text: 'PLANNING', cls: 'kovix-msg__status--thinking' },
+                        refining: { text: 'REFINING', cls: 'kovix-msg__status--thinking' },
+                        awaiting_approval: { text: 'AWAITING APPROVAL', cls: 'kovix-msg__status--awaiting' },
+                        executing: { text: 'EXECUTING', cls: 'kovix-msg__status--working' },
+                        paused_at_milestone: { text: 'PAUSED AT MILESTONE', cls: 'kovix-msg__status--awaiting' },
+                        complete: { text: 'COMPLETE', cls: 'kovix-msg__status--done' },
+                        error: { text: 'ERROR', cls: 'kovix-msg__status--error' },
+                        stopped: { text: 'STOPPED', cls: 'kovix-msg__status--error' },
                 };
                 const config = stateConfig[this.executionState] ?? stateConfig.idle;
-                this.statusIndicator.style.cssText = `font-size: 11px; color: ${config.color}; margin-bottom: 6px;`;
+                this.statusIndicator.className = `kovix-msg__status ${config.cls}`;
                 this.statusIndicator.textContent = config.text;
+
+                if (this.agentSublineEl) {
+                        const modelName = this.currentModelInfo.name ?? 'No Model';
+                        const mode = (this.modeBadgeEl?.textContent ?? 'GENERAL').toLowerCase();
+                        this.agentSublineEl.textContent = `${mode} \u00b7 ${this.currentModelInfo.isLocal ? 'local' : 'cloud'} \u00b7 ${modelName}`;
+                }
         }
 
         private getActionIcon(action: string): string {
@@ -1083,58 +1076,24 @@ export class ConstructAgentViewPane extends ViewPane {
                 this.toolLogEntries = [];
                 this.toolLogContainer = null;
 
-                // Clear conversation history so the agent doesn't remember previous turns
                 this.agentLoop.clearConversationHistory();
 
-                // Re-render welcome message
-                const welcome = dom.$('.construct-welcome');
-                welcome.style.cssText = `padding: 16px; text-align: center;`;
-
-                const logo = dom.$('.construct-logo');
-                logo.style.cssText = `font-size: 32px; margin-bottom: 8px; color: var(--kovix-volt-400);`;
+                // Re-render welcome message (Kovix v1.3.0 class-based)
+                const welcome = dom.$('.kovix-welcome');
+                const logo = dom.$('.kovix-welcome__logo');
                 logo.textContent = '\u2B21';
-
-                const title = dom.$('.construct-title');
-                title.style.cssText = `font-size: 14px; font-weight: 600; color: var(--kovix-text-primary); margin-bottom: 4px;`;
+                const title = dom.$('.kovix-welcome__title');
                 title.textContent = 'Kovix Agent';
-
-                const subtitle = dom.$('.construct-subtitle');
-                subtitle.style.cssText = `font-size: 12px; color: var(--kovix-text-tertiary); margin-bottom: 12px;`;
-                subtitle.textContent = 'AI-powered coding assistant';
-
-                const statusEl = dom.$('.construct-status');
-                const stateConfig: Record<ExecutionState, { text: string; color: string }> = {
-                        idle: { text: '\u25CF Ready', color: 'var(--kovix-state-running)' },
-                        planning: { text: '\u25CF Planning...', color: 'var(--kovix-state-pending)' },
-                        refining: { text: '\u25CF Refining...', color: 'var(--kovix-state-pending)' },
-                        awaiting_approval: { text: '\u25CF Awaiting Approval', color: 'var(--kovix-state-pending)' },
-                        executing: { text: '\u25CF Executing...', color: 'var(--kovix-volt-400)' },
-                        paused_at_milestone: { text: '\u25CF Paused at Milestone', color: 'var(--kovix-ignite-500)' },
-                        complete: { text: '\u25CF Complete', color: 'var(--kovix-state-running)' },
-                        error: { text: '\u25CF Error', color: 'var(--kovix-state-error)' },
-                        stopped: { text: '\u25CF Stopped', color: 'var(--kovix-ignite-500)' },
-                };
-                const cfg = stateConfig.idle;
-                statusEl.style.cssText = `font-size: 11px; color: ${cfg.color}; margin-bottom: 6px;`;
-                statusEl.textContent = cfg.text;
-
-                const memoryStatus = dom.$('.construct-memory-status');
-                memoryStatus.classList.add('kovix-badge');
-                memoryStatus.classList.add(this.constructMemory.isInitialized ? 'kovix-badge--info' : 'kovix-badge--idle');
-                memoryStatus.style.marginBottom = '8px';
-                memoryStatus.textContent = this.constructMemory.isInitialized
-                        ? 'Vector search'
-                        : 'Keyword fallback';
-
-                const hint = dom.$('.construct-hint');
-                hint.style.cssText = `font-size: 11px; color: var(--kovix-text-tertiary); font-family: monospace; background: var(--kovix-bg-ink); border-radius: 4px; padding: 6px 10px; display: inline-block;`;
-                hint.textContent = 'Ctrl+Shift+I  Inline edit  |  Ctrl+Shift+C  Focus panel';
-
+                const subtitle = dom.$('.kovix-welcome__subtitle');
+                subtitle.textContent = 'Your AI pair programmer with its own OS';
+                const statusEl = dom.$('.kovix-msg__status.kovix-msg__status--done');
+                statusEl.textContent = 'READY';
+                const hint = dom.$('.kovix-welcome__hint');
+                hint.innerHTML = '<kbd>Ctrl+Shift+K</kbd> focus panel &nbsp;\u00b7&nbsp; <kbd>Ctrl+Shift+I</kbd> inline edit &nbsp;\u00b7&nbsp; <kbd>Ctrl+Shift+P</kbd> commands';
                 welcome.appendChild(logo);
                 welcome.appendChild(title);
                 welcome.appendChild(subtitle);
                 welcome.appendChild(statusEl);
-                welcome.appendChild(memoryStatus);
                 welcome.appendChild(hint);
                 this.messageContainer.appendChild(welcome);
 
@@ -1147,7 +1106,7 @@ export class ConstructAgentViewPane extends ViewPane {
          */
         private updateClearBtnVisibility(): void {
                 if (!this.clearBtn) { return; }
-                const hasMessages = this.messageContainer.querySelectorAll('.construct-user-msg, .construct-agent-msg').length > 0;
+                const hasMessages = this.messageContainer.querySelectorAll('.kovix-msg').length > 0;
                 this.clearBtn.style.display = hasMessages ? 'inline-block' : 'none';
         }
 
@@ -1192,9 +1151,52 @@ export class ConstructAgentViewPane extends ViewPane {
 
         private updateModelPickerLabel(): void {
                 if (!this.modelPickerBtn) { return; }
-                const icon = this.currentModelInfo.isLocal ? '\u26A1' : '\uD83C\uDF10'; // ⚡ or 🌐
+                const isLocal = this.currentModelInfo.isLocal;
+                const dotCls = isLocal ? 'kovix-model-pill__dot is-local' : 'kovix-model-pill__dot is-cloud';
+                const modelLabel = this.currentModelInfo.name ?? 'No Model';
                 const typeLabel = this.currentModelInfo.providerType ?? 'none';
-                this.modelPickerBtn.textContent = `${icon} ${this.currentModelInfo.name} (${typeLabel})`;
+                this.modelPickerBtn.innerHTML = '';
+                const dot = dom.$(`.${dotCls.replace(/\s+/g, '.')}`);
+                const label = document.createElement('span');
+                label.textContent = `${modelLabel} \u00b7 ${typeLabel}`;
+                const chevron = dom.$('.kovix-model-pill__chevron');
+                chevron.textContent = '\u25BE';
+                this.modelPickerBtn.appendChild(dot);
+                this.modelPickerBtn.appendChild(label);
+                this.modelPickerBtn.appendChild(chevron);
+        }
+
+        /** Scan the input textarea for @file and #tag chips and render them above the input. */
+        private scanInputForChips(): void {
+                if (!this.chipsRowEl) { return; }
+                const text = this.inputBox.value;
+                const matches = text.match(/(@[\w./_-]+|#[\w-]+)/g) ?? [];
+                const current = new Set(matches);
+                const existing = new Set(Array.from(this.chipsRowEl.querySelectorAll<HTMLElement>('.kovix-chip')).map(c => c.dataset.token ?? ''));
+                for (const chip of Array.from(this.chipsRowEl.querySelectorAll<HTMLElement>('.kovix-chip'))) {
+                        if (!current.has(chip.dataset.token ?? '')) { chip.remove(); }
+                }
+                for (const tok of current) {
+                        if (!existing.has(tok)) {
+                                const chip = dom.$('.kovix-chip');
+                                chip.classList.add(tok.startsWith('@') ? 'kovix-chip--file' : 'kovix-chip--tag');
+                                chip.dataset.token = tok;
+                                chip.textContent = tok;
+                                const close = dom.$('.kovix-chip__close');
+                                close.textContent = '\u00d7';
+                                close.onclick = () => {
+                                        this.inputBox.value = this.inputBox.value.replace(tok, '').replace(/\s+/, ' ').trim();
+                                        chip.remove();
+                                        this.scanInputForChips();
+                                };
+                                chip.appendChild(close);
+                                this.chipsRowEl.appendChild(chip);
+                        }
+                }
+        }
+
+        private clearChips(): void {
+                if (this.chipsRowEl) { this.chipsRowEl.replaceChildren(); }
         }
 
         // --- Phase 2: Context Gathering ---
