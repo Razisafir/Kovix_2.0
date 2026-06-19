@@ -84,7 +84,7 @@ export class KovixAgentControlCenter extends ViewPane {
 		@IAgentModeService private readonly modeService: IAgentModeService,
 		@IUniversalMemoryService private readonly universalMemory: IUniversalMemoryService,
 		@IPendingChangesService private readonly pendingChanges: IPendingChangesService,
-		@ILogService private readonly logService: ILogService,
+		@ILogService private readonly _logService: ILogService,
 	) {
 		super(options, keybindingService, contextMenuService, configurationService, contextKeyService, viewDescriptorService, instantiationService, openerService, themeService, telemetryService, hoverService);
 	}
@@ -328,7 +328,7 @@ export class KovixAgentControlCenter extends ViewPane {
 	private refreshDiffsCard(): void {
 		const body = this.diffsCardEl.querySelector('.kovix-cc-card-body') as HTMLElement;
 		body.replaceChildren();
-		const pending = this.pendingChanges.getPendingChanges();
+		const pending = this.pendingChanges.pendingEntries;
 		if (pending.length === 0) {
 			const empty = dom.$('.kovix-cc-empty');
 			empty.textContent = 'No pending diffs. Agent changes will appear here for approval.';

@@ -17,6 +17,15 @@ export enum UniversalMemoryCategory {
 	ToolUsage = 'tool_usage',
 	ProjectContext = 'project_context',
 	ErrorSolution = 'error_solution',
+	// Memory-layer aliases used by the v1.3.0 graph + control center UIs.
+	// These map onto the five-layer memory model (working/episodic/semantic/
+	// procedural/universal) so the Obsidian-style graph view can colour-code
+	// nodes by memory layer.
+	Working = 'working',
+	Episodic = 'episodic',
+	Semantic = 'semantic',
+	Procedural = 'procedural',
+	Universal = 'universal',
 }
 
 /**

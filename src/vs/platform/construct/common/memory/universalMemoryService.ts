@@ -50,6 +50,18 @@ export interface IUniversalMemoryService {
 	removeMemory(id: string): Promise<void>;
 
 	/**
+	 * Delete a memory entry by ID (alias of {@link removeMemory}).
+	 * Used by the Obsidian-style memory graph UI.
+	 */
+	delete(id: string): Promise<void>;
+
+	/**
+	 * Update an existing memory entry's content and/or tags.
+	 * Used by the Obsidian-style memory graph editor.
+	 */
+	update(id: string, changes: { content?: string; tags?: string[] }): Promise<IUniversalMemoryEntry | undefined>;
+
+	/**
 	 * Get statistics about the universal memory store.
 	 */
 	getStats(): Promise<IUniversalMemoryStats>;

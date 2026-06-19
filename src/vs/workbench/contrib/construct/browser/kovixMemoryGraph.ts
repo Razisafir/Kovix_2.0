@@ -114,8 +114,8 @@ export class KovixMemoryGraphPane extends ViewPane {
 		@ITelemetryService telemetryService: ITelemetryService,
 		@IHoverService hoverService: IHoverService,
 		@IUniversalMemoryService private readonly universalMemory: IUniversalMemoryService,
-		@IConstructMemoryService private readonly constructMemory: IConstructMemoryService,
-		@IMemoryOrchestrator private readonly memoryOrchestrator: IMemoryOrchestrator,
+		@IConstructMemoryService private readonly _constructMemory: IConstructMemoryService,
+		@IMemoryOrchestrator private readonly _memoryOrchestrator: IMemoryOrchestrator,
 		@ILogService private readonly logService: ILogService,
 		@INotificationService private readonly notificationService: INotificationService,
 	) {
@@ -209,7 +209,7 @@ export class KovixMemoryGraphPane extends ViewPane {
 
 	private async loadMemories(): Promise<void> {
 		try {
-			const stats = await this.universalMemory.getStats();
+			await this.universalMemory.getStats(); // warm the store + verify connectivity
 			const all: IUniversalMemoryEntry[] = [];
 			// Fetch up to 500 most recent entries across categories
 			for (const cat of Object.values(UniversalMemoryCategory)) {
@@ -217,9 +217,9 @@ export class KovixMemoryGraphPane extends ViewPane {
 					const results = await this.universalMemory.query({
 						category: cat,
 						limit: 100,
-						query: '',
+						text: '',
 					});
-					all.push(...results.items);
+					all.push(...results);
 				} catch { /* category may not be implemented */ }
 			}
 
@@ -262,7 +262,7 @@ export class KovixMemoryGraphPane extends ViewPane {
 
 	private buildEdges(): void {
 		this.edges = [];
-		const nodeIds = new Set(this.nodes.map(n => n.id));
+		const _nodeIds = new Set(this.nodes.map(n => n.id)); (void)_nodeIds;
 
 		// Tag-based links
 		const byTag = new Map<string, string[]>();
