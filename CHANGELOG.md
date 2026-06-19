@@ -1,5 +1,45 @@
 # Changelog
 
+## [1.2.0] - 2026-06-19
+
+### Critical Fix
+- **Broke the aiService ↔ secureKeyManager cyclic dependency** that crashed every Construct workbench contribution on v1.1.0. The agent panel, status bar agent indicators, and AI autocomplete all failed to construct with `Error: cyclic dependency between services`. Both services now use `@IInstantiationService` + lazy `_resolveXxx()` helpers to defer partner resolution to first runtime use. A new `LazyCloudProvider` proxy class defers CloudProvider construction until first method call (necessary because CloudProvider's ctor subscribes to `ISecureKeyManager.onDidChangeKey`).
+
+### Added — Multi-Provider LLM Support
+- **8 new first-class LLM providers** added to the existing 5:
+  - **NVIDIA NIM** (`integrate.api.nvidia.com/v1`, `nvapi-` keys) — 121+ models including Llama, Nemotron, Mistral, Qwen, DeepSeek
+  - **OpenRouter** (`openrouter.ai/api/v1`, `sk-or-` keys) — one key for Claude, GPT, Gemini, Llama, etc.
+  - **LM Studio** (`localhost:1234/v1`, no auth) — local OpenAI-compatible
+  - **Together AI** (`api.together.xyz/v1`) — hosted Llama/Qwen
+  - **Groq** (`api.groq.com/openai/v1`, `gsk_` keys) — ultra-fast inference
+  - **Mistral AI** (`api.mistral.ai/v1`) — Mistral Large, Codestral, Mixtral
+  - **Google Gemini** (`generativelanguage.googleapis.com/v1beta/openai`) — Gemini 1.5/2.0 Pro/Flash
+  - **DeepSeek** (`api.deepseek.com/v1`) — DeepSeek Chat, Coder, R1
+- All 13 providers route through CloudProvider via OpenAI-compatible endpoints
+- Provider-specific API key validation rules (nvapi-, sk-or-, gsk_, sk-ant-, sk-)
+- `DEFAULT_ENDPOINTS`, `PROVIDER_LABELS`, `REQUIRES_KEY`, `IS_LOCAL`, `DEFAULT_MODELS` lookup tables exported for UI consumption
+- OpenRouter requests automatically include `HTTP-Referer` and `X-Title` attribution headers per their docs
+- CloudProvider now listens to `onDidChangeActiveProvider` and re-resolves endpoint + clears cached models when user switches providers
+- `Manage API Keys` command expanded to all 13 providers in the quick-pick dropdown
+
+### Added — Agent Modes & Multi-Agent Swarms
+- New `IAgentModeService` with 6 built-in modes:
+  - **General** — all-purpose assistant (default)
+  - **Architect** — plans multi-file changes, read-only, hands off to Coder
+  - **Coder** — executes plans by editing files + running commands
+  - **Reviewer** — reviews pending diffs for bugs/security/style
+  - **Debugger** — reproduces issues, reads stack traces, bisects
+  - **Ask** — pure Q&A, no file modifications
+- Per-mode model selection (Roo Code custom modes pattern) — each mode can override the global model. Run a strong model for planning, a cheap fast model for execution.
+- Sub-agent spawning (OpenAI Swarm handoff pattern) — modes with `canSpawnSubAgents: true` can spawn sub-agents with their own mode + task. Tracked via `ISubAgent` interface with status (pending/running/completed/failed/cancelled), output, and token usage.
+- Custom mode creation via `Kovix: Create Custom Agent Mode` wizard (slug, displayName, roleDefinition, tool groups, sub-agent capability)
+- 3 new commands: `switchAgentMode`, `createAgentMode`, `spawnSubAgent`
+- Modes persist to `.kovix/modes.json`; built-in modes cannot be deleted
+
+### Documentation
+- Complete README rewrite for v1.2.0 — multi-provider table, agent modes section, swarm docs, updated commands, architecture diagram
+- License file reference corrected: `CONSTRUCT_LICENSE.txt` → `KOVIX_LICENSE.txt`
+
 ## [1.1.0] - 2026-06-19
 
 ### Added
