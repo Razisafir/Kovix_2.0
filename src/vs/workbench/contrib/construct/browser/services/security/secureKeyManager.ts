@@ -28,10 +28,24 @@ const SECRET_KEY_PREFIX = 'construct.apiKey';
 
 /**
  * Default endpoints per provider type.
+ *
+ * Kovix v1.2.0: expanded to cover all major OpenAI-compatible endpoints.
+ * Anthropic uses its native API (handled separately in CloudProvider).
+ * Ollama uses its native API (handled separately in OllamaProvider).
+ * All others are OpenAI-compatible and route through CloudProvider with
+ * the appropriate base URL.
  */
 const DEFAULT_ENDPOINTS: Record<LLMProvider, string> = {
         anthropic: 'https://api.anthropic.com',
         openai: 'https://api.openai.com',
+        nvidia: 'https://integrate.api.nvidia.com/v1',
+        openrouter: 'https://openrouter.ai/api/v1',
+        lmstudio: 'http://localhost:1234/v1',
+        together: 'https://api.together.xyz/v1',
+        groq: 'https://api.groq.com/openai/v1',
+        mistral: 'https://api.mistral.ai/v1',
+        gemini: 'https://generativelanguage.googleapis.com/v1beta/openai',
+        deepseek: 'https://api.deepseek.com/v1',
         ollama: 'http://localhost:11434',
         litellm: '',
         custom: '',
@@ -39,13 +53,144 @@ const DEFAULT_ENDPOINTS: Record<LLMProvider, string> = {
 
 /**
  * Human-readable labels per provider type.
+ * Shown in the provider settings UI and the model picker dropdown.
  */
 const PROVIDER_LABELS: Record<LLMProvider, string> = {
         anthropic: 'Anthropic',
         openai: 'OpenAI',
+        nvidia: 'NVIDIA NIM',
+        openrouter: 'OpenRouter',
+        lmstudio: 'LM Studio',
+        together: 'Together AI',
+        groq: 'Groq',
+        mistral: 'Mistral AI',
+        gemini: 'Google Gemini',
+        deepseek: 'DeepSeek',
         ollama: 'Ollama',
         litellm: 'LiteLLM',
         custom: 'Custom',
+};
+
+/**
+ * Whether a provider requires an API key.
+ * Local providers (Ollama, LM Studio) don't need keys.
+ */
+const REQUIRES_KEY: Record<LLMProvider, boolean> = {
+        anthropic: true,
+        openai: true,
+        nvidia: true,
+        openrouter: true,
+        lmstudio: false,
+        together: true,
+        groq: true,
+        mistral: true,
+        gemini: true,
+        deepseek: true,
+        ollama: false,
+        litellm: false,
+        custom: false,
+};
+
+/**
+ * Whether a provider is local (no internet required).
+ * Used to group providers in the settings UI.
+ */
+const IS_LOCAL: Record<LLMProvider, boolean> = {
+        anthropic: false,
+        openai: false,
+        nvidia: false,
+        openrouter: false,
+        lmstudio: true,
+        together: false,
+        groq: false,
+        mistral: false,
+        gemini: false,
+        deepseek: false,
+        ollama: true,
+        litellm: true, // assume local proxy
+        custom: false,
+};
+
+/**
+ * Known default models per provider.
+ * Used to populate the model picker when the provider's /models endpoint
+ * is unreachable or returns no models. These lists are intentionally short
+ * (3-6 entries) — the live /models response is preferred when available.
+ */
+const DEFAULT_MODELS: Record<LLMProvider, { id: string; displayName: string }[]> = {
+        anthropic: [
+                { id: 'claude-sonnet-4-20250514', displayName: 'Claude Sonnet 4' },
+                { id: 'claude-3-5-sonnet-20241022', displayName: 'Claude 3.5 Sonnet' },
+                { id: 'claude-3-5-haiku-20241022', displayName: 'Claude 3.5 Haiku' },
+        ],
+        openai: [
+                { id: 'gpt-4o', displayName: 'GPT-4o' },
+                { id: 'gpt-4o-mini', displayName: 'GPT-4o mini' },
+                { id: 'gpt-4-turbo', displayName: 'GPT-4 Turbo' },
+                { id: 'o1-preview', displayName: 'o1-preview' },
+                { id: 'o1-mini', displayName: 'o1-mini' },
+        ],
+        nvidia: [
+                { id: 'meta/llama-3.1-405b-instruct', displayName: 'Llama 3.1 405B Instruct' },
+                { id: 'meta/llama-3.1-70b-instruct', displayName: 'Llama 3.1 70B Instruct' },
+                { id: 'meta/llama-3.1-8b-instruct', displayName: 'Llama 3.1 8B Instruct' },
+                { id: 'nvidia/llama-3.1-nemotron-70b-instruct', displayName: 'Nemotron 70B Instruct' },
+                { id: 'mistralai/mistral-large-2-instruct', displayName: 'Mistral Large 2' },
+                { id: 'qwen/qwen2.5-coder-32b-instruct', displayName: 'Qwen2.5 Coder 32B' },
+                { id: 'deepseek-ai/deepseek-r1', displayName: 'DeepSeek R1' },
+        ],
+        openrouter: [
+                { id: 'anthropic/claude-3.5-sonnet', displayName: 'Claude 3.5 Sonnet (via OpenRouter)' },
+                { id: 'openai/gpt-4o', displayName: 'GPT-4o (via OpenRouter)' },
+                { id: 'google/gemini-flash-1.5', displayName: 'Gemini Flash 1.5 (via OpenRouter)' },
+                { id: 'meta-llama/llama-3.1-405b-instruct', displayName: 'Llama 3.1 405B (via OpenRouter)' },
+                { id: 'qwen/qwen-2.5-72b-instruct', displayName: 'Qwen 2.5 72B (via OpenRouter)' },
+                { id: 'deepseek/deepseek-chat', displayName: 'DeepSeek Chat (via OpenRouter)' },
+        ],
+        lmstudio: [
+                // LM Studio models are user-loaded; default list is empty.
+                // The /v1/models endpoint will return whatever the user has loaded.
+        ],
+        together: [
+                { id: 'meta-llama/Llama-3.3-70B-Instruct-Turbo', displayName: 'Llama 3.3 70B Turbo' },
+                { id: 'meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo', displayName: 'Llama 3.1 405B Turbo' },
+                { id: 'Qwen/Qwen2.5-72B-Instruct-Turbo', displayName: 'Qwen 2.5 72B Turbo' },
+        ],
+        groq: [
+                { id: 'llama-3.3-70b-versatile', displayName: 'Llama 3.3 70B Versatile' },
+                { id: 'llama-3.1-8b-instant', displayName: 'Llama 3.1 8B Instant' },
+                { id: 'mixtral-8x7b-32768', displayName: 'Mixtral 8x7B' },
+                { id: 'gemma2-9b-it', displayName: 'Gemma 2 9B' },
+        ],
+        mistral: [
+                { id: 'mistral-large-latest', displayName: 'Mistral Large' },
+                { id: 'mistral-small-latest', displayName: 'Mistral Small' },
+                { id: 'codestral-latest', displayName: 'Codestral' },
+                { id: 'open-mixtral-8x22b', displayName: 'Mixtral 8x22B' },
+        ],
+        gemini: [
+                { id: 'gemini-1.5-pro', displayName: 'Gemini 1.5 Pro' },
+                { id: 'gemini-1.5-flash', displayName: 'Gemini 1.5 Flash' },
+                { id: 'gemini-2.0-flash-exp', displayName: 'Gemini 2.0 Flash (exp)' },
+        ],
+        deepseek: [
+                { id: 'deepseek-chat', displayName: 'DeepSeek Chat' },
+                { id: 'deepseek-coder', displayName: 'DeepSeek Coder' },
+                { id: 'deepseek-reasoner', displayName: 'DeepSeek R1' },
+        ],
+        ollama: [
+                { id: 'qwen2.5-coder:7b', displayName: 'Qwen2.5 Coder 7B' },
+                { id: 'qwen2.5-coder:1.5b', displayName: 'Qwen2.5 Coder 1.5B' },
+                { id: 'llama3.2:3b', displayName: 'Llama 3.2 3B' },
+                { id: 'codellama:7b', displayName: 'Code Llama 7B' },
+                { id: 'deepseek-coder:6.7b', displayName: 'DeepSeek Coder 6.7B' },
+        ],
+        litellm: [
+                // LiteLLM proxy models are user-defined; default list is empty.
+        ],
+        custom: [
+                // Custom endpoint models are user-defined; default list is empty.
+        ],
 };
 
 /**
@@ -236,8 +381,8 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
         // ─── Validation ──────────────────────────────────────────────────────────────
 
         validateKey(provider: LLMProvider, key: string): { valid: boolean; error?: string } {
-                if (provider === 'ollama') {
-                        // Ollama does not require an API key
+                // Local providers that don't require a key
+                if (!REQUIRES_KEY[provider]) {
                         return { valid: true };
                 }
 
@@ -256,6 +401,34 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
                                 if (!key.startsWith('sk-')) {
                                         return { valid: false, error: 'OpenAI API keys must start with "sk-".' };
                                 }
+                                break;
+
+                        case 'nvidia':
+                                // NVIDIA NIM keys start with "nvapi-"
+                                if (!key.startsWith('nvapi-')) {
+                                        return { valid: false, error: 'NVIDIA NIM API keys must start with "nvapi-".' };
+                                }
+                                break;
+
+                        case 'openrouter':
+                                // OpenRouter keys start with "sk-or-"
+                                if (!key.startsWith('sk-or-')) {
+                                        return { valid: false, error: 'OpenRouter API keys must start with "sk-or-".' };
+                                }
+                                break;
+
+                        case 'groq':
+                                // Groq keys are 56-char alphanumeric, typically start with "gsk_"
+                                if (!key.startsWith('gsk_')) {
+                                        return { valid: false, error: 'Groq API keys typically start with "gsk_".' };
+                                }
+                                break;
+
+                        case 'together':
+                        case 'mistral':
+                        case 'gemini':
+                        case 'deepseek':
+                                // These providers use opaque API keys; non-empty is sufficient
                                 break;
 
                         case 'litellm':
@@ -284,14 +457,27 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
                                         result = await this.testAnthropicConnection(key, endpoint);
                                         break;
 
-                                case 'openai':
-                                        result = await this.testOpenAIConnection(key, endpoint);
-                                        break;
-
                                 case 'ollama':
                                         result = await this.testOllamaConnection(endpoint);
                                         break;
 
+                                case 'lmstudio':
+                                        // LM Studio is OpenAI-compatible with no auth; use generic test
+                                        result = await this.testGenericConnection('', endpoint);
+                                        break;
+
+                                // Kovix v1.2.0: all OpenAI-compatible cloud providers route
+                                // through the same testGenericConnection method. The endpoint
+                                // differs per provider (DEFAULT_ENDPOINTS), but the request
+                                // shape (GET /models with Bearer auth) is identical.
+                                case 'openai':
+                                case 'nvidia':
+                                case 'openrouter':
+                                case 'together':
+                                case 'groq':
+                                case 'mistral':
+                                case 'gemini':
+                                case 'deepseek':
                                 case 'litellm':
                                 case 'custom':
                                         result = await this.testGenericConnection(key, endpoint);
@@ -344,10 +530,24 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
                 // Bridge: sync the AI service provider when the key manager switches.
                 // Map LLMProvider types to AIProviderType so IConstructAIService
                 // stays in sync with the key manager's active provider.
+                //
+                // Kovix v1.2.0: All OpenAI-compatible cloud providers route through
+                // the 'cloud' AIProviderType (which is CloudProvider under the hood).
+                // CloudProvider reads the active provider's endpoint from this service
+                // and routes the request accordingly.
                 const providerToAIType: Partial<Record<LLMProvider, AIProviderType>> = {
                         ollama: 'ollama',
+                        // All cloud providers route through CloudProvider:
                         anthropic: 'cloud',
                         openai: 'cloud',
+                        nvidia: 'cloud',
+                        openrouter: 'cloud',
+                        lmstudio: 'cloud',
+                        together: 'cloud',
+                        groq: 'cloud',
+                        mistral: 'cloud',
+                        gemini: 'cloud',
+                        deepseek: 'cloud',
                         litellm: 'cloud',
                         custom: 'cloud',
                 };

@@ -64,6 +64,13 @@ export class CloudProvider extends Disposable implements IConstructAIProvider {
         private _baseUrl: string;
         private _apiKey: string = '';
         private _customModels: IModelInfo[] = [];
+        /**
+         * Kovix v1.2.0: which LLMProvider is currently active.
+         * Drives OpenRouter-specific headers, Anthropic vs OpenAI routing,
+         * and the default model list returned by listModels() when the
+         * /models endpoint is unreachable.
+         */
+        private _activeLLMProvider: import('../../../../../../platform/construct/common/security/secureKeyManager.js').LLMProvider | undefined;
 
         private readonly _onDidChangeActiveModel = this._register(new Emitter<IModelInfo | undefined>());
         readonly onDidChangeActiveModel = this._onDidChangeActiveModel.event;
@@ -87,25 +94,52 @@ export class CloudProvider extends Disposable implements IConstructAIProvider {
                         this._resolveApiKey();
                 }));
 
+                // Kovix v1.2.0: When the active provider changes in the key manager
+                // (user picks NVIDIA instead of OpenAI, etc.), re-resolve so we pick
+                // up the new endpoint + key + default model list.
+                this._register(this._keyManager.onDidChangeActiveProvider(() => {
+                        this._resolveApiKey();
+                        // Clear cached models so listModels() re-fetches from the new endpoint
+                        this._customModels = [];
+                        this._activeModel = undefined;
+                }));
+
                 // SEC-5: Redact any potential secrets from log output
                 this.logService.info(redactSecrets('[CloudProvider] Initialized (baseUrl: ' + this._baseUrl + ', backend: ' + (this.isAnthropicKey ? 'Anthropic' : 'OpenAI-compatible') + ')'));
         }
 
         /**
-         * P0-2 FIX: Resolve API key through ISecureKeyManager (single source of truth).
+         * P0-2 FIX: Resolve API key + endpoint through ISecureKeyManager (single source of truth).
          * Falls back to IStorageService for backward compatibility.
+         *
+         * Kovix v1.2.0: Now also resolves the endpoint and provider type from the
+         * active provider config, so CloudProvider can route to NVIDIA NIM, OpenRouter,
+         * LM Studio, Together, Groq, Mistral, Gemini, DeepSeek, etc. without needing
+         * a separate provider class for each.
          */
         private async _resolveApiKey(): Promise<void> {
                 // Try ISecureKeyManager first (OS keychain — single source of truth)
                 try {
                         const activeProvider = await this._keyManager.getActiveProvider();
-                        if (activeProvider && (activeProvider.provider === 'openai' || activeProvider.provider === 'anthropic' || activeProvider.provider === 'litellm' || activeProvider.provider === 'custom')) {
-                                const key = await this._keyManager.getKey(activeProvider.provider);
-                                if (key) {
-                                        this._apiKey = key;
-                                        // Also sync to IStorageService for backward compatibility
-                                        this._storageService.store(STORAGE_KEY_CLOUD_API_KEY, key, 0 /* StorageScope.APPLICATION */, 1 /* StorageTarget.MACHINE */);
-                                        return;
+                        if (activeProvider) {
+                                const p = activeProvider.provider;
+                                // All these providers route through CloudProvider:
+                                if (p === 'openai' || p === 'anthropic' || p === 'nvidia' ||
+                                        p === 'openrouter' || p === 'lmstudio' || p === 'together' ||
+                                        p === 'groq' || p === 'mistral' || p === 'gemini' ||
+                                        p === 'deepseek' || p === 'litellm' || p === 'custom') {
+                                        this._activeLLMProvider = p;
+                                        // Pick up the endpoint from the active provider config
+                                        if (activeProvider.endpoint) {
+                                                this._baseUrl = activeProvider.endpoint;
+                                        }
+                                        const key = await this._keyManager.getKey(p);
+                                        if (key) {
+                                                this._apiKey = key;
+                                                // Also sync to IStorageService for backward compatibility
+                                                this._storageService.store(STORAGE_KEY_CLOUD_API_KEY, key, 0 /* StorageScope.APPLICATION */, 1 /* StorageTarget.MACHINE */);
+                                                return;
+                                        }
                                 }
                         }
                 } catch {
@@ -119,6 +153,26 @@ export class CloudProvider extends Disposable implements IConstructAIProvider {
                 if (!this._apiKey) {
                         this._apiKey = this.configurationService.getValue<string>('construct.cloud.apiKey') ?? '';
                 }
+        }
+
+        /**
+         * Kovix v1.2.0: Build the correct headers for the active provider.
+         * OpenRouter requires HTTP-Referer and X-Title headers per their docs.
+         * Anthropic uses x-api-key + anthropic-version. Others use Bearer auth.
+         */
+        private _buildHeaders(): Record<string, string> {
+                if (this._activeLLMProvider === 'openrouter') {
+                        return {
+                                'Authorization': 'Bearer ' + this._apiKey,
+                                'HTTP-Referer': 'https://kovix.ai',
+                                'X-Title': 'Kovix IDE',
+                                'Content-Type': 'application/json',
+                        };
+                }
+                return {
+                        'Authorization': 'Bearer ' + this._apiKey,
+                        'Content-Type': 'application/json',
+                };
         }
 
         /** Whether the configured API key is for the Anthropic API. */
@@ -207,9 +261,7 @@ export class CloudProvider extends Disposable implements IConstructAIProvider {
                         const timeout = setTimeout(() => controller.abort(), 10_000);
 
                         const response = await fetch(this._baseUrl + '/models', {
-                                headers: {
-                                        'Authorization': 'Bearer ' + this._apiKey,
-                                },
+                                headers: this._buildHeaders(),
                                 signal: controller.signal,
                         });
                         clearTimeout(timeout);
@@ -557,10 +609,7 @@ export class CloudProvider extends Disposable implements IConstructAIProvider {
                         try {
                                 const response = await fetch(this._baseUrl + '/chat/completions', {
                                         method: 'POST',
-                                        headers: {
-                                                'Content-Type': 'application/json',
-                                                'Authorization': 'Bearer ' + this._apiKey,
-                                        },
+                                        headers: this._buildHeaders(),
                                         body: JSON.stringify(body),
                                         signal: options?.signal,
                                 });
@@ -786,10 +835,7 @@ export class CloudProvider extends Disposable implements IConstructAIProvider {
                 try {
                         const response = await fetch(this._baseUrl + '/chat/completions', {
                                 method: 'POST',
-                                headers: {
-                                        'Content-Type': 'application/json',
-                                        'Authorization': 'Bearer ' + this._apiKey,
-                                },
+                                headers: this._buildHeaders(),
                                 body: JSON.stringify(body),
                                 signal: options?.signal,
                         });
