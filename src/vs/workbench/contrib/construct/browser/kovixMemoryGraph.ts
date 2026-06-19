@@ -41,8 +41,8 @@ import { IViewDescriptorService } from '../../../../workbench/common/views.js';
 import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
 import { IOpenerService } from '../../../../platform/opener/common/opener.js';
 import { IHoverService } from '../../../../platform/hover/browser/hover.js';
-import { IConstructMemoryService } from '../../../../platform/construct/common/memory/constructMemory.js';
-import { IMemoryOrchestrator } from '../../../../platform/construct/common/memory/memoryOrchestrator.js';
+
+
 import { Action, Separator } from '../../../../base/common/actions.js';
 import './media/kovixMemoryGraph.css';
 
@@ -130,8 +130,6 @@ export class KovixMemoryGraphPane extends ViewPane {
 		@ITelemetryService telemetryService: ITelemetryService,
 		@IHoverService hoverService: IHoverService,
 		@IUniversalMemoryService private readonly universalMemory: IUniversalMemoryService,
-		@IConstructMemoryService private readonly _constructMemory: IConstructMemoryService,
-		@IMemoryOrchestrator private readonly _memoryOrchestrator: IMemoryOrchestrator,
 		@ILogService private readonly logService: ILogService,
 		@INotificationService private readonly notificationService: INotificationService,
 	) {

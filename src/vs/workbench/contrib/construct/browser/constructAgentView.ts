@@ -36,7 +36,7 @@ import { ConstructProgressPanel } from './constructProgressPanel.js';
 import { LoadingState, FileChangeEntry, TaskMetrics } from '../../../../platform/construct/common/agent/loadingState.js';
 import { IRefinedIdea, IRefinementQuestion, IRefinementAnswer } from '../../../../platform/construct/common/agent/ideaRefinementTypes.js';
 import { IIdeaRefinementService } from '../../../../platform/construct/common/agent/ideaRefinementService.js';
-import { IAgentModeService } from './services/agent/agentModeService.js';
+
 import { IConstructSessionService } from '../../../../platform/construct/common/session/constructSessionService.js';
 import { ISelectablePlanStep, IApprovedPlan, IMilestone } from '../../../../platform/construct/common/agent/milestoneStateMachine.js';
 import { showStopModePicker } from './constructStopModePicker.js';
