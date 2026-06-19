@@ -723,9 +723,21 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
                         headers['Authorization'] = `Bearer ${key}`;
                 }
 
-                // Try /v1/models first
+                // Kovix v1.3.1 FIX: Normalize the models URL.
+                // DEFAULT_ENDPOINTS already includes the API version path for most providers
+                // (nvidia → /v1, openrouter → /api/v1, together → /v1, groq → /openai/v1,
+                // mistral → /v1, deepseek → /v1, lmstudio → /v1). The previous code appended
+                // "/v1/models" unconditionally, which produced "/v1/v1/models" for all of those
+                // providers and made "Test Provider Connection" always fail with HTTP 404.
+                // The fix: strip any trailing "/v1" (or "/api/v1" etc.) and append "/models",
+                // so the URL is correct regardless of whether the endpoint already includes
+                // a version segment. We also fall back to "/v1/models" if the endpoint has
+                // no version segment at all (e.g. OpenAI's bare "https://api.openai.com").
+                const modelsUrl = this.buildModelsUrl(endpoint);
+
+                // Try {modelsUrl} first
                 try {
-                        const modelsResponse = await fetch(`${endpoint}/v1/models`, {
+                        const modelsResponse = await fetch(modelsUrl, {
                                 method: 'GET',
                                 headers,
                         });
@@ -747,12 +759,13 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
                                 return { healthy: false, latencyMs: 0, error: 'Authentication failed. Check your API key and endpoint.' };
                         }
                 } catch {
-                        // /v1/models failed, try /health as fallback
+                        // /models failed, try /health as fallback
                 }
 
-                // Fallback: try /health endpoint
+                // Fallback: try /health endpoint on the bare host (no /v1)
                 try {
-                        const healthResponse = await fetch(`${endpoint}/health`, {
+                        const healthUrl = new URL('/health', endpoint).toString();
+                        const healthResponse = await fetch(healthUrl, {
                                 method: 'GET',
                                 headers,
                         });
@@ -765,6 +778,28 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
                 } catch (error) {
                         return { healthy: false, latencyMs: 0, error: `Cannot reach endpoint at ${endpoint}: ${error instanceof Error ? error.message : String(error)}` };
                 }
+        }
+
+        /**
+         * Build the correct /models URL for an OpenAI-compatible endpoint.
+         *
+         * Kovix v1.3.1: DEFAULT_ENDPOINTS is inconsistent about whether it includes
+         * the /v1 version segment. Some endpoints end with /v1 (nvidia, openrouter,
+         * together, groq, mistral, deepseek, lmstudio), others don't (openai bare
+         * host). We handle both cases here so the test-connection command works for
+         * every provider.
+         *
+         * Rules:
+         * - If endpoint already ends with /v1, /v2, /api/v1, /openai/v1, etc.,
+         *   append "/models" → ".../v1/models"
+         * - Otherwise (bare host like "https://api.openai.com"), append "/v1/models"
+         */
+        private buildModelsUrl(endpoint: string): string {
+                const trimmed = endpoint.replace(/\/+$/, ''); // strip trailing slashes
+                if (/(\/v\d+|\/api\/v\d+|\/openai\/v\d+)$/i.test(trimmed)) {
+                        return `${trimmed}/models`;
+                }
+                return `${trimmed}/v1/models`;
         }
 
         // ─── Lifecycle ───────────────────────────────────────────────────────────────

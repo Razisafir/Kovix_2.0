@@ -209,10 +209,15 @@ export class ConstructAgentViewPane extends ViewPane {
 
 		const settingsBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
 		settingsBtn.textContent = '\u2699';
-		settingsBtn.title = 'API settings';
+		settingsBtn.title = 'API settings — add or manage API keys';
 		settingsBtn.setAttribute('aria-label', 'API settings');
 		settingsBtn.onclick = () => {
-			this.commandService.executeCommand('construct.openApiSettings');
+			// Kovix v1.3.1: route the gear button to the friendly QuickInput-based
+			// key manager (construct.manageApiKeys) instead of the raw JSON settings
+			// page. The key manager walks the user through provider selection, key
+			// entry, validation, and activation — far more discoverable than a
+			// settings.json text filter.
+			this.commandService.executeCommand('construct.manageApiKeys');
 		};
 
 		const controlCenterBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
@@ -406,10 +411,10 @@ export class ConstructAgentViewPane extends ViewPane {
 
 			if (!hasAIProvider) {
 				this.addAgentMessage(
-					'[SETUP] No AI provider available. Install [Ollama](https://ollama.ai) for local inference, or configure a cloud provider in [Settings](command:construct.openApiSettings).',
+					'[SETUP] No AI provider configured yet. [Add an API key](command:construct.manageApiKeys) to use the Kovix agent — NVIDIA NIM, OpenAI, Anthropic, OpenRouter, Groq, Together, Mistral, Gemini, DeepSeek, or local Ollama / LM Studio.',
 					'error'
 				);
-				this.notificationService.warn('No AI provider available. Install Ollama or configure cloud settings.');
+				this.notificationService.warn('No AI provider configured. Click the gear icon or run "Kovix: Manage API Keys" to add one.');
 				return;
 			}
 

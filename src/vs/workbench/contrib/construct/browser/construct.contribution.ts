@@ -864,11 +864,52 @@ registerAction2(class SelectModelAction extends Action2 {
                 const aiService = accessor.get(IConstructAIService);
                 const quickInput = accessor.get(IQuickInputService);
                 const notificationService = accessor.get(INotificationService);
+                const commandService = accessor.get(ICommandService);
+                const keyManager = accessor.get(ISecureKeyManager);
 
-                const models = await aiService.listModels();
+                let models = await aiService.listModels();
                 if (models.length === 0) {
-                        notificationService.warn('No models available. Please check your AI provider settings.');
-                        return;
+                        // Kovix v1.3.1: instead of a dead-end warning, offer to walk the
+                        // user through the API key setup flow. This is the single most
+                        // common reason for "no models" — the user hasn't added a key yet.
+                        const activeProvider = await keyManager.getActiveProvider();
+                        const providerLabel = activeProvider?.name ?? 'none';
+                        const setupPick = await quickInput.pick(
+                                [
+                                        {
+                                                label: '$(key) Add or Manage API Keys',
+                                                description: localize('setupKeysDesc', "Open the key manager — NVIDIA NIM, OpenAI, Anthropic, etc."),
+                                                action: 'manageKeys' as const,
+                                        },
+                                        {
+                                                label: '$(plug) Switch Provider',
+                                                description: localize('switchProviderDesc', "Current: {0}", providerLabel),
+                                                action: 'switchProvider' as const,
+                                        },
+                                        {
+                                                label: '$(refresh) Retry Model List',
+                                                description: localize('retryModelsDesc', "Re-fetch the model list from the active provider"),
+                                                action: 'retry' as const,
+                                        },
+                                ],
+                                { placeHolder: localize('noModelsPlaceholder', "No models available. Set up a provider to continue.") },
+                        );
+
+                        if (!setupPick) { return; }
+                        if (setupPick.action === 'manageKeys') {
+                                commandService.executeCommand('construct.manageApiKeys');
+                        } else if (setupPick.action === 'switchProvider') {
+                                commandService.executeCommand('construct.switchProvider.quick');
+                        } else if (setupPick.action === 'retry') {
+                                models = await aiService.listModels();
+                                if (models.length === 0) {
+                                        notificationService.warn(localize('stillNoModels', "Still no models available. Verify your API key and endpoint are correct, then try again."));
+                                        return;
+                                }
+                        } else {
+                                return;
+                        }
+                        if (models.length === 0) { return; }
                 }
 
                 const currentModel = aiService.getActiveModel();
