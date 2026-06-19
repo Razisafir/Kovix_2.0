@@ -131,13 +131,16 @@ export const DEFAULT_MODELS: Record<LLMProvider, { id: string; displayName: stri
                 { id: 'o1-mini', displayName: 'o1-mini' },
         ],
         nvidia: [
-                { id: 'meta/llama-3.1-405b-instruct', displayName: 'Llama 3.1 405B Instruct' },
+                // Kovix v1.3.1: refreshed against the live NVIDIA NIM catalog (June 2026).
+                // Removed stale entries (llama-3.1-405b, qwen2.5-coder-32b, deepseek-r1) that
+                // are no longer on the endpoint and would cause "model not found" errors
+                // when the /v1/models fetch fails and this fallback list is used.
+                { id: 'meta/llama-3.3-70b-instruct', displayName: 'Llama 3.3 70B Instruct' },
                 { id: 'meta/llama-3.1-70b-instruct', displayName: 'Llama 3.1 70B Instruct' },
                 { id: 'meta/llama-3.1-8b-instruct', displayName: 'Llama 3.1 8B Instruct' },
                 { id: 'nvidia/llama-3.1-nemotron-70b-instruct', displayName: 'Nemotron 70B Instruct' },
                 { id: 'mistralai/mistral-large-2-instruct', displayName: 'Mistral Large 2' },
-                { id: 'qwen/qwen2.5-coder-32b-instruct', displayName: 'Qwen2.5 Coder 32B' },
-                { id: 'deepseek-ai/deepseek-r1', displayName: 'DeepSeek R1' },
+                { id: 'mistralai/codestral-22b-instruct-v0.1', displayName: 'Codestral 22B (coding)' },
         ],
         openrouter: [
                 { id: 'anthropic/claude-3.5-sonnet', displayName: 'Claude 3.5 Sonnet (via OpenRouter)' },
