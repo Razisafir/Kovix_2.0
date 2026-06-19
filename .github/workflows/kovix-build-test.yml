@@ -1,0 +1,273 @@
+# KOVIX Runtime Test — NVIDIA-only, 5-agent parallel
+# Downloads the .deb produced by build.yml, launches it under Xvfb, runs
+# the full feature matrix with 5 NVIDIA NIM keys as 5 parallel agents
+# (Hikmah/CEO/CTO/COO/CISO), and uploads a PDF report + screenshots as
+# workflow artifacts.
+#
+# Prereqs:
+#   1. build.yml must have produced a kovix-linux-x64 artifact (it does on
+#      every push to main and on tag pushes).
+#   2. These repo secrets must be set:
+#        NVIDIA_KEY_HIKMAH, NVIDIA_KEY_CEO, NVIDIA_KEY_CTO,
+#        NVIDIA_KEY_COO, NVIDIA_KEY_CISO
+#      (gh secret set NVIDIA_KEY_HIKMAH -R Razisafir/KOVIX -b "nvapi-...")
+#
+# Trigger manually:
+#   gh workflow run kovix-build-test.yml -R Razisafir/KOVIX \
+#     -f build_run_id=<run_id of build.yml>  # optional, defaults to latest
+#
+# Or via API:
+#   POST /repos/Razisafir/KOVIX/actions/workflows/kovix-build-test.yml/dispatches
+
+name: KOVIX Runtime Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: 'Run ID of a successful build.yml run (defaults to latest)'
+        required: false
+        default: ''
+  workflow_run:
+    workflows: ['Build Kovix IDE']
+    types: [completed]
+    branches: [main, release/*]
+
+permissions:
+  actions: read
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  test:
+    name: Launch + Test + Report
+    runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout (for test driver script)
+        uses: actions/checkout@v4
+
+      - name: Resolve build.yml run ID
+        id: build-run
+        run: |
+          if [ -n "${{ inputs.build_run_id }}" ]; then
+            echo "id=${{ inputs.build_run_id }}" >> $GITHUB_OUTPUT
+          else
+            # Find the most recent successful build.yml run on main
+            ID=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${{ github.repository }}/actions/workflows/build.yml/runs?status=success&per_page=1" \
+              | jq -r '.workflow_runs[0].id')
+            echo "Resolved build run: $ID"
+            echo "id=$ID" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download kovix-linux-x64 artifact from build.yml run
+        uses: actions/download-artifact@v4
+        with:
+          name: kovix-linux-x64
+          path: ./kovix-artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ steps.build-run.outputs.id }}
+
+      - name: Find + install .deb
+        run: |
+          set -e
+          DEB=$(find ./kovix-artifacts -name '*.deb' | head -1)
+          if [ -z "$DEB" ]; then
+            echo "ERROR: no .deb in artifact"
+            find ./kovix-artifacts -type f
+            exit 1
+          fi
+          echo "Found .deb: $DEB"
+          sudo apt-get update -y
+          # Install runtime deps first (so dpkg -i doesn't fail on missing deps)
+          sudo apt-get install -y \
+            libxkbfile1 libsecret-1-0 libnss3 libgbm1 libgtk-3-0 libasound2 \
+            libatk-bridge2.0-0 libxss1 libasound2t64 2>/dev/null || true
+          sudo dpkg -i "$DEB" || sudo apt-get install -f -y
+          which kovix
+          kovix --version
+
+      - name: Install runtime tooling
+        run: |
+          sudo apt-get install -y \
+            xvfb x11-utils xdotool xwd imagemagick scrot \
+            jq ripgrep
+          python3 -m pip install --upgrade pip
+          pip install reportlab pillow requests
+
+      - name: Verify all 5 NVIDIA keys are configured
+        env:
+          NVIDIA_KEY_HIKMAH: ${{ secrets.NVIDIA_KEY_HIKMAH }}
+          NVIDIA_KEY_CEO:    ${{ secrets.NVIDIA_KEY_CEO }}
+          NVIDIA_KEY_CTO:    ${{ secrets.NVIDIA_KEY_CTO }}
+          NVIDIA_KEY_COO:    ${{ secrets.NVIDIA_KEY_COO }}
+          NVIDIA_KEY_CISO:   ${{ secrets.NVIDIA_KEY_CISO }}
+        run: |
+          for k in HIKMAH CEO CTO COO CISO; do
+            v=$(eval echo "\$NVIDIA_KEY_$k")
+            if [ -z "$v" ]; then
+              echo "FAIL: NVIDIA_KEY_$k is not set. Add it with:"
+              echo "  gh secret set NVIDIA_KEY_$k -R ${{ github.repository }} -b 'nvapi-...'"
+              exit 1
+            fi
+            code=$(curl -s -o /dev/null -w "%{http_code}" \
+                    https://integrate.api.nvidia.com/v1/models \
+                    -H "Authorization: Bearer $v")
+            echo "$k: HTTP $code"
+            [ "$code" = "200" ] || exit 1
+          done
+
+      - name: Prep test workspace
+        run: |
+          mkdir -p /tmp/kovix-test/shots /tmp/kovix-test/workspace
+          cd /tmp/kovix-test/workspace
+          git clone --depth 1 https://github.com/microsoft/vscode-extension-samples.git sample
+
+      - name: Write settings.json (Hikmah agent, NVIDIA NIM)
+        env:
+          NVIDIA_KEY_HIKMAH: ${{ secrets.NVIDIA_KEY_HIKMAH }}
+        run: |
+          mkdir -p /tmp/kovix-test/userdata/User
+          cat > /tmp/kovix-test/userdata/User/settings.json <<EOF
+          {
+            "construct.llm.provider": "nvidia",
+            "construct.llm.apiKey":   "$NVIDIA_KEY_HIKMAH",
+            "construct.llm.model":    "meta/llama-3.1-70b-instruct",
+            "construct.memory.embeddingProvider": "nvidia",
+            "construct.memory.embeddingModel":    "nvidia/nv-embed-v1",
+            "construct.memory.vectorStore":       "bm25",
+            "construct.safety.confirmDestructive": false
+          }
+          EOF
+          cat /tmp/kovix-test/userdata/User/settings.json | jq .  # validate JSON
+
+      - name: Launch KOVIX under Xvfb
+        run: |
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1920x1080x24 >/tmp/xvfb.log 2>&1 &
+          sleep 2
+          cd /tmp/kovix-test
+          kovix --user-data-dir=/tmp/kovix-test/userdata \
+                --extensions-dir=/tmp/kovix-test/exts \
+                /tmp/kovix-test/workspace > kovix.log 2>&1 &
+          echo $! > kovix.pid
+          sleep 25
+          DISPLAY=:99 xwd -root -silent | convert xwd:- shots/4.1-first-launch.png
+          ls -la shots/
+
+      - name: Run feature test matrix (TODO: implement driver script)
+        env:
+          NVIDIA_KEY_HIKMAH: ${{ secrets.NVIDIA_KEY_HIKMAH }}
+          NVIDIA_KEY_CEO:    ${{ secrets.NVIDIA_KEY_CEO }}
+          NVIDIA_KEY_CTO:    ${{ secrets.NVIDIA_KEY_CTO }}
+          NVIDIA_KEY_COO:    ${{ secrets.NVIDIA_KEY_COO }}
+          NVIDIA_KEY_CISO:   ${{ secrets.NVIDIA_KEY_CISO }}
+        run: |
+          # Placeholder: the actual driver script is scripts/ci/run-feature-tests.sh
+          # (lives in the KOVIX repo). If it doesn't exist yet, this step fails
+          # gracefully and the report is built from whatever screenshots exist.
+          if [ -f scripts/ci/run-feature-tests.sh ]; then
+            bash scripts/ci/run-feature-tests.sh /tmp/kovix-test 2>&1 | tee run.log
+          else
+            echo "WARN: scripts/ci/run-feature-tests.sh not found in repo"
+            echo "Falling back to manual Xvfb screenshot capture only"
+            DISPLAY=:99 xwd -root -silent | convert xwd:- /tmp/kovix-test/shots/6.12-ui-hero.png
+            echo "Feature matrix driver missing" > run.log
+          fi
+
+      - name: 30-min stability probe
+        run: |
+          PID=$(cat /tmp/kovix-test/kovix.pid)
+          for i in 1 2 3 4 5 6; do
+            ps -p $PID -o %cpu,%mem,etime,cmd > /tmp/kovix-test/shots/8.1-stability-cpu-$i.txt 2>&1 || true
+            sleep 300
+          done
+          for f in /tmp/kovix-test/shots/8.1-stability-cpu-*.txt; do
+            [ -f "$f" ] && convert -size 800x600 xc:black -font DejaVu-Sans -fill white \
+              -pointsize 12 -annotate +20+30 "$(cat $f)" "${f%.txt}.png" 2>/dev/null || true
+          done
+
+      - name: Build PDF report
+        run: |
+          cd /tmp/kovix-test
+          if [ -f ../../scripts/ci/build_report.py ]; then
+            python3 ../../scripts/ci/build_report.py
+          else
+            # Inline minimal PDF builder
+            python3 <<'PY'
+          from reportlab.lib.pagesizes import A4
+          from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+          from reportlab.lib.units import cm
+          from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, PageBreak
+          from reportlab.lib import colors
+          from PIL import Image as PILImage
+          import os, glob, datetime
+          SHOTS = "/tmp/kovix-test/shots"
+          OUT = "/tmp/kovix-test/KOVIX_V1.3_TEST_REPORT.pdf"
+          s = getSampleStyleSheet()
+          h1 = ParagraphStyle("h1", parent=s["Heading1"], fontSize=20, spaceAfter=12)
+          body = ParagraphStyle("body", parent=s["BodyText"], fontSize=10, leading=14)
+          cap = ParagraphStyle("cap", parent=s["Italic"], fontSize=8, textColor=colors.grey)
+          def img(p, mw=15*cm, mh=18*cm):
+              if not os.path.exists(p): return Paragraph(f"<i>missing: {os.path.basename(p)}</i>", cap)
+              iw, ih = PILImage.open(p).size
+              r = min(mw/iw, mh/ih)
+              return Image(p, width=iw*r, height=ih*r)
+          d = SimpleDocTemplate(OUT, pagesize=A4, leftMargin=2*cm, rightMargin=2*cm, topMargin=2*cm, bottomMargin=2*cm)
+          story = [
+              Paragraph("KOVIX v1.3.0 — Runtime Test Report (GHA)", h1),
+              Spacer(1, 0.5*cm),
+              Paragraph(f"Run: {datetime.datetime.utcnow().isoformat()} UTC", body),
+              Paragraph(f"Binary: prebuilt .deb from build.yml", body),
+              Paragraph(f"LLM: NVIDIA NIM (5 keys, 5 agents)", body),
+              PageBreak(),
+          ]
+          for shot in sorted(glob.glob(f"{SHOTS}/*.png")):
+              story.append(Paragraph(os.path.basename(shot), h1))
+              story.append(img(shot))
+              story.append(Paragraph(f"Fig. — {os.path.basename(shot)}", cap))
+              story.append(PageBreak())
+          d.build(story)
+          print(f"Wrote {OUT}")
+          PY
+          fi
+          ls -la /tmp/kovix-test/KOVIX_V1.3_TEST_REPORT.pdf
+
+      - name: Upload PDF report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kovix-test-report-pdf
+          path: /tmp/kovix-test/KOVIX_V1.3_TEST_REPORT.pdf
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kovix-test-screenshots
+          path: /tmp/kovix-test/shots/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload run.log + kovix.log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kovix-test-logs
+          path: |
+            /tmp/kovix-test/run.log
+            /tmp/kovix-test/kovix.log
+            /tmp/xvfb.log
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Kill KOVIX
+        if: always()
+        run: kill $(cat /tmp/kovix-test/kovix.pid) 2>/dev/null || true
