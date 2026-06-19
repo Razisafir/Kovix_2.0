@@ -35,7 +35,7 @@ const SECRET_KEY_PREFIX = 'construct.apiKey';
  * All others are OpenAI-compatible and route through CloudProvider with
  * the appropriate base URL.
  */
-const DEFAULT_ENDPOINTS: Record<LLMProvider, string> = {
+export const DEFAULT_ENDPOINTS: Record<LLMProvider, string> = {
         anthropic: 'https://api.anthropic.com',
         openai: 'https://api.openai.com',
         nvidia: 'https://integrate.api.nvidia.com/v1',
@@ -55,7 +55,7 @@ const DEFAULT_ENDPOINTS: Record<LLMProvider, string> = {
  * Human-readable labels per provider type.
  * Shown in the provider settings UI and the model picker dropdown.
  */
-const PROVIDER_LABELS: Record<LLMProvider, string> = {
+export const PROVIDER_LABELS: Record<LLMProvider, string> = {
         anthropic: 'Anthropic',
         openai: 'OpenAI',
         nvidia: 'NVIDIA NIM',
@@ -75,7 +75,7 @@ const PROVIDER_LABELS: Record<LLMProvider, string> = {
  * Whether a provider requires an API key.
  * Local providers (Ollama, LM Studio) don't need keys.
  */
-const REQUIRES_KEY: Record<LLMProvider, boolean> = {
+export const REQUIRES_KEY: Record<LLMProvider, boolean> = {
         anthropic: true,
         openai: true,
         nvidia: true,
@@ -95,7 +95,7 @@ const REQUIRES_KEY: Record<LLMProvider, boolean> = {
  * Whether a provider is local (no internet required).
  * Used to group providers in the settings UI.
  */
-const IS_LOCAL: Record<LLMProvider, boolean> = {
+export const IS_LOCAL: Record<LLMProvider, boolean> = {
         anthropic: false,
         openai: false,
         nvidia: false,
@@ -117,7 +117,7 @@ const IS_LOCAL: Record<LLMProvider, boolean> = {
  * is unreachable or returns no models. These lists are intentionally short
  * (3-6 entries) — the live /models response is preferred when available.
  */
-const DEFAULT_MODELS: Record<LLMProvider, { id: string; displayName: string }[]> = {
+export const DEFAULT_MODELS: Record<LLMProvider, { id: string; displayName: string }[]> = {
         anthropic: [
                 { id: 'claude-sonnet-4-20250514', displayName: 'Claude Sonnet 4' },
                 { id: 'claude-3-5-sonnet-20241022', displayName: 'Claude 3.5 Sonnet' },
@@ -674,45 +674,6 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
                         }
 
                         return { healthy: true, latencyMs: 0, error: `Unexpected status: ${response.status}` };
-                } catch (error) {
-                        return { healthy: false, latencyMs: 0, error: `Network error: ${error instanceof Error ? error.message : String(error)}` };
-                }
-        }
-
-        /**
-         * Test OpenAI connection by listing models with the stored key.
-         */
-        private async testOpenAIConnection(key: string | null, endpoint: string): Promise<IProviderHealthResult> {
-                if (!key) {
-                        return { healthy: false, latencyMs: 0, error: 'No API key stored for OpenAI.' };
-                }
-
-                try {
-                        const response = await fetch(`${endpoint}/v1/models`, {
-                                method: 'GET',
-                                headers: {
-                                        'Authorization': `Bearer ${key}`,
-                                },
-                        });
-
-                        if (response.status === 401) {
-                                return { healthy: false, latencyMs: 0, error: 'Authentication failed. Check your API key.' };
-                        }
-
-                        if (response.status === 200) {
-                                const body = await response.json().catch(() => null) as any;
-                                const models: string[] = [];
-                                if (body?.data && Array.isArray(body.data)) {
-                                        for (const model of body.data) {
-                                                if (model.id) {
-                                                        models.push(model.id);
-                                                }
-                                        }
-                                }
-                                return { healthy: true, latencyMs: 0, models };
-                        }
-
-                        return { healthy: false, latencyMs: 0, error: `Unexpected status: ${response.status}` };
                 } catch (error) {
                         return { healthy: false, latencyMs: 0, error: `Network error: ${error instanceof Error ? error.message : String(error)}` };
                 }

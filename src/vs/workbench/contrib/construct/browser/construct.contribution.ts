@@ -77,6 +77,7 @@ import { IConstructProjectService } from '../../../../platform/construct/common/
 import { ConstructProjectServiceImpl } from './services/project/constructProjectServiceImpl.js';
 import { IIdeaRefinementService } from '../../../../platform/construct/common/agent/ideaRefinementService.js';
 import { IdeaRefinementServiceImpl } from './services/agent/ideaRefinementServiceImpl.js';
+import { IAgentModeService, AgentModeService } from './services/agent/agentModeService.js';
 import { IUniversalMemoryService } from '../../../../platform/construct/common/memory/universalMemoryService.js';
 import { UniversalMemoryService } from './services/memory/universalMemoryService.js';
 import { IConstructSessionService } from '../../../../platform/construct/common/session/constructSessionService.js';
@@ -594,6 +595,164 @@ registerSingleton(IConstructAIService, ConstructAIService, InstantiationType.Del
 // Built-in tools (read_file, write_file, run_terminal, search_codebase, web_search)
 // + Kali WSL2 integration + command safety blocklist
 registerSingleton(IConstructToolRegistry, ConstructToolRegistryService, InstantiationType.Delayed);
+
+// --- Phase 5: Agent Modes + Swarm (Kovix v1.2.0) ------------------------------
+// Per-agent model selection (Roo Code custom modes pattern) + sub-agent spawning
+// (OpenAI Swarm handoff pattern). Built-in modes: general, architect, coder,
+// reviewer, debugger, ask. User can create unlimited custom modes.
+registerSingleton(IAgentModeService, AgentModeService, InstantiationType.Delayed);
+
+// Command: Switch Agent Mode (Kovix v1.2.0 — Roo Code custom modes pattern)
+registerAction2(class SwitchAgentModeAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.switchAgentMode',
+                        title: localize2('switchAgentMode', "Switch Agent Mode"),
+                        f1: true,
+                        category: localize2('constructCategoryAI', "Kovix"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const modeService = accessor.get(IAgentModeService);
+                const quickInput = accessor.get(IQuickInputService);
+                const notificationService = accessor.get(INotificationService);
+
+                const modes = modeService.getAllModes();
+                const activeMode = modeService.getActiveMode();
+                const picks = modes.map(m => ({
+                        label: `$(${m.icon}) ${m.displayName}`,
+                        description: m.slug === activeMode.slug ? '(active)' : '',
+                        detail: m.description,
+                        modeSlug: m.slug,
+                }));
+
+                const pick = await quickInput.pick(picks, {
+                        placeHolder: 'Select agent mode',
+                });
+
+                if (pick) {
+                        modeService.setActiveMode(pick.modeSlug);
+                        const newMode = modeService.getActiveMode();
+                        notificationService.info(`Kovix: Switched to ${newMode.displayName} mode`);
+                }
+        }
+});
+
+// Command: Create Custom Agent Mode
+registerAction2(class CreateAgentModeAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.createAgentMode',
+                        title: localize2('createAgentMode', "Create Custom Agent Mode"),
+                        f1: true,
+                        category: localize2('constructCategoryAI', "Kovix"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const modeService = accessor.get(IAgentModeService);
+                const quickInput = accessor.get(IQuickInputService);
+                const notificationService = accessor.get(INotificationService);
+
+                const slug = await quickInput.input({
+                        prompt: 'Mode slug (lowercase, no spaces, e.g. "data-scientist")',
+                        validateInput: (v: string) => {
+                                if (!v) { return 'Slug is required'; }
+                                if (!/^[a-z][a-z0-9-]*$/.test(v)) { return 'Must be lowercase letters, numbers, and hyphens only'; }
+                                if (modeService.getMode(v)) { return 'Mode with this slug already exists'; }
+                                return undefined;
+                        },
+                });
+                if (!slug) { return; }
+
+                const displayName = await quickInput.input({
+                        prompt: 'Display name (e.g. "Data Scientist")',
+                        validateInput: (v: string) => v ? undefined : 'Display name is required',
+                });
+                if (!displayName) { return; }
+
+                const roleDefinition = await quickInput.input({
+                        prompt: 'Role definition (system prompt for this mode)',
+                        validateInput: (v: string) => v ? undefined : 'Role definition is required',
+                });
+                if (!roleDefinition) { return; }
+
+                const toolGroupsPick = await quickInput.pick(
+                        [
+                                { label: 'File ops', picked: true, group: 'tools' },
+                                { label: 'Terminal', picked: true, group: 'tools' },
+                                { label: 'Search', picked: true, group: 'tools' },
+                                { label: 'Browser', picked: false, group: 'tools' },
+                                { label: 'MCP', picked: false, group: 'tools' },
+                                { label: 'Memory', picked: true, group: 'tools' },
+                                { label: 'Git', picked: false, group: 'tools' },
+                                { label: 'Diff', picked: true, group: 'tools' },
+                                { label: 'Planning', picked: false, group: 'tools' },
+                                { label: 'Sub-agent', picked: false, group: 'tools' },
+                        ],
+                        {
+                                placeHolder: 'Select tool groups for this mode',
+                                canPickMany: true,
+                        },
+                );
+                const toolGroups = (toolGroupsPick || []).map(p => p.label.toLowerCase().replace('-', '') as any);
+
+                modeService.upsertMode({
+                        slug,
+                        displayName,
+                        description: `User-created mode: ${displayName}`,
+                        icon: 'spark',
+                        roleDefinition,
+                        toolGroups,
+                        canSpawnSubAgents: toolGroups.includes('subagent' as any),
+                        modelPreference: { enabled: false },
+                        builtin: false,
+                });
+                notificationService.info(`Kovix: Created custom mode "${displayName}"`);
+                modeService.setActiveMode(slug);
+        }
+});
+
+// Command: Spawn Sub-Agent (Kovix v1.2.0 — OpenAI Swarm pattern)
+registerAction2(class SpawnSubAgentAction extends Action2 {
+        constructor() {
+                super({
+                        id: 'construct.spawnSubAgent',
+                        title: localize2('spawnSubAgent', "Spawn Sub-Agent"),
+                        f1: true,
+                        category: localize2('constructCategoryAI', "Kovix"),
+                });
+        }
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const modeService = accessor.get(IAgentModeService);
+                const quickInput = accessor.get(IQuickInputService);
+                const notificationService = accessor.get(INotificationService);
+
+                const modes = modeService.getAllModes().filter(m => m.canSpawnSubAgents || m.slug !== modeService.getActiveMode().slug);
+                if (modes.length === 0) {
+                        notificationService.warn('Kovix: No modes available to spawn as sub-agent');
+                        return;
+                }
+
+                const modePick = await quickInput.pick(
+                        modes.map(m => ({
+                                label: `$(${m.icon}) ${m.displayName}`,
+                                detail: m.description,
+                                modeSlug: m.slug,
+                        })),
+                        { placeHolder: 'Select mode for the sub-agent' },
+                );
+                if (!modePick) { return; }
+
+                const task = await quickInput.input({
+                        prompt: 'Task for the sub-agent',
+                        validateInput: (v: string) => v ? undefined : 'Task is required',
+                });
+                if (!task) { return; }
+
+                const sub = modeService.spawnSubAgent(modePick.modeSlug, task);
+                notificationService.info(`Kovix: Spawned sub-agent ${sub.id} (mode: ${modePick.modeSlug})`);
+        }
+});
 
 // Command: Switch AI Provider
 registerAction2(class SwitchAIProviderAction extends Action2 {
