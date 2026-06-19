@@ -316,10 +316,32 @@ jobs:
 
       - name: Generate SHA256 hashes
         run: |
+          set -euo pipefail
           mkdir -p out/
-          cp -r kovix-windows/* kovix-macos/* kovix-linux/* out/ 2>/dev/null || true
+          # Each artifact zip extracts with its own internal directory structure
+          # (e.g. kovix-windows/system-setup/*.exe, kovix-linux/deb/amd64/deb/*.deb).
+          # Flatten everything to a single out/ directory so softprops/action-gh-release
+          # can attach every installable file as a top-level release asset.
+          for d in kovix-windows kovix-macos kovix-linux; do
+            if [ -d "$d" ]; then
+              find "$d" -type f \( -name '*.exe' -o -name '*.zip' -o -name '*.deb' -o -name '*.rpm' -o -name '*.tar.gz' \) -exec cp {} out/ \;
+            fi
+          done
+          # Rename the Windows .exe to a stable, versioned name
+          if ls out/ConstructIDESetup.exe 1>/dev/null 2>&1; then
+            mv out/ConstructIDESetup.exe "out/KovixSetup-x64-${GITHUB_REF_NAME}.exe"
+          fi
+          # Rename the Linux .deb to a stable name (strip the build-timestamp suffix)
+          for f in out/kovix_*_amd64.deb; do
+            [ -e "$f" ] || continue
+            mv "$f" "out/kovix_${GITHUB_REF_NAME#v}_amd64.deb"
+            break
+          done
+          # Generate checksums.txt with all installable files
           cd out/
-          sha256sum *.zip *.deb *.exe *.tar.gz > checksums.txt 2>/dev/null || true
+          sha256sum *.exe *.zip *.deb 2>/dev/null > checksums.txt || true
+          cat checksums.txt
+          ls -la
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
