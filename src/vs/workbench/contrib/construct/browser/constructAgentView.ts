@@ -36,6 +36,7 @@ import { ConstructProgressPanel } from './constructProgressPanel.js';
 import { LoadingState, FileChangeEntry, TaskMetrics } from '../../../../platform/construct/common/agent/loadingState.js';
 import { IRefinedIdea, IRefinementQuestion, IRefinementAnswer } from '../../../../platform/construct/common/agent/ideaRefinementTypes.js';
 import { IIdeaRefinementService } from '../../../../platform/construct/common/agent/ideaRefinementService.js';
+import { IAgentModeService } from './services/agent/agentModeService.js';
 import { IConstructSessionService } from '../../../../platform/construct/common/session/constructSessionService.js';
 import { ISelectablePlanStep, IApprovedPlan, IMilestone } from '../../../../platform/construct/common/agent/milestoneStateMachine.js';
 import { showStopModePicker } from './constructStopModePicker.js';
@@ -137,6 +138,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 @IIdeaRefinementService private readonly ideaRefinementService: IIdeaRefinementService,
                 @IConstructSessionService private readonly sessionService: IConstructSessionService,
                 @IQuickInputService private readonly quickInputService: IQuickInputService,
+                @IAgentModeService private readonly agentModeService: IAgentModeService,
         ) {
                 super(options, keybindingService, contextMenuService, configurationService, contextKeyService, viewDescriptorService, instantiationService, openerService, themeService, telemetryService, hoverService);
                 // DIAGNOSTIC: confirm the constructor ran (i.e. super() completed without throwing)
@@ -200,7 +202,30 @@ export class ConstructAgentViewPane extends ViewPane {
                         this.commandService.executeCommand('construct.openApiSettings');
                 };
 
+                // --- Kovix v1.2.0: Agent mode badge — click to switch modes ---
+                const modeBtn = dom.$('button.construct-mode-btn') as HTMLButtonElement;
+                const activeMode = this.agentModeService.getActiveMode();
+                modeBtn.textContent = `$(${activeMode.icon}) ${activeMode.displayName}`;
+                modeBtn.style.cssText = `
+                        background: ${activeMode.accentColor ?? 'var(--kovix-bg-raised)'}; 
+                        border: 1px solid var(--kovix-border); border-radius: 10px;
+                        color: var(--kovix-text-primary); font-size: 10px; padding: 2px 8px;
+                        cursor: pointer; display: flex; align-items: center; gap: 4px;
+                        font-weight: 500;
+                `;
+                modeBtn.title = `Agent mode: ${activeMode.displayName}\n${activeMode.description}\nClick to switch modes`;
+                modeBtn.onclick = () => {
+                        this.commandService.executeCommand('construct.switchAgentMode');
+                };
+                // Update the badge when the active mode changes
+                this._register(this.agentModeService.onDidChangeActiveMode(mode => {
+                        modeBtn.textContent = `$(${mode.icon}) ${mode.displayName}`;
+                        modeBtn.style.background = mode.accentColor ?? 'var(--kovix-bg-raised)';
+                        modeBtn.title = `Agent mode: ${mode.displayName}\n${mode.description}\nClick to switch modes`;
+                }));
+
                 modelPickerBar.appendChild(this.modelPickerBtn);
+                modelPickerBar.appendChild(modeBtn);
 
                 // Session history button
                 const sessionHistoryBtn = dom.$('button.construct-session-history-btn') as HTMLButtonElement;
