@@ -655,7 +655,7 @@ registerAction2(class CreateAgentModeAction extends Action2 {
 
                 const slug = await quickInput.input({
                         prompt: 'Mode slug (lowercase, no spaces, e.g. "data-scientist")',
-                        validateInput: (v: string) => {
+                        validateInput: async (v: string) => {
                                 if (!v) { return 'Slug is required'; }
                                 if (!/^[a-z][a-z0-9-]*$/.test(v)) { return 'Must be lowercase letters, numbers, and hyphens only'; }
                                 if (modeService.getMode(v)) { return 'Mode with this slug already exists'; }
@@ -666,13 +666,13 @@ registerAction2(class CreateAgentModeAction extends Action2 {
 
                 const displayName = await quickInput.input({
                         prompt: 'Display name (e.g. "Data Scientist")',
-                        validateInput: (v: string) => v ? undefined : 'Display name is required',
+                        validateInput: async (v: string) => v ? undefined : 'Display name is required',
                 });
                 if (!displayName) { return; }
 
                 const roleDefinition = await quickInput.input({
                         prompt: 'Role definition (system prompt for this mode)',
-                        validateInput: (v: string) => v ? undefined : 'Role definition is required',
+                        validateInput: async (v: string) => v ? undefined : 'Role definition is required',
                 });
                 if (!roleDefinition) { return; }
 
@@ -745,7 +745,7 @@ registerAction2(class SpawnSubAgentAction extends Action2 {
 
                 const task = await quickInput.input({
                         prompt: 'Task for the sub-agent',
-                        validateInput: (v: string) => v ? undefined : 'Task is required',
+                        validateInput: async (v: string) => v ? undefined : 'Task is required',
                 });
                 if (!task) { return; }
 
