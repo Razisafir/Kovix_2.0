@@ -1,5 +1,89 @@
 # Changelog
 
+## [1.4.0] - 2026-06-19
+
+### Skills system — the missing "tools & playbooks" layer
+- **New `ISkillRegistry` platform interface** (`src/vs/platform/construct/common/skills/skillRegistry.ts`) — the formal contract for skill storage, lookup, and per-task ranking. Service ID `construct.skillRegistry`. Skills carry: slug, title, description, scope (user / project / builtin), file path, allowed/disallowed tools, enabled flag, tags, icon, source URL, installed-at timestamp, and the markdown body.
+- **Full implementation** (`src/vs/workbench/contrib/construct/browser/services/skills/skillRegistryService.ts`, ~380 lines) with:
+  - Claude-Code-style SKILL.md frontmatter parser (regex-based, tolerant of missing fields)
+  - Scope-aware loader: builtin skills (in code) → user-global skills at `~/.kovix/skills/<slug>/SKILL.md` → project-scoped skills at `<workspace>/.kovix/skills/<slug>/SKILL.md`
+  - State persistence to `~/.kovix/kovix-skills-state.json` (tracks disabled slugs across restarts)
+  - `rankForTask(task, topK)` — token/tag scoring (slug tag match 0.30, substring 0.15, title 0.10, description 0.05) returns the top-K most relevant skills for any task
+  - `getContextForTask(task, topK)` — formats the matched skills into a single string ready to inject into the agent's system prompt
+  - `createSkillFromDocument(options)` — writes a new SKILL.md to disk from in-app document conversion
+  - `importFromUrl(url, scope)` — fetches a SKILL.md from a URL and installs it
+  - `revealSkill(slug)` — opens the SKILL.md in the editor
+  - `onDidUpdateSkills` event for reactive UI
+- **3 builtin skills** shipped in code: `kovix-plan-act`, `kovix-debug-loop`, `kovix-review-pr` — so every Kovix install has useful playbooks on day one without needing a network fetch.
+- **3 community skills** imported from the user's `skills.zip` and installed both into `~/.kovix/skills/` and into the repo at `/skills/`: `performance-audit`, `security-audit`, `ui-audit`. Each ships a SKILL.md with frontmatter + a structured audit playbook body.
+
+### Auto-skill discovery — the agent picks its own playbook
+- The agent loop's `buildSystemPrompt()` now consults `ISkillRegistry.getContextForTask()` on every turn and injects the top-3 matching skills into the system prompt as a `## Available skills (use the most relevant one)` block. The agent no longer needs the user to remember what skills exist — it discovers the right one per task.
+- Slash commands make every skill one keystroke away: `/skills` (list), `/<slug>` (invoke, e.g. `/security-audit`), `/skill-create` (convert current document into a skill).
+
+### Agent Settings pane — one place for everything
+- **New file `kovixAgentSettings.ts`** — a single pane with 6 tabs that finally gives users one home for all agent configuration:
+  1. **Skills** — list all skills (builtin / user / project), toggle enabled, reveal SKILL.md, delete, import from URL, create from document
+  2. **Memory** — every privacy control (see below) surfaced as toggles + dropdowns, plus a "Forget everything" destructive button
+  3. **MCP** — browse and install MCP servers from the builtin catalog (now 9 entries, see below), see installed status
+  4. **API Keys** — the 5 NVIDIA NIM keys (Hikmah + CEO/CTO/COO/CISO) with per-agent assignment
+  5. **Swarm** — spawn and monitor multi-agent swarms (see below)
+  6. **Autonomous** — toggle autonomous idea→app mode and tune its guardrails (see below)
+- Registered as view `construct.agentSettings`; opens via `Kovix: Open Agent Settings` command or the ⚙️ icon in the agent panel header.
+- Styling matches the v1.3.0 luxury-chromium design system (Volt-on-ink, hairline separators, pill tabs) so the pane feels native to the rest of the workbench.
+
+### Memory privacy — users stay in control of their data
+- **9 new privacy config keys** under `construct.memory.privacy.*`:
+  - `autoRemember` (default true) — auto-store facts from conversation
+  - `requireExplicitConsent` (default false) — ask before each memory write
+  - `piiScrub` (default true) — redact PII before storing
+  - `scope` (per-project / per-workspace / global, default per-project)
+  - `retentionDays` (default 90, range 1–3650)
+  - `crossProjectLearning` (default false)
+  - `redactFileContents` (default true) — store metadata only, not source code
+  - `telemetryOptOut` (default true)
+  - `forgetOnWindowClose` (default false) — clear working memory on close
+  - `allowNetworkSync` (default false) — local-only even when a Supermemory key is set
+- **New `memoryPrivacy.ts` utility** — 13-pattern PII scrubber (emails, phone numbers, credit cards, SSNs, API keys, JWTs, IPv4/IPv6, MAC addresses, AWS keys, GitHub tokens, private keys, Bitcoin addresses, URLs with credentials), file-content redaction (replaces source-code bodies with `<<redacted:N bytes>>`), retention enforcement, explicit-consent gating, and scope resolution.
+- Slash command `/forget-everything` wipes all stored memory immediately. `/memory` shows current memory state and privacy settings inline in the chat.
+
+### MCP marketplace — 5 new builtin servers
+- Expanded the builtin catalog from 4 to 9 entries:
+  - **21st.dev magic** (`npx -y @21st-dev/magic@latest`) — component registry MCP. Featured.
+  - **Ponytail** (`npx -y ponytail-mcp@latest`) — "Lazy Senior Developer Mode" YAGNI enforcement, from `https://github.com/DietrichGebert/ponytail`.
+  - **Supermemory** (`npx -y supermemory-mcp@latest`) — cloud memory sync. Requires `SUPERMEMORY_API_KEY`.
+  - **Browserbase** (`npx -y @browserbasehq/mcp@latest`) — cloud browser automation.
+  - **Smithery Obsidian** (`npx -y @smithery/obsidian-mcp@latest`) — bridge to a local Obsidian vault. Requires `OBSIDIAN_VAULT_PATH`.
+
+### Autonomous idea → app
+- **New `kovixAutonomousConfig.ts`** with 7 settings under `construct.autonomous.*`: `enabled`, `maxIterations` (default 25), `requireApprovalAtMilestone` (default true), `milestoneGate` (plan / build / test / ship), `autoRunTests` (default true), `autoCommit` (default false), `safetyMode` (default strict).
+- **New `construct.autonomousBuild` command** + `/idea <description>` slash command — kicks off a non-stop refinement → plan → build loop with milestone gates. Each milestone pauses for human approval when `requireApprovalAtMilestone` is true, so the user keeps the steering wheel while Kovix does the driving.
+
+### Agent swarm — multi-agent coordination
+- **New `construct.openSwarm` command** + Swarm tab in Agent Settings — spawn multiple worker agents in parallel, each with its own role and model assignment. Monitor live status (idle / planning / executing / done) and review each agent's output stream. The supervisor (Hikmah) routes subtasks to workers and aggregates results.
+
+### Build verification
+- Full `gulp compile` runs to **0 errors** end-to-end (src + 33 extensions + monaco typecheck + extension media).
+- The only fix needed during build verification was a single missing `URI` import in `construct.contribution.ts` (the new skill-reveal handler used `URI.file(...)` but never imported `URI`). Committed as `c7bdc93`.
+
+### Files added
+- `src/vs/platform/construct/common/skills/skillRegistry.ts` (~110 lines) — platform interface
+- `src/vs/workbench/contrib/construct/browser/services/skills/skillRegistryService.ts` (~380 lines) — full implementation
+- `src/vs/workbench/contrib/construct/browser/services/memory/memoryPrivacy.ts` — PII scrubber + privacy utilities
+- `src/vs/workbench/contrib/construct/browser/kovixAgentSettings.ts` — 6-tab Agent Settings pane
+- `src/vs/workbench/contrib/construct/browser/kovixAutonomousConfig.ts` — autonomous mode config
+- `skills/performance-audit/SKILL.md`, `skills/security-audit/SKILL.md`, `skills/ui-audit/SKILL.md` — community skills shipped in repo
+
+### Files modified
+- `src/vs/workbench/contrib/construct/browser/construct.contribution.ts` — registered SkillRegistry singleton, Agent Settings view, 12 new commands, added URI import
+- `src/vs/workbench/contrib/construct/browser/constructAgentView.ts` — wired skill auto-discovery into `buildSystemPrompt`, added 8 slash commands (`/skills`, `/<slug>`, `/skill-create`, `/forget-everything`, `/memory`, `/swarm`, `/idea`, `/autonomous`)
+- `src/vs/workbench/contrib/construct/browser/services/agent/agentLoop.ts` — `buildSystemPrompt` now calls `ISkillRegistry.getContextForTask()` per turn
+- `src/vs/workbench/contrib/construct/browser/services/mcp/mcpMarketplaceService.ts` — added 5 new builtin MCP entries
+- `src/vs/workbench/contrib/construct/browser/constructMemoryConfig.ts` — added 9 privacy config keys
+- `package.json` — version bumped to 1.4.0
+- `README.md` — version badge bumped to 1.4.0
+
+
 ## [1.3.0] - 2026-06-19
 
 ### Critical UI Fix — Luxury Chromium theme wired up + agent panel rebuilt
