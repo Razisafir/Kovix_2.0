@@ -22,31 +22,10 @@ export class ConstructRateLimitError extends Error {
         }
 }
 
-export class ConstructNetworkError extends Error {
-        constructor(message: string) {
-                super(message);
-                this.name = 'ConstructNetworkError';
-        }
-}
-
 export class ConstructOverloadedError extends Error {
         constructor(message: string) {
                 super(message);
                 this.name = 'ConstructOverloadedError';
-        }
-}
-
-export class ConstructTimeoutError extends Error {
-        constructor(message: string, public readonly timeoutMs: number) {
-                super(message);
-                this.name = 'ConstructTimeoutError';
-        }
-}
-
-export class ConstructSecurityError extends Error {
-        constructor(message: string, public readonly code?: string) {
-                super(message);
-                this.name = 'ConstructSecurityError';
         }
 }
 

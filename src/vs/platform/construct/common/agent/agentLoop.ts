@@ -124,16 +124,6 @@ export interface IAgentLoop {
         undoLastTask(): Promise<IRestoreResult | null>;
 
         /**
-         * Run the planning phase with a pre-refined idea.
-         * The refined idea provides a more detailed specification than a raw prompt.
-         *
-         * @param refinedDescription The refined idea description.
-         * @param signal Optional AbortSignal for cancellation.
-         * @returns Plan with steps for user approval.
-         */
-        runPlanningPhaseWithIdea(refinedDescription: string, signal?: AbortSignal): Promise<IPlanResult>;
-
-        /**
          * Run execution with an approved plan and milestone-based pausing.
          * Yields AgentLoopEvents including milestone pause/resume events.
          *
@@ -142,15 +132,6 @@ export interface IAgentLoop {
          * @returns AsyncGenerator of events for real-time streaming.
          */
         runWithApprovedPlan(approvedPlan: IApprovedPlan, signal?: AbortSignal): AsyncGenerator<AgentLoopEvent>;
-
-        /**
-         * Start milestone-aware execution from an approved plan.
-         * The agent will pause at milestones based on the execution mode.
-         *
-         * @param approvedPlan The approved plan to execute.
-         * @param signal Optional AbortSignal for cancellation.
-         */
-        startExecution(approvedPlan: IApprovedPlan, signal?: AbortSignal): void;
 
         /**
          * Resume execution from the current milestone.

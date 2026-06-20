@@ -18,8 +18,6 @@ import { join } from '../../../base/common/path.js';
  */
 const DEFAULT_CONFIG: IFileWatcherConfig = {
         debounceMs: 100,
-        animateAppearance: true,
-        animationDurationMs: 200,
         ignorePatterns: ['**/node_modules/**', '**/.git/**', '**/.construct/**'],
 };
 
@@ -54,11 +52,6 @@ export class FileWatcherNodeService extends Disposable implements IFileWatcherSe
         get isWatching(): boolean { return this._isWatching; }
 
         get config(): IFileWatcherConfig { return this._config; }
-
-        updateConfig(config: Partial<IFileWatcherConfig>): void {
-                this._config = { ...this._config, ...config };
-                this.logService.info(`[FileWatcherNode] Config updated: debounceMs=${this._config.debounceMs}`);
-        }
 
         startWatching(workspaceRoot: URI): void {
                 if (this._isWatching) { return; }

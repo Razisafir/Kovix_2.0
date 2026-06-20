@@ -15,24 +15,22 @@
  * if a name changes in one place but not the other.
  */
 export const CONSTRUCT_CHANNELS = {
-	/** MCP filesystem server process management */
-	MCP: 'constructMcp',
-	/** Qdrant vector store for semantic code search */
-	VECTOR_STORE: 'constructVector',
-	/** SQLite chat history for persistent conversations */
-	CHAT_HISTORY: 'constructChatHistory',
-	/** Secure key management via OS keychain */
-	SECURE_KEYS: 'constructSecureKeys',
-	/** Centralized configuration service */
-	CONFIG: 'constructConfig',
-	/** Text embedding generation for semantic search */
-	EMBEDDING: 'constructEmbedding',
-	/** System notification service */
-	NOTIFICATION: 'constructNotification',
-	/** Filesystem event watching */
-	FILE_WATCHER: 'constructFileWatcher',
-	/** Terminal command execution */
-	TERMINAL: 'constructTerminal',
+        /** MCP filesystem server process management */
+        MCP: 'constructMcp',
+        /** Qdrant vector store for semantic code search */
+        VECTOR_STORE: 'constructVector',
+        /** Secure key management via OS keychain */
+        SECURE_KEYS: 'constructSecureKeys',
+        /** Centralized configuration service */
+        CONFIG: 'constructConfig',
+        /** Text embedding generation for semantic search */
+        EMBEDDING: 'constructEmbedding',
+        /** System notification service */
+        NOTIFICATION: 'constructNotification',
+        /** Filesystem event watching */
+        FILE_WATCHER: 'constructFileWatcher',
+        /** Terminal command execution */
+        TERMINAL: 'constructTerminal',
 } as const;
 
 export type ConstructChannelName = typeof CONSTRUCT_CHANNELS[keyof typeof CONSTRUCT_CHANNELS];

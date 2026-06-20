@@ -5,13 +5,14 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { IConstructService } from '../common/construct.js';
+// ponytail: IConstructService + ConstructService class removed (no-op stub, never injected).
+//   Kept: registerSingleton(IMCPProcessNodeService, ...) and the other live registrations.
+//   Also removed: IConstructChatHistory registration (interface has 0 DI consumers).
+
 import { IMCPProcessNodeService } from '../common/mcp/mcpProcessNode.js';
 import { MCPProcessNodeService } from './mcpProcessNode.js';
 import { IConstructVectorStore } from '../common/memory/vectorStore.js';
 import { ConstructVectorStoreService } from './constructVectorStore.js';
-import { IConstructChatHistory } from '../common/memory/vectorStore.js';
-import { ConstructChatHistoryService } from './constructChatHistory.js';
 import { IConstructConfigService } from '../common/config/constructConfigService.js';
 import { ConstructConfigService } from './constructConfigService.js';
 import { ISecureKeyManager } from '../common/security/secureKeyManager.js';
@@ -26,24 +27,6 @@ import { ITerminalExecutor } from '../common/terminal/terminalExecutor.js';
 import { TerminalNodeService } from './constructTerminalService.js';
 import { registerSingleton, InstantiationType } from '../../instantiation/common/extensions.js';
 
-class ConstructService implements IConstructService {
-        declare readonly _serviceBrand: undefined;
-        private _port: number = 8000;
-
-        async start(): Promise<void> {
-                // Python agent-backend has been removed.
-                // The Construct service now runs entirely within the Node.js process.
-        }
-
-        getPort(): number { return this._port; }
-
-        async stop(): Promise<void> {
-                // No external process to stop
-        }
-}
-
-registerSingleton(IConstructService, ConstructService, InstantiationType.Eager);
-
 // Register the MCP node service for IPC exposure to the renderer.
 // The browser-layer MCPProcessService will attempt to use this service
 // via IPC when running in desktop mode. In browser-only mode (vscode.dev),
@@ -53,8 +36,6 @@ registerSingleton(IMCPProcessNodeService, MCPProcessNodeService, InstantiationTy
 // --- Phase 3: Memory & Context Services (Node layer) ---
 // Qdrant-backed vector store for workspace file chunk embeddings
 registerSingleton(IConstructVectorStore, ConstructVectorStoreService, InstantiationType.Delayed);
-// SQLite-backed chat history for persistent conversation storage
-registerSingleton(IConstructChatHistory, ConstructChatHistoryService, InstantiationType.Delayed);
 
 // --- Config Service (P0: Single source of config truth) ---
 registerSingleton(IConstructConfigService, ConstructConfigService, InstantiationType.Delayed);

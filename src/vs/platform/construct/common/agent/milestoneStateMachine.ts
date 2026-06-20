@@ -9,13 +9,13 @@
  * Execution state for the milestone-based agent loop.
  */
 export enum ExecutionState {
-	Idle = 'idle',
-	Planning = 'planning',
-	AwaitingApproval = 'awaiting_approval',
-	Executing = 'executing',
-	PausedAtMilestone = 'paused_at_milestone',
-	Complete = 'complete',
-	Error = 'error',
+        Idle = 'idle',
+        Planning = 'planning',
+        AwaitingApproval = 'awaiting_approval',
+        Executing = 'executing',
+        PausedAtMilestone = 'paused_at_milestone',
+        Complete = 'complete',
+        Error = 'error',
 }
 
 /**
@@ -24,66 +24,52 @@ export enum ExecutionState {
  * for user review before continuing.
  */
 export interface IMilestone {
-	/** Unique identifier. */
-	readonly id: string;
-	/** Display name. */
-	readonly name: string;
-	/** Description of what this milestone accomplishes. */
-	readonly description: string;
-	/** Index in the plan (0-based). */
-	readonly index: number;
-	/** Whether this milestone is a major one (e.g., core feature complete). */
-	readonly isMajor: boolean;
-	/** Plan step indices included in this milestone. */
-	readonly stepIndices: number[];
-	/** Whether this milestone has been completed. */
-	readonly completed: boolean;
-}
-
-/**
- * State machine for milestone tracking.
- */
-export interface MilestoneState {
-	/** Current execution state. */
-	readonly state: ExecutionState;
-	/** All milestones in the plan. */
-	readonly milestones: IMilestone[];
-	/** Index of the current milestone being executed. */
-	readonly currentMilestoneIndex: number;
-	/** IDs of completed milestones. */
-	readonly completedMilestoneIds: string[];
+        /** Unique identifier. */
+        readonly id: string;
+        /** Display name. */
+        readonly name: string;
+        /** Description of what this milestone accomplishes. */
+        readonly description: string;
+        /** Index in the plan (0-based). */
+        readonly index: number;
+        /** Whether this milestone is a major one (e.g., core feature complete). */
+        readonly isMajor: boolean;
+        /** Plan step indices included in this milestone. */
+        readonly stepIndices: number[];
+        /** Whether this milestone has been completed. */
+        readonly completed: boolean;
 }
 
 /**
  * A selectable plan step (for task deselection).
  */
 export interface ISelectablePlanStep {
-	/** Step index. */
-	readonly index: number;
-	/** Step action. */
-	readonly action: 'Read' | 'Create' | 'Edit' | 'Run';
-	/** Step target. */
-	readonly target: string;
-	/** Step description. */
-	readonly description: string;
-	/** Whether this step is selected for execution. */
-	selected: boolean;
+        /** Step index. */
+        readonly index: number;
+        /** Step action. */
+        readonly action: 'Read' | 'Create' | 'Edit' | 'Run';
+        /** Step target. */
+        readonly target: string;
+        /** Step description. */
+        readonly description: string;
+        /** Whether this step is selected for execution. */
+        selected: boolean;
 }
 
 /**
  * An approved plan with optional step deselection and execution mode.
  */
 export interface IApprovedPlan {
-	/** The task description. */
-	readonly task: string;
-	/** Steps with selection state. */
-	readonly steps: ISelectablePlanStep[];
-	/** Selected execution mode. */
-	readonly executionMode: string;
-	/** Milestones extracted from the plan. */
-	readonly milestones: IMilestone[];
-	/** Whether the plan was approved by the user. */
-	readonly approved: boolean;
-	/** Timestamp of approval. */
-	readonly approvedAt: number;
+        /** The task description. */
+        readonly task: string;
+        /** Steps with selection state. */
+        readonly steps: ISelectablePlanStep[];
+        /** Selected execution mode. */
+        readonly executionMode: string;
+        /** Milestones extracted from the plan. */
+        readonly milestones: IMilestone[];
+        /** Whether the plan was approved by the user. */
+        readonly approved: boolean;
+        /** Timestamp of approval. */
+        readonly approvedAt: number;
 }

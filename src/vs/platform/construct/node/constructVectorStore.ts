@@ -302,13 +302,6 @@ export class ConstructVectorStoreService extends Disposable implements IConstruc
                 }
         }
 
-        /**
-         * Get the current embedding mode for status display.
-         */
-        getEmbedMode(): 'ollama' | 'bm25' {
-                return this._embedMode;
-        }
-
         // --- Private helpers ---
 
         /**

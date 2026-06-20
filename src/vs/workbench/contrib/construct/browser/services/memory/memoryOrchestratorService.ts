@@ -24,7 +24,6 @@ import { IWorkingMemoryService } from '../../../../../../platform/construct/comm
 import { IEpisodicMemoryService } from '../../../../../../platform/construct/common/memory/episodicMemory.js';
 import { ISemanticMemoryService } from '../../../../../../platform/construct/common/memory/semanticMemory.js';
 import { IProceduralMemoryService } from '../../../../../../platform/construct/common/memory/proceduralMemory.js';
-import { IEmbeddingService } from '../../../../../../platform/construct/common/memory/embeddingService.js';
 import { IConstructMemoryService } from '../../../../../../platform/construct/common/memory/constructMemory.js';
 
 const DEFAULT_MAX_TOKENS = 4000;
@@ -49,7 +48,6 @@ export class MemoryOrchestratorService extends Disposable implements IMemoryOrch
                 @IEpisodicMemoryService private readonly episodicMemory: IEpisodicMemoryService,
                 @ISemanticMemoryService private readonly semanticMemory: ISemanticMemoryService,
                 @IProceduralMemoryService private readonly proceduralMemory: IProceduralMemoryService,
-                @IEmbeddingService _embeddingService: IEmbeddingService,
                 @IConstructMemoryService private readonly constructMemory: IConstructMemoryService
         ) {
                 super();

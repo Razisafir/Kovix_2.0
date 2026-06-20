@@ -6,8 +6,6 @@
  *--------------------------------------------------------------------------------------------*/
 
 import { localize, localize2 } from '../../../../nls.js';
-import { Registry } from '../../../../platform/registry/common/platform.js';
-import { IConfigurationRegistry, Extensions as ConfigurationExtensions, IConfigurationNode } from '../../../../platform/configuration/common/configurationRegistry.js';
 import { Action2, registerAction2 } from '../../../../platform/actions/common/actions.js';
 import { ServicesAccessor } from '../../../../platform/instantiation/common/instantiation.js';
 import { INotificationService } from '../../../../platform/notification/common/notification.js';
@@ -17,89 +15,10 @@ import { ISecureKeyManager, LLMProvider, IProviderConfig } from '../../../../pla
 import { IProgressService, ProgressLocation } from '../../../../platform/progress/common/progress.js';
 
 // ─── Configuration Registration ──────────────────────────────────────────────────
-
-const apiSettingsConfiguration: IConfigurationNode = {
-        id: 'construct.api',
-        order: 100,
-        title: localize('construct.api', "Construct -- API Key Management"),
-        type: 'object',
-        properties: {
-                'construct.api.activeProvider': {
-                        type: 'string',
-                        default: 'anthropic',
-                        description: localize('construct.api.activeProvider', "The active LLM provider for the Construct agent. API keys are stored securely in the OS keychain."),
-                        enum: [
-                                'anthropic',
-                                'openai',
-                                'nvidia',
-                                'openrouter',
-                                'lmstudio',
-                                'together',
-                                'groq',
-                                'mistral',
-                                'gemini',
-                                'deepseek',
-                                'ollama',
-                                'litellm',
-                                'custom',
-                        ],
-                        enumDescriptions: [
-                                localize('construct.api.activeProvider.anthropic', "Anthropic (Claude models). Requires an API key starting with sk-ant-."),
-                                localize('construct.api.activeProvider.openai', "OpenAI (GPT models). Requires an API key starting with sk-."),
-                                localize('construct.api.activeProvider.nvidia', "NVIDIA NIM (integrate.api.nvidia.com). OpenAI-compatible. Requires an API key starting with nvapi-."),
-                                localize('construct.api.activeProvider.openrouter', "OpenRouter (openrouter.ai). Multi-model router. Requires an API key starting with sk-or-."),
-                                localize('construct.api.activeProvider.lmstudio', "LM Studio (local). OpenAI-compatible. No API key required. Must be running locally on port 1234."),
-                                localize('construct.api.activeProvider.together', "Together AI (api.together.xyz). OpenAI-compatible. Requires an API key."),
-                                localize('construct.api.activeProvider.groq', "Groq (api.groq.com). Fast inference. OpenAI-compatible. Requires an API key starting with gsk_."),
-                                localize('construct.api.activeProvider.mistral', "Mistral AI (api.mistral.ai). OpenAI-compatible. Requires an API key."),
-                                localize('construct.api.activeProvider.gemini', "Google Gemini (generativelanguage.googleapis.com). OpenAI-compatible mode. Requires an API key."),
-                                localize('construct.api.activeProvider.deepseek', "DeepSeek (api.deepseek.com). OpenAI-compatible. Requires an API key."),
-                                localize('construct.api.activeProvider.ollama', "Ollama (local models). No API key required. Must be running locally."),
-                                localize('construct.api.activeProvider.litellm', "LiteLLM proxy. Requires an endpoint URL and optional API key."),
-                                localize('construct.api.activeProvider.custom', "Custom OpenAI-compatible endpoint. Requires an endpoint URL and optional API key."),
-                        ],
-                        scope: 1 /* ConfigurationScope.APPLICATION */,
-                },
-                'construct.api.anthropic.key': {
-                        type: 'string',
-                        default: '',
-                        description: localize('construct.api.anthropic.key', "Anthropic API key placeholder. The actual key is stored securely in the OS keychain. Use the 'Construct: Manage API Keys' command to set or update your key."),
-                        scope: 1 /* ConfigurationScope.APPLICATION */,
-                },
-                'construct.api.openai.key': {
-                        type: 'string',
-                        default: '',
-                        description: localize('construct.api.openai.key', "OpenAI API key placeholder. The actual key is stored securely in the OS keychain. Use the 'Construct: Manage API Keys' command to set or update your key."),
-                        scope: 1 /* ConfigurationScope.APPLICATION */,
-                },
-                'construct.api.ollama.endpoint': {
-                        type: 'string',
-                        default: 'http://localhost:11434',
-                        description: localize('construct.api.ollama.endpoint', "Ollama server endpoint URL. Only change this if you are running Ollama on a non-default port or remote host."),
-                        scope: 1 /* ConfigurationScope.APPLICATION */,
-                },
-                'construct.api.litellm.endpoint': {
-                        type: 'string',
-                        default: '',
-                        description: localize('construct.api.litellm.endpoint', "LiteLLM proxy endpoint URL. Required when using LiteLLM as the active provider."),
-                        scope: 1 /* ConfigurationScope.APPLICATION */,
-                },
-                'construct.api.custom.endpoint': {
-                        type: 'string',
-                        default: '',
-                        description: localize('construct.api.custom.endpoint', "Custom OpenAI-compatible endpoint URL. Required when using a custom provider."),
-                        scope: 1 /* ConfigurationScope.APPLICATION */,
-                },
-                'construct.api.custom.key': {
-                        type: 'string',
-                        default: '',
-                        description: localize('construct.api.custom.key', "Custom provider API key placeholder. The actual key is stored securely in the OS keychain. Use the 'Construct: Manage API Keys' command to set or update your key."),
-                        scope: 1 /* ConfigurationScope.APPLICATION */,
-                },
-        },
-};
-
-Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).registerConfiguration(apiSettingsConfiguration);
+// ponytail: 7 dead config keys removed (construct.api.activeProvider, .anthropic.key,
+//   .openai.key, .ollama.endpoint, .litellm.endpoint, .custom.endpoint, .custom.key).
+//   None were ever read — ManageApiKeys uses ISecureKeyManager directly.
+//   Kept: nothing. The block was 100% dead.
 
 // ─── Provider Metadata ───────────────────────────────────────────────────────────
 

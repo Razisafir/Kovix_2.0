@@ -5,16 +5,9 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { createDecorator } from '../../instantiation/common/instantiation.js';
-
-export const IConstructService = createDecorator<IConstructService>('constructService');
-
-export interface IConstructService {
-        readonly _serviceBrand: undefined;
-        getPort(): number;
-        start(): Promise<void>;
-        stop(): Promise<void>;
-}
+// ponytail: IConstructService was a no-op stub ("Python agent-backend has been removed").
+// Removed in dead-code audit. The node and electron-sandbox side-effect files
+// still register IMCPProcessNodeService and the other live services.
 
 // ---------------------------------------------------------------------------
 // Construct AI Agent System — Public API re-exports

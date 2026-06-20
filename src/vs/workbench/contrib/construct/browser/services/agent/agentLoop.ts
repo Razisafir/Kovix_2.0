@@ -627,16 +627,6 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
         }
 
         /**
-         * Run the planning phase with a pre-refined idea description.
-         * The refined idea provides more detail than a raw prompt.
-         */
-        async runPlanningPhaseWithIdea(refinedDescription: string, signal?: AbortSignal): Promise<IPlanResult> {
-                this.logService.info(`[AgentLoop] Planning phase started with refined idea: ${refinedDescription.substring(0, 100)}...`);
-                const task = `Based on the following refined specification, analyze the workspace and create a detailed implementation plan:\n\n${refinedDescription}`;
-                return this.runPlanningPhase(task, signal);
-        }
-
-        /**
          * Run execution with an approved plan, supporting milestone-based pausing.
          */
         async *runWithApprovedPlan(approvedPlan: IApprovedPlan, signal?: AbortSignal): AsyncGenerator<AgentLoopEvent> {
@@ -650,45 +640,6 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                 const enhancedTask = `${approvedPlan.task}\n\nExecute these specific steps:\n${taskDescription}`;
 
                 yield* this.run(enhancedTask, signal);
-        }
-
-        /**
-         * Start milestone-aware execution from an approved plan.
-         */
-        startExecution(approvedPlan: IApprovedPlan, signal?: AbortSignal): void {
-                this._approvedPlan = approvedPlan;
-                this._executionConfig = {
-                        mode: approvedPlan.executionMode as ExecutionMode,
-                };
-                this._completedMilestoneIds = new Set();
-                this._executionState = ExecutionState.Executing;
-
-                // Run the execution in the background
-                const runAsync = async () => {
-                        try {
-                                const selectedSteps = approvedPlan.steps.filter(s => s.selected);
-                                const taskDescription = selectedSteps.map(s => `${s.action}: ${s.target}`).join('\n');
-                                const enhancedTask = `${approvedPlan.task}\n\nExecute these specific steps:\n${taskDescription}`;
-
-                                const stream = this.run(enhancedTask, signal);
-                                for await (const event of stream) {
-                                        // Check for milestone pauses
-                                        if (event.type === 'tool_result' && event.success) {
-                                                const shouldPause = this.shouldPauseAtMilestone(event);
-                                                if (shouldPause && this._currentMilestone) {
-                                                        this._executionState = ExecutionState.PausedAtMilestone;
-                                                        this._onDidMilestonePause.fire(this._currentMilestone);
-                                                        // Wait for resume
-                                                        await this._waitForResume();
-                                                }
-                                        }
-                                }
-                                this._executionState = ExecutionState.Complete;
-                        } catch (error) {
-                                this._executionState = ExecutionState.Error;
-                        }
-                };
-                runAsync();
         }
 
         /**
@@ -720,58 +671,6 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                 this._completedMilestoneIds.add(milestone.id);
                         }
                         this._currentMilestone = null;
-                }
-        }
-
-        /**
-         * Wait for the user to resume from a milestone pause.
-         */
-        private _waitForResume(): Promise<void> {
-                return new Promise<void>((resolve) => {
-                        this._milestoneResumeResolver = resolve;
-                });
-        }
-
-        /**
-         * Check if the agent should pause at a milestone based on the execution mode.
-         */
-        private shouldPauseAtMilestone(event: { type: string; toolId?: string; toolName?: string }): boolean {
-                if (!this._executionConfig || !this._approvedPlan) {
-                        return false;
-                }
-
-                const milestones = this._approvedPlan.milestones;
-                if (!milestones || milestones.length === 0) {
-                        return false;
-                }
-
-                const mode = this._executionConfig.mode;
-
-                // Full auto: never pause
-                if (mode === ExecutionMode.FullAuto) {
-                        return false;
-                }
-
-                // Find the next uncompleted milestone
-                const nextMilestone = milestones.find(m => !this._completedMilestoneIds.has(m.id) && !m.completed);
-                if (!nextMilestone) {
-                        return false;
-                }
-
-                // Set current milestone if not already set
-                if (!this._currentMilestone || this._currentMilestone.id !== nextMilestone.id) {
-                        this._currentMilestone = nextMilestone;
-                }
-
-                switch (mode) {
-                        case ExecutionMode.EveryMilestone:
-                                return true;
-                        case ExecutionMode.MajorMilestone:
-                                return nextMilestone.isMajor;
-                        case ExecutionMode.Selective:
-                                return this._executionConfig.selectedMilestoneIds?.includes(nextMilestone.id) ?? false;
-                        default:
-                                return false;
                 }
         }
 

@@ -122,8 +122,6 @@ import { IMCPProcessNodeService } from '../../platform/construct/common/mcp/mcpP
 import { MCPProcessNodeService } from '../../platform/construct/node/mcpProcessNode.js';
 import { IConstructVectorStore } from '../../platform/construct/common/memory/vectorStore.js';
 import { ConstructVectorStoreService } from '../../platform/construct/node/constructVectorStore.js';
-import { IConstructChatHistory } from '../../platform/construct/common/memory/vectorStore.js';
-import { ConstructChatHistoryService } from '../../platform/construct/node/constructChatHistory.js';
 import { IConstructConfigService } from '../../platform/construct/common/config/constructConfigService.js';
 import { ConstructConfigService } from '../../platform/construct/node/constructConfigService.js';
 import { ISecureKeyManager } from '../../platform/construct/common/security/secureKeyManager.js';
@@ -1141,9 +1139,6 @@ export class CodeApplication extends Disposable {
                 // Construct Vector Store Service (Qdrant-backed semantic code search)
                 services.set(IConstructVectorStore, new SyncDescriptor(ConstructVectorStoreService, undefined, true));
 
-                // Construct Chat History Service (SQLite-backed persistent conversations)
-                services.set(IConstructChatHistory, new SyncDescriptor(ConstructChatHistoryService, undefined, true));
-
                 // Construct Config Service (single source of truth for .construct/settings.json)
                 services.set(IConstructConfigService, new SyncDescriptor(ConstructConfigService, undefined, true));
 
@@ -1288,10 +1283,6 @@ export class CodeApplication extends Disposable {
                 // Vector store — semantic code search (Qdrant)
                 const constructVectorChannel = ProxyChannel.fromService(accessor.get(IConstructVectorStore), disposables);
                 mainProcessElectronServer.registerChannel(CONSTRUCT_CHANNELS.VECTOR_STORE, constructVectorChannel);
-
-                // Chat history — persistent conversation storage (SQLite)
-                const constructChatHistoryChannel = ProxyChannel.fromService(accessor.get(IConstructChatHistory), disposables);
-                mainProcessElectronServer.registerChannel(CONSTRUCT_CHANNELS.CHAT_HISTORY, constructChatHistoryChannel);
 
                 // Config service — centralized configuration
                 const constructConfigChannel = ProxyChannel.fromService(accessor.get(IConstructConfigService), disposables);

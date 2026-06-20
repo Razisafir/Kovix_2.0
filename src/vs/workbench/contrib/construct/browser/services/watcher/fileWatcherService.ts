@@ -19,8 +19,6 @@ import * as glob from '../../../../../../base/common/glob.js';
  */
 const DEFAULT_CONFIG: IFileWatcherConfig = {
         debounceMs: 100,
-        animateAppearance: true,
-        animationDurationMs: 200,
         ignorePatterns: []
 };
 
@@ -190,32 +188,6 @@ export class FileWatcherService extends Disposable implements IFileWatcherServic
                         timestamp: Date.now()
                 });
                 this.scheduleDebounce();
-        }
-
-        /**
-         * Update the watcher configuration.
-         * Changes to debounceMs, animateAppearance, and animationDurationMs
-         * take effect immediately. Changes to ignorePatterns take effect on
-         * the next startWatching() call (requires restarting the watcher).
-         */
-        updateConfig(partial: Partial<IFileWatcherConfig>): void {
-                const needsRestart = partial.ignorePatterns !== undefined &&
-                        JSON.stringify(partial.ignorePatterns) !== JSON.stringify(this._config.ignorePatterns);
-
-                this._config = {
-                        ...this._config,
-                        ...partial
-                };
-
-                this.logService.info(`[FileWatcher] Config updated: ${JSON.stringify(partial)}`);
-
-                if (needsRestart) {
-                        this.recompileIgnorePatterns();
-                        if (this._isWatching && this.workspaceRoot) {
-                                this.logService.info('[FileWatcher] ignorePatterns changed, restarting watcher.');
-                                this.startWatching(this.workspaceRoot);
-                        }
-                }
         }
 
         // --- VS Code File Change Handler -------------------------------------------

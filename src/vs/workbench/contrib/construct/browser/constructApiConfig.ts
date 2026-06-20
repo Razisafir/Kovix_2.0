@@ -30,13 +30,6 @@ const apiConfiguration: IConfigurationNode = {
                                                                 'claude-3-5-sonnet-20241022',
                                                                 'claude-3-opus-20240229'
                                                 ]
-                                },
-                                'construct.anthropic.maxTokens': {
-                                                type: 'number',
-                                                default: 8192,
-                                                minimum: 1024,
-                                                maximum: 32768,
-                                                description: localize('construct.anthropic.maxTokens', "Maximum number of tokens the LLM can generate per response. Higher values allow longer responses but cost more.")
                                 }
                 }
 };
@@ -131,10 +124,10 @@ const securityConfiguration: IConfigurationNode = {
                         scope: 4 /* ConfigurationScope.WINDOW */
                 },
                 'construct.security.allowExternalTargets': {
-                	type: 'boolean',
-                	default: false,
-                	description: localize('construct.security.allowExternalTargets', "Allow nmap and Nuclei to scan non-loopback / non-private (RFC1918) targets. Default false for safety. Enable only if you understand the legal and ethical implications of scanning external hosts."),
-                	scope: 4 /* ConfigurationScope.WINDOW */
+                        type: 'boolean',
+                        default: false,
+                        description: localize('construct.security.allowExternalTargets', "Allow nmap and Nuclei to scan non-loopback / non-private (RFC1918) targets. Default false for safety. Enable only if you understand the legal and ethical implications of scanning external hosts."),
+                        scope: 4 /* ConfigurationScope.WINDOW */
                 }
         }
 };
@@ -192,42 +185,42 @@ Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).regis
 // --- Phase 4 Patch A: Tab Autocomplete Configuration ---
 
 const autocompleteConfiguration: IConfigurationNode = {
-	id: 'kovix.autocomplete',
-	order: 105,
-	title: localize('kovix.autocomplete', "Kovix — Tab Autocomplete"),
-	type: 'object',
-	properties: {
-		'construct.autocomplete.enabled': {
-			type: 'boolean',
-			default: true,
-			description: localize('construct.autocomplete.enabled', "Enable Kovix tab autocomplete. When enabled, the editor shows ghost-text suggestions as you type. Press Tab to accept."),
-			scope: 4 /* ConfigurationScope.WINDOW */
-		},
-		'construct.autocomplete.debounceMs': {
-			type: 'number',
-			default: 200,
-			minimum: 50,
-			maximum: 2000,
-			description: localize('construct.autocomplete.debounceMs', "Delay in milliseconds between the last keystroke and the autocomplete request. Higher values reduce API calls but feel slower; lower values feel snappier but may overload the provider."),
-			scope: 4 /* ConfigurationScope.WINDOW */
-		},
-		'construct.autocomplete.maxTokens': {
-			type: 'number',
-			default: 32,
-			minimum: 8,
-			maximum: 256,
-			description: localize('construct.autocomplete.maxTokens', "Maximum number of tokens to generate per autocomplete request. Higher values allow longer suggestions but take more time."),
-			scope: 4 /* ConfigurationScope.WINDOW */
-		},
-		'construct.autocomplete.temperature': {
-			type: 'number',
-			default: 0.2,
-			minimum: 0,
-			maximum: 1,
-			description: localize('construct.autocomplete.temperature', "Sampling temperature for autocomplete. Lower values (0.0-0.2) produce more deterministic suggestions; higher values (0.5-1.0) produce more varied suggestions."),
-			scope: 4 /* ConfigurationScope.WINDOW */
-		}
-	}
+        id: 'kovix.autocomplete',
+        order: 105,
+        title: localize('kovix.autocomplete', "Kovix — Tab Autocomplete"),
+        type: 'object',
+        properties: {
+                'construct.autocomplete.enabled': {
+                        type: 'boolean',
+                        default: true,
+                        description: localize('construct.autocomplete.enabled', "Enable Kovix tab autocomplete. When enabled, the editor shows ghost-text suggestions as you type. Press Tab to accept."),
+                        scope: 4 /* ConfigurationScope.WINDOW */
+                },
+                'construct.autocomplete.debounceMs': {
+                        type: 'number',
+                        default: 200,
+                        minimum: 50,
+                        maximum: 2000,
+                        description: localize('construct.autocomplete.debounceMs', "Delay in milliseconds between the last keystroke and the autocomplete request. Higher values reduce API calls but feel slower; lower values feel snappier but may overload the provider."),
+                        scope: 4 /* ConfigurationScope.WINDOW */
+                },
+                'construct.autocomplete.maxTokens': {
+                        type: 'number',
+                        default: 32,
+                        minimum: 8,
+                        maximum: 256,
+                        description: localize('construct.autocomplete.maxTokens', "Maximum number of tokens to generate per autocomplete request. Higher values allow longer suggestions but take more time."),
+                        scope: 4 /* ConfigurationScope.WINDOW */
+                },
+                'construct.autocomplete.temperature': {
+                        type: 'number',
+                        default: 0.2,
+                        minimum: 0,
+                        maximum: 1,
+                        description: localize('construct.autocomplete.temperature', "Sampling temperature for autocomplete. Lower values (0.0-0.2) produce more deterministic suggestions; higher values (0.5-1.0) produce more varied suggestions."),
+                        scope: 4 /* ConfigurationScope.WINDOW */
+                }
+        }
 };
 
 Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration).registerConfiguration(autocompleteConfiguration);
