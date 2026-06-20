@@ -11,6 +11,7 @@ import { IConfigurationService } from '../../../../../../platform/configuration/
 import { ISecretStorageService } from '../../../../../../platform/secrets/common/secrets.js';
 import { IStorageService, StorageScope, StorageTarget } from '../../../../../../platform/storage/common/storage.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
+import { IWorkspaceTrustManagementService } from '../../../../../../platform/workspace/common/workspaceTrust.js';
 import {
         IMCPServerDefinition,
         MCPTransportType,
@@ -60,7 +61,8 @@ export class MCPServerRegistry extends Disposable {
                 @IConfigurationService private readonly configurationService: IConfigurationService,
                 @ISecretStorageService private readonly secretStorageService: ISecretStorageService,
                 @IStorageService private readonly storageService: IStorageService,
-                @ILogService private readonly logService: ILogService
+                @ILogService private readonly logService: ILogService,
+                @IWorkspaceTrustManagementService private readonly workspaceTrustService: IWorkspaceTrustManagementService
         ) {
                 super();
                 this.loadServers();
@@ -71,8 +73,77 @@ export class MCPServerRegistry extends Disposable {
 
         private loadServers(): void {
                 try {
-                        const config = this.configurationService.getValue(MCP_CONFIG_KEY) as ISerializedServer[] | undefined;
-                        for (const serialized of (config ?? [])) {
+                        // SEC-9 (K2-C2 fix): inspect the configuration at multiple
+                        // scopes so we can distinguish Application-scoped server
+                        // defs (trusted) from workspace-scoped defs (untrusted by
+                        // default). The `inspect()` API returns an object whose
+                        // `.overrides` / `.user` / `.workspace` / `.workspaceFolder`
+                        // fields tell us where each value came from.
+                        //
+                        // Defense layers (per the audit's K2-C2 fix spec):
+                        //   (a) construct.mcp.servers is now registered with
+                        //       restricted:true (constructApiConfig.ts). VS Code
+                        //       Workspace Trust will refuse to read workspace-
+                        //       scoped values for restricted settings when the
+                        //       workspace is untrusted. This is the PRIMARY gate.
+                        //   (b) Here in loadServers(), we ALSO check
+                        //       isWorkspaceTrusted() explicitly — defense-in-depth
+                        //       in case the restricted:true gate is bypassed by a
+                        //       future VS Code API change or by a manual edit to
+                        //       the workspace storage DB.
+                        //   (c) Even in a TRUSTED workspace, we strip isBuiltin
+                        //       and userApproved from any server def that came
+                        //       from workspace scope. Only Application scope may
+                        //       set these flags. This closes the PoC where a
+                        //       malicious (but user-trusted) workspace ships
+                        //       {"isBuiltin":true,"userApproved":true} and
+                        //       auto-spawns on workspace open.
+                        const isTrusted = this.workspaceTrustService.isWorkspaceTrusted();
+                        const inspectResult = this.configurationService.inspect<ISerializedServer[]>(MCP_CONFIG_KEY);
+
+                        // Merge Application-scoped (user) + workspace-scoped
+                        // (if trusted). We intentionally do NOT merge workspace
+                        // values when the workspace is untrusted — even if the
+                        // restricted:true gate somehow leaked them through.
+                        //
+                        // Note: inspect<T>() returns IConfigurationValue<Readonly<T>>
+                        // where the *Value fields (userValue, workspaceValue, ...)
+                        // are the raw T values, while the bare-name fields (user,
+                        // workspace, ...) are wrapped in IInspectValue<T>. We use
+                        // the *Value fields here for direct array access.
+                        const userScoped: readonly ISerializedServer[] = inspectResult.userValue ?? inspectResult.applicationValue ?? [];
+                        const workspaceScoped: readonly ISerializedServer[] = (isTrusted ? (inspectResult.workspaceValue ?? []) : []);
+                        const workspaceFolderScoped: readonly ISerializedServer[] = (isTrusted ? (inspectResult.workspaceFolderValue ?? []) : []);
+
+                        if (!isTrusted && ((inspectResult.workspaceValue?.length ?? 0) > 0 || (inspectResult.workspaceFolderValue?.length ?? 0) > 0)) {
+                                this.logService.warn(
+                                        `[MCP Registry] Workspace is untrusted — ignoring ${(inspectResult.workspaceValue?.length ?? 0) + (inspectResult.workspaceFolderValue?.length ?? 0)} workspace-scoped MCP server definition(s). ` +
+                                        `Trust the workspace (Manage → Trust Workspace And Install Extensions) to load them.`
+                                );
+                        }
+
+                        const merged: readonly ISerializedServer[] = [
+                                ...userScoped,
+                                ...workspaceScoped,
+                                ...workspaceFolderScoped
+                        ];
+
+                        for (const serialized of merged) {
+                                // SEC-9 (K2-C2 fix): strip isBuiltin and userApproved
+                                // from any def that originated from workspace scope.
+                                // Only Application-scoped config may set them. This
+                                // prevents a trusted-but-malicious workspace from
+                                // auto-spawning by claiming isBuiltin:true.
+                                const fromWorkspaceScope = workspaceScoped.includes(serialized) || workspaceFolderScoped.includes(serialized);
+                                const effectiveIsBuiltin = fromWorkspaceScope ? false : (serialized.isBuiltin ?? false);
+                                const effectiveUserApproved = fromWorkspaceScope ? false : (serialized.userApproved ?? false);
+
+                                if (fromWorkspaceScope && ((serialized.isBuiltin ?? false) || (serialized.userApproved ?? false))) {
+                                        this.logService.warn(
+                                                `[MCP Registry] Stripped isBuiltin/userApproved from workspace-scoped server "${serialized.name}" — only Application-scoped config may set these flags.`
+                                        );
+                                }
+
                                 const server: IMCPServerDefinition = {
                                         name: serialized.name,
                                         command: serialized.command,
@@ -83,15 +154,17 @@ export class MCPServerRegistry extends Disposable {
                                         description: serialized.description,
                                         categories: serialized.categories ?? [],
                                         installPath: serialized.installPath,
-                                        isBuiltin: serialized.isBuiltin ?? false,
+                                        isBuiltin: effectiveIsBuiltin,
                                         secretEnvKeys: serialized.secretEnvKeys,
-                                        // SEC-7 (H2 follow-up): round-trip the approval flag.
-                                        // Built-ins are always pre-approved regardless of stored value.
-                                        userApproved: serialized.isBuiltin ? true : (serialized.userApproved ?? false)
+                                        // Built-ins are always pre-approved. Workspace-scoped
+                                        // servers are NEVER pre-approved (effectiveUserApproved
+                                        // is false for them, even if the workspace JSON claims
+                                        // otherwise). User must explicitly approve via the UI.
+                                        userApproved: effectiveIsBuiltin ? true : effectiveUserApproved
                                 };
                                 this.servers.set(server.name, server);
                         }
-                        this.logService.info(`[MCP Registry] Loaded ${this.servers.size} servers`);
+                        this.logService.info(`[MCP Registry] Loaded ${this.servers.size} servers (workspace trusted: ${isTrusted})`);
                 } catch (error) {
                         this.logService.error('[MCP Registry] Failed to load servers:', error);
                 }

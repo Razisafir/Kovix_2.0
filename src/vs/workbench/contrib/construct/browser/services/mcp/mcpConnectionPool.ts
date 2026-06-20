@@ -21,6 +21,8 @@ import {
         MCP_MAX_RESTART_BACKOFF_MS,
         MCP_RESTART_BACKOFF_BASE_MS
 } from '../../../../../../platform/construct/common/mcp/mcpTypes.js';
+import { assertSafeUrl } from '../../../../../../platform/construct/common/security/urlGuard.js';
+import { buildChildEnv } from '../../../../../../platform/construct/common/security/childEnv.js';
 
 interface IConnectionEntry {
         client: any; // MCP Client instance
@@ -147,6 +149,35 @@ export class MCPConnectionPool extends Disposable {
                         throw new Error(`Connection pool full (max ${this.maxConcurrentServers}). Stop another server first.`);
                 }
 
+                // ─── SEC-9 (K2-C1 fix): hoist the userApproved consent gate OUT of
+                // connectRawStdio() into connect() BEFORE transport selection.
+                // The prior SEC-7 H2 fix only gated the raw-stdio fallback path;
+                // the primary StdioClientTransport + SSEClientTransport paths
+                // bypassed the gate entirely. Combined with K2-C2 (workspace-
+                // scoped MCP config) and K2-C3 (marketplace has no integrity
+                // verification), this formed a 3-step RCE chain: open a cloned
+                // repo → click Start → arbitrary command execution.
+                //
+                // The gate now runs in connect() AND reconnect() — every spawn
+                // path goes through it. Built-in servers (agent-reach,
+                // ponytail, ui-ux-pro-max) are pre-approved (def.isBuiltin ===
+                // true). Marketplace-installed servers require explicit user
+                // approval via MCPServerRegistry.approveServer() before they
+                // can be spawned.
+                this._assertApproved(def);
+
+                // ─── SEC-9 (K2-H7 fix): validate SSE transport URLs before
+                // constructing the transport. Without this, a malicious
+                // marketplace entry (or hand-edited .construct/mcp.json) with
+                // transport:'sse' + command:'http://169.254.169.254/…' would
+                // connect the Kovix renderer to cloud metadata. The approval
+                // gate above mitigates (user must approve), but the env-preview
+                // doesn't surface the URL as a network target — so we validate
+                // explicitly here too (defense-in-depth).
+                if (def.transport !== MCPTransportType.Stdio) {
+                        assertSafeUrl(def.command);
+                }
+
                 // Disconnect existing if reconnecting
                 if (this.connections.has(def.name)) {
                         await this.disconnect(def.name);
@@ -162,11 +193,11 @@ export class MCPConnectionPool extends Disposable {
                                 transport = new StdioClientTransport({
                                         command: def.command,
                                         args: def.args,
-                                        env: this._buildChildEnv(def.env)
+                                        env: this._sanitizeAndBuildEnv(def.env, def.name)
                                 });
                         } else {
                                 const { SSEClientTransport } = await import('@modelcontextprotocol/sdk/client/sse.js');
-                                const url = new URL(def.command); // For SSE, command is the URL
+                                const url = new URL(def.command); // For SSE, command is the URL (already validated above)
                                 transport = new SSEClientTransport(url);
                         }
                 } catch (importError) {
@@ -249,31 +280,18 @@ export class MCPConnectionPool extends Disposable {
                 const { spawn } = await import('child_process');
                 const def = entry.definition;
 
-                // SEC-7 (H2 fix): Consent gate for non-builtin MCP servers.
-                // Marketplace-installed servers can ship arbitrary command/args/env.
-                // Until the user explicitly approves a server (via the MCP settings
-                // UI — see IMCPServerDefinition.userApproved), we refuse to spawn it.
-                // Built-in servers (agent-reach, ponytail, ui-ux-pro-max) are
-                // pre-approved because they ship with Kovix itself.
-                if (!def.isBuiltin && !def.userApproved) {
-                        const argPreview = def.args.map(a => a.includes(' ') ? `"${a}"` : a).join(' ');
-                        const envKeys = Object.keys(def.env ?? {});
-                        const envPreview = envKeys.length === 0
-                                ? '(none)'
-                                : envKeys.map(k => k.endsWith('_KEY') || k.endsWith('_TOKEN') || k.includes('SECRET') ? `${k}=<redacted>` : `${k}=${def.env[k]}`).join(' ');
-                        this.logService.warn(`[MCP] Refusing to spawn unapproved server "${def.name}". Command: ${def.command} ${argPreview}. Env: ${envPreview}. User must approve via MCP settings.`);
-                        throw new Error(
-                                `MCP server "${def.name}" has not been approved. For your safety, Kovix refuses to spawn ` +
-                                `non-built-in MCP servers until you review and approve them.\n\n` +
-                                `Command: ${def.command} ${argPreview}\n` +
-                                `Env: ${envPreview}\n\n` +
-                                `Open the MCP settings pane (Kovix → MCP Servers) to review and approve this server.`
-                        );
-                }
-                // SEC-7 (H2 fix): Build a minimal env for the spawned MCP server
-                // via the shared _buildChildEnv() helper. See that method for the
-                // rationale and the curated PARENT_ENV_ALLOWLIST.
-                const childEnv = this._buildChildEnv(def.env);
+                // SEC-9 (K2-C1 fix): the consent gate is now hoisted into
+                // connect() and reconnect() — see _assertApproved(). The
+                // check below is defense-in-depth: if a future refactor ever
+                // calls connectRawStdio() directly without going through
+                // connect(), we still refuse to spawn unapproved servers.
+                this._assertApproved(def);
+
+                // SEC-9 (K2-H1/H2 fix): Build a minimal env via the shared
+                // buildChildEnv() helper (PARENT_ENV_ALLOWLIST + DENIED_ENV_KEYS).
+                // See src/vs/platform/construct/common/security/childEnv.ts for
+                // the rationale and the curated lists.
+                const childEnv = this._sanitizeAndBuildEnv(def.env, def.name);
 
                 const childProcess: any = spawn(def.command, def.args, {
                         env: childEnv,
@@ -434,6 +452,20 @@ export class MCPConnectionPool extends Disposable {
 
                 // Recreate transport
                 const def = entry.definition;
+
+                // SEC-9 (K2-C1 fix): re-apply the consent gate on reconnect.
+                // A server that was approved at connect time stays approved
+                // (the def carries userApproved:true), but if the user
+                // somehow revoked approval between connect and reconnect, we
+                // refuse to respawn. Defense-in-depth — the auto-restart path
+                // should never bypass the consent gate.
+                this._assertApproved(def);
+
+                // SEC-9 (K2-H7 fix): re-validate SSE URL on reconnect too.
+                if (def.transport !== MCPTransportType.Stdio) {
+                        assertSafeUrl(def.command);
+                }
+
                 let transport: any;
 
                 if (def.transport === MCPTransportType.Stdio) {
@@ -441,7 +473,7 @@ export class MCPConnectionPool extends Disposable {
                         transport = new StdioClientTransport({
                                 command: def.command,
                                 args: def.args,
-                                env: this._buildChildEnv(def.env)
+                                env: this._sanitizeAndBuildEnv(def.env, def.name)
                         });
                 } else {
                         const { SSEClientTransport } = await import('@modelcontextprotocol/sdk/client/sse.js');
@@ -473,48 +505,61 @@ export class MCPConnectionPool extends Disposable {
         }
 
         /**
-         * SEC-7 (H2 fix): Build a minimal env for a spawned MCP server child process.
+         * SEC-9 (K2-C1 fix): Consent gate for non-builtin MCP servers.
          *
-         * Spreading the entire parent `process.env` into the child lets a malicious
-         * marketplace entry set `NODE_OPTIONS=--require /tmp/payload.js` or
-         * `LD_PRELOAD=/tmp/evil.so` in `def.env` — and those env vars would then
-         * apply to EVERY spawned MCP server (not just the malicious one) because
-         * they leaked through `process.env`.
+         * Marketplace-installed servers can ship arbitrary command/args/env.
+         * Until the user explicitly approves a server (via the MCP settings UI
+         * — see IMCPServerDefinition.userApproved), we refuse to spawn it.
+         * Built-in servers (agent-reach, ponytail, ui-ux-pro-max) are
+         * pre-approved because they ship with Kovix itself.
          *
-         * This helper only passes through a curated allowlist of env vars that MCP
-         * servers actually need (PATH for binary resolution, HOME/USERPROFILE for
-         * config-file lookup, LANG/LC_* for locale, plus shell-essential vars).
-         * Server-specific env vars from `def.env` are layered on top, scoped to
-         * this one server.
-         *
-         * Used by both the raw `spawn()` path and the `StdioClientTransport` path
-         * (the previous StdioClientTransport sites at connect() and reconnect()
-         * were still spreading `process.env` — closed in this same SEC-7 pass).
+         * This method is called from connect() and reconnect() (the two
+         * transport-selection entry points) AND from connectRawStdio() (the
+         * fallback path). Triple-checked by design: the primary fix is in
+         * connect()/reconnect() so it covers StdioClientTransport AND SSE;
+         * connectRawStdio() re-checks as defense-in-depth in case a future
+         * refactor calls it directly.
          */
-        private _buildChildEnv(serverEnv?: Record<string, string>): Record<string, string> {
-                const PARENT_ENV_ALLOWLIST = [
-                        'PATH', 'PATHEXT', 'Path',
-                        'HOME', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'XDG_CONFIG_HOME', 'XDG_DATA_HOME',
-                        'LANG', 'LC_ALL', 'LC_CTYPE', 'LC_MESSAGES',
-                        'USER', 'LOGNAME', 'SHELL', 'TERM',
-                        'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP', 'TMPDIR',
-                        // Kovix-specific (read-only config flags, not secrets)
-                        'KOVIX_ALLOW_PRIVATE_NET', 'KOVIX_ALLOW_LOOPBACK',
-                        'PONYTAIL_DEFAULT_MODE',
-                ];
-                const childEnv: Record<string, string> = {};
-                const parentEnv = process.env as Record<string, string>;
-                for (const key of PARENT_ENV_ALLOWLIST) {
-                        if (parentEnv[key] !== undefined) {
-                                childEnv[key] = parentEnv[key];
-                        }
+        private _assertApproved(def: IMCPServerDefinition): void {
+                if (def.isBuiltin || def.userApproved) {
+                        return;
                 }
-                if (serverEnv) {
-                        for (const [k, v] of Object.entries(serverEnv)) {
-                                childEnv[k] = v as string;
-                        }
+                const argPreview = def.args.map(a => a.includes(' ') ? `"${a}"` : a).join(' ');
+                const envKeys = Object.keys(def.env ?? {});
+                const envPreview = envKeys.length === 0
+                        ? '(none)'
+                        : envKeys.map(k => k.endsWith('_KEY') || k.endsWith('_TOKEN') || k.includes('SECRET') ? `${k}=<redacted>` : `${k}=${def.env[k]}`).join(' ');
+                this.logService.warn(`[MCP] Refusing to spawn unapproved server "${def.name}". Command: ${def.command} ${argPreview}. Env: ${envPreview}. User must approve via MCP settings.`);
+                throw new Error(
+                        `MCP server "${def.name}" has not been approved. For your safety, Kovix refuses to spawn ` +
+                        `non-built-in MCP servers until you review and approve them.\n\n` +
+                        `Command: ${def.command} ${argPreview}\n` +
+                        `Env: ${envPreview}\n\n` +
+                        `Open the MCP settings pane (Kovix → MCP Servers) to review and approve this server.`
+                );
+        }
+
+        /**
+         * SEC-9 (K2-H1/H2 fix): Build a minimal env for a spawned MCP server
+         * child process via the shared buildChildEnv() helper.
+         *
+         * Replaces the inlined `_buildChildEnv()` (which had no dangerous-env
+         * denylist — K2-H2). The shared helper lives at
+         * src/vs/platform/construct/common/security/childEnv.ts and is the
+         * single canonical implementation used by every spawn site in the
+         * Kovix tree. Stripped DENIED_ENV_KEYS are logged so the user knows
+         * their server definition was sanitized.
+         */
+        private _sanitizeAndBuildEnv(serverEnv: Record<string, string> | undefined, serverName: string): Record<string, string> {
+                const { env, strippedKeys } = buildChildEnv(serverEnv);
+                if (strippedKeys.length > 0) {
+                        this.logService.warn(
+                                `[MCP] Server "${serverName}" definition contained ${strippedKeys.length} dangerous env key(s) ` +
+                                `which were stripped before spawn: ${strippedKeys.join(', ')}. ` +
+                                `These keys allow code injection (NODE_OPTIONS, LD_PRELOAD, PYTHONPATH, ...) and are never passed to spawned MCP servers. `
+                        );
                 }
-                return childEnv;
+                return env;
         }
 
         private delay(ms: number): Promise<void> {

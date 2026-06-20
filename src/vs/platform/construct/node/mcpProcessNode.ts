@@ -10,6 +10,7 @@ import { ILogService } from '../../log/common/log.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
 import { IMCPProcessNodeService } from '../common/mcp/mcpProcessNode.js';
 import { assertWithinWorkspace, validateToolName, validateMcpMethod } from '../common/security/workspaceGuard.js';
+import { buildChildEnv } from '../common/security/childEnv.js';
 
 /**
  * JSON-RPC 2.0 request structure for MCP protocol.
@@ -165,17 +166,41 @@ export class MCPProcessNodeService extends Disposable implements IMCPProcessNode
 
                 this.logService.info(`[MCPProcessNode] Spawning MCP filesystem server: ${npxPath} -y @modelcontextprotocol/server-filesystem ${this.rootPath}`);
 
+                // SEC-9 (K2-H1 fix): Use the shared buildChildEnv() helper
+                // instead of spreading `{ ...process.env }`. The prior SEC-7
+                // H2 fix added _buildChildEnv() only in mcpConnectionPool.ts;
+                // this separate spawn path (the built-in MCP filesystem
+                // server) was missed and still leaked the full parent env —
+                // including any secret in AWS_*, GITHUB_TOKEN,
+                // KOVIX_ENCRYPTION_KEY_HEX, NODE_OPTIONS=--require ...,
+                // LD_PRELOAD=..., etc. — into the npx child and whatever npx
+                // pulls down at install time.
+                //
+                // The shared helper applies BOTH the PARENT_ENV_ALLOWLIST
+                // (drops everything not on the list) AND the DENIED_ENV_KEYS
+                // denylist (strips NODE_OPTIONS/LD_PRELOAD/etc. from serverEnv).
+                // See src/vs/platform/construct/common/security/childEnv.ts.
+                const { env: childEnv, strippedKeys } = buildChildEnv();
+                if (strippedKeys.length > 0) {
+                        // Should never happen for the built-in filesystem server
+                        // (no serverEnv passed), but log defensively in case a
+                        // future caller adds one.
+                        this.logService.warn(
+                                `[MCPProcessNode] Stripped ${strippedKeys.length} dangerous env key(s) from child env: ${strippedKeys.join(', ')}`
+                        );
+                }
+
                 try {
                         this.process = spawn(npxPath, ['-y', '@modelcontextprotocol/server-filesystem', this.rootPath], {
                                 stdio: ['pipe', 'pipe', 'pipe'],
-                                env: { ...process.env as Record<string, string> },
+                                env: childEnv,
                         });
                 } catch {
                         // Fallback: try bare npx
                         this.logService.warn('[MCPProcessNode] npx not found at resolved path, falling back to bare npx');
                         this.process = spawn('npx', ['-y', '@modelcontextprotocol/server-filesystem', this.rootPath], {
                                 stdio: ['pipe', 'pipe', 'pipe'],
-                                env: { ...process.env as Record<string, string> },
+                                env: childEnv,
                         });
                 }
 
