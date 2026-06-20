@@ -315,14 +315,15 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
                 const masked = this.computeMaskedDisplay(key);
                 this.storeMaskedKey(provider, masked);
 
-                // P0-2 FIX: Sync to IStorageService so CloudProvider (pre-migration) still works
-                const storageKey = `construct.${provider}.apiKey`;
-                this.storageService.store(storageKey, key, StorageScope.PROFILE, StorageTarget.MACHINE);
-
-                // P0-2 FIX: Also sync the generic cloud key for CloudProvider backward compatibility
-                if (provider === 'openai' || provider === 'anthropic' || provider === 'litellm' || provider === 'custom') {
-                        this.storageService.store(STORAGE_KEY_CLOUD_API_KEY, key, StorageScope.APPLICATION, StorageTarget.MACHINE);
-                }
+                // SEC-7 (C1 fix): Removed plaintext IStorageService.store() calls.
+                // The OS keychain (ISecretStorageService) is the single source of truth.
+                // Writing the key to IStorageService as well defeated the keychain's
+                // encryption-at-rest and per-app ACLs — any process with read access
+                // to ~/.config/Kovix/User/globalStorage/storage.json could recover
+                // every provider key. CloudProvider has been updated to read from
+                // SecureKeyManager directly. Legacy plaintext keys left by previous
+                // versions are migrated on first read (see getKey() below) and then
+                // purged from IStorageService.
 
                 this.logService.info(`[SecureKeyManager] API key stored for provider: ${provider}`);
                 this._onDidChangeKey.fire(provider);
@@ -341,6 +342,38 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
                 if (value !== undefined && value !== null) {
                         this.keyCache.set(provider, value);
                         return value;
+                }
+
+                // SEC-7 (C1 fix): One-time migration of legacy plaintext keys.
+                // Previous versions wrote API keys to IStorageService (plaintext JSON
+                // on disk) in addition to the OS keychain. If the keychain is empty
+                // but a legacy plaintext entry exists, migrate it into the keychain
+                // and purge the plaintext copy. This runs at most once per provider
+                // per profile — after migration the plaintext entry is gone.
+                const legacyStorageKey = `construct.${provider}.apiKey`;
+                const legacyValue = this.storageService.get(legacyStorageKey, StorageScope.PROFILE);
+                if (legacyValue) {
+                        await this.secretStorageService.set(secretKey, legacyValue);
+                        this.storageService.remove(legacyStorageKey, StorageScope.PROFILE);
+                        // Also purge the generic cloud key if this provider wrote it
+                        if (provider === 'openai' || provider === 'anthropic' || provider === 'litellm' || provider === 'custom') {
+                                this.storageService.remove(STORAGE_KEY_CLOUD_API_KEY, StorageScope.APPLICATION);
+                        }
+                        this.keyCache.set(provider, legacyValue);
+                        this.logService.info(`[SecureKeyManager] Migrated legacy plaintext key for provider: ${provider} → OS keychain`);
+                        return legacyValue;
+                }
+
+                // Also check the generic cloud API key (pre-migration CloudProvider wrote here)
+                if (provider === 'openai' || provider === 'anthropic' || provider === 'litellm' || provider === 'custom') {
+                        const genericValue = this.storageService.get(STORAGE_KEY_CLOUD_API_KEY, StorageScope.APPLICATION);
+                        if (genericValue) {
+                                await this.secretStorageService.set(secretKey, genericValue);
+                                this.storageService.remove(STORAGE_KEY_CLOUD_API_KEY, StorageScope.APPLICATION);
+                                this.keyCache.set(provider, genericValue);
+                                this.logService.info(`[SecureKeyManager] Migrated legacy generic cloud key for provider: ${provider} → OS keychain`);
+                                return genericValue;
+                        }
                 }
 
                 return null;

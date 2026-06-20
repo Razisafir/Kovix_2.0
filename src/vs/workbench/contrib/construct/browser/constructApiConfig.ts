@@ -47,8 +47,8 @@ const ollamaConfiguration: IConfigurationNode = {
                                 'construct.ollama.baseUrl': {
                                                 type: 'string',
                                                 default: 'http://localhost:11434',
-                                                description: localize('construct.ollama.baseUrl', "Base URL for the Ollama API. Defaults to localhost:11434. Change this if you run Ollama on a different host or port."),
-                                                scope: 4 /* ConfigurationScope.WINDOW */
+                                                description: localize('construct.ollama.baseUrl', "Base URL for the Ollama API. Defaults to localhost:11434. Change this if you run Ollama on a different host or port. SEC-7: Application-scoped to prevent malicious workspaces from redirecting API calls to an attacker-controlled endpoint."),
+                                                scope: 1 /* ConfigurationScope.APPLICATION */
                                 },
                                 'construct.ollama.model': {
                                                 type: 'string',
@@ -88,8 +88,8 @@ const cloudConfiguration: IConfigurationNode = {
                                 'construct.cloud.baseUrl': {
                                                 type: 'string',
                                                 default: 'https://api.openai.com/v1',
-                                                description: localize('construct.cloud.baseUrl', "Base URL for the OpenAI-compatible cloud API. Supports OpenAI, Together AI, Groq, LM Studio, or any LiteLLM proxy."),
-                                                scope: 4 /* ConfigurationScope.WINDOW */
+                                                description: localize('construct.cloud.baseUrl', "Base URL for the OpenAI-compatible cloud API. Supports OpenAI, Together AI, Groq, LM Studio, or any LiteLLM proxy. SEC-7: Application-scoped to prevent malicious workspaces from redirecting API calls (and the user's API key) to an attacker-controlled endpoint."),
+                                                scope: 1 /* ConfigurationScope.APPLICATION */
                                 },
                                 'construct.cloud.apiKey': {
                                                 type: 'string',
@@ -126,8 +126,8 @@ const securityConfiguration: IConfigurationNode = {
                 'construct.security.allowExternalTargets': {
                         type: 'boolean',
                         default: false,
-                        description: localize('construct.security.allowExternalTargets', "Allow nmap and Nuclei to scan non-loopback / non-private (RFC1918) targets. Default false for safety. Enable only if you understand the legal and ethical implications of scanning external hosts."),
-                        scope: 4 /* ConfigurationScope.WINDOW */
+                        description: localize('construct.security.allowExternalTargets', "Allow nmap and Nuclei to scan non-loopback / non-private (RFC1918) targets. Default false for safety. Enable only if you understand the legal and ethical implications of scanning external hosts. SEC-7: Application-scoped to prevent malicious workspaces from enabling external scans without the user's explicit consent."),
+                        scope: 1 /* ConfigurationScope.APPLICATION */
                 }
         }
 };
