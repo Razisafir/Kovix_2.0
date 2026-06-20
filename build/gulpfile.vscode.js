@@ -294,7 +294,7 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
                 // TODO the API should be copied to `out` during compile, not here
                 const api = gulp.src('src/vscode-dts/vscode.d.ts').pipe(rename('out/vscode-dts/vscode.d.ts'));
 
-                const telemetry = gulp.src('.build/telemetry/**', { base: '.build/telemetry', dot: true });
+                const telemetry = gulp.src('.build/telemetry/**', { base: '.build/telemetry', dot: true, allowEmpty: true });
 
                 const jsFilter = util.filter(data => !data.isDirectory() && /\.js$/.test(data.path));
                 const root = path.resolve(path.join(__dirname, '..'));
@@ -413,11 +413,11 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
                         result = es.merge(result, gulp.src('resources/win32/VisualElementsManifest.xml', { base: 'resources/win32' })
                                 .pipe(rename(product.nameShort + '.VisualElementsManifest.xml')));
 
-                        result = es.merge(result, gulp.src('.build/policies/win32/**', { base: '.build/policies/win32' })
+                        result = es.merge(result, gulp.src('.build/policies/win32/**', { base: '.build/policies/win32', allowEmpty: true })
                                 .pipe(rename(f => f.dirname = `policies/${f.dirname}`)));
 
                         if (quality === 'insider') {
-                                result = es.merge(result, gulp.src('.build/win32/appx/**', { base: '.build/win32' }));
+                                result = es.merge(result, gulp.src('.build/win32/appx/**', { base: '.build/win32', allowEmpty: true }));
                         }
                 } else if (platform === 'linux') {
                         result = es.merge(result, gulp.src('resources/linux/bin/kovix.sh', { base: '.' })
