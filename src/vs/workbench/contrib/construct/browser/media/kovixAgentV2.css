@@ -1,0 +1,536 @@
+/*---------------------------------------------------------------------------------------------
+ *  Kovix Agent Panel — v2.0 Teal Identity + agent-first surfaces.
+ *
+ *  This file is ADDED to kovixAgent.css (the existing 1,073-line file keeps
+ *  working via the backward-compat token aliases). It adds:
+ *    1. Persistent agent status bar (always visible when agent is active)
+ *    2. Plan-approval UI redesign (replaces inline-styles plan card)
+ *    3. Autonomy stop-mode segmented control (replaces QuickPick)
+ *    4. Message-category visual distinctions (user/agent-text/agent-tool/agent-question)
+ *    5. Memory browser scope badges (project vs universal)
+ *    6. Error state rendering (what failed / what attempted / recovery)
+ *
+ *  All values reference --kovix-* tokens. Zero hardcoded hex.
+ *--------------------------------------------------------------------------------------------*/
+
+/* ═════════════════════════════════════════════════════════════════════════
+   1. PERSISTENT AGENT STATUS BAR
+   Always visible at the top of the agent panel when the agent is active.
+   Replaces the inline status indicator that was buried in the welcome message.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.kovix-agent-statusbar {
+  display: flex;
+  align-items: center;
+  gap: var(--kovix-space-2);
+  padding: var(--kovix-space-1) var(--kovix-space-3);
+  background: var(--kovix-bg-elevated);
+  border-bottom: 1px solid var(--kovix-border);
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-xs);
+  color: var(--kovix-text-secondary);
+  min-height: 28px;
+}
+
+.kovix-agent-statusbar__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--kovix-radius-pill);
+  flex-shrink: 0;
+  transition: background var(--kovix-motion-fast);
+}
+
+/* State: idle */
+.kovix-agent-statusbar.is-idle .kovix-agent-statusbar__dot {
+  background: var(--kovix-text-muted);
+}
+
+/* State: planning (amber pulse) */
+.kovix-agent-statusbar.is-planning .kovix-agent-statusbar__dot {
+  background: var(--kovix-warning);
+  animation: kovix-status-pulse 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* State: executing (teal pulse) */
+.kovix-agent-statusbar.is-executing .kovix-agent-statusbar__dot {
+  background: var(--kovix-accent);
+  animation: kovix-status-pulse 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* State: refining (info pulse) */
+.kovix-agent-statusbar.is-refining .kovix-agent-statusbar__dot {
+  background: var(--kovix-info);
+  animation: kovix-status-pulse 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* State: paused at milestone (warning solid, no pulse) */
+.kovix-agent-statusbar.is-paused .kovix-agent-statusbar__dot {
+  background: var(--kovix-warning);
+}
+
+/* State: awaiting approval (warning solid) */
+.kovix-agent-statusbar.is-awaiting .kovix-agent-statusbar__dot {
+  background: var(--kovix-warning);
+}
+
+/* State: complete (success solid) */
+.kovix-agent-statusbar.is-complete .kovix-agent-statusbar__dot {
+  background: var(--kovix-success);
+}
+
+/* State: error (error solid) */
+.kovix-agent-statusbar.is-error .kovix-agent-statusbar__dot {
+  background: var(--kovix-error);
+}
+
+.kovix-agent-statusbar__label {
+  font-weight: var(--kovix-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kovix-agent-statusbar__task {
+  color: var(--kovix-text-muted);
+  margin-left: var(--kovix-space-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.kovix-agent-statusbar__progress {
+  font-family: var(--kovix-font-mono);
+  color: var(--kovix-text-muted);
+  font-size: 10px;
+}
+
+@keyframes kovix-status-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(1.2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kovix-agent-statusbar__dot { animation: none !important; }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   2. PLAN APPROVAL UI (redesigned)
+   Replaces the inline-style plan card. Uses shared Checkbox component.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.kovix-plan-card {
+  background: var(--kovix-bg-elevated);
+  border: 1px solid var(--kovix-border);
+  border-radius: var(--kovix-radius-md);
+  padding: var(--kovix-space-3);
+  margin: var(--kovix-space-3) 0;
+  font-family: var(--kovix-font-ui);
+}
+
+.kovix-plan-card__header {
+  display: flex;
+  align-items: center;
+  gap: var(--kovix-space-2);
+  margin-bottom: var(--kovix-space-3);
+  padding-bottom: var(--kovix-space-2);
+  border-bottom: 1px solid var(--kovix-border);
+}
+
+.kovix-plan-card__title {
+  font-size: var(--kovix-text-base);
+  font-weight: var(--kovix-weight-semibold);
+  color: var(--kovix-text-primary);
+}
+
+.kovix-plan-card__meta {
+  font-size: var(--kovix-text-xs);
+  color: var(--kovix-text-muted);
+  margin-left: auto;
+  font-family: var(--kovix-font-mono);
+}
+
+.kovix-plan-card__steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kovix-space-1);
+  margin-bottom: var(--kovix-space-3);
+}
+
+.kovix-plan-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--kovix-space-2);
+  padding: var(--kovix-space-1) var(--kovix-space-2);
+  border-radius: var(--kovix-radius-sm);
+  transition: background var(--kovix-motion-fast);
+}
+
+.kovix-plan-step:hover {
+  background: var(--kovix-accent-subtle);
+}
+
+/* Step state: pending (default) */
+.kovix-plan-step__text {
+  flex: 1;
+  font-size: var(--kovix-text-sm);
+  color: var(--kovix-text-primary);
+  line-height: var(--kovix-leading-normal);
+}
+
+/* Step state: in-progress */
+.kovix-plan-step.is-in-progress {
+  background: var(--kovix-info-bg);
+}
+.kovix-plan-step.is-in-progress .kovix-plan-step__text {
+  color: var(--kovix-info);
+  font-weight: var(--kovix-weight-medium);
+}
+
+/* Step state: complete */
+.kovix-plan-step.is-complete .kovix-plan-step__text {
+  color: var(--kovix-success);
+  text-decoration: line-through;
+  text-decoration-color: var(--kovix-success);
+}
+
+/* Step state: failed */
+.kovix-plan-step.is-failed {
+  background: var(--kovix-error-bg);
+}
+.kovix-plan-step.is-failed .kovix-plan-step__text {
+  color: var(--kovix-error);
+}
+
+.kovix-plan-card__controls {
+  display: flex;
+  gap: var(--kovix-space-2);
+  align-items: center;
+  padding-top: var(--kovix-space-2);
+  border-top: 1px solid var(--kovix-border);
+}
+
+.kovix-plan-card__select-all {
+  font-size: var(--kovix-text-xs);
+  color: var(--kovix-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--kovix-space-1);
+  font-family: var(--kovix-font-ui);
+}
+
+.kovix-plan-card__select-all:hover {
+  color: var(--kovix-accent);
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   3. AUTONOMY STOP-MODE SEGMENTED CONTROL
+   Replaces the QuickPick. Visible in the plan card, not buried in a settings toggle.
+   Trust decision: how much autonomy to grant the agent.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.kovix-stop-mode {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kovix-space-2);
+  margin-bottom: var(--kovix-space-3);
+}
+
+.kovix-stop-mode__label {
+  font-size: var(--kovix-text-xs);
+  font-weight: var(--kovix-weight-semibold);
+  color: var(--kovix-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.kovix-stop-mode__options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--kovix-space-1);
+}
+
+.kovix-stop-mode__option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--kovix-space-2) var(--kovix-space-3);
+  background: var(--kovix-bg-input);
+  border: 1px solid var(--kovix-border);
+  border-radius: var(--kovix-radius-sm);
+  cursor: pointer;
+  transition: all var(--kovix-motion-fast);
+  font-family: var(--kovix-font-ui);
+}
+
+.kovix-stop-mode__option:hover {
+  border-color: var(--kovix-accent);
+  background: var(--kovix-accent-subtle);
+}
+
+.kovix-stop-mode__option.is-selected {
+  border-color: var(--kovix-accent);
+  background: var(--kovix-accent-subtle);
+  box-shadow: inset 0 0 0 1px var(--kovix-accent);
+}
+
+.kovix-stop-mode__option-name {
+  font-size: var(--kovix-text-sm);
+  font-weight: var(--kovix-weight-semibold);
+  color: var(--kovix-text-primary);
+}
+
+.kovix-stop-mode__option-desc {
+  font-size: 10px;
+  color: var(--kovix-text-muted);
+  line-height: 1.3;
+}
+
+.kovix-stop-mode__option.is-selected .kovix-stop-mode__option-name {
+  color: var(--kovix-accent);
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   4. MESSAGE-CATEGORY VISUAL DISTINCTIONS
+   User / agent-text / agent-tool / agent-question — distinguishable at a glance.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+/* User messages: teal-tinted bubble, right-aligned content feel */
+.kovix-msg--user .kovix-msg__bubble {
+  background: var(--kovix-accent-subtle);
+  border: 1px solid var(--kovix-border-accent);
+  color: var(--kovix-text-primary);
+  border-radius: var(--kovix-radius-md);
+  padding: var(--kovix-space-2) var(--kovix-space-3);
+}
+
+/* Agent text responses: transparent bubble, just the avatar distinguishes */
+.kovix-msg--agent .kovix-msg__bubble {
+  background: transparent;
+  border: none;
+  color: var(--kovix-text-primary);
+  padding: var(--kovix-space-1) 0;
+}
+
+/* Agent tool calls: card with left-border accent + monospace label */
+.kovix-msg--tool {
+  margin: var(--kovix-space-1) 0;
+  padding: var(--kovix-space-2) var(--kovix-space-3);
+  background: var(--kovix-bg-elevated);
+  border-left: 3px solid var(--kovix-accent);
+  border-radius: var(--kovix-radius-sm);
+  font-family: var(--kovix-font-mono);
+  font-size: var(--kovix-text-sm);
+  color: var(--kovix-text-secondary);
+}
+
+.kovix-msg--tool .kovix-msg__tool-name {
+  color: var(--kovix-accent);
+  font-weight: var(--kovix-weight-semibold);
+}
+
+.kovix-msg--tool .kovix-msg__tool-args {
+  color: var(--kovix-text-muted);
+}
+
+/* Agent questions: card with warning left-border, prompts user input */
+.kovix-msg--question {
+  margin: var(--kovix-space-2) 0;
+  padding: var(--kovix-space-3);
+  background: var(--kovix-warning-bg);
+  border-left: 3px solid var(--kovix-warning);
+  border-radius: var(--kovix-radius-md);
+  font-family: var(--kovix-font-ui);
+  color: var(--kovix-text-primary);
+}
+
+.kovix-msg--question .kovix-msg__question-label {
+  font-size: var(--kovix-text-xs);
+  font-weight: var(--kovix-weight-semibold);
+  color: var(--kovix-warning);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--kovix-space-1);
+  display: block;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   5. MEMORY BROWSER SCOPE BADGES
+   Visual distinction between project-scoped and universal memory entries.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.kovix-memory-entry {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--kovix-space-2);
+  padding: var(--kovix-space-2) var(--kovix-space-3);
+  border-bottom: 1px solid var(--kovix-border);
+  transition: background var(--kovix-motion-fast);
+}
+
+.kovix-memory-entry:hover {
+  background: var(--kovix-accent-subtle);
+}
+
+.kovix-memory-entry__scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px var(--kovix-space-1);
+  font-family: var(--kovix-font-ui);
+  font-size: 9px;
+  font-weight: var(--kovix-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: var(--kovix-radius-pill);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.kovix-memory-entry__scope--project {
+  background: var(--kovix-info-bg);
+  color: var(--kovix-info);
+  border: 1px solid rgba(88, 166, 255, 0.30);
+}
+
+.kovix-memory-entry__scope--universal {
+  background: var(--kovix-accent-subtle);
+  color: var(--kovix-accent);
+  border: 1px solid var(--kovix-border-accent);
+}
+
+.kovix-memory-entry__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.kovix-memory-entry__text {
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-sm);
+  color: var(--kovix-text-primary);
+  line-height: var(--kovix-leading-normal);
+  margin-bottom: 2px;
+}
+
+.kovix-memory-entry__meta {
+  font-family: var(--kovix-font-mono);
+  font-size: 10px;
+  color: var(--kovix-text-muted);
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   6. AGENT ERROR STATE (inline in chat)
+   Uses the shared createErrorState component but with agent-specific styling.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.kovix-agent-error {
+  margin: var(--kovix-space-2) 0;
+}
+
+.kovix-agent-error .kovix-error-state__title::before {
+  content: '⚠';
+  margin-right: var(--kovix-space-1);
+  color: var(--kovix-error);
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   7. ONBOARDING WIZARD — focused single-purpose flow treatment
+   Larger type, more whitespace, centered layout (per foundation doc).
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.kovix-onboarding-step {
+  max-width: 540px;
+  margin: 0 auto;
+  padding: var(--kovix-space-8) var(--kovix-space-4);
+  text-align: center;
+}
+
+.kovix-onboarding-step__headline {
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-xl);
+  font-weight: var(--kovix-weight-semibold);
+  color: var(--kovix-text-primary);
+  margin: 0 0 var(--kovix-space-2);
+  line-height: var(--kovix-leading-tight);
+}
+
+.kovix-onboarding-step__sub {
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-md);
+  color: var(--kovix-text-secondary);
+  margin: 0 0 var(--kovix-space-6);
+  line-height: var(--kovix-leading-relaxed);
+}
+
+.kovix-onboarding-step__input {
+  margin: 0 auto var(--kovix-space-4);
+  max-width: 420px;
+}
+
+.kovix-onboarding-step__actions {
+  display: flex;
+  gap: var(--kovix-space-2);
+  justify-content: center;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   8. MILESTONE PAUSE CONTROLS (redesigned from inline styles)
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.kovix-milestone-pause {
+  margin: var(--kovix-space-2) 0;
+  padding: var(--kovix-space-3);
+  background: var(--kovix-warning-bg);
+  border: 1px solid rgba(210, 153, 34, 0.30);
+  border-left: 3px solid var(--kovix-warning);
+  border-radius: var(--kovix-radius-md);
+}
+
+.kovix-milestone-pause__header {
+  display: flex;
+  align-items: center;
+  gap: var(--kovix-space-2);
+  margin-bottom: var(--kovix-space-2);
+}
+
+.kovix-milestone-pause__icon {
+  color: var(--kovix-warning);
+  font-size: 16px;
+}
+
+.kovix-milestone-pause__title {
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-base);
+  font-weight: var(--kovix-weight-semibold);
+  color: var(--kovix-text-primary);
+}
+
+.kovix-milestone-pause__name {
+  font-family: var(--kovix-font-mono);
+  font-size: var(--kovix-text-sm);
+  color: var(--kovix-warning);
+  margin-left: var(--kovix-space-1);
+}
+
+.kovix-milestone-pause__body {
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-sm);
+  color: var(--kovix-text-secondary);
+  line-height: var(--kovix-leading-relaxed);
+  margin-bottom: var(--kovix-space-3);
+}
+
+.kovix-milestone-pause__actions {
+  display: flex;
+  gap: var(--kovix-space-2);
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   9. MEMORY BROWSER EMPTY STATE
+   For a brand-new project with no memory yet.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.kovix-memory-empty {
+  padding: var(--kovix-space-8) var(--kovix-space-4);
+  text-align: center;
+}

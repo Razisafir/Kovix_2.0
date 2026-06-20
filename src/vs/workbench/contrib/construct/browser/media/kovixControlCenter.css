@@ -110,7 +110,7 @@
 }
 
 .kovix-cc-kv--total .kovix-cc-kv-val {
-	color: var(--kovix-volt-400);
+	color: var(--kovix-accent-hover);
 	font-weight: 700;
 }
 

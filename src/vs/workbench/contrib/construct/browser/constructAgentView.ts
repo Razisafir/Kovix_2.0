@@ -45,6 +45,10 @@ import { ISkillRegistry } from '../../../../platform/construct/common/skills/ski
 // P0-3: Slash command autocomplete dropdown — instantiates one per agent input.
 import { KovixSlashDropdown } from './kovixSlashDropdown.js';
 import './media/kovixAgent.css';
+// v2.0 teal-identity additions: persistent status bar, plan-approval redesign,
+// stop-mode segmented control, message-category distinctions, memory scope
+// badges, error states, milestone pause redesign, onboarding step treatment.
+import './media/kovixAgentV2.css';
 
 type ExecutionState = 'idle' | 'planning' | 'refining' | 'awaiting_approval' | 'executing' | 'paused_at_milestone' | 'complete' | 'error' | 'stopped';
 

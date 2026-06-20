@@ -43,7 +43,7 @@
 	display: grid;
 	place-items: center;
 	flex-shrink: 0;
-	box-shadow: var(--kovix-shadow-volt);
+	box-shadow: var(--kovix-shadow-accent);
 }
 
 .kovix-agent__titles {
@@ -94,7 +94,7 @@
 }
 
 .kovix-icon-btn:focus-visible {
-	outline: 2px solid var(--kovix-volt-400);
+	outline: 2px solid var(--kovix-accent-hover);
 	outline-offset: -2px;
 }
 
@@ -141,9 +141,9 @@
 }
 
 .kovix-session-tab.is-active {
-	background: var(--kovix-volt-subtle);
-	color: var(--kovix-volt-400);
-	border-color: var(--kovix-hairline-volt);
+	background: var(--kovix-accent-subtle);
+	color: var(--kovix-accent-hover);
+	border-color: var(--kovix-border-accent);
 }
 
 .kovix-session-tab__close {
@@ -182,8 +182,8 @@
 	font-size: 11px;
 	font-weight: 500;
 	color: var(--kovix-text-on-volt);
-	background: var(--kovix-volt-500);
-	border: 1px solid var(--kovix-volt-600);
+	background: var(--kovix-accent);
+	border: 1px solid var(--kovix-accent-active);
 	cursor: pointer;
 	white-space: nowrap;
 	transition: filter var(--kovix-motion-fast);
@@ -224,7 +224,7 @@
 	border: 1px solid var(--kovix-hairline);
 }
 
-.kovix-mode-badge--architect { color: var(--kovix-volt-400); border-color: var(--kovix-hairline-volt); }
+.kovix-mode-badge--architect { color: var(--kovix-accent-hover); border-color: var(--kovix-border-accent); }
 .kovix-mode-badge--coder     { color: var(--kovix-ignite-400); border-color: rgba(255,90,54,0.30); }
 .kovix-mode-badge--reviewer  { color: var(--kovix-state-running); border-color: rgba(78,201,176,0.30); }
 .kovix-mode-badge--debugger  { color: var(--kovix-state-pending); border-color: rgba(215,186,125,0.30); }
@@ -251,7 +251,7 @@
 }
 
 .kovix-agent__messages::-webkit-scrollbar-thumb:hover {
-	background: var(--kovix-volt-500);
+	background: var(--kovix-accent);
 }
 
 .kovix-msg {
@@ -327,7 +327,7 @@
 }
 
 .kovix-msg__status--working  { color: var(--kovix-state-running); }
-.kovix-msg__status--thinking { color: var(--kovix-volt-400); }
+.kovix-msg__status--thinking { color: var(--kovix-accent-hover); }
 .kovix-msg__status--awaiting { color: var(--kovix-state-pending); }
 .kovix-msg__status--error    { color: var(--kovix-ignite-500); }
 .kovix-msg__status--done     { color: var(--kovix-state-success); }
@@ -343,8 +343,8 @@
 }
 
 .kovix-msg--user .kovix-msg__bubble {
-	background: var(--kovix-volt-subtle);
-	border-color: var(--kovix-hairline-volt);
+	background: var(--kovix-accent-subtle);
+	border-color: var(--kovix-border-accent);
 }
 
 .kovix-msg__bubble code {
@@ -374,8 +374,8 @@
 	font-size: 10px;
 	font-weight: 500;
 	color: var(--kovix-text-on-volt);
-	background: var(--kovix-volt-500);
-	border: 1px solid var(--kovix-volt-600);
+	background: var(--kovix-accent);
+	border: 1px solid var(--kovix-accent-active);
 	transition: filter var(--kovix-motion-fast);
 }
 
@@ -385,7 +385,7 @@
 
 .kovix-toolchip--ok { background: var(--kovix-state-running); border-color: var(--kovix-state-running); }
 .kovix-toolchip--err { background: var(--kovix-ignite-500); border-color: var(--kovix-ignite-600); }
-.kovix-toolchip--running { background: var(--kovix-volt-500); border-color: var(--kovix-volt-600); animation: kovix-chip-pulse 1.4s ease-in-out infinite; }
+.kovix-toolchip--running { background: var(--kovix-accent); border-color: var(--kovix-accent-active); animation: kovix-chip-pulse 1.4s ease-in-out infinite; }
 
 @keyframes kovix-chip-pulse {
 	0%, 100% { opacity: 1; }
@@ -566,9 +566,9 @@
 }
 
 .kovix-plan__step.is-active .kovix-plan__step-num {
-	background: var(--kovix-volt-500);
+	background: var(--kovix-accent);
 	color: var(--kovix-text-on-volt);
-	box-shadow: 0 0 0 3px var(--kovix-volt-subtle);
+	box-shadow: 0 0 0 3px var(--kovix-accent-subtle);
 }
 
 .kovix-plan__step-label {
@@ -599,8 +599,8 @@
 
 .kovix-welcome__logo {
 	font-size: 40px;
-	color: var(--kovix-volt-500);
-	text-shadow: 0 0 24px var(--kovix-volt-glow);
+	color: var(--kovix-accent);
+	text-shadow: 0 0 24px var(--kovix-accent-glow);
 	line-height: 1;
 	margin-bottom: var(--kovix-space-2);
 }
@@ -632,7 +632,7 @@
 .kovix-welcome__hint kbd {
 	font-family: var(--kovix-font-mono);
 	background: var(--kovix-bg-raised);
-	color: var(--kovix-volt-400);
+	color: var(--kovix-accent-hover);
 	padding: 1px 5px;
 	border-radius: var(--kovix-radius-xs);
 	border: 1px solid var(--kovix-hairline-bold);
@@ -673,9 +673,9 @@
 }
 
 .kovix-chip--file {
-	background: var(--kovix-volt-subtle);
-	color: var(--kovix-volt-400);
-	border-color: var(--kovix-hairline-volt);
+	background: var(--kovix-accent-subtle);
+	color: var(--kovix-accent-hover);
+	border-color: var(--kovix-border-accent);
 }
 
 .kovix-chip--tag {
@@ -707,8 +707,8 @@
 }
 
 .kovix-inputrow:focus-within {
-	border-color: var(--kovix-volt-500);
-	box-shadow: 0 0 0 3px var(--kovix-volt-subtle);
+	border-color: var(--kovix-accent);
+	box-shadow: 0 0 0 3px var(--kovix-accent-subtle);
 }
 
 .kovix-inputrow textarea {
@@ -877,7 +877,7 @@
 	max-height: 240px;
 	overflow-y: auto;
 	background: var(--kovix-bg-overlay, #14141C);
-	border: 1px solid var(--kovix-hairline-volt, rgba(197, 66, 255, 0.30));
+	border: 1px solid var(--kovix-border-accent, rgba(197, 66, 255, 0.30));
 	border-radius: var(--kovix-radius-md, 7px);
 	box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5);
 	padding: var(--kovix-space-1, 4px);
@@ -907,25 +907,25 @@
 
 .kovix-slash-dropdown__item:hover,
 .kovix-slash-dropdown__item.is-active {
-	background: var(--kovix-volt-subtle, rgba(197, 66, 255, 0.12));
+	background: var(--kovix-accent-subtle, rgba(197, 66, 255, 0.12));
 	color: var(--kovix-text-primary, #FFFFFF);
 }
 
 .kovix-slash-dropdown__item.is-active {
-	box-shadow: inset 2px 0 0 var(--kovix-volt-500, #C542FF);
+	box-shadow: inset 2px 0 0 var(--kovix-accent, #C542FF);
 }
 
 .kovix-slash-dropdown__cmd {
 	font-family: var(--kovix-font-mono, "JetBrains Mono", monospace);
 	font-weight: 600;
-	color: var(--kovix-volt-400, #D670FF);
+	color: var(--kovix-accent-hover, #D670FF);
 	min-width: 130px;
 	flex-shrink: 0;
 }
 
 .kovix-slash-dropdown__item:hover .kovix-slash-dropdown__cmd,
 .kovix-slash-dropdown__item.is-active .kovix-slash-dropdown__cmd {
-	color: var(--kovix-volt-400, #D670FF);
+	color: var(--kovix-accent-hover, #D670FF);
 }
 
 .kovix-slash-dropdown__usage {
@@ -979,15 +979,15 @@
 
 /* Visually distinguish the secondary buttons with a subtle Volt tint on hover */
 .kovix-agent__header-secondary .kovix-icon-btn:hover {
-	background: var(--kovix-volt-subtle, rgba(197, 66, 255, 0.12));
-	color: var(--kovix-volt-400, #D670FF);
+	background: var(--kovix-accent-subtle, rgba(197, 66, 255, 0.12));
+	color: var(--kovix-accent-hover, #D670FF);
 }
 
 /* Active state for the ponytail button — shows the current mode in the badge */
 .kovix-agent__header-secondary .kovix-icon-btn.is-active {
-	background: var(--kovix-volt-subtle, rgba(197, 66, 255, 0.12));
-	color: var(--kovix-volt-400, #D670FF);
-	box-shadow: inset 0 -2px 0 var(--kovix-volt-500, #C542FF);
+	background: var(--kovix-accent-subtle, rgba(197, 66, 255, 0.12));
+	color: var(--kovix-accent-hover, #D670FF);
+	box-shadow: inset 0 -2px 0 var(--kovix-accent, #C542FF);
 }
 
 /* ===========================================================================
@@ -1005,8 +1005,8 @@
 
 .kovix-memory-pill:hover,
 .kovix-ponytail-badge:hover {
-	background: var(--kovix-volt-subtle, rgba(197, 66, 255, 0.12)) !important;
-	border-color: var(--kovix-hairline-volt, rgba(197, 66, 255, 0.30)) !important;
+	background: var(--kovix-accent-subtle, rgba(197, 66, 255, 0.12)) !important;
+	border-color: var(--kovix-border-accent, rgba(197, 66, 255, 0.30)) !important;
 	color: var(--kovix-text-primary, #FFFFFF) !important;
 }
 
@@ -1028,8 +1028,8 @@
 }
 
 .kovix-mode-badge:hover {
-	background: var(--kovix-volt-500, #C542FF) !important;
-	border-color: var(--kovix-volt-500, #C542FF) !important;
+	background: var(--kovix-accent, #C542FF) !important;
+	border-color: var(--kovix-accent, #C542FF) !important;
 	color: #FFFFFF !important;
 }
 
@@ -1043,7 +1043,7 @@
 }
 
 .kovix-agent__subline-seg:hover {
-	color: var(--kovix-volt-400, #D670FF);
+	color: var(--kovix-accent-hover, #D670FF);
 	text-decoration: underline;
 }
 
@@ -1067,7 +1067,7 @@
 }
 
 .kovix-attach-btn:hover {
-	color: var(--kovix-volt-400, #D670FF);
-	border-color: var(--kovix-volt-500, #C542FF);
-	background: var(--kovix-volt-subtle, rgba(197, 66, 255, 0.12));
+	color: var(--kovix-accent-hover, #D670FF);
+	border-color: var(--kovix-accent, #C542FF);
+	background: var(--kovix-accent-subtle, rgba(197, 66, 255, 0.12));
 }

@@ -42,10 +42,10 @@
   --vscode-editor-lineHighlightBackground: rgba(255, 255, 255, 0.03);
   --vscode-editor-lineHighlightBorder: transparent;
 
-  --vscode-editorCursor-foreground: var(--kovix-volt-400);
+  --vscode-editorCursor-foreground: var(--kovix-accent-hover);
   --vscode-editorIndentGuide-background: rgba(255, 255, 255, 0.04);
   --vscode-editorIndentGuide-activeBackground: rgba(255, 255, 255, 0.10);
-  --vscode-editorLink-activeForeground: var(--kovix-volt-400);
+  --vscode-editorLink-activeForeground: var(--kovix-accent-hover);
 
   /* ── Workbench shell ──────────────────────────────────────────────────── */
 
@@ -53,7 +53,7 @@
   --vscode-descriptionForeground: var(--kovix-text-secondary);
   --vscode-icon-foreground: var(--kovix-text-primary);
   --vscode-errorForeground: var(--kovix-state-error);
-  --vscode-focusBorder: var(--kovix-volt-500);
+  --vscode-focusBorder: var(--kovix-accent);
 
   --vscode-sideBar-background: var(--kovix-bg-surface);
   --vscode-sideBar-foreground: var(--kovix-text-secondary);
@@ -66,15 +66,15 @@
   --vscode-activityBar-background: var(--kovix-bg-surface);
   --vscode-activityBar-foreground: var(--kovix-text-secondary);
   --vscode-activityBar-inactiveForeground: var(--kovix-text-tertiary);
-  --vscode-activityBar-activeBorder: var(--kovix-volt-500);
+  --vscode-activityBar-activeBorder: var(--kovix-accent);
   --vscode-activityBar-activeBackground: transparent;
-  --vscode-activityBar-activeFocusBorder: var(--kovix-volt-500);
-  --vscode-activityBarBadge-background: var(--kovix-volt-500);
+  --vscode-activityBar-activeFocusBorder: var(--kovix-accent);
+  --vscode-activityBarBadge-background: var(--kovix-accent);
   --vscode-activityBarBadge-foreground: #FFFFFF;
   --vscode-activityBarTop-background: var(--kovix-bg-surface);
   --vscode-activityBarTop-foreground: var(--kovix-text-secondary);
   --vscode-activityBarTop-inactiveForeground: var(--kovix-text-tertiary);
-  --vscode-activityBarTop-activeBorder: var(--kovix-volt-500);
+  --vscode-activityBarTop-activeBorder: var(--kovix-accent);
 
   --vscode-statusBar-background: var(--kovix-bg-surface);
   --vscode-statusBar-foreground: var(--kovix-text-secondary);
@@ -108,7 +108,7 @@
 
   --vscode-tab-activeBackground: var(--kovix-bg-ink);
   --vscode-tab-activeForeground: var(--kovix-text-primary);
-  --vscode-tab-activeBorderTop: var(--kovix-volt-500);
+  --vscode-tab-activeBorderTop: var(--kovix-accent);
   --vscode-tab-activeBorderBottom: transparent;
   --vscode-tab-activeBorder: transparent;
   --vscode-tab-inactiveBackground: var(--kovix-bg-surface);
@@ -126,22 +126,22 @@
   --vscode-editorGroup-dropBackground: rgba(197, 66, 255, 0.10);
 
   --vscode-splitView-inactiveVisibleBorder: var(--kovix-hairline);
-  --vscode-splitView-activeVisibleBorder: var(--kovix-volt-500);
+  --vscode-splitView-activeVisibleBorder: var(--kovix-accent);
 
   /* ── Lists & trees (file explorer, command palette, quick pick) ──────── */
 
   --vscode-list-foreground: var(--kovix-text-secondary);
   --vscode-list-activeSelectionBackground: rgba(197, 66, 255, 0.18);
   --vscode-list-activeSelectionForeground: var(--kovix-text-primary);
-  --vscode-list-activeSelectionIconForeground: var(--kovix-volt-400);
+  --vscode-list-activeSelectionIconForeground: var(--kovix-accent-hover);
   --vscode-list-inactiveSelectionBackground: rgba(255, 255, 255, 0.05);
   --vscode-list-inactiveSelectionForeground: var(--kovix-text-primary);
   --vscode-list-hoverBackground: rgba(197, 66, 255, 0.08);
   --vscode-list-hoverForeground: var(--kovix-text-primary);
   --vscode-list-focusBackground: rgba(197, 66, 255, 0.14);
   --vscode-list-focusForeground: var(--kovix-text-primary);
-  --vscode-list-focusOutline: var(--kovix-volt-500);
-  --vscode-list-highlightForeground: var(--kovix-volt-400);
+  --vscode-list-focusOutline: var(--kovix-accent);
+  --vscode-list-highlightForeground: var(--kovix-accent-hover);
   --vscode-list-filterMatchBackground: rgba(255, 194, 51, 0.20);
   --vscode-list-invalidItemForeground: var(--kovix-state-error);
   --vscode-list-errorForeground: var(--kovix-state-error);
@@ -155,7 +155,7 @@
   --vscode-input-border: var(--kovix-border);
   --vscode-input-placeholderForeground: var(--kovix-text-tertiary);
   --vscode-inputOption-activeBackground: rgba(197, 66, 255, 0.20);
-  --vscode-inputOption-activeBorder: var(--kovix-volt-500);
+  --vscode-inputOption-activeBorder: var(--kovix-accent);
   --vscode-inputOption-activeForeground: var(--kovix-text-primary);
   --vscode-inputOption-hoverBackground: rgba(255, 255, 255, 0.06);
 
@@ -163,9 +163,9 @@
   --vscode-dropdown-foreground: var(--kovix-text-primary);
   --vscode-dropdown-border: var(--kovix-border);
 
-  --vscode-button-background: var(--kovix-volt-500);
+  --vscode-button-background: var(--kovix-accent);
   --vscode-button-foreground: #FFFFFF;
-  --vscode-button-hoverBackground: var(--kovix-volt-400);
+  --vscode-button-hoverBackground: var(--kovix-accent-hover);
   --vscode-button-secondaryBackground: rgba(255, 255, 255, 0.06);
   --vscode-button-secondaryForeground: var(--kovix-text-primary);
   --vscode-button-secondaryHoverBackground: rgba(255, 255, 255, 0.10);
@@ -176,17 +176,17 @@
   --vscode-scrollbar-shadow: rgba(0, 0, 0, 0.4);
   --vscode-scrollbarSlider-background: rgba(255, 255, 255, 0.08);
   --vscode-scrollbarSlider-hoverBackground: rgba(255, 255, 255, 0.14);
-  --vscode-scrollbarSlider-activeBackground: var(--kovix-volt-500);
+  --vscode-scrollbarSlider-activeBackground: var(--kovix-accent);
   --vscode-progressBar-background: var(--kovix-gradient-volt);
 
   /* ── Badges, chips, banners ──────────────────────────────────────────── */
 
-  --vscode-badge-background: var(--kovix-volt-500);
+  --vscode-badge-background: var(--kovix-accent);
   --vscode-badge-foreground: #FFFFFF;
 
   --vscode-banner-background: var(--kovix-bg-overlay);
   --vscode-banner-foreground: var(--kovix-text-primary);
-  --vscode-banner-iconForeground: var(--kovix-volt-400);
+  --vscode-banner-iconForeground: var(--kovix-accent-hover);
 
   /* ── Quick pick / command palette ────────────────────────────────────── */
 
@@ -195,14 +195,14 @@
   --vscode-quickInputTitle-background: transparent;
   --vscode-quickInputList-focusBackground: rgba(197, 66, 255, 0.18);
   --vscode-quickInputList-focusForeground: var(--kovix-text-primary);
-  --vscode-quickInputList-focusIconForeground: var(--kovix-volt-400);
+  --vscode-quickInputList-focusIconForeground: var(--kovix-accent-hover);
   --vscode-pickerGroup-foreground: var(--kovix-text-tertiary);
   --vscode-pickerGroup-border: var(--kovix-hairline);
 
   /* ── Settings UI ─────────────────────────────────────────────────────── */
 
   --vscode-settings-headerForeground: var(--kovix-text-primary);
-  --vscode-settings-modifiedItemIndicator: var(--kovix-volt-500);
+  --vscode-settings-modifiedItemIndicator: var(--kovix-accent);
   --vscode-settings-headerBorder: var(--kovix-hairline);
   --vscode-settings-sashBorder: var(--kovix-hairline);
   --vscode-settings-dropdownBackground: var(--kovix-bg-overlay);
@@ -211,7 +211,7 @@
   --vscode-settings-dropdownListBorder: var(--kovix-hairline);
   --vscode-settings-checkboxBackground: var(--kovix-bg-input);
   --vscode-settings-checkboxBorder: var(--kovix-border);
-  --vscode-settings-checkboxForeground: var(--kovix-volt-400);
+  --vscode-settings-checkboxForeground: var(--kovix-accent-hover);
   --vscode-settings-textInputBackground: var(--kovix-bg-input);
   --vscode-settings-textInputForeground: var(--kovix-text-primary);
   --vscode-settings-textInputBorder: var(--kovix-border);
@@ -226,7 +226,7 @@
   --vscode-notifications-background: var(--kovix-bg-overlay);
   --vscode-notifications-foreground: var(--kovix-text-primary);
   --vscode-notifications-border: var(--kovix-border);
-  --vscode-notificationLink-foreground: var(--kovix-volt-400);
+  --vscode-notificationLink-foreground: var(--kovix-accent-hover);
   --vscode-notificationCenterHeader-background: var(--kovix-bg-surface);
   --vscode-notificationToast-background: var(--kovix-bg-overlay);
 
@@ -237,14 +237,14 @@
   /* ── Git / SCM ───────────────────────────────────────────────────────── */
 
   --vscode-gitDecoration-addedResourceForeground: #21D3A8;
-  --vscode-gitDecoration-modifiedResourceForeground: var(--kovix-volt-400);
+  --vscode-gitDecoration-modifiedResourceForeground: var(--kovix-accent-hover);
   --vscode-gitDecoration-deletedResourceForeground: var(--kovix-state-error);
   --vscode-gitDecoration-untrackedResourceForeground: #3DA9FC;
   --vscode-gitDecoration-ignoredResourceForeground: var(--kovix-text-tertiary);
   --vscode-gitDecoration-conflictingResourceForeground: var(--kovix-state-pending);
 
   --vscode-scmGraph-foreground: var(--kovix-text-secondary);
-  --vscode-scmGraph-historyItemHoverLabelForeground: var(--kovix-volt-400);
+  --vscode-scmGraph-historyItemHoverLabelForeground: var(--kovix-accent-hover);
 
   /* ── Terminal ────────────────────────────────────────────────────────── */
 
@@ -271,9 +271,9 @@
 
   --vscode-symbolIcon-arrayForeground: #FFC233;
   --vscode-symbolIcon-booleanForeground: #3DA9FC;
-  --vscode-symbolIcon-classForeground: var(--kovix-volt-400);
+  --vscode-symbolIcon-classForeground: var(--kovix-accent-hover);
   --vscode-symbolIcon-functionForeground: #5FE8C6;
-  --vscode-symbolIcon-interfaceForeground: var(--kovix-volt-400);
+  --vscode-symbolIcon-interfaceForeground: var(--kovix-accent-hover);
   --vscode-symbolIcon-variableForeground: #E8EAED;
 }
 
@@ -333,7 +333,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--kovix-volt-400);
+  background: var(--kovix-accent-hover);
   box-shadow: 0 0 0 0 rgba(197, 66, 255, 0.55);
   display: inline-block;
   margin-right: 6px;
@@ -397,7 +397,7 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background: var(--kovix-volt-500);
+  background: var(--kovix-accent);
   border-radius: 2px;
 }
 
@@ -434,7 +434,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: var(--kovix-volt-500);
+  background: var(--kovix-accent);
   color: #FFFFFF;
   border-radius: var(--kovix-radius-md);
   font-size: 12px;
@@ -445,7 +445,7 @@
   transition: background var(--kovix-motion-fast) ease;
 }
 .monaco-workbench .settings-editor .kovix-settings-cta:hover {
-  background: var(--kovix-volt-400);
+  background: var(--kovix-accent-hover);
 }
 
 /* About dialog — the Kovix brand panel that replaces VS Code's About content. */
@@ -487,10 +487,10 @@
   border-top: 1px solid var(--kovix-hairline);
 }
 .monaco-workbench .dialog .kovix-about-credit a {
-  color: var(--kovix-volt-400);
+  color: var(--kovix-accent-hover);
   text-decoration: none;
 }
 .monaco-workbench .dialog .kovix-about-credit a:hover {
-  color: var(--kovix-volt-400);
+  color: var(--kovix-accent-hover);
   text-decoration: underline;
 }

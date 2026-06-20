@@ -13,7 +13,7 @@
 
 /* Subtle marker at the cursor position when a proposal is pending */
 .kovix-inline-agent-preview-marker {
-	border-left: 2px solid var(--vscode-editorInfo-foreground, var(--kovix-volt-400));
+	border-left: 2px solid var(--vscode-editorInfo-foreground, var(--kovix-accent-hover));
 	margin-left: -2px;
 }
 
