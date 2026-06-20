@@ -26,7 +26,7 @@
   --vscode-editorGutter-background: var(--kovix-bg-ink);
   --vscode-editorGutter-addedBackground: rgba(33, 211, 168, 0.35);
   --vscode-editorGutter-deletedBackground: rgba(224, 161, 0, 0.35);
-  --vscode-editorGutter-modifiedBackground: rgba(197, 66, 255, 0.35);
+  --vscode-editorGutter-modifiedBackground: rgba(20, 184, 166, 0.35);
 
   --vscode-editor-foreground: var(--kovix-text-primary);
   --vscode-editorLineNumber-foreground: var(--kovix-text-tertiary);
@@ -34,8 +34,8 @@
 
   /* NOTE: editor selection background is exposed as a non-prefixed CSS var
      by the editor itself; override via the theme token below. */
-  --vscode-editor-selectionBackground: rgba(197, 66, 255, 0.28);
-  --vscode-editor-inactiveSelectionBackground: rgba(197, 66, 255, 0.12);
+  --vscode-editor-selectionBackground: rgba(20, 184, 166, 0.28);
+  --vscode-editor-inactiveSelectionBackground: rgba(20, 184, 166, 0.12);
   --vscode-editor-wordHighlightBackground: rgba(255, 255, 255, 0.06);
   --vscode-editor-wordHighlightStrongBackground: rgba(255, 255, 255, 0.10);
 
@@ -81,11 +81,11 @@
   --vscode-statusBar-border: var(--kovix-hairline);
   --vscode-statusBar-noFolderBackground: var(--kovix-bg-surface);
   --vscode-statusBar-noFolderForeground: var(--kovix-text-tertiary);
-  --vscode-statusBarItem-activeBackground: rgba(197, 66, 255, 0.20);
-  --vscode-statusBarItem-hoverBackground: rgba(197, 66, 255, 0.10);
+  --vscode-statusBarItem-activeBackground: rgba(20, 184, 166, 0.20);
+  --vscode-statusBarItem-hoverBackground: rgba(20, 184, 166, 0.10);
   --vscode-statusBarItem-compactHoverBackground: rgba(255, 255, 255, 0.06);
-  --vscode-statusBarItem-prominentBackground: rgba(197, 66, 255, 0.18);
-  --vscode-statusBarItem-prominentHoverBackground: rgba(197, 66, 255, 0.28);
+  --vscode-statusBarItem-prominentBackground: rgba(20, 184, 166, 0.18);
+  --vscode-statusBarItem-prominentHoverBackground: rgba(20, 184, 166, 0.28);
   --vscode-statusBarItem-errorBackground: rgba(224, 161, 0, 0.18);
   --vscode-statusBarItem-errorForeground: var(--kovix-state-error);
   --vscode-statusBarItem-warningBackground: rgba(255, 194, 51, 0.16);
@@ -97,7 +97,7 @@
   --vscode-titleBar-inactiveForeground: var(--kovix-text-tertiary);
 
   --vscode-menubar-selectionForeground: var(--kovix-text-primary);
-  --vscode-menubar-selectionBackground: rgba(197, 66, 255, 0.10);
+  --vscode-menubar-selectionBackground: rgba(20, 184, 166, 0.10);
   --vscode-menubar-selectionBorder: transparent;
 
   /* ── Editor tabs & panes ──────────────────────────────────────────────── */
@@ -123,7 +123,7 @@
   --vscode-tab-unfocusedInactiveForeground: var(--kovix-text-tertiary);
 
   --vscode-editorGroup-border: var(--kovix-hairline);
-  --vscode-editorGroup-dropBackground: rgba(197, 66, 255, 0.10);
+  --vscode-editorGroup-dropBackground: rgba(20, 184, 166, 0.10);
 
   --vscode-splitView-inactiveVisibleBorder: var(--kovix-hairline);
   --vscode-splitView-activeVisibleBorder: var(--kovix-accent);
@@ -131,14 +131,14 @@
   /* ── Lists & trees (file explorer, command palette, quick pick) ──────── */
 
   --vscode-list-foreground: var(--kovix-text-secondary);
-  --vscode-list-activeSelectionBackground: rgba(197, 66, 255, 0.18);
+  --vscode-list-activeSelectionBackground: rgba(20, 184, 166, 0.18);
   --vscode-list-activeSelectionForeground: var(--kovix-text-primary);
   --vscode-list-activeSelectionIconForeground: var(--kovix-accent-hover);
   --vscode-list-inactiveSelectionBackground: rgba(255, 255, 255, 0.05);
   --vscode-list-inactiveSelectionForeground: var(--kovix-text-primary);
-  --vscode-list-hoverBackground: rgba(197, 66, 255, 0.08);
+  --vscode-list-hoverBackground: rgba(20, 184, 166, 0.08);
   --vscode-list-hoverForeground: var(--kovix-text-primary);
-  --vscode-list-focusBackground: rgba(197, 66, 255, 0.14);
+  --vscode-list-focusBackground: rgba(20, 184, 166, 0.14);
   --vscode-list-focusForeground: var(--kovix-text-primary);
   --vscode-list-focusOutline: var(--kovix-accent);
   --vscode-list-highlightForeground: var(--kovix-accent-hover);
@@ -154,7 +154,7 @@
   --vscode-input-foreground: var(--kovix-text-primary);
   --vscode-input-border: var(--kovix-border);
   --vscode-input-placeholderForeground: var(--kovix-text-tertiary);
-  --vscode-inputOption-activeBackground: rgba(197, 66, 255, 0.20);
+  --vscode-inputOption-activeBackground: rgba(20, 184, 166, 0.20);
   --vscode-inputOption-activeBorder: var(--kovix-accent);
   --vscode-inputOption-activeForeground: var(--kovix-text-primary);
   --vscode-inputOption-hoverBackground: rgba(255, 255, 255, 0.06);
@@ -193,7 +193,7 @@
   --vscode-quickInput-background: var(--kovix-bg-overlay);
   --vscode-quickInput-foreground: var(--kovix-text-primary);
   --vscode-quickInputTitle-background: transparent;
-  --vscode-quickInputList-focusBackground: rgba(197, 66, 255, 0.18);
+  --vscode-quickInputList-focusBackground: rgba(20, 184, 166, 0.18);
   --vscode-quickInputList-focusForeground: var(--kovix-text-primary);
   --vscode-quickInputList-focusIconForeground: var(--kovix-accent-hover);
   --vscode-pickerGroup-foreground: var(--kovix-text-tertiary);
@@ -218,7 +218,7 @@
   --vscode-settings-numberInputBackground: var(--kovix-bg-input);
   --vscode-settings-numberInputForeground: var(--kovix-text-primary);
   --vscode-settings-numberInputBorder: var(--kovix-border);
-  --vscode-settings-focusedRowBackground: rgba(197, 66, 255, 0.06);
+  --vscode-settings-focusedRowBackground: rgba(20, 184, 166, 0.06);
   --vscode-settings-rowHoverBackground: rgba(255, 255, 255, 0.03);
 
   /* ── Notifications, dialogs ──────────────────────────────────────────── */
@@ -236,10 +236,10 @@
 
   /* ── Git / SCM ───────────────────────────────────────────────────────── */
 
-  --vscode-gitDecoration-addedResourceForeground: #21D3A8;
+  --vscode-gitDecoration-addedResourceForeground: #3FB950;
   --vscode-gitDecoration-modifiedResourceForeground: var(--kovix-accent-hover);
   --vscode-gitDecoration-deletedResourceForeground: var(--kovix-state-error);
-  --vscode-gitDecoration-untrackedResourceForeground: #3DA9FC;
+  --vscode-gitDecoration-untrackedResourceForeground: #58A6FF;
   --vscode-gitDecoration-ignoredResourceForeground: var(--kovix-text-tertiary);
   --vscode-gitDecoration-conflictingResourceForeground: var(--kovix-state-pending);
 
@@ -250,31 +250,31 @@
 
   --vscode-terminal-background: var(--kovix-bg-ink);
   --vscode-terminal-foreground: var(--kovix-text-primary);
-  --vscode-terminal-ansiBlack: #050507;
-  --vscode-terminal-ansiRed: #FF4D5E;
-  --vscode-terminal-ansiGreen: #21D3A8;
-  --vscode-terminal-ansiYellow: #FFC233;
-  --vscode-terminal-ansiBlue: #3DA9FC;
-  --vscode-terminal-ansiMagenta: #C542FF;
-  --vscode-terminal-ansiCyan: #00E5FF;
-  --vscode-terminal-ansiWhite: #E8EAED;
-  --vscode-terminal-ansiBrightBlack: #5A5E68;
-  --vscode-terminal-ansiBrightRed: #FF8A96;
-  --vscode-terminal-ansiBrightGreen: #5FE8C6;
-  --vscode-terminal-ansiBrightYellow: #FFD466;
-  --vscode-terminal-ansiBrightBlue: #7CC4FD;
-  --vscode-terminal-ansiBrightMagenta: #D670FF;
-  --vscode-terminal-ansiBrightCyan: #4DECFF;
+  --vscode-terminal-ansiBlack: #0B1115;
+  --vscode-terminal-ansiRed: #F85149;
+  --vscode-terminal-ansiGreen: #3FB950;
+  --vscode-terminal-ansiYellow: #D29922;
+  --vscode-terminal-ansiBlue: #58A6FF;
+  --vscode-terminal-ansiMagenta: #14B8A6;
+  --vscode-terminal-ansiCyan: #2DD4BF;
+  --vscode-terminal-ansiWhite: #E6EDF3;
+  --vscode-terminal-ansiBrightBlack: #5C6770;
+  --vscode-terminal-ansiBrightRed: #FF7B72;
+  --vscode-terminal-ansiBrightGreen: #56D364;
+  --vscode-terminal-ansiBrightYellow: #E3B341;
+  --vscode-terminal-ansiBrightBlue: #79C0FF;
+  --vscode-terminal-ansiBrightMagenta: #2DD4BF;
+  --vscode-terminal-ansiBrightCyan: #5EEAD4;
   --vscode-terminal-ansiBrightWhite: #FFFFFF;
 
   /* ── Editor syntax (overrides for VS Code Dark+ token colors) ────────── */
 
-  --vscode-symbolIcon-arrayForeground: #FFC233;
-  --vscode-symbolIcon-booleanForeground: #3DA9FC;
+  --vscode-symbolIcon-arrayForeground: #D29922;
+  --vscode-symbolIcon-booleanForeground: #58A6FF;
   --vscode-symbolIcon-classForeground: var(--kovix-accent-hover);
-  --vscode-symbolIcon-functionForeground: #5FE8C6;
+  --vscode-symbolIcon-functionForeground: #56D364;
   --vscode-symbolIcon-interfaceForeground: var(--kovix-accent-hover);
-  --vscode-symbolIcon-variableForeground: #E8EAED;
+  --vscode-symbolIcon-variableForeground: #E6EDF3;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -307,7 +307,7 @@
   transition: filter var(--kovix-motion-fast) ease;
 }
 .monaco-workbench .activitybar .kovix-activity-logo:hover {
-  filter: drop-shadow(0 0 8px rgba(197, 66, 255, 0.55));
+  filter: drop-shadow(0 0 8px rgba(20, 184, 166, 0.55));
 }
 .monaco-workbench .activitybar .kovix-activity-logo svg {
   width: 24px;
@@ -334,7 +334,7 @@
   height: 8px;
   border-radius: 50%;
   background: var(--kovix-accent-hover);
-  box-shadow: 0 0 0 0 rgba(197, 66, 255, 0.55);
+  box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.55);
   display: inline-block;
   margin-right: 6px;
   animation: kovix-status-pulse 1600ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
@@ -354,9 +354,9 @@
   box-shadow: none;
 }
 @keyframes kovix-status-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(197, 66, 255, 0.55); }
-  70%  { box-shadow: 0 0 0 8px rgba(197, 66, 255, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(197, 66, 255, 0); }
+  0%   { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.55); }
+  70%  { box-shadow: 0 0 0 8px rgba(20, 184, 166, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(20, 184, 166, 0); }
 }
 @keyframes kovix-status-pulse-amber {
   0%   { box-shadow: 0 0 0 0 rgba(255, 194, 51, 0.55); }
@@ -408,7 +408,7 @@
   gap: 12px;
   padding: 14px 24px;
   background:
-    linear-gradient(180deg, rgba(197, 66, 255, 0.08) 0%, rgba(197, 66, 255, 0) 100%),
+    linear-gradient(180deg, rgba(20, 184, 166, 0.08) 0%, rgba(20, 184, 166, 0) 100%),
     var(--kovix-bg-surface);
   border-bottom: 1px solid var(--kovix-hairline);
 }
@@ -459,7 +459,7 @@
   width: 64px;
   height: 64px;
   flex-shrink: 0;
-  filter: drop-shadow(0 0 12px rgba(197, 66, 255, 0.35));
+  filter: drop-shadow(0 0 12px rgba(20, 184, 166, 0.35));
 }
 .monaco-workbench .dialog .kovix-about-titles { flex: 1; min-width: 0; }
 .monaco-workbench .dialog .kovix-about-name {
