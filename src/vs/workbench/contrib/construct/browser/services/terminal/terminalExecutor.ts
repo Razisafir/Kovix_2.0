@@ -18,21 +18,71 @@ import { IConfigurationService } from '../../../../../../platform/configuration/
  * Security blocklist patterns -- checked before every command execution.
  * Blocks destructive commands that could damage the system.
  * Each pattern is tested against the lowercased, trimmed command.
+ *
+ * SECURITY FIX (M3): Expanded to close the documented bypasses:
+ *   - `rm -rf ~` / `rm -rf $HOME` / `rm -rf *` (was: only literal `/`)
+ *   - `su root`, `doas`, `pkexec` (was: only `sudo`)
+ *   - `telinit 6`, `systemctl reboot`, `shutdown -r`, `halt`, `poweroff`
+ *     (was: only `reboot` / `shutdown` / `init 0|6`)
+ *   - `tee /etc/cron.d/x`, `cp payload /etc/cron.d/x`,
+ *     `install -m 644 payload /etc/cron.d/x`,
+ *     `cp payload /etc/passwd`, `mv payload /etc/shadow`
+ *     (was: only `> /etc/`)
+ *
+ * These are still regex-based (defense-in-depth); the primary control is
+ * the restricted-mode allowlist in `terminalExecutor.ts` (platform layer).
+ * The blocklist catches destructive commands even when restricted mode is
+ * disabled by the user.
  */
 const BLOCKLIST_PATTERNS: RegExp[] = [
-        /rm\s+(-[a-zA-Z]*f[a-zA-Z]*\s+|--)recursive.*\s+\//,         // rm -rf / or rm --recursive /
-        /rm\s+-[a-zA-Z]*f[a-zA-Z]*\s+\//,                             // rm -rf /
-        /\bsudo\b/,                                                      // any sudo
-        /curl\s+.*\|\s*(sh|bash)/,                                       // curl | sh / curl | bash
-        /wget\s+.*\|\s*(sh|bash)/,                                       // wget | sh / wget | bash
-        /\bmkfs\b/,                                                       // mkfs
-        /\bdd\s+.*of=\/dev\//,                                            // dd if=...of=/dev/...
-        /chmod\s+777\s+\//,                                               // chmod 777 /
-        />\s*\/etc\//,                                                   // writing to /etc/ (e.g., echo "..." > /etc/...)
-        /:\(\)\s*\{\s*:\|:&\s*\}/,                                // fork bomb: :(){ :|:& };:
-        /\bshutdown\b/,                                                  // shutdown
-        /\breboot\b/,                                                    // reboot
-        /\binit\s+[06]\b/,                                              // init 0 / init 6
+        // rm — any recursive/force flag targeting /, ~, $HOME, *, or absolute paths
+        // outside the workspace. Closes `rm -rf ~` and `rm -rf $HOME` bypasses.
+        /rm\s+(-[a-zA-Z]*[rRf][a-zA-Z]*\s+|--)recursive.*\s+\/(?:\s|$)/,           // rm -rf /
+        /rm\s+-[a-zA-Z]*[rRf][a-zA-Z]*\s+\/(?:\s|$)/,                              // rm -rf /
+        /rm\s+-[a-zA-Z]*[rRf][a-zA-Z]*\s+(?:~|\$home|\$\{home\}|\*|\.\.\/)/,       // rm -rf ~ / $home / * / ../
+        /rm\s+--recursive.*\s+(?:~|\$home|\$\{home\}|\*|\.\.\/)/,                    // rm --recursive ~ / $home / *
+        // Privilege escalation — close su/doas/pkexec gaps (was: only sudo).
+        // `su` is matched with optional flags (`-`, `--`, `-l`, `- root`, etc.) so
+        // `su - root`, `su -- root`, `su -l root` all match. The command is
+        // lowercased before matching, so all literal strings here are lowercase.
+        /\bsudo\b/,
+        /\bsu\s+(?:-+\s*\w*\s+)?(?:root|[\w-]+)/,                                  // su root / su - root / su -l root / su someuser
+        /\bdoas\b/,
+        /\bpkexec\b/,
+        // Fetch-and-execute — curl/wget piped to shell (still common LLM-escape vector).
+        /curl\s+.*\|\s*(sh|bash)/,
+        /wget\s+.*\|\s*(sh|bash)/,
+        /curl\s+.*\|\s*\/bin\/(?:sh|bash)/,
+        /wget\s+.*\|\s*\/bin\/(?:sh|bash)/,
+        // Filesystem destruction.
+        /\bmkfs\b/,
+        /\bdd\s+.*of=\/dev\//,                                                     // dd if=...of=/dev/...
+        /\bchmod\s+777\s+\//,                                                      // chmod 777 /
+        // Persistence — writes to /etc/, /etc/cron.d/, /etc/passwd, /etc/shadow.
+        // Closes `tee /etc/cron.d/...`, `cp payload /etc/...`, `install ... /etc/...`
+        // bypasses (was: only `> /etc/`).
+        />\s*\/etc\//,                                                              // > /etc/...
+        /tee\s+(?:-a\s+)?\/etc\//,                                                 // tee /etc/...
+        /\b(?:cp|mv|install|dd)\s+.*\s+\/etc\//,                                   // cp/mv/install/dd ... /etc/...
+        /\b(?:cp|mv|install|dd)\s+.*\s+\/etc\/(?:passwd|shadow|sudoers|cron\.\w)/,  // explicit /etc/passwd etc.
+        // Fork bomb — both classic and brace-expanded variants.
+        /:\(\)\s*\{\s*:\|:&\s*\}/,
+        /\(\)\s*\{\s*\*\|&\s*\}/,
+        // Power control — expanded from `shutdown`/`reboot`/`init 0|6` to cover
+        // `halt`, `poweroff`, `telinit`, `systemctl reboot/poweroff/halt`.
+        /\bshutdown\b/,
+        /\breboot\b/,
+        /\bhalt\b/,
+        /\bpoweroff\b/,
+        /\btelinit\s+\d/,
+        /\binit\s+[06]\b/,
+        /\bsystemctl\s+(?:reboot|poweroff|halt|suspend|hibernate)\b/,
+        // Kernel-module tampering.
+        /\brmmod\s+/,
+        /\binsmod\s+.*\.ko/,
+        /\bmodprobe\s+-[rR]\b/,
+        // Block-device writes (raw disk, bypass filesystem).
+        /\b(?:dd|cp)\s+.*\s+\/dev\/(?:sd|nvme|hd|vd|xvd)/,
 ];
 
 /** Marker used to capture exit code from shell output. */

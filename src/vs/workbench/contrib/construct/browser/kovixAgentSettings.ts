@@ -65,6 +65,39 @@ const TABS: ITabDef[] = [
         { id: 'autonomous', label: 'Autonomous', icon: 'rocket' },
 ];
 
+/**
+ * SECURITY FIX (M1): Escape HTML metacharacters in dynamic strings before
+ * interpolating them into innerHTML template literals.
+ *
+ * Several places in this file build DOM via `element.innerHTML = \`...${dynamic}...\``
+ * where `dynamic` originates from marketplace JSON (item.name / item.author /
+ * item.rating — fetched from raw.githubusercontent.com), user-supplied skill
+ * metadata (skill.slug / skill.icon / skill.scope — read from SKILL.md files
+ * in any cloned repo or ~/.kovix/skills/), MCP server definitions (s.name),
+ * and provider config (p.key / p.endpoint). A malicious marketplace entry or
+ * a poisoned SKILL.md could ship `"><img src=x onerror=eval(...)>` as the
+ * name field and execute arbitrary JS in the Kovix renderer.
+ *
+ * Defense-in-depth: the webview CSP blocks inline event handlers, but this
+ * pane is NOT a webview — it's native DOM in the workbench. There is no CSP
+ * here, so escaping is the primary control.
+ *
+ * The helper escapes the five HTML metacharacters (& < > " '). For values
+ * that need to appear inside an attribute, the same escape is sufficient
+ * because we always quote attributes with double quotes.
+ */
+function escapeHtml(s: unknown): string {
+        if (s === null || s === undefined) {
+                return '';
+        }
+        return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+}
+
 export class KovixAgentSettingsPane extends ViewPane {
 
         private root!: HTMLElement;
@@ -126,7 +159,7 @@ export class KovixAgentSettingsPane extends ViewPane {
                         for (const tab of TABS) {
                                 const btn = dom.$('button.kovix-tab') as HTMLButtonElement;
                                 (btn as HTMLElement).dataset.tab = tab.id;
-                                btn.innerHTML = `<span class="codicon codicon-${tab.icon}"></span> ${tab.label}`;
+                                btn.innerHTML = `<span class="codicon codicon-${escapeHtml(tab.icon)}"></span> ${escapeHtml(tab.label)}`;
                                 btn.onclick = () => this.switchTab(tab.id);
                                 if (tab.id === this.currentTab) { btn.classList.add('is-active'); }
                                 this.tabbar.appendChild(btn);
@@ -225,11 +258,11 @@ export class KovixAgentSettingsPane extends ViewPane {
                 if (!skill.enabled) { card.classList.add('is-disabled'); }
 
                 const icon = dom.$('.kovix-card__icon');
-                icon.innerHTML = `<span class="codicon codicon-${skill.icon || 'file-code'}"></span>`;
+                icon.innerHTML = `<span class="codicon codicon-${escapeHtml(skill.icon || 'file-code')}"></span>`;
 
                 const body = dom.$('.kovix-card__body');
                 const title = dom.$('.kovix-card__title');
-                title.innerHTML = `<code>/${skill.slug}</code> <span class="kovix-muted">· ${skill.scope}</span>`;
+                title.innerHTML = `<code>/${escapeHtml(skill.slug)}</code> <span class="kovix-muted">· ${escapeHtml(skill.scope)}</span>`;
                 const desc = dom.$('.kovix-card__desc');
                 desc.textContent = skill.description;
                 const tags = dom.$('.kovix-card__tags');
@@ -293,7 +326,7 @@ export class KovixAgentSettingsPane extends ViewPane {
                 // Current posture summary
                 const cfg = this.readPrivacyConfig();
                 const posture = dom.$('.kovix-posture');
-                posture.innerHTML = `<span class="codicon codicon-shield"></span> <strong>Current posture:</strong> ${describePrivacyPosture(cfg)}`;
+                posture.innerHTML = `<span class="codicon codicon-shield"></span> <strong>Current posture:</strong> ${escapeHtml(describePrivacyPosture(cfg))}`;
                 wrap.appendChild(posture);
 
                 // Toggles
@@ -432,10 +465,10 @@ export class KovixAgentSettingsPane extends ViewPane {
                                         const status = this.mcpManager.getServerStatus(s.name);
                                         const card = dom.$('.kovix-card');
                                         const icon = dom.$('.kovix-card__icon');
-                                        icon.innerHTML = `<span class="codicon codicon-${status === 'running' ? 'circle-filled' : 'circle-outline'}"></span>`;
+                                        icon.innerHTML = `<span class="codicon codicon-${status === 'running' ? 'circle-filled' : 'circle-outline'}"></span>`; // status is internal state, no escaping needed
                                         const body = dom.$('.kovix-card__body');
                                         const title = dom.$('.kovix-card__title');
-                                        title.innerHTML = `<strong>${s.name}</strong> <span class="kovix-muted">· ${status}</span>`;
+                                        title.innerHTML = `<strong>${escapeHtml(s.name)}</strong> <span class="kovix-muted">· ${escapeHtml(status)}</span>`;
                                         const sub = dom.$('.kovix-card__desc');
                                         sub.textContent = `${s.command} ${(s.args || []).join(' ')}`.slice(0, 120);
                                         body.append(title, sub);
@@ -472,7 +505,7 @@ export class KovixAgentSettingsPane extends ViewPane {
                                 icon.innerHTML = '<span class="codicon codicon-package"></span>';
                                 const body = dom.$('.kovix-card__body');
                                 const title = dom.$('.kovix-card__title');
-                                title.innerHTML = `<strong>${item.name}</strong> <span class="kovix-muted">· ${item.author} · ★ ${item.rating}</span>`;
+                                title.innerHTML = `<strong>${escapeHtml(item.name)}</strong> <span class="kovix-muted">· ${escapeHtml(item.author)} · ★ ${escapeHtml(item.rating)}</span>`;
                                 const sub = dom.$('.kovix-card__desc');
                                 sub.textContent = item.description.slice(0, 140);
                                 body.append(title, sub);
@@ -551,9 +584,9 @@ export class KovixAgentSettingsPane extends ViewPane {
                         icon.innerHTML = '<span class="codicon codicon-key"></span>';
                         const body = dom.$('.kovix-card__body');
                         const title = dom.$('.kovix-card__title');
-                        title.innerHTML = `<strong>${p.name}</strong>`;
+                        title.innerHTML = `<strong>${escapeHtml(p.name)}</strong>`;
                         const sub = dom.$('.kovix-card__desc');
-                        sub.innerHTML = `<code>${p.key}</code> · <code>${p.endpoint}</code><br><span class="kovix-muted">${p.models}</span>`;
+                        sub.innerHTML = `<code>${escapeHtml(p.key)}</code> · <code>${escapeHtml(p.endpoint)}</code><br><span class="kovix-muted">${escapeHtml(p.models)}</span>`;
                         body.append(title, sub);
                         card.append(icon, body);
                         wrap.appendChild(card);
@@ -593,10 +626,10 @@ export class KovixAgentSettingsPane extends ViewPane {
                         const card = dom.$('.kovix-card');
                         if (m.slug === active.slug) { card.classList.add('is-active'); }
                         const icon = dom.$('.kovix-card__icon');
-                        icon.innerHTML = `<span class="codicon codicon-${m.icon}"></span>`;
+                        icon.innerHTML = `<span class="codicon codicon-${escapeHtml(m.icon)}"></span>`;
                         const body = dom.$('.kovix-card__body');
                         const title = dom.$('.kovix-card__title');
-                        title.innerHTML = `<strong>${m.displayName}</strong> ${m.slug === active.slug ? '<span class="kovix-badge">active</span>' : ''}`;
+                        title.innerHTML = `<strong>${escapeHtml(m.displayName)}</strong> ${m.slug === active.slug ? '<span class="kovix-badge">active</span>' : ''}`;
                         const sub = dom.$('.kovix-card__desc');
                         sub.textContent = m.description;
                         body.append(title, sub);
@@ -723,7 +756,7 @@ export class KovixAgentSettingsPane extends ViewPane {
 
         private makeBtn(icon: string, label: string, tooltip: string, disabled = false): HTMLButtonElement {
                 const btn = dom.$('button.kovix-btn') as HTMLButtonElement;
-                btn.innerHTML = `<span class="codicon codicon-${icon}"></span> ${label}`;
+                btn.innerHTML = `<span class="codicon codicon-${escapeHtml(icon)}"></span> ${escapeHtml(label)}`;
                 btn.title = tooltip;
                 if (disabled) { btn.disabled = true; }
                 return btn;
@@ -731,7 +764,7 @@ export class KovixAgentSettingsPane extends ViewPane {
 
         private makeIconBtn(icon: string, tooltip: string): HTMLButtonElement {
                 const btn = dom.$('button.kovix-iconbtn') as HTMLButtonElement;
-                btn.innerHTML = `<span class="codicon codicon-${icon}"></span>`;
+                btn.innerHTML = `<span class="codicon codicon-${escapeHtml(icon)}"></span>`;
                 btn.title = tooltip;
                 btn.setAttribute('aria-label', tooltip);
                 return btn;

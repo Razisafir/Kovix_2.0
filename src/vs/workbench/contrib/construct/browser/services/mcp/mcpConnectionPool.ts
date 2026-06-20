@@ -49,10 +49,51 @@ export class MCPConnectionPool extends Disposable {
 
         private healthCheckTimer: IDisposable | undefined;
 
+        /**
+         * SECURITY FIX (M6): Cache the Node-environment capability check ONCE at
+         * service construction time, so the failure surfaces immediately at
+         * startup (visible in the Kovix log) rather than only when a user first
+         * tries to spawn an MCP server.
+         *
+         * The previous runtime-only check meant a vscode-web user could install
+         * a marketplace MCP server, see it appear in the UI as "ready to start",
+         * click Start, and only THEN discover the spawn fails because
+         * `child_process` isn't available in the renderer. By that point the
+         * user has already invested in configuring the server and the error
+         * message arrives with no surrounding context.
+         *
+         * This cached flag is computed in the constructor and logged immediately,
+         * so the workspace log shows `[MCP ConnectionPool] Not running in a Node
+         * environment — MCP server spawning disabled` the moment the service is
+         * instantiated. The spawn path still re-checks the flag (defense-in-depth
+         * in case the cached value is somehow wrong), but the early log ensures
+         * the issue is visible before any user action.
+         */
+        private readonly canSpawnChildProcesses: boolean;
+
         constructor(
                 @ILogService private readonly logService: ILogService
         ) {
                 super();
+                // Compute the capability once. We check both `typeof process` and
+                // `process.versions?.node` because bundlers like esbuild/webpack
+                // polyfill `process` with `{ env: {}, ... }` (no `versions`) when
+                // targeting browsers — that polyfill is enough to satisfy
+                // `typeof process !== 'undefined'` but `process.versions.node` is
+                // still undefined, which correctly identifies the non-Node context.
+                this.canSpawnChildProcesses = (
+                        typeof process !== 'undefined' &&
+                        !!process.versions?.node
+                );
+                if (!this.canSpawnChildProcesses) {
+                        this.logService.warn(
+                                '[MCP ConnectionPool] Not running in a Node.js environment — MCP server spawning is disabled. ' +
+                                'This is expected in vscode-web (github.dev / vscode.dev). MCP servers installed via the marketplace ' +
+                                'will appear in the UI but will fail to start with a clear error when the user clicks Start.'
+                        );
+                } else {
+                        this.logService.info('[MCP ConnectionPool] Node.js environment detected — MCP server spawning available.');
+                }
                 this.startHealthChecks();
         }
 
@@ -188,10 +229,21 @@ export class MCPConnectionPool extends Disposable {
          * This method will throw in vscode-web contexts.
          */
         private async connectRawStdio(entry: IConnectionEntry): Promise<void> {
-                // P0-4: MCP process spawning should happen in node layer via IPC.
-                // Browser-layer code must not import child_process.
-                if (typeof process === 'undefined' || !process.versions?.node) {
-                        throw new Error('MCP server spawning is not available in browser context. Use IPC to the node process.');
+                // SECURITY FIX (M6): Use the cached capability flag computed in the
+                // constructor. This is the same check that was previously inlined
+                // here (and logged a startup warning when false). Re-checking the
+                // cached flag at the spawn site is defense-in-depth — the cached
+                // value never changes during the lifetime of the service, but
+                // re-validating before a security-sensitive operation is good
+                // hygiene and keeps the failure mode local if a future refactor
+                // ever bypasses the constructor.
+                if (!this.canSpawnChildProcesses) {
+                        throw new Error(
+                                'MCP server spawning is not available in this environment (browser/web context). ' +
+                                'Kovix detected at startup that child_process is unavailable — see the earlier ' +
+                                '[MCP ConnectionPool] warning in the log. To use MCP servers, run Kovix as a ' +
+                                'desktop (Electron) build rather than in a browser.'
+                        );
                 }
 
                 const { spawn } = await import('child_process');

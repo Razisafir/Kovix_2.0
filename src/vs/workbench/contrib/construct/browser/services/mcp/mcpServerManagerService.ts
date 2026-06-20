@@ -43,6 +43,15 @@ export class MCPServerManagerService extends Disposable implements IMCPServerMan
         private resourceCache = new Map<string, ICachedResource>();
         private readonly cacheTTLMs = MCP_RESOURCE_CACHE_TTL_MS;
 
+        /**
+         * SECURITY FIX (M6): Cache the Node-environment capability at construction
+         * time so auto-discovery can short-circuit without re-running the
+         * environment probe every time `discoverServers()` is called. Logged once
+         * at startup so the failure mode is visible in the Kovix log before any
+         * user interaction.
+         */
+        private readonly canSpawnChildProcesses: boolean;
+
         private readonly _onDidChangeConnection = this._register(new Emitter<IMCPConnectionEvent>());
         readonly onDidChangeConnection: Event<IMCPConnectionEvent> = this._onDidChangeConnection.event;
 
@@ -67,6 +76,21 @@ export class MCPServerManagerService extends Disposable implements IMCPServerMan
                 this.connectionPool = this._register(instantiationService.createInstance(MCPConnectionPool));
                 this.registry = this._register(instantiationService.createInstance(MCPServerRegistry));
 
+                // M6: Compute the capability once at startup. See MCPConnectionPool
+                // constructor for the full rationale — the same flag is computed there
+                // as well, but we keep a local copy here to avoid coupling the
+                // auto-discovery path to the connection pool's internal state.
+                this.canSpawnChildProcesses = (
+                        typeof process !== 'undefined' &&
+                        !!process.versions?.node
+                );
+                if (!this.canSpawnChildProcesses) {
+                        this.logService.warn(
+                                '[MCP Manager] Auto-discovery of common MCP servers is disabled (no Node.js environment). ' +
+                                'Only servers explicitly registered via the marketplace or settings will be available.'
+                        );
+                }
+
                 // Forward events from connection pool
                 this._register(this.connectionPool.onConnectionChange((e: IMCPConnectionEvent) => this._onDidChangeConnection.fire(e)));
                 this._register(this.connectionPool.onHealthUpdate((e: IMCPHealthStatus) => this._onDidUpdateHealth.fire(e)));
@@ -89,10 +113,15 @@ export class MCPServerManagerService extends Disposable implements IMCPServerMan
         private async autoDiscoverCommonServers(): Promise<IMCPServerDefinition[]> {
                 const common: IMCPServerDefinition[] = [];
 
-                // child_process is only available in Electron/Node environments.
-                // In vscode-web, auto-discovery is unavailable.
-                if (typeof process === 'undefined' || !process.versions?.node) {
-                        this.logService.info('[MCP Manager] Skipping auto-discovery: not running in Node.js environment');
+                // SECURITY FIX (M6): Use the cached capability flag instead of
+                // re-probing `process.versions.node` on every call. The flag
+                // is computed in the constructor and logged once at startup,
+                // so the failure mode is visible before any user interaction.
+                // In vscode-web (github.dev / vscode.dev), auto-discovery is
+                // unavailable because `child_process` doesn't exist in the
+                // renderer.
+                if (!this.canSpawnChildProcesses) {
+                        // Log already emitted at construction time — no need to spam.
                         return common;
                 }
 

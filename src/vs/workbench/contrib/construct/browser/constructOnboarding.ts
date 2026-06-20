@@ -393,56 +393,56 @@ export class ConstructOnboardingWizard extends Disposable {
         <title>Kovix Setup</title>
         <style>
                 :root {
-				/* Kovix design tokens — mirrored from kovix-tokens.css so the
-				   webview (sandboxed from the parent workbench CSS) renders
-				   against the same single source of truth. */
-				--kovix-bg-ink: #0B0D10;
-				--kovix-bg-surface: #13161B;
-				--kovix-bg-raised: #1B1F26;
-				--kovix-border: #2A2F38;
-				--kovix-border-subtle: #1F232B;
-				--kovix-text-primary: #E8EAED;
-				--kovix-text-secondary: #9A9DA6;
-				--kovix-text-tertiary: #5A5E68;
-				--kovix-volt-400: #8A63FF;
-				--kovix-volt-500: #6E42FF;
-				--kovix-volt-600: #4F2BCC;
-				--kovix-ignite-400: #FF8A5C;
-				--kovix-ignite-500: #FF5A36;
-				--kovix-gradient: linear-gradient(135deg, #8A63FF 0%, #FF5A36 100%);
-				--kovix-state-running: #21D3A8;
-				--kovix-state-pending: #FFC233;
-				--kovix-state-error: #FF4D5E;
-				--kovix-state-info: #3DA9FC;
-				--kovix-badge-running-bg: rgba(33, 211, 168, 0.16);
-				--kovix-badge-running-fg: #5FE8C6;
-				--kovix-badge-pending-bg: rgba(255, 194, 51, 0.16);
-				--kovix-badge-pending-fg: #FFD466;
-				--kovix-badge-error-bg: rgba(255, 77, 94, 0.16);
-				--kovix-badge-error-fg: #FF8A96;
-				--kovix-badge-info-bg: rgba(61, 169, 252, 0.16);
-				--kovix-badge-info-fg: #7CC4FD;
-				--kovix-radius-sm: 5px;
-				--kovix-radius-md: 7px;
-				--kovix-radius-lg: 10px;
-				--kovix-font-ui: "Inter", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-				--kovix-font-mono: "JetBrains Mono", "Cascadia Code", "SF Mono", Consolas, monospace;
+                                /* Kovix design tokens — mirrored from kovix-tokens.css so the
+                                   webview (sandboxed from the parent workbench CSS) renders
+                                   against the same single source of truth. */
+                                --kovix-bg-ink: #0B0D10;
+                                --kovix-bg-surface: #13161B;
+                                --kovix-bg-raised: #1B1F26;
+                                --kovix-border: #2A2F38;
+                                --kovix-border-subtle: #1F232B;
+                                --kovix-text-primary: #E8EAED;
+                                --kovix-text-secondary: #9A9DA6;
+                                --kovix-text-tertiary: #5A5E68;
+                                --kovix-volt-400: #8A63FF;
+                                --kovix-volt-500: #6E42FF;
+                                --kovix-volt-600: #4F2BCC;
+                                --kovix-ignite-400: #FF8A5C;
+                                --kovix-ignite-500: #FF5A36;
+                                --kovix-gradient: linear-gradient(135deg, #8A63FF 0%, #FF5A36 100%);
+                                --kovix-state-running: #21D3A8;
+                                --kovix-state-pending: #FFC233;
+                                --kovix-state-error: #FF4D5E;
+                                --kovix-state-info: #3DA9FC;
+                                --kovix-badge-running-bg: rgba(33, 211, 168, 0.16);
+                                --kovix-badge-running-fg: #5FE8C6;
+                                --kovix-badge-pending-bg: rgba(255, 194, 51, 0.16);
+                                --kovix-badge-pending-fg: #FFD466;
+                                --kovix-badge-error-bg: rgba(255, 77, 94, 0.16);
+                                --kovix-badge-error-fg: #FF8A96;
+                                --kovix-badge-info-bg: rgba(61, 169, 252, 0.16);
+                                --kovix-badge-info-fg: #7CC4FD;
+                                --kovix-radius-sm: 5px;
+                                --kovix-radius-md: 7px;
+                                --kovix-radius-lg: 10px;
+                                --kovix-font-ui: "Inter", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                                --kovix-font-mono: "JetBrains Mono", "Cascadia Code", "SF Mono", Consolas, monospace;
 
-				--accent: var(--kovix-volt-500);
-				--accent-dim: rgba(110, 66, 255, 0.40);
-				--bg-primary: var(--kovix-bg-ink);
-				--bg-secondary: var(--kovix-bg-surface);
-				--bg-card: var(--kovix-bg-raised);
-				--bg-input: var(--kovix-bg-ink);
-				--border: var(--kovix-border);
-				--border-subtle: var(--kovix-border-subtle);
-				--text-primary: var(--kovix-text-primary);
-				--text-secondary: var(--kovix-text-secondary);
-				--text-muted: var(--kovix-text-tertiary);
-				--success: var(--kovix-state-running);
-				--error: var(--kovix-state-error);
-				--warning: var(--kovix-state-pending);
-				--info: var(--kovix-state-info)
+                                --accent: var(--kovix-volt-500);
+                                --accent-dim: rgba(110, 66, 255, 0.40);
+                                --bg-primary: var(--kovix-bg-ink);
+                                --bg-secondary: var(--kovix-bg-surface);
+                                --bg-card: var(--kovix-bg-raised);
+                                --bg-input: var(--kovix-bg-ink);
+                                --border: var(--kovix-border);
+                                --border-subtle: var(--kovix-border-subtle);
+                                --text-primary: var(--kovix-text-primary);
+                                --text-secondary: var(--kovix-text-secondary);
+                                --text-muted: var(--kovix-text-tertiary);
+                                --success: var(--kovix-state-running);
+                                --error: var(--kovix-state-error);
+                                --warning: var(--kovix-state-pending);
+                                --info: var(--kovix-state-info)
                 }
 
                 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -621,21 +621,21 @@ export class ConstructOnboardingWizard extends Disposable {
                 }
                 .btn:active { transform: scale(0.97); }
                 .btn-primary {
-				background: var(--kovix-gradient);
-				color: #FFFFFF;
-				font-weight: 500;
-			}
-			.btn-primary:hover { filter: brightness(1.08); }
-			.btn-primary:disabled {
-				opacity: 0.4;
-				cursor: not-allowed;
-			}
-			.btn-secondary {
-				background: transparent;
-				color: var(--text-secondary);
-				border: 1px solid var(--border);
-			}
-			.btn-secondary:hover { border-color: var(--accent); color: var(--text-primary); }
+                                background: var(--kovix-gradient);
+                                color: #FFFFFF;
+                                font-weight: 500;
+                        }
+                        .btn-primary:hover { filter: brightness(1.08); }
+                        .btn-primary:disabled {
+                                opacity: 0.4;
+                                cursor: not-allowed;
+                        }
+                        .btn-secondary {
+                                background: transparent;
+                                color: var(--text-secondary);
+                                border: 1px solid var(--border);
+                        }
+                        .btn-secondary:hover { border-color: var(--accent); color: var(--text-primary); }
                 .btn-success {
                         background: var(--success);
                         color: white;
@@ -1329,7 +1329,47 @@ export class ConstructOnboardingWizard extends Disposable {
                 }
 
                 // ---- Message handler from extension host ----
+                //
+                // SECURITY FIX (M2): Validate the message source before processing.
+                // VS Code webviews run inside an iframe with a 'vscode-webview://' origin.
+                // The host (extension) posts messages via 'webview.postMessage()' which
+                // arrive here with 'event.source === window.parent'. If a malicious
+                // document somehow gets loaded into the webview (e.g. via a tool that
+                // renders attacker-controlled HTML, or via a compromised script tag
+                // that escaped CSP), it could otherwise post fake 'ollamaStatus' /
+                // 'providerSwitched' / 'configSaved' messages and trick the onboarding
+                // flow into advancing past steps or accepting a malicious provider
+                // configuration.
+                //
+                // Defense-in-depth: reject any message whose 'source' is not the parent
+                // frame. The CSP already blocks cross-origin scripts, but this guard
+                // catches the case where an attacker has found a same-origin script
+                // injection (e.g. via a future innerHTML regression — see M1) and is
+                // trying to drive the onboarding state machine.
+                function isTrustedHostMessage(event: MessageEvent): boolean {
+                        // Accept only messages from the parent frame (the extension host bridge).
+                        // 'window.parent' is the iframe parent in same-origin cases; for cross-origin
+                        // parents (the normal webview case), 'event.source' is a WindowProxy that
+                        // strict-equals 'window.parent'. Either way, this excludes sibling iframes,
+                        // popups, and same-tab navigations.
+                        if (event.source !== window.parent) {
+                                return false;
+                        }
+                        // Reject any message that arrives with an unexpected origin. VS Code
+                        // webview messages typically arrive with an empty string or a
+                        // 'vscode-webview://'-family origin; either is acceptable. Anything
+                        // else (https://, file://, http://) is rejected.
+                        const origin = event.origin;
+                        if (origin && origin !== 'null' && !origin.startsWith('vscode-webview:')) {
+                                return false;
+                        }
+                        return true;
+                }
+
                 window.addEventListener('message', (event) => {
+                        if (!isTrustedHostMessage(event)) {
+                                return;
+                        }
                         const msg = event.data;
                         switch (msg.type) {
                                 case 'ollamaStatus':

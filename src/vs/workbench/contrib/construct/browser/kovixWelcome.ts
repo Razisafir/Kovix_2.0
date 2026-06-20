@@ -142,13 +142,19 @@ export class KovixWelcomeView extends Disposable {
     }
   }
 
+  /**
+   * SECURITY FIX (M4/L2): CSP nonce must be cryptographically random.
+   * Previous implementation used Math.random() — V8's XorShift128+ PRNG is
+   * not crypto-grade and the CSP nonce protects every <script> tag in the
+   * welcome webview from injection. Use the Web Crypto API instead, which is
+   * available in both the Electron renderer and the browser.
+   */
   private generateNonce(): string {
-    let nonce = '';
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
-      nonce += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return nonce;
+    // 32 bytes (256 bits) hex-encoded → 64 chars. Same entropy as the prior
+    // 32-char base62 string but from a CSPRNG.
+    const array = new Uint8Array(32);
+    globalThis.crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
   }
 
   /**

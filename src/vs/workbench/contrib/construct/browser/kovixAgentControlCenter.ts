@@ -309,13 +309,26 @@ export class KovixAgentControlCenter extends ViewPane {
                         for (const [label, cat] of layers) {
                                 const count = (stats as any)[cat] ?? (stats as any)[label.toLowerCase()] ?? 0;
                                 const row = dom.$('.kovix-cc-kv');
-                                row.innerHTML = `<span class="kovix-cc-kv-key">${label}</span><span class="kovix-cc-kv-val">${count}</span>`;
+                                // SECURITY FIX (M1): DOM construction instead of innerHTML.
+                                // `label` is a hardcoded string from the `layers` array above and
+                                // `count` is a numeric stat, but using DOM API is consistent with
+                                // the rest of the M1 fixes and removes the innerHTML surface entirely.
+                                const keySpan = dom.$('span.kovix-cc-kv-key');
+                                keySpan.textContent = label;
+                                const valSpan = dom.$('span.kovix-cc-kv-val');
+                                valSpan.textContent = String(count);
+                                row.append(keySpan, valSpan);
                                 body.appendChild(row);
                         }
                         // Total
                         const total = Object.values(stats).reduce((acc: number, v: any) => acc + (typeof v === 'number' ? v : 0), 0) as number;
                         const totalRow = dom.$('.kovix-cc-kv.kovix-cc-kv--total');
-                        totalRow.innerHTML = `<span class="kovix-cc-kv-key">Total entries</span><span class="kovix-cc-kv-val">${total}</span>`;
+                        // SECURITY FIX (M1): DOM construction instead of innerHTML (defense-in-depth).
+                        const totalKeySpan = dom.$('span.kovix-cc-kv-key');
+                        totalKeySpan.textContent = 'Total entries';
+                        const totalValSpan = dom.$('span.kovix-cc-kv-val');
+                        totalValSpan.textContent = String(total);
+                        totalRow.append(totalKeySpan, totalValSpan);
                         body.appendChild(totalRow);
                 } catch (err) {
                         const empty = dom.$('.kovix-cc-empty');
@@ -336,10 +349,18 @@ export class KovixAgentControlCenter extends ViewPane {
                 }
                 for (const change of pending) {
                         const item = dom.$('.kovix-cc-diff');
-                        item.innerHTML = `
-                                <span class="kovix-cc-diff-icon">${change.isNewFile ? '+' : '~'}</span>
-                                <span class="kovix-cc-diff-path">${change.uri.fsPath}</span>
-                        `;
+                        // SECURITY FIX (M1): Use textContent + DOM construction instead of innerHTML.
+                        // `change.uri.fsPath` is a workspace file path. While workspace paths are
+                        // typically safe, on Windows they can contain spaces, and on any OS a
+                        // maliciously-named file (e.g. `<img src=x onerror=alert(1)>.ts`) could
+                        // be created by a tool and trigger XSS via innerHTML. The icon is a
+                        // literal '+' or '~', but using DOM construction for both is consistent
+                        // and removes the entire innerHTML surface.
+                        const iconSpan = dom.$('span.kovix-cc-diff-icon');
+                        iconSpan.textContent = change.isNewFile ? '+' : '~';
+                        const pathSpan = dom.$('span.kovix-cc-diff-path');
+                        pathSpan.textContent = change.uri.fsPath;
+                        item.append(iconSpan, pathSpan);
                         body.appendChild(item);
                 }
                 const actions = dom.$('.kovix-cc-card-actions');
