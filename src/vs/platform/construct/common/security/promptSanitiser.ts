@@ -90,9 +90,12 @@ function generateDelimiterId(): string {
         // Node fallback: require('crypto').randomBytes(16).toString('hex')
         // (used only in tests / older Node without globalThis.crypto).
         try {
-                // eslint-disable-next-line @typescript-eslint/no-var-requires
-                const nodeCrypto = require('crypto');
-                if (typeof nodeCrypto?.randomBytes === 'function') {
+                // Use globalThis indirection so this file type-checks under Monaco's
+                // tsconfig (which lacks @types/node). The runtime path still resolves
+                // to Node's require() in Electron main / Node test runners.
+                const g = globalThis as unknown as { require?: (mod: string) => { randomBytes?: (n: number) => Buffer } };
+                const nodeCrypto = g.require?.('crypto');
+                if (nodeCrypto && typeof nodeCrypto.randomBytes === 'function') {
                         return nodeCrypto.randomBytes(16).toString('hex');
                 }
         } catch {
