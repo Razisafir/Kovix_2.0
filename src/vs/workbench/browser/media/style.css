@@ -13,6 +13,7 @@
 */
 @import url('./kovix-tokens.css');
 @import url('./kovix-brand.css');
+@import url('../parts/kovix/ui/kovixUiComponents.css');
 
 /* Animations */
 

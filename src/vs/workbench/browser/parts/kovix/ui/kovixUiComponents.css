@@ -1,0 +1,357 @@
+/*---------------------------------------------------------------------------------------------
+ *  Kovix shared UI component library — styles.
+ *
+ *  Every component uses --kovix-* tokens defined in kovix-tokens.css.
+ *  No hardcoded hex values anywhere in this file.
+ *
+ *  Loaded once via @import in style.css (added in this commit).
+ *--------------------------------------------------------------------------------------------*/
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Button — primary / secondary / ghost / destructive
+   ───────────────────────────────────────────────────────────────────────── */
+
+.kovix-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--kovix-space-1);
+  padding: var(--kovix-space-2) var(--kovix-space-3);
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-base);
+  font-weight: var(--kovix-weight-medium);
+  line-height: 1;
+  border: 1px solid transparent;
+  border-radius: var(--kovix-radius-sm);
+  cursor: pointer;
+  transition: background var(--kovix-motion-fast), border-color var(--kovix-motion-fast), color var(--kovix-motion-fast);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.kovix-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--kovix-shadow-accent);
+}
+
+.kovix-btn.is-disabled,
+.kovix-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.kovix-btn--primary {
+  background: var(--kovix-accent);
+  color: var(--kovix-text-on-accent);
+  border-color: var(--kovix-accent);
+}
+.kovix-btn--primary:hover {
+  background: var(--kovix-accent-hover);
+  border-color: var(--kovix-accent-hover);
+}
+
+.kovix-btn--secondary {
+  background: var(--kovix-bg-elevated);
+  color: var(--kovix-text-primary);
+  border-color: var(--kovix-border-strong);
+}
+.kovix-btn--secondary:hover {
+  background: var(--kovix-bg-surface);
+  border-color: var(--kovix-border-accent);
+}
+
+.kovix-btn--ghost {
+  background: transparent;
+  color: var(--kovix-text-secondary);
+  border-color: transparent;
+}
+.kovix-btn--ghost:hover {
+  background: var(--kovix-accent-subtle);
+  color: var(--kovix-text-primary);
+}
+
+.kovix-btn--destructive {
+  background: var(--kovix-error);
+  color: #FFFFFF;
+  border-color: var(--kovix-error);
+}
+.kovix-btn--destructive:hover {
+  background: #DC4441;
+  border-color: #DC4441;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Input
+   ───────────────────────────────────────────────────────────────────────── */
+
+.kovix-input {
+  width: 100%;
+  padding: var(--kovix-space-2) var(--kovix-space-3);
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-base);
+  color: var(--kovix-text-primary);
+  background: var(--kovix-bg-input);
+  border: 1px solid var(--kovix-border);
+  border-radius: var(--kovix-radius-sm);
+  outline: none;
+  transition: border-color var(--kovix-motion-fast), box-shadow var(--kovix-motion-fast);
+}
+
+.kovix-input::placeholder {
+  color: var(--kovix-text-muted);
+}
+
+.kovix-input:hover:not(:focus) {
+  border-color: var(--kovix-border-strong);
+}
+
+.kovix-input:focus {
+  border-color: var(--kovix-accent);
+  box-shadow: 0 0 0 2px var(--kovix-accent-glow);
+}
+
+.kovix-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Checkbox — for plan-approval per-task checkboxes
+   Custom-styled native input (preserves keyboard nav + screen reader support)
+   ───────────────────────────────────────────────────────────────────────── */
+
+.kovix-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kovix-space-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.kovix-checkbox__input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  background: var(--kovix-bg-input);
+  border: 1px solid var(--kovix-border-strong);
+  border-radius: var(--kovix-radius-sm);
+  cursor: pointer;
+  position: relative;
+  transition: background var(--kovix-motion-fast), border-color var(--kovix-motion-fast);
+}
+
+.kovix-checkbox__input:hover:not(:disabled) {
+  border-color: var(--kovix-accent);
+}
+
+.kovix-checkbox__input:focus-visible {
+  outline: none;
+  box-shadow: var(--kovix-shadow-accent);
+}
+
+.kovix-checkbox__input:checked {
+  background: var(--kovix-accent);
+  border-color: var(--kovix-accent);
+}
+
+.kovix-checkbox__input:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--kovix-text-on-accent);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.kovix-checkbox__input:indeterminate {
+  background: var(--kovix-accent);
+  border-color: var(--kovix-accent);
+}
+
+.kovix-checkbox__input:indeterminate::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 6px;
+  width: 8px;
+  height: 2px;
+  background: var(--kovix-text-on-accent);
+}
+
+.kovix-checkbox__input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.kovix-checkbox__label {
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-base);
+  color: var(--kovix-text-primary);
+  cursor: pointer;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Badge / Tag
+   ───────────────────────────────────────────────────────────────────────── */
+
+.kovix-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--kovix-space-1);
+  padding: 2px var(--kovix-space-2);
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-xs);
+  font-weight: var(--kovix-weight-medium);
+  line-height: 1.4;
+  border-radius: var(--kovix-radius-pill);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.kovix-badge--default {
+  background: var(--kovix-bg-elevated);
+  color: var(--kovix-text-secondary);
+  border-color: var(--kovix-border);
+}
+
+.kovix-badge--success {
+  background: var(--kovix-success-bg);
+  color: var(--kovix-success);
+  border-color: rgba(63, 185, 80, 0.30);
+}
+
+.kovix-badge--warning {
+  background: var(--kovix-warning-bg);
+  color: var(--kovix-warning);
+  border-color: rgba(210, 153, 34, 0.30);
+}
+
+.kovix-badge--error {
+  background: var(--kovix-error-bg);
+  color: var(--kovix-error);
+  border-color: rgba(248, 81, 73, 0.30);
+}
+
+.kovix-badge--info {
+  background: var(--kovix-info-bg);
+  color: var(--kovix-info);
+  border-color: rgba(88, 166, 255, 0.30);
+}
+
+.kovix-badge--accent {
+  background: var(--kovix-accent-subtle);
+  color: var(--kovix-accent);
+  border-color: var(--kovix-border-accent);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   EmptyState
+   ───────────────────────────────────────────────────────────────────────── */
+
+.kovix-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--kovix-space-8) var(--kovix-space-4);
+  gap: var(--kovix-space-3);
+  color: var(--kovix-text-secondary);
+}
+
+.kovix-empty-state__headline {
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-xl);
+  font-weight: var(--kovix-weight-semibold);
+  color: var(--kovix-text-primary);
+  margin: 0;
+}
+
+.kovix-empty-state__body {
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-base);
+  color: var(--kovix-text-secondary);
+  max-width: 360px;
+  line-height: var(--kovix-leading-relaxed);
+  margin: 0;
+}
+
+.kovix-empty-state__cta {
+  margin-top: var(--kovix-space-2);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Skeleton — loading placeholder with shimmer animation
+   ───────────────────────────────────────────────────────────────────────── */
+
+.kovix-skeleton {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--kovix-bg-elevated) 0%,
+    var(--kovix-bg-surface) 50%,
+    var(--kovix-bg-elevated) 100%
+  );
+  background-size: 200% 100%;
+  animation: kovix-skeleton-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes kovix-skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kovix-skeleton {
+    animation: none;
+    background: var(--kovix-bg-elevated);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   ErrorState
+   ───────────────────────────────────────────────────────────────────────── */
+
+.kovix-error-state {
+  display: flex;
+  flex-direction: column;
+  gap: var(--kovix-space-2);
+  padding: var(--kovix-space-3) var(--kovix-space-4);
+  background: var(--kovix-error-bg);
+  border: 1px solid rgba(248, 81, 73, 0.30);
+  border-left: 3px solid var(--kovix-error);
+  border-radius: var(--kovix-radius-md);
+}
+
+.kovix-error-state__title {
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-base);
+  font-weight: var(--kovix-weight-semibold);
+  color: var(--kovix-error);
+}
+
+.kovix-error-state__detail {
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-sm);
+  color: var(--kovix-text-secondary);
+  line-height: var(--kovix-leading-relaxed);
+}
+
+.kovix-error-state__recovery {
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-sm);
+  color: var(--kovix-text-primary);
+  line-height: var(--kovix-leading-relaxed);
+}
+
+.kovix-error-state__actions {
+  display: flex;
+  gap: var(--kovix-space-2);
+  margin-top: var(--kovix-space-1);
+}
