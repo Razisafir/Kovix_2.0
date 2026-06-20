@@ -79,6 +79,11 @@ export class ConstructAgentViewPane extends ViewPane {
         private sendBtn!: HTMLButtonElement;
         private stopBtn!: HTMLButtonElement;
         private statusIndicator!: HTMLElement;
+        /** v2.0: persistent agent status bar (always visible when agent is active) */
+        private statusBarEl!: HTMLElement;
+        private statusBarDotEl!: HTMLElement;
+        private statusBarLabelEl!: HTMLElement;
+        private statusBarTaskEl!: HTMLElement;
         private planContainer: HTMLElement | null = null;
         private progressPanel!: ConstructProgressPanel;
         private messageCount = 0;
@@ -189,6 +194,22 @@ export class ConstructAgentViewPane extends ViewPane {
                 this.agentRoot = dom.$('.kovix-agent');
                 container.appendChild(this.agentRoot);
                 container.style.height = '100%';
+
+                // --- v2.0: Persistent agent status bar (always visible at top) ---
+                // 7 states: idle/planning/executing/refining/paused/awaiting/complete/error
+                // Replaces the buried statusIndicator with a glanceable persistent bar.
+                this.statusBarEl = dom.$('.kovix-agent-statusbar');
+                this.statusBarEl.classList.add('is-idle');
+                this.statusBarEl.setAttribute('role', 'status');
+                this.statusBarEl.setAttribute('aria-live', 'polite');
+                this.statusBarDotEl = dom.$('.kovix-agent-statusbar__dot');
+                this.statusBarLabelEl = dom.$('.kovix-agent-statusbar__label');
+                this.statusBarLabelEl.textContent = 'READY';
+                this.statusBarTaskEl = dom.$('.kovix-agent-statusbar__task');
+                this.statusBarEl.appendChild(this.statusBarDotEl);
+                this.statusBarEl.appendChild(this.statusBarLabelEl);
+                this.statusBarEl.appendChild(this.statusBarTaskEl);
+                this.agentRoot.appendChild(this.statusBarEl);
 
                 // --- Header: avatar + name + subline + actions ---
                 const header = dom.$('.kovix-agent__header');
@@ -1301,20 +1322,31 @@ export class ConstructAgentViewPane extends ViewPane {
         }
 
         private updateStatusIndicator(): void {
-                const stateConfig: Record<ExecutionState, { text: string; cls: string }> = {
-                        idle: { text: 'READY', cls: 'kovix-msg__status--done' },
-                        planning: { text: 'PLANNING', cls: 'kovix-msg__status--thinking' },
-                        refining: { text: 'REFINING', cls: 'kovix-msg__status--thinking' },
-                        awaiting_approval: { text: 'AWAITING APPROVAL', cls: 'kovix-msg__status--awaiting' },
-                        executing: { text: 'EXECUTING', cls: 'kovix-msg__status--working' },
-                        paused_at_milestone: { text: 'PAUSED AT MILESTONE', cls: 'kovix-msg__status--awaiting' },
-                        complete: { text: 'COMPLETE', cls: 'kovix-msg__status--done' },
-                        error: { text: 'ERROR', cls: 'kovix-msg__status--error' },
-                        stopped: { text: 'STOPPED', cls: 'kovix-msg__status--error' },
+                const stateConfig: Record<ExecutionState, { text: string; cls: string; barCls: string }> = {
+                        idle: { text: 'READY', cls: 'kovix-msg__status--done', barCls: 'is-idle' },
+                        planning: { text: 'PLANNING', cls: 'kovix-msg__status--thinking', barCls: 'is-planning' },
+                        refining: { text: 'REFINING', cls: 'kovix-msg__status--thinking', barCls: 'is-refining' },
+                        awaiting_approval: { text: 'AWAITING APPROVAL', cls: 'kovix-msg__status--awaiting', barCls: 'is-awaiting' },
+                        executing: { text: 'EXECUTING', cls: 'kovix-msg__status--working', barCls: 'is-executing' },
+                        paused_at_milestone: { text: 'PAUSED AT MILESTONE', cls: 'kovix-msg__status--awaiting', barCls: 'is-paused' },
+                        complete: { text: 'COMPLETE', cls: 'kovix-msg__status--done', barCls: 'is-complete' },
+                        error: { text: 'ERROR', cls: 'kovix-msg__status--error', barCls: 'is-error' },
+                        stopped: { text: 'STOPPED', cls: 'kovix-msg__status--error', barCls: 'is-idle' },
                 };
                 const config = stateConfig[this.executionState] ?? stateConfig.idle;
                 this.statusIndicator.className = `kovix-msg__status ${config.cls}`;
                 this.statusIndicator.textContent = config.text;
+
+                // v2.0: Drive the persistent status bar with the same state.
+                if (this.statusBarEl) {
+                        // Clear all is-* classes, then add the current one
+                        this.statusBarEl.classList.remove('is-idle', 'is-planning', 'is-executing', 'is-refining', 'is-paused', 'is-awaiting', 'is-complete', 'is-error');
+                        this.statusBarEl.classList.add(config.barCls);
+                        if (this.statusBarLabelEl) { this.statusBarLabelEl.textContent = config.text; }
+                        if (this.statusBarTaskEl) {
+                                this.statusBarTaskEl.textContent = this.currentTaskId ? `· ${this.currentTaskId}` : '';
+                        }
+                }
 
                 if (this.agentSublineEl) {
                         const modelName = this.currentModelInfo.name ?? 'No Model';
