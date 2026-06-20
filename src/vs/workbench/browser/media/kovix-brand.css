@@ -32,8 +32,8 @@
   --vscode-editorLineNumber-foreground: var(--kovix-text-tertiary);
   --vscode-editorLineNumber-activeForeground: var(--kovix-text-secondary);
 
-  --vscode-editor selection-background is exposed as a non-prefixed
-     CSS var by the editor itself; override via the theme token: */;
+  /* NOTE: editor selection background is exposed as a non-prefixed CSS var
+     by the editor itself; override via the theme token below. */
   --vscode-editor-selectionBackground: rgba(197, 66, 255, 0.28);
   --vscode-editor-inactiveSelectionBackground: rgba(197, 66, 255, 0.12);
   --vscode-editor-wordHighlightBackground: rgba(255, 255, 255, 0.06);

@@ -18,13 +18,13 @@ import { ConstructMemoryViewPane } from './constructMemoryView.js';
 import { KovixMemoryGraphPane } from './kovixMemoryGraph.js';
 import { KovixAgentControlCenter } from './kovixAgentControlCenter.js';
 import { KovixAgentSettingsPane } from './kovixAgentSettings.js';
-import { KovixWelcomeContribution } from './kovixWelcome.js';
+import { KovixWelcomeContribution, KovixWelcomeView } from './kovixWelcome.js';
 import { KovixBrandChromeContribution } from './kovixBrandChrome.js';
 import { KovixSurfaceBrandingContribution } from './kovixSurfaceBranding.js';
 import { KovixSplashContribution } from './kovixSplash.js';
 import { KovixCommandBridgeContribution } from './kovixCommandBridge.js';
 import { IStatusbarService, StatusbarAlignment, IStatusbarEntryAccessor } from '../../../../workbench/services/statusbar/browser/statusbar.js';
-import { IWorkbenchContribution, Extensions as WorkbenchExtensions, IWorkbenchContributionsRegistry } from '../../../../workbench/common/contributions.js';
+import { IWorkbenchContribution, Extensions as WorkbenchExtensions, IWorkbenchContributionsRegistry, WorkbenchPhase } from '../../../../workbench/common/contributions.js';
 import { LifecyclePhase } from '../../../../workbench/services/lifecycle/common/lifecycle.js';
 import { Disposable } from '../../../../base/common/lifecycle.js';
 import { Action2, registerAction2 } from '../../../../platform/actions/common/actions.js';
@@ -342,10 +342,13 @@ Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).regi
 Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(KovixBrandChromeContribution, LifecyclePhase.Restored);
 Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(KovixSurfaceBrandingContribution, LifecyclePhase.Restored);
 // The command bridge must install BEFORE the splash / brand-chrome contributions
-// run, so they can dispatch commands immediately. Starting is the earliest phase.
-Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(KovixCommandBridgeContribution, LifecyclePhase.Starting);
-// Splash also runs at Starting so the overlay mounts before any workbench DOM.
-Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(KovixSplashContribution, LifecyclePhase.Starting);
+// run, so they can dispatch commands immediately. BlockStartup is the earliest phase
+// (maps to LifecyclePhase.Starting) — requires registerWorkbenchContribution2.
+Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution2(
+        KovixCommandBridgeContribution.ID, KovixCommandBridgeContribution, WorkbenchPhase.BlockStartup);
+// Splash also runs at BlockStartup so the overlay mounts before any workbench DOM.
+Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution2(
+        KovixSplashContribution.ID, KovixSplashContribution, WorkbenchPhase.BlockStartup);
 
 // --- Construct Commands --------------------------------------------------------
 // NOTE: The `construct.focusPanel` command is auto-registered by the container's

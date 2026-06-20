@@ -162,8 +162,9 @@ export class KovixSlashDropdown extends Disposable {
 			this.dropdown.setAttribute('aria-label', 'Kovix slash commands');
 		}
 
+		const dropdown = this.dropdown; // capture narrowed local for closure
 		// Re-render items
-		this.dropdown.innerHTML = '';
+		dropdown.innerHTML = '';
 		this.items = this.filtered.map((cmd, i) => {
 			const item = document.createElement('div');
 			item.className = 'kovix-slash-dropdown__item';
@@ -195,7 +196,7 @@ export class KovixSlashDropdown extends Disposable {
 				this.setActiveIndex(i);
 			});
 
-			this.dropdown.appendChild(item);
+			dropdown.appendChild(item);
 			return item;
 		});
 

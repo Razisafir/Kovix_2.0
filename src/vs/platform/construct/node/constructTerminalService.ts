@@ -5,7 +5,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { ITerminalExecutor, ITerminalExecResult, sanitiseForAuditLog, TerminalRateLimiter } from '../common/terminal/terminalExecutor.js';
+import { ITerminalExecutor, ITerminalExecResult, sanitiseForAuditLog, TerminalRateLimiter, isInterpreterCommand as isInterpreterCommandFn } from '../common/terminal/terminalExecutor.js';
 import { ILogService } from '../../log/common/log.js';
 import { Disposable } from '../../../base/common/lifecycle.js';
 import { execFile } from 'child_process';
@@ -41,6 +41,10 @@ export class TerminalNodeService extends Disposable implements ITerminalExecutor
                         />\/etc\//i,
                 ];
                 return dangerousPatterns.some(pattern => pattern.test(command));
+        }
+
+        isInterpreterCommand(command: string): boolean {
+                return isInterpreterCommandFn(command);
         }
 
         async execute(

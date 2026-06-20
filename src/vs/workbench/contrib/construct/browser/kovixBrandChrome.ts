@@ -19,9 +19,8 @@
 import { Disposable } from '../../../../base/common/lifecycle.js';
 import { mainWindow } from '../../../../base/browser/window.js';
 import { IWorkbenchContribution } from '../../../common/contributions.js';
-import { LifecyclePhase } from '../../../services/lifecycle/common/lifecycle.js';
 import { IWorkbenchLayoutService, Parts } from '../../../services/layout/browser/layoutService.js';
-import { IStatusbarService, StatusbarAlignment, IStatusbarEntryAccessor } from '../../../services/statusbar/browser/statusbar.js';
+import { IStatusbarService, StatusbarAlignment } from '../../../services/statusbar/browser/statusbar.js';
 import { IConstructAIService } from '../../../../platform/construct/common/llm/constructAIService.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
 import { localize } from '../../../../nls.js';
@@ -45,19 +44,7 @@ const KOVIX_K_SVG_24 = `
   <path d="M 480 480 L 600 480 L 540 540 Z" fill="#D670FF" />
 </svg>`;
 
-const KOVIX_K_SVG_16 = `
-<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <defs>
-    <linearGradient id="kovix-chrome-volt-16" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#D670FF" />
-      <stop offset="55%" stop-color="#C542FF" />
-      <stop offset="100%" stop-color="#A020E0" />
-    </linearGradient>
-  </defs>
-  <rect x="0" y="0" width="1024" height="1024" rx="224" ry="224" fill="url(#kovix-chrome-volt-16)" />
-  <path d="M 320 200 H 480 V 824 H 320 Z" fill="#FFFFFF" />
-  <path d="M 480 480 L 760 200 L 880 200 L 880 320 L 600 600 L 880 880 L 880 1000 L 760 1000 L 480 720 Z" fill="#FFFFFF" />
-</svg>`;
+/* KOVIX_K_SVG_16 was removed — unused. Re-add if a 16px variant is needed. */
 
 /**
  * Injects Kovix branding into the workbench chrome:
@@ -71,11 +58,7 @@ const KOVIX_K_SVG_16 = `
 export class KovixBrandChromeContribution extends Disposable implements IWorkbenchContribution {
   static readonly ID = 'workbench.contrib.kovixBrandChrome';
 
-  private activityLogo: HTMLElement | undefined;
-  private statusLogo: HTMLElement | undefined;
-  private statusDot: HTMLElement | undefined;
   private statusBarEl: HTMLElement | undefined;
-  private statusEntry: IStatusbarEntryAccessor | undefined;
 
   constructor(
     @IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService,
@@ -123,7 +106,6 @@ export class KovixBrandChromeContribution extends Disposable implements IWorkben
     // Insert as the FIRST child of the activity bar so the K mark sits
     // above the default Explorer / Search / SCM icons.
     container.insertBefore(btn, container.firstChild);
-    this.activityLogo = btn;
   }
 
   private injectStatusBar(): void {
@@ -131,7 +113,7 @@ export class KovixBrandChromeContribution extends Disposable implements IWorkben
     // (that would race with VS Code's own render loop); instead we add a
     // proper statusbar entry with a high-priority LEFT slot so it appears
     // to the left of every other entry.
-    this.statusEntry = this._register(this.statusbarService.addEntry({
+    this._register(this.statusbarService.addEntry({
       name: localize('kovixBrandMark', "Kovix"),
       text: `$( Kovix )`, // placeholder — replaced by ariaLabel + custom DOM below
       ariaLabel: localize('kovixBrandMarkAria', "Kovix IDE"),

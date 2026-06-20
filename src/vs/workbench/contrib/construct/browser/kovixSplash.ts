@@ -58,7 +58,7 @@ export class KovixSplashContribution extends Disposable implements IWorkbenchCon
     // Hide the overlay the moment the workbench signals Restored.
     // ILifecycleService exposes `when(phase): Promise<void>` that resolves
     // when the requested phase is reached.
-    lifecycleService.when(LifecyclePhase.Restored).then(() => {
+    this.lifecycleService.when(LifecyclePhase.Restored).then(() => {
       this.hideOverlay();
     }).catch(err => {
       this.logService.error('[Kovix] Splash lifecycle when() failed:', err);

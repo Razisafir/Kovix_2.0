@@ -16,7 +16,6 @@
 
 import { Disposable } from '../../../../base/common/lifecycle.js';
 import { IWorkbenchContribution } from '../../../common/contributions.js';
-import { LifecyclePhase } from '../../../services/lifecycle/common/lifecycle.js';
 import { ICommandService } from '../../../../platform/commands/common/commands.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
 

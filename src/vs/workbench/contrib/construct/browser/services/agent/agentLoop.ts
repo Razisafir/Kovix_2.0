@@ -183,8 +183,6 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
         /** Milestone execution state. */
         private _executionState: ExecutionState = ExecutionState.Idle;
         private _currentMilestone: IMilestone | null = null;
-        private _approvedPlan: IApprovedPlan | null = null;
-        private _executionConfig: { mode: ExecutionMode; selectedMilestoneIds?: string[] } | null = null;
         private _milestoneResumeResolver: (() => void) | null = null;
         private _completedMilestoneIds: Set<string> = new Set();
 
