@@ -43,6 +43,9 @@ import * as os from 'os';
 // SEC-7 (H1 fix): SSRF guard — blocks 169.254.169.254 (cloud metadata), loopback,
 // and private IPs from user-supplied URLs the agent fetches.
 import { assertSafeUrl } from '../../../platform/construct/common/security/urlGuard.js';
+// SEC-9 (K2-H3 fix): shared child-env builder — same allowlist + denylist as
+// every other spawn site in the Kovix tree.
+import { buildChildEnv } from '../../../platform/construct/common/security/childEnv.js';
 
 // ─── JSON-RPC 2.0 Types ─────────────────────────────────────────────────────
 
@@ -175,24 +178,49 @@ function detectVenvPath(): string | null {
 /**
  * Build environment variables for command execution.
  * Injects proxy settings from config and venv PATH.
+ *
+ * SEC-9 (K2-H3 fix): The previous version spread `...process.env` into the
+ * curl/yt-dlp/python3/mcporter grandchildren. The Kovix parent process now
+ * filters env via buildChildEnv() before spawning this script, so
+ * `process.env` here is already filtered — BUT if a future code path ever
+ * launches agentReachMcpServer without that filter (e.g. a CLI mode, an
+ * alternative launcher, dev testing with `node agentReachMcpServer.ts`),
+ * the grandchildren would inherit NODE_OPTIONS / LD_PRELOAD / PYTHONSTARTUP
+ * / etc. and be RCE-prone.
+ *
+ * Defense-in-depth: apply the same allowlist + denylist here via the shared
+ * buildChildEnv() helper. The proxy + venv PATH fields are layered on top as
+ * serverEnv-style overrides (they are not in DENIED_ENV_KEYS, so they pass
+ * through).
  */
 function buildCommandEnv(config: AgentReachConfig): Record<string, string> {
-        const env: Record<string, string> = { ...process.env as Record<string, string> };
+        // Start with the allowlisted parent env (PATH, HOME, LANG, ...).
+        // buildChildEnv also returns any stripped keys for telemetry.
+        const overrides: Record<string, string> = {};
 
-        // Inject venv bin directory into PATH
+        // Inject venv bin directory into PATH. We can't set PATH directly
+        // because we want it MERGED with the existing PATH, not replaced.
+        // So we read PATH from the allowlisted env, prepend venvBin, and
+        // pass the merged value as an override.
         const venvBin = detectVenvPath();
         if (venvBin) {
-                env.PATH = `${venvBin}${path.delimiter}${env.PATH || ''}`;
+                const parentPath = process.env.PATH ?? '';
+                overrides.PATH = `${venvBin}${path.delimiter}${parentPath}`;
         }
 
-        // Apply proxy settings
+        // Apply proxy settings (HTTP_PROXY / HTTPS_PROXY are NOT in
+        // DENIED_ENV_KEYS, so they pass through).
         if (config.proxy) {
-                env.HTTP_PROXY = config.proxy;
-                env.HTTPS_PROXY = config.proxy;
-                env.http_proxy = config.proxy;
-                env.https_proxy = config.proxy;
+                overrides.HTTP_PROXY = config.proxy;
+                overrides.HTTPS_PROXY = config.proxy;
+                overrides.http_proxy = config.proxy;
+                overrides.https_proxy = config.proxy;
         }
 
+        const { env, strippedKeys } = buildChildEnv(overrides);
+        if (strippedKeys.length > 0) {
+                log('warn', `Stripped ${strippedKeys.length} dangerous env key(s) from agent-reach child env: ${strippedKeys.join(', ')}`);
+        }
         return env;
 }
 
@@ -212,7 +240,11 @@ function executeCommand(
 ): Promise<{ stdout: string; stderr: string; exitCode: number }> {
         return new Promise((resolve) => {
                 const startTime = Date.now();
-                const childEnv = env || { ...process.env as Record<string, string> };
+                // SEC-9 (K2-H3 fix): when no env is passed by the caller, build one
+                // via the shared allowlist + denylist helper instead of spreading
+                // `...process.env`. This closes the leak path for any future caller
+                // that forgets to pass env through buildCommandEnv().
+                const childEnv = env ?? buildChildEnv().env;
 
                 log('info', `Executing: ${cmd} ${args.map(a => a.includes(' ') ? `"${a}"` : a).join(' ')} (timeout: ${timeout}ms)`);
 

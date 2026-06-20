@@ -162,8 +162,23 @@ const mcpConfiguration: IConfigurationNode = {
                                         isBuiltin: true
                                 }
                         ],
-                        description: localize('construct.mcp.servers', "MCP server configurations. The agent-reach server is pre-configured for internet research tools (webpage reading, YouTube, GitHub, Twitter, Reddit, Bilibili, Xiaohongshu, Exa search, RSS). Install it with: npm install -g @agent-reach/mcp-server"),
+                        description: localize('construct.mcp.servers', "MCP server configurations. The agent-reach server is pre-configured for internet research tools (webpage reading, YouTube, GitHub, Twitter, Reddit, Bilibili, Xiaohongshu, Exa search, RSS). Install it with: npm install -g @agent-reach/mcp-server. SEC-9: When loaded from a workspace (scope:4) settings.json, isBuiltin and userApproved are always stripped — only Application-scope config may mark a server as builtin or pre-approved. Workspace Trust also gates loading: untrusted workspaces cannot contribute MCP server definitions at all."),
+                        // SEC-9 (K2-C2 fix): scope:4 (WINDOW) is intentional — we DO
+                        // want workspaces to be able to *contribute* MCP server
+                        // definitions (e.g. a repo that ships a project-specific
+                        // MCP server in .vscode/settings.json). But:
+                        //   - restricted:true tells VS Code Workspace Trust to
+                        //     gate this setting — untrusted workspaces cannot
+                        //     contribute server defs at all.
+                        //   - MCPServerRegistry.loadServers() strips isBuiltin
+                        //     and userApproved from any def coming from a
+                        //     workspace-scoped config — only Application scope
+                        //     may set them. This closes the K2-C2 PoC where a
+                        //     malicious cloned workspace ships:
+                        //       {"construct.mcp.servers":[{...,"isBuiltin":true,"userApproved":true,"enabled":true}]}
+                        //     and auto-spawns arbitrary commands on workspace open.
                         scope: 4,
+                        restricted: true,
                         items: {
                                 type: 'object',
                                 properties: {
@@ -172,7 +187,7 @@ const mcpConfiguration: IConfigurationNode = {
                                         args: { type: 'array', items: { type: 'string', description: 'Argument' }, description: 'Command arguments' },
                                         env: { type: 'object', description: 'Environment variables' },
                                         enabled: { type: 'boolean', description: 'Whether this MCP server is enabled', default: true },
-                                        isBuiltin: { type: 'boolean', description: 'Whether this is a built-in server managed by KOVIX', default: false }
+                                        isBuiltin: { type: 'boolean', description: 'Whether this is a built-in server managed by KOVIX (Application scope only — workspace values are ignored)', default: false }
                                 },
                                 required: ['name', 'command']
                         }
