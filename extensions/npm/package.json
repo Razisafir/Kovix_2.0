@@ -26,9 +26,9 @@
     "jsonc-parser": "^3.2.0",
     "minimatch": "^5.1.6",
     "request-light": "^0.7.0",
+    "vscode-uri": "^3.0.8",
     "which": "^4.0.0",
-    "which-pm": "^2.1.1",
-    "vscode-uri": "^3.0.8"
+    "which-pm": "^4.0.0"
   },
   "devDependencies": {
     "@types/minimatch": "^5.1.2",
@@ -341,18 +341,18 @@
       }
     ],
     "terminalQuickFixes": [
-        {
-          "id": "ms-vscode.npm-command",
-          "commandLineMatcher": "npm",
-          "commandExitResult": "error",
-          "outputMatcher": {
-            "anchor": "bottom",
-            "length": 8,
-            "lineMatcher": "Did you mean (?:this|one of these)\\?((?:\\n.+?npm .+ #.+)+)",
-            "offset": 2
-          }
+      {
+        "id": "ms-vscode.npm-command",
+        "commandLineMatcher": "npm",
+        "commandExitResult": "error",
+        "outputMatcher": {
+          "anchor": "bottom",
+          "length": 8,
+          "lineMatcher": "Did you mean (?:this|one of these)\\?((?:\\n.+?npm .+ #.+)+)",
+          "offset": 2
         }
-      ]
+      }
+    ]
   },
   "repository": {
     "type": "git",
