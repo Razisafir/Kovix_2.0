@@ -100,6 +100,10 @@ import './constructApiSettings.js';
 import './kovixAccessibilityConfig.js';
 import './kovixAccessibilityContribution.js';
 import './kovixAutonomousConfig.js';
+// P0-1: Register the top-level "Kovix" menu with all 53 commands in submenus.
+// Highest-impact discoverability fix — every Kovix feature now has a visible
+// menu entry, not just a Command Palette entry.
+import './kovixMenu.js';
 import { ILanguageFeaturesService } from '../../../../editor/common/services/languageFeatures.js';
 import { registerKovixAutocomplete } from '../../../../editor/contrib/construct/browser/kovixInlineCompletionProvider.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
@@ -115,12 +119,15 @@ const constructControlIcon = registerIcon('construct-control-icon', Codicon.dash
 const constructSettingsIcon = registerIcon('construct-settings-icon', Codicon.settings, localize('constructSettingsIcon', 'View icon of the Kovix Agent Settings view.'));
 
 // Register the Kovix view container in the AUXILIARY BAR (right-hand side, Antigravity-style)
+// P0-2: order changed from 100 to 0 so the Kovix agent icon is the FIRST icon
+// in the activity bar (above Explorer), not the 6th. The agent is the primary
+// surface; it should be the first thing users see.
 const constructViewContainer = Registry.as<IViewContainersRegistry>(ViewExtensions.ViewContainersRegistry).registerViewContainer({
                 id: 'construct',
                 title: localize2('construct', "Kovix Agent"),
                 ctorDescriptor: new SyncDescriptor(ViewPaneContainer, ['construct', { mergeViewWithContainerWhenSingleView: true }]),
                 icon: constructViewIcon,
-                order: 100,
+                order: 0,
                 // Open the right-hand panel by default on first launch so the agent is immediately visible.
                 openCommandActionDescriptor: {
                                 id: 'construct.focusPanel',
@@ -217,11 +224,14 @@ class ConstructStatusBarContribution extends Disposable implements IWorkbenchCon
                                 }));
 
                                 // Pending changes (right side)
+                                // P2-4: Made clickable — opens the SCM / changes view to review
+                                // pending diffs. Previously display-only.
                                 this._register(this.statusbarService.addEntry({
                                                 name: localize('constructChanges', "Kovix Changes"),
                                                 text: '$(diff-added) 0 pending',
                                                 ariaLabel: localize('constructChangesAria', "No changes awaiting approval"),
-                                                tooltip: localize('constructChangesTooltip', "No changes awaiting approval"),
+                                                tooltip: localize('constructChangesTooltip', "Click to review pending Kovix agent diffs"),
+                                                command: 'workbench.view.scm',
                                 }, 'construct.changes', StatusbarAlignment.RIGHT, 50));
 
                                 // Agent Reach status (left side, priority 49)
@@ -349,6 +359,11 @@ registerAction2(class NewConstructChatAction extends Action2 {
                                                 title: localize2('newConstructChat', "Kovix: New Chat"),
                                                 f1: true,
                                                 category: localize2('constructCategory2', "Kovix"),
+                                                // P1-3: Add keyboard shortcut (Ctrl+Alt+N to avoid VS Code's Ctrl+Shift+N New Window conflict)
+                                                keybinding: {
+                                                                primary: KeyMod.CtrlCmd | KeyMod.Alt | KeyCode.KeyN,
+                                                                weight: KeybindingWeight.WorkbenchContrib,
+                                                },
                                 });
                 }
                 run(accessor: ServicesAccessor): void {
@@ -715,6 +730,11 @@ registerAction2(class SwitchAgentModeAction extends Action2 {
                         title: localize2('switchAgentMode', "Switch Agent Mode"),
                         f1: true,
                         category: localize2('constructCategoryAI', "Kovix"),
+                        // P1-3: Add keyboard shortcut (Ctrl+Shift+M)
+                        keybinding: {
+                                primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyM,
+                                weight: KeybindingWeight.WorkbenchContrib,
+                        },
                 });
         }
         async run(accessor: ServicesAccessor): Promise<void> {
@@ -1078,6 +1098,11 @@ registerAction2(class UndoTaskAction extends Action2 {
                                                 title: localize2('undoTask', "Kovix: Undo Last Task"),
                                                 f1: true,
                                                 category: localize2('constructCategoryUndo', "Kovix"),
+                                                // P1-3: Add keyboard shortcut (Ctrl+Shift+U)
+                                                keybinding: {
+                                                                primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyU,
+                                                                weight: KeybindingWeight.WorkbenchContrib,
+                                                },
                                 });
                 }
                 async run(accessor: ServicesAccessor): Promise<void> {
@@ -1839,6 +1864,12 @@ registerAction2(class OpenAgentSettingsAction extends Action2 {
                         title: localize2('openAgentSettings', "Kovix: Open Agent Settings"),
                         f1: true,
                         category: localize2('constructCategorySettings', "Kovix"),
+                        // P1-3: Add keyboard shortcut (Ctrl+Shift+A conflicts with "Toggle Block Comment",
+                        // use Ctrl+Alt+A instead)
+                        keybinding: {
+                                primary: KeyMod.CtrlCmd | KeyMod.Alt | KeyCode.KeyA,
+                                weight: KeybindingWeight.WorkbenchContrib,
+                        },
                 });
         }
         run(accessor: ServicesAccessor): void {
@@ -1871,6 +1902,12 @@ registerAction2(class OpenSwarmAction extends Action2 {
                         title: localize2('openSwarm', "Kovix: Open Swarm"),
                         f1: true,
                         category: localize2('constructCategorySwarm', "Kovix"),
+                        // P1-3: Add keyboard shortcut (Ctrl+Shift+S conflicts with "Save Without Formatting",
+                        // use Ctrl+Alt+S instead)
+                        keybinding: {
+                                primary: KeyMod.CtrlCmd | KeyMod.Alt | KeyCode.KeyS,
+                                weight: KeybindingWeight.WorkbenchContrib,
+                        },
                 });
         }
         run(accessor: ServicesAccessor): void {

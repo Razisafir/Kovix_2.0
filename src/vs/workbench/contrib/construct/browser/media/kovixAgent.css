@@ -862,3 +862,212 @@
 		animation: none !important;
 	}
 }
+
+/* ===========================================================================
+   P0-3: Slash command autocomplete dropdown
+   Appears above the agent input when the user types "/". Lists all 7 slash
+   commands with descriptions, filterable, arrow-key navigable.
+   =========================================================================== */
+
+.kovix-slash-dropdown {
+	position: absolute;
+	bottom: 100%;
+	left: 0;
+	right: 0;
+	max-height: 240px;
+	overflow-y: auto;
+	background: var(--kovix-bg-overlay, #14141C);
+	border: 1px solid var(--kovix-hairline-volt, rgba(197, 66, 255, 0.30));
+	border-radius: var(--kovix-radius-md, 7px);
+	box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.5);
+	padding: var(--kovix-space-1, 4px);
+	margin-bottom: 4px;
+	z-index: 100;
+	font-family: var(--kovix-font-ui, "Inter", sans-serif);
+	font-size: 12px;
+	display: none;
+	animation: kovix-slash-fade-in 120ms cubic-bezier(0.4, 0, 0.2, 1) 1 both;
+}
+
+@keyframes kovix-slash-fade-in {
+	from { opacity: 0; transform: translateY(4px); }
+	to   { opacity: 1; transform: translateY(0); }
+}
+
+.kovix-slash-dropdown__item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 10px;
+	border-radius: var(--kovix-radius-sm, 5px);
+	cursor: pointer;
+	color: var(--kovix-text-secondary, #C8CCD4);
+	transition: background var(--kovix-motion-fast, 120ms) ease;
+}
+
+.kovix-slash-dropdown__item:hover,
+.kovix-slash-dropdown__item.is-active {
+	background: var(--kovix-volt-subtle, rgba(197, 66, 255, 0.12));
+	color: var(--kovix-text-primary, #FFFFFF);
+}
+
+.kovix-slash-dropdown__item.is-active {
+	box-shadow: inset 2px 0 0 var(--kovix-volt-500, #C542FF);
+}
+
+.kovix-slash-dropdown__cmd {
+	font-family: var(--kovix-font-mono, "JetBrains Mono", monospace);
+	font-weight: 600;
+	color: var(--kovix-volt-400, #D670FF);
+	min-width: 130px;
+	flex-shrink: 0;
+}
+
+.kovix-slash-dropdown__item:hover .kovix-slash-dropdown__cmd,
+.kovix-slash-dropdown__item.is-active .kovix-slash-dropdown__cmd {
+	color: var(--kovix-volt-400, #D670FF);
+}
+
+.kovix-slash-dropdown__usage {
+	font-family: var(--kovix-font-mono, "JetBrains Mono", monospace);
+	font-size: 10px;
+	color: var(--kovix-text-tertiary, #8A8F9C);
+	flex-shrink: 0;
+}
+
+.kovix-slash-dropdown__desc {
+	color: var(--kovix-text-tertiary, #8A8F9C);
+	font-size: 11px;
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.kovix-slash-dropdown__item:hover .kovix-slash-dropdown__desc,
+.kovix-slash-dropdown__item.is-active .kovix-slash-dropdown__desc {
+	color: var(--kovix-text-secondary, #C8CCD4);
+}
+
+/* Make sure the input area is positioned so the dropdown can anchor to it */
+.kovix-inputarea {
+	position: relative;
+}
+
+/* ===========================================================================
+   P1-1: Secondary button row in agent panel header (mode/swarm/skills/MCP/
+   autonomous/ponytail). Currently these are injected as a follow-up to the
+   existing 4 header buttons. The styling is intentionally compact — these
+   are secondary actions, not primary CTAs.
+   =========================================================================== */
+
+.kovix-agent__header-secondary {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	padding: 4px 10px;
+	border-bottom: 1px solid var(--kovix-hairline, rgba(255, 255, 255, 0.06));
+	background: rgba(0, 0, 0, 0.15);
+}
+
+.kovix-agent__header-secondary .kovix-icon-btn {
+	width: 24px;
+	height: 24px;
+	font-size: 12px;
+}
+
+/* Visually distinguish the secondary buttons with a subtle Volt tint on hover */
+.kovix-agent__header-secondary .kovix-icon-btn:hover {
+	background: var(--kovix-volt-subtle, rgba(197, 66, 255, 0.12));
+	color: var(--kovix-volt-400, #D670FF);
+}
+
+/* Active state for the ponytail button — shows the current mode in the badge */
+.kovix-agent__header-secondary .kovix-icon-btn.is-active {
+	background: var(--kovix-volt-subtle, rgba(197, 66, 255, 0.12));
+	color: var(--kovix-volt-400, #D670FF);
+	box-shadow: inset 0 -2px 0 var(--kovix-volt-500, #C542FF);
+}
+
+/* ===========================================================================
+   P2-1: Hover states for memory pill + ponytail badge (they're clickable but
+   didn't look it before)
+   =========================================================================== */
+
+.kovix-memory-pill,
+.kovix-ponytail-badge {
+	cursor: pointer;
+	transition: background var(--kovix-motion-fast, 120ms) ease,
+	            border-color var(--kovix-motion-fast, 120ms) ease,
+	            color var(--kovix-motion-fast, 120ms) ease;
+}
+
+.kovix-memory-pill:hover,
+.kovix-ponytail-badge:hover {
+	background: var(--kovix-volt-subtle, rgba(197, 66, 255, 0.12)) !important;
+	border-color: var(--kovix-hairline-volt, rgba(197, 66, 255, 0.30)) !important;
+	color: var(--kovix-text-primary, #FFFFFF) !important;
+}
+
+/* ===========================================================================
+   P2-2: Mode badge gets a chevron + hover state
+   =========================================================================== */
+
+.kovix-mode-badge {
+	cursor: pointer;
+	transition: background var(--kovix-motion-fast, 120ms) ease,
+	            border-color var(--kovix-motion-fast, 120ms) ease;
+}
+
+.kovix-mode-badge::after {
+	content: ' ▾';
+	font-size: 9px;
+	opacity: 0.7;
+	margin-left: 2px;
+}
+
+.kovix-mode-badge:hover {
+	background: var(--kovix-volt-500, #C542FF) !important;
+	border-color: var(--kovix-volt-500, #C542FF) !important;
+	color: #FFFFFF !important;
+}
+
+/* ===========================================================================
+   P2-3: Agent subline segments are individually clickable
+   =========================================================================== */
+
+.kovix-agent__subline-seg {
+	cursor: pointer;
+	transition: color var(--kovix-motion-fast, 120ms) ease;
+}
+
+.kovix-agent__subline-seg:hover {
+	color: var(--kovix-volt-400, #D670FF);
+	text-decoration: underline;
+}
+
+/* ===========================================================================
+   P2-5: Attach-file button in agent input (paperclip)
+   =========================================================================== */
+
+.kovix-attach-btn {
+	width: 28px;
+	height: 28px;
+	display: grid;
+	place-items: center;
+	background: transparent;
+	color: var(--kovix-text-tertiary, #8A8F9C);
+	border: 1px solid var(--kovix-border-subtle, rgba(255, 255, 255, 0.15));
+	border-radius: var(--kovix-radius-sm, 5px);
+	cursor: pointer;
+	font-size: 13px;
+	flex-shrink: 0;
+	transition: all var(--kovix-motion-fast, 120ms) ease;
+}
+
+.kovix-attach-btn:hover {
+	color: var(--kovix-volt-400, #D670FF);
+	border-color: var(--kovix-volt-500, #C542FF);
+	background: var(--kovix-volt-subtle, rgba(197, 66, 255, 0.12));
+}

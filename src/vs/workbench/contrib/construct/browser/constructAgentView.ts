@@ -42,6 +42,8 @@ import { ISelectablePlanStep, IApprovedPlan, IMilestone } from '../../../../plat
 import { showStopModePicker } from './constructStopModePicker.js';
 import { IQuickInputService } from '../../../../platform/quickinput/common/quickInput.js';
 import { ISkillRegistry } from '../../../../platform/construct/common/skills/skillRegistry.js';
+// P0-3: Slash command autocomplete dropdown — instantiates one per agent input.
+import { KovixSlashDropdown } from './kovixSlashDropdown.js';
 import './media/kovixAgent.css';
 
 type ExecutionState = 'idle' | 'planning' | 'refining' | 'awaiting_approval' | 'executing' | 'paused_at_milestone' | 'complete' | 'error' | 'stopped';
@@ -85,6 +87,10 @@ export class ConstructAgentViewPane extends ViewPane {
         private agentRoot!: HTMLElement;
         private agentNameEl!: HTMLElement;
         private agentSublineEl!: HTMLElement;
+        // P2-3: Subline segments, individually clickable
+        private agentSublineModeEl!: HTMLElement;
+        private agentSublineProviderEl!: HTMLElement;
+        private agentSublineModelEl!: HTMLElement;
         private modeBadgeEl!: HTMLElement;
         private memoryPillEl!: HTMLElement;
         private ponytailBadgeEl!: HTMLElement;
@@ -191,7 +197,37 @@ export class ConstructAgentViewPane extends ViewPane {
                 this.agentNameEl = dom.$('.kovix-agent__name');
                 this.agentNameEl.textContent = 'Kovix Agent';
                 this.agentSublineEl = dom.$('.kovix-agent__subline');
-                this.agentSublineEl.textContent = 'General \u00b7 No Model';
+                // P2-3: Make each subline segment individually clickable.
+                // The three segments are: mode · provider · model. Each opens its
+                // respective picker on click.
+                this.agentSublineEl.innerHTML = '';
+                const subMode = dom.$('span.kovix-agent__subline-seg');
+                subMode.textContent = 'General';
+                subMode.title = 'Switch agent mode';
+                subMode.onclick = () => { this.commandService.executeCommand('construct.switchAgentMode'); };
+                const subDot1 = dom.$('span');
+                subDot1.textContent = ' \u00b7 ';
+                subDot1.style.color = 'var(--kovix-text-tertiary)';
+                const subProvider = dom.$('span.kovix-agent__subline-seg');
+                subProvider.textContent = 'No Provider';
+                subProvider.title = 'Switch LLM provider';
+                subProvider.onclick = () => { this.commandService.executeCommand('construct.switchProvider'); };
+                const subDot2 = dom.$('span');
+                subDot2.textContent = ' \u00b7 ';
+                subDot2.style.color = 'var(--kovix-text-tertiary)';
+                const subModel = dom.$('span.kovix-agent__subline-seg');
+                subModel.textContent = 'No Model';
+                subModel.title = 'Select model';
+                subModel.onclick = () => { this.commandService.executeCommand('construct.selectModel'); };
+                this.agentSublineEl.appendChild(subMode);
+                this.agentSublineEl.appendChild(subDot1);
+                this.agentSublineEl.appendChild(subProvider);
+                this.agentSublineEl.appendChild(subDot2);
+                this.agentSublineEl.appendChild(subModel);
+                // Keep references so updateStatusIndicator can refresh the text.
+                this.agentSublineModeEl = subMode;
+                this.agentSublineProviderEl = subProvider;
+                this.agentSublineModelEl = subModel;
                 titles.appendChild(this.agentNameEl);
                 titles.appendChild(this.agentSublineEl);
 
@@ -239,6 +275,56 @@ export class ConstructAgentViewPane extends ViewPane {
                 header.appendChild(titles);
                 header.appendChild(actions);
                 this.agentRoot.appendChild(header);
+
+                // --- P1-1: Secondary header button row (6 missing buttons) ---
+                // These are the 6 commands the audit flagged as command-palette-only.
+                // Placed in a secondary row below the primary header to avoid
+                // overcrowding the top row.
+                const secondaryActions = dom.$('.kovix-agent__header-secondary');
+
+                const modeBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
+                modeBtn.textContent = '\u21C5';
+                modeBtn.title = 'Switch Agent Mode (Ctrl+Shift+M)';
+                modeBtn.setAttribute('aria-label', 'Switch agent mode');
+                modeBtn.onclick = () => { this.commandService.executeCommand('construct.switchAgentMode'); };
+
+                const swarmBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
+                swarmBtn.textContent = '\u2B21';
+                swarmBtn.title = 'Open Swarm Dashboard (Ctrl+Shift+S)';
+                swarmBtn.setAttribute('aria-label', 'Open swarm dashboard');
+                swarmBtn.onclick = () => { this.commandService.executeCommand('construct.openSwarm'); };
+
+                const skillsBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
+                skillsBtn.textContent = '\u25AE';
+                skillsBtn.title = 'View installed skills';
+                skillsBtn.setAttribute('aria-label', 'View installed skills');
+                skillsBtn.onclick = () => { this.commandService.executeCommand('construct.viewSkill'); };
+
+                const mcpBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
+                mcpBtn.textContent = '\u229E';
+                mcpBtn.title = 'Open MCP Marketplace';
+                mcpBtn.setAttribute('aria-label', 'Open MCP marketplace');
+                mcpBtn.onclick = () => { this.commandService.executeCommand('construct.mcp.openMarketplace'); };
+
+                const autonomousBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
+                autonomousBtn.textContent = '\uD83D\uDE80';
+                autonomousBtn.title = 'Start Autonomous Build (idea \u2192 app wizard)';
+                autonomousBtn.setAttribute('aria-label', 'Start autonomous build');
+                autonomousBtn.onclick = () => { this.commandService.executeCommand('construct.autonomousBuild'); };
+
+                const ponytailBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
+                ponytailBtn.textContent = '\uD83D\uDCE7';
+                ponytailBtn.title = 'Ponytail: set lazy-dev mode';
+                ponytailBtn.setAttribute('aria-label', 'Ponytail: set mode');
+                ponytailBtn.onclick = () => { this.commandService.executeCommand('construct.ponytailSetMode'); };
+
+                secondaryActions.appendChild(modeBtn);
+                secondaryActions.appendChild(swarmBtn);
+                secondaryActions.appendChild(skillsBtn);
+                secondaryActions.appendChild(mcpBtn);
+                secondaryActions.appendChild(autonomousBtn);
+                secondaryActions.appendChild(ponytailBtn);
+                this.agentRoot.appendChild(secondaryActions);
 
                 // --- Session tabs ---
                 const sessions = dom.$('.kovix-agent__sessions');
@@ -366,6 +452,36 @@ export class ConstructAgentViewPane extends ViewPane {
                 this.clearBtn.style.display = 'none';
                 this.clearBtn.onclick = () => { this.clearMessages(); };
 
+                // P2-5: Attach-file button — opens the OS file picker and inserts
+                // the selected file as an @filename chip in the input.
+                const attachBtn = dom.$('button.kovix-attach-btn') as HTMLButtonElement;
+                attachBtn.textContent = '\uD83D\uDCCE'; // paperclip
+                attachBtn.title = 'Attach file (inserts as @filename chip)';
+                attachBtn.setAttribute('aria-label', 'Attach file');
+                attachBtn.onclick = () => {
+                        // Use a hidden file input to trigger the OS picker.
+                        const fileInput = document.createElement('input');
+                        fileInput.type = 'file';
+                        fileInput.multiple = false;
+                        fileInput.onchange = () => {
+                                const file = fileInput.files?.[0];
+                                if (file) {
+                                        // Insert as @filename chip — append to the textarea value
+                                        // and trigger the chip scanner.
+                                        const filename = file.name;
+                                        const current = this.inputBox.value;
+                                        const sep = current.length > 0 && !current.endsWith(' ') ? ' ' : '';
+                                        this.inputBox.value = `${current}${sep}@${filename} `;
+                                        this.inputBox.dispatchEvent(new Event('input', { bubbles: true }));
+                                        this.inputBox.focus();
+                                        const len = this.inputBox.value.length;
+                                        this.inputBox.setSelectionRange(len, len);
+                                }
+                        };
+                        fileInput.click();
+                };
+
+                this.inputRowEl.appendChild(attachBtn);
                 this.inputRowEl.appendChild(this.inputBox);
                 this.inputRowEl.appendChild(this.stopBtn);
                 this.inputRowEl.appendChild(this.sendBtn);
@@ -377,6 +493,17 @@ export class ConstructAgentViewPane extends ViewPane {
                 inputArea.appendChild(this.inputRowEl);
                 inputArea.appendChild(this.inputHintEl);
                 this.agentRoot.appendChild(inputArea);
+
+                // --- P0-3: Slash command autocomplete dropdown ---
+                // Wires the KovixSlashDropdown to the textarea. The dropdown shows
+                // when the user types "/" and lists all 7 slash commands with
+                // descriptions, filterable, arrow-key navigable.
+                this._register(new KovixSlashDropdown(this.inputBox, (cmd) => {
+                        // onSelect callback — no-op here; the textarea value is already
+                        // updated by the dropdown. The user hits Enter to send as usual.
+                        // Logging could go here if we want telemetry on slash usage.
+                        void cmd;
+                }));
 
                 // --- Send handler ---
                 const sendMessage = async () => {
@@ -1182,7 +1309,12 @@ export class ConstructAgentViewPane extends ViewPane {
                 if (this.agentSublineEl) {
                         const modelName = this.currentModelInfo.name ?? 'No Model';
                         const mode = (this.modeBadgeEl?.textContent ?? 'GENERAL').toLowerCase();
-                        this.agentSublineEl.textContent = `${mode} \u00b7 ${this.currentModelInfo.isLocal ? 'local' : 'cloud'} \u00b7 ${modelName}`;
+                        const provider = this.currentModelInfo.isLocal ? 'local' : 'cloud';
+                        // P2-3: update the three clickable segments individually
+                        // rather than replacing the whole subline string.
+                        if (this.agentSublineModeEl) { this.agentSublineModeEl.textContent = mode; }
+                        if (this.agentSublineProviderEl) { this.agentSublineProviderEl.textContent = provider; }
+                        if (this.agentSublineModelEl) { this.agentSublineModelEl.textContent = modelName; }
                 }
         }
 
