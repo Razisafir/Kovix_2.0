@@ -379,7 +379,7 @@ registerAction2(class ShowInlineAgentAction extends Action2 {
                 constructor() {
                                 super({
                                                 id: 'construct.showInlineAgent',
-                                                title: localize2('showInlineAgent', "Kovix: Show Inline Agent"),
+                                                title: localize2('showInlineAgent', "Kovix: Focus Agent Panel"),
                                                 keybinding: {
                                                                 primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyI,
                                                                 weight: KeybindingWeight.WorkbenchContrib,
