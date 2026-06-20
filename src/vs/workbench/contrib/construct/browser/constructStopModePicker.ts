@@ -32,10 +32,22 @@ interface IMilestonePickItem extends IQuickPickItem {
  * @param milestones The milestones available for selective mode.
  * @returns The selected execution mode, or undefined if cancelled.
  */
+/**
+ * Result of showStopModePicker — includes both the chosen ExecutionMode
+ * and (in Selective mode) the milestone IDs the user picked.
+ * Fix for F-007 (#77): the picker previously discarded the user's milestone
+ * selection. Now it returns the IDs so the caller can wire them into the
+ * IApprovedPlan.
+ */
+export interface IStopModePickResult {
+        readonly mode: ExecutionMode;
+        readonly selectedMilestoneIds?: string[];
+}
+
 export async function showStopModePicker(
         quickInputService: IQuickInputService,
         milestones?: IMilestone[],
-): Promise<ExecutionMode | undefined> {
+): Promise<IStopModePickResult | undefined> {
         const configs = Object.values(DEFAULT_EXECUTION_MODE_CONFIGS);
 
         const items: IExecutionModePickItem[] = configs.map(config => ({
@@ -57,6 +69,8 @@ export async function showStopModePicker(
         const selectedMode = (pick as IExecutionModePickItem).mode;
 
         // If Selective mode and milestones are available, show milestone picker
+        // Fix for F-007 (#77): actually capture the user's selection this time.
+        let selectedMilestoneIds: string[] | undefined;
         if (selectedMode === ExecutionMode.Selective && milestones && milestones.length > 0) {
                 const milestoneItems: IMilestonePickItem[] = milestones.map(m => ({
                         label: `${m.isMajor ? '\u2B50' : '\uD83D\uDFE2'} ${m.name}`,
@@ -66,15 +80,16 @@ export async function showStopModePicker(
                         milestoneId: m.id,
                 }));
 
-                await quickInputService.pick(milestoneItems, {
+                const milestonePicks = await quickInputService.pick(milestoneItems, {
                         placeHolder: 'Select milestones to pause at...',
                         title: 'Select Pause Points',
                         canPickMany: true,
                 });
-                // Note: The actual milestone selection is stored in the approved plan.
-                // The picker is informational here; the selection is used when building
-                // the IApprovedPlan in the agent view.
+
+                if (milestonePicks && milestonePicks.length > 0) {
+                        selectedMilestoneIds = (milestonePicks as IMilestonePickItem[]).map(p => p.milestoneId);
+                }
         }
 
-        return selectedMode;
+        return { mode: selectedMode, selectedMilestoneIds };
 }

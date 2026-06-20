@@ -68,6 +68,12 @@ export interface IApprovedPlan {
         readonly executionMode: string;
         /** Milestones extracted from the plan. */
         readonly milestones: IMilestone[];
+        /**
+         * IDs of milestones the user selected to pause at (Selective mode only).
+         * Fix for F-007 (#77): previously the picker discarded this selection.
+         * Undefined means "use default pause behavior for the chosen mode".
+         */
+        readonly selectedMilestoneIds?: string[];
         /** Whether the plan was approved by the user. */
         readonly approved: boolean;
         /** Timestamp of approval. */

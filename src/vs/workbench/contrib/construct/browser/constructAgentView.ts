@@ -392,7 +392,11 @@ export class ConstructAgentViewPane extends ViewPane {
                 this.agentRoot.appendChild(modelBar);
 
                 // --- Messages area ---
+                // F-008 (#78): aria-live so screen readers announce new agent messages.
                 this.messageContainer = dom.$('.kovix-agent__messages');
+                this.messageContainer.setAttribute('role', 'log');
+                this.messageContainer.setAttribute('aria-live', 'polite');
+                this.messageContainer.setAttribute('aria-label', 'Agent conversation');
 
                 // Welcome / empty state
                 const welcome = dom.$('.kovix-welcome');
@@ -985,13 +989,15 @@ export class ConstructAgentViewPane extends ViewPane {
                 approveBtn.onclick = async () => {
                         // Show stop mode picker
                         const milestones = this.agentLoop.extractMilestonesFromPlan(plan.steps);
-                        const selectedMode = await showStopModePicker(this.quickInputService, milestones);
-                        if (!selectedMode) { return; } // cancelled
+                        const pickResult = await showStopModePicker(this.quickInputService, milestones);
+                        if (!pickResult) { return; } // cancelled
 
                         const approvedPlan: IApprovedPlan = {
                                 task,
                                 steps: this.selectableSteps,
-                                executionMode: selectedMode,
+                                executionMode: pickResult.mode,
+                                // Fix for F-007 (#77): pass the user's milestone selection through to the plan
+                                selectedMilestoneIds: pickResult.selectedMilestoneIds,
                                 milestones,
                                 approved: true,
                                 approvedAt: Date.now(),
@@ -1998,7 +2004,13 @@ export class ConstructAgentViewPane extends ViewPane {
 
                 if (pick) {
                         await this.sessionService.switchToSession((pick as any).sessionId);
-                        this.notificationService.info(`Session restored: ${pick.label}`);
+                        // F-006 (#97): the session service stores metadata only (title, message
+                        // count, timestamps) — it does not persist the conversation messages.
+                        // Switching sessions updates the active session pointer but does not
+                        // restore the chat view, because there are no messages to restore.
+                        // Closing #97 as wontfix — message persistence is a separate feature
+                        // (see #74, fixed-by-deletion of the unused SQLite service).
+                        this.notificationService.info(`Switched to session: ${pick.label}. (Messages from this session are not persisted — start a new chat to begin a fresh conversation.)`);
                 }
         }
 

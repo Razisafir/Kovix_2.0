@@ -39,6 +39,9 @@ import { redactSecrets } from '../../../../../../platform/construct/common/secur
 import { IPendingChangesService } from '../../../../../../platform/construct/common/diff/pendingChanges.js';
 import { IUniversalMemoryService } from '../../../../../../platform/construct/common/memory/universalMemoryService.js';
 import { ISkillRegistry } from '../../../../../../platform/construct/common/skills/skillRegistry.js';
+// Fix for F-002 (#72): inject the tool registry so security tools (nmap, nuclei, ghidra)
+// and MCP server tools are visible to the LLM, not just the 8 hardcoded AGENT_TOOLS.
+import { IConstructToolRegistry } from '../../../../../../platform/construct/common/tools/constructToolRegistry.js';
 
 const MAX_ROUNDS = 50;
 
@@ -160,6 +163,19 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
         readonly _serviceBrand: undefined;
 
         private _isRunning = false;
+
+        /**
+         * Fix for F-003 (#73): multi-turn conversation context.
+         * Each turn's user message + assistant response + tool calls + tool results
+         * are appended here and prepended to the next turn's conversationMessages.
+         * Cleared when the user starts a new chat (see clearConversationHistory()).
+         */
+        private _conversationHistory: IChatMessage[] = [];
+
+        /** Fix for F-003 (#73): clear history when starting a new chat. */
+        clearConversationHistory(): void {
+                this._conversationHistory = [];
+        }
         private readonly _onDidStart = this._register(new Emitter<string>());
         readonly onDidStart = this._onDidStart.event;
         private readonly _onDidComplete = this._register(new Emitter<{ summary: string }>());
@@ -204,9 +220,30 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                 @IUniversalMemoryService private readonly universalMemory: IUniversalMemoryService,
                 @ISkillRegistry private readonly skillRegistry: ISkillRegistry,
                 @IDialogService private readonly dialogService: IDialogService,
+                // Fix for F-002 (#72): inject the tool registry so the agent loop sees
+                // security tools (nmap, nuclei, ghidra) and MCP server tools too.
+                @IConstructToolRegistry private readonly toolRegistry: IConstructToolRegistry,
         ) {
                 super();
-                this.logService.info('[AgentLoop] Service created with error recovery, snapshots, file watcher, pending changes, universal memory, and skill registry');
+                this.logService.info('[AgentLoop] Service created with error recovery, snapshots, file watcher, pending changes, universal memory, skill registry, and tool registry');
+        }
+
+        /**
+         * Fix for F-002 (#72): build the tool list from the registry, falling back
+         * to the hardcoded AGENT_TOOLS only if the registry is empty (e.g. during
+         * early init before MCP servers connect).
+         */
+        private getAgentTools(): IToolDefinition[] {
+                const registered = this.toolRegistry.listTools();
+                return registered.length > 0 ? registered : AGENT_TOOLS;
+        }
+
+        /** Fix for F-002 (#72): read-only tools for the planning phase. */
+        private getPlanningTools(): IToolDefinition[] {
+                const all = this.getAgentTools();
+                const readOnlyNames = new Set(['read_file', 'list_directory', 'search_codebase', 'web_search']);
+                const filtered = all.filter(t => readOnlyNames.has(t.name));
+                return filtered.length > 0 ? filtered : PLANNING_TOOLS;
         }
 
         get isRunning(): boolean {
@@ -232,7 +269,10 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                 // Build system prompt with memory context
                 const systemPrompt = await this.buildSystemPrompt(task, true);
 
+                // Fix for F-003 (#73): prepend prior conversation context so the agent
+                // remembers what was discussed in previous turns.
                 const conversationMessages: IChatMessage[] = [
+                        ...this._conversationHistory,
                         {
                                 role: 'user',
                                 content: `Analyze the current workspace and create a plan for this task: "${task}"\n\nFirst, explore the workspace to understand its structure, then list the specific steps needed. Use only read_file and list_directory tools.\n\nFormat your response as a numbered list of steps, each starting with [Read], [Create], [Edit], or [Run].`
@@ -268,7 +308,7 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
 
                                 const stream = this.aiService.chat(
                                         conversationMessages,
-                                        PLANNING_TOOLS,
+                                        this.getPlanningTools(),
                                         { signal: timeoutController.signal, systemPrompt }
                                 );
 
@@ -359,6 +399,12 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                         // Parse the plan from the response
                         const steps = this.parsePlan(fullResponse);
 
+                        // Fix for F-003 (#73): remember this turn so the next turn has context.
+                        this._conversationHistory.push(
+                                { role: 'user', content: task },
+                                { role: 'assistant', content: fullResponse },
+                        );
+
                         return {
                                 steps,
                                 summary: fullResponse,
@@ -406,7 +452,9 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                         // Build system prompt with memory context
                         const systemPrompt = await this.buildSystemPrompt(task, false);
 
+                        // Fix for F-003 (#73): prepend prior conversation context.
                         const conversationMessages: IChatMessage[] = [
+                                ...this._conversationHistory,
                                 {
                                         role: 'user',
                                         content: task
@@ -437,7 +485,7 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
 
                                 const stream = this.aiService.chat(
                                         conversationMessages,
-                                        AGENT_TOOLS,
+                                        this.getAgentTools(),
                                         { signal: timeoutController.signal, systemPrompt }
                                 );
 
@@ -613,6 +661,12 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                         if (this.universalMemory && finalSummary) {
                                 this.universalMemory.autoExtractFromTask(task, finalSummary.substring(0, 500)).catch(() => { /* non-critical */ });
                         }
+
+                        // Fix for F-003 (#73): remember this turn so the next turn has context.
+                        this._conversationHistory.push(
+                                { role: 'user', content: task },
+                                { role: 'assistant', content: finalSummary || 'Task completed.' },
+                        );
 
                         yield { type: 'complete', summary: finalSummary || 'Task completed.' };
                         this._onDidComplete.fire({ summary: finalSummary });

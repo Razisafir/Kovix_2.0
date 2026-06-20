@@ -36,7 +36,7 @@ Kovix is an AI-native development environment built on a VS Code fork. The headl
 - **Multi-provider, user-owned keys** — Use NVIDIA NIM, OpenRouter, OpenAI, Anthropic, Gemini, Mistral, Groq, Together, DeepSeek, LM Studio, Ollama, or any OpenAI-compatible endpoint. Your keys, your choice, your cost.
 - **Per-agent model selection** — Each agent mode (architect, coder, reviewer, debugger, etc.) can use a different model. Run a strong model for planning and a cheap fast model for execution.
 - **Multi-agent swarms** — Spawn sub-agents in different modes for parallel or pipelined work. Architect plans → Coder executes → Reviewer audits, each with its own model and tools.
-- **Runs locally** — Works with Ollama, LM Studio, or in-process ONNX models. Your code and keys never leave your machine if you don't want them to.
+- **Runs locally** — Works with Ollama or LM Studio. Your code and keys never leave your machine if you don't want them to. (Note: the in-process ONNX provider via Transformers.js requires an internet connection on first model load — model weights and WASM binaries are fetched from the HuggingFace Hub. For fully offline use, prefer Ollama.)
 - **No telemetry, no Microsoft account, no subscription** — All Microsoft telemetry stripped out. Open VSX gallery replaces the proprietary marketplace.
 - **Right-side agent panel** — Matches Google Antigravity's layout. The agent sits beside your code, not on top of it.
 
