@@ -294,6 +294,12 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
                 // TODO the API should be copied to `out` during compile, not here
                 const api = gulp.src('src/vscode-dts/vscode.d.ts').pipe(rename('out/vscode-dts/vscode.d.ts'));
 
+                // gulp 5: fast-glob throws ENOENT when scandir hits a non-existent base
+                // directory. The .build/telemetry/ folder is only populated by
+                // build/azure-pipelines/common/extract-telemetry.sh, which our release.yml
+                // does not run. Pre-create the directory so gulp.src emits no files
+                // (matching gulp 4 behavior) instead of crashing the build.
+                fs.mkdirSync('.build/telemetry', { recursive: true });
                 const telemetry = gulp.src('.build/telemetry/**', { base: '.build/telemetry', dot: true, allowEmpty: true });
 
                 const jsFilter = util.filter(data => !data.isDirectory() && /\.js$/.test(data.path));
@@ -413,10 +419,12 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
                         result = es.merge(result, gulp.src('resources/win32/VisualElementsManifest.xml', { base: 'resources/win32' })
                                 .pipe(rename(product.nameShort + '.VisualElementsManifest.xml')));
 
+                        fs.mkdirSync('.build/policies/win32', { recursive: true });
                         result = es.merge(result, gulp.src('.build/policies/win32/**', { base: '.build/policies/win32', allowEmpty: true })
                                 .pipe(rename(f => f.dirname = `policies/${f.dirname}`)));
 
                         if (quality === 'insider') {
+                                fs.mkdirSync('.build/win32/appx', { recursive: true });
                                 result = es.merge(result, gulp.src('.build/win32/appx/**', { base: '.build/win32', allowEmpty: true }));
                         }
                 } else if (platform === 'linux') {
