@@ -534,3 +534,93 @@
   padding: var(--kovix-space-8) var(--kovix-space-4);
   text-align: center;
 }
+
+/* ═════════════════════════════════════════════════════════════════════════
+   10. TOOL ACTIVITY LOG (sub-elements of .kovix-msg--tool)
+   Replaces the inline style.cssText blocks from renderToolActivityLog().
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.construct-tool-log {
+  /* Uses .kovix-msg--tool base styling (left-border accent, monospace, etc.)
+     from section 4 above. These are the sub-element styles. */
+}
+
+.construct-tool-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--kovix-space-2) var(--kovix-space-3);
+  cursor: pointer;
+  color: var(--kovix-text-primary);
+  font-family: var(--kovix-font-ui);
+  font-size: var(--kovix-text-sm);
+  font-weight: var(--kovix-weight-semibold);
+}
+
+.construct-tool-log-toggle {
+  color: var(--kovix-text-muted);
+  font-family: var(--kovix-font-mono);
+  font-size: var(--kovix-text-xs);
+}
+
+.construct-tool-log-body {
+  padding: 0 var(--kovix-space-3) var(--kovix-space-2);
+}
+
+.construct-tool-log-entry {
+  padding: var(--kovix-space-1) 0;
+  color: var(--kovix-text-secondary);
+  font-family: var(--kovix-font-mono);
+  font-size: var(--kovix-text-xs);
+  border-bottom: 1px solid var(--kovix-border);
+}
+
+.construct-tool-log-entry:last-child {
+  border-bottom: none;
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   11. DIFF VIEWER (replaces inline style.cssText in showPendingDiff)
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.construct-diff {
+  background: var(--kovix-bg-elevated);
+  border: 1px solid var(--kovix-border);
+  border-radius: var(--kovix-radius-md);
+  margin: var(--kovix-space-2) 0;
+  overflow: hidden;
+}
+
+.construct-diff-path {
+  padding: var(--kovix-space-2) var(--kovix-space-3);
+  background: var(--kovix-bg-base);
+  color: var(--kovix-accent);
+  font-family: var(--kovix-font-mono);
+  font-size: var(--kovix-text-sm);
+  border-bottom: 1px solid var(--kovix-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.construct-diff-content {
+  padding: var(--kovix-space-2) var(--kovix-space-3);
+  max-height: 240px;
+  overflow-y: auto;
+  font-family: var(--kovix-font-mono);
+  font-size: var(--kovix-text-sm);
+  color: var(--kovix-text-secondary);
+  white-space: pre-wrap;
+  background: var(--kovix-bg-base);
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   12. ERROR BUBBLE (for addAgentMessage with type='error')
+   Replaces inline bubble.style.borderColor = 'var(--kovix-ignite-500)'.
+   ═════════════════════════════════════════════════════════════════════════ */
+
+.kovix-msg__bubble--error {
+  border: 1px solid var(--kovix-error);
+  background: var(--kovix-error-bg);
+  color: var(--kovix-error);
+}

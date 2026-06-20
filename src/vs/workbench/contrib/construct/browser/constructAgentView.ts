@@ -44,6 +44,8 @@ import { IQuickInputService } from '../../../../platform/quickinput/common/quick
 import { ISkillRegistry } from '../../../../platform/construct/common/skills/skillRegistry.js';
 // P0-3: Slash command autocomplete dropdown — instantiates one per agent input.
 import { KovixSlashDropdown } from './kovixSlashDropdown.js';
+// v2.0: Shared component library — createButton, createCheckbox, etc.
+import { createButton } from '../../../browser/parts/kovix/ui/kovixUiComponents.js';
 import './media/kovixAgent.css';
 // v2.0 teal-identity additions: persistent status bar, plan-approval redesign,
 // stop-mode segmented control, message-category distinctions, memory scope
@@ -1270,7 +1272,8 @@ export class ConstructAgentViewPane extends ViewPane {
                 head.appendChild(author);
                 head.appendChild(status);
                 const bubble = dom.$('.kovix-msg__bubble');
-                if (type === 'error') { bubble.style.borderColor = 'var(--kovix-ignite-500)'; }
+                // v2.0: error bubbles get the error token via CSS class, not inline style
+                if (type === 'error') { bubble.classList.add('kovix-msg__bubble--error'); }
                 bubble.textContent = text;
                 body.appendChild(head);
                 body.appendChild(bubble);
@@ -1549,43 +1552,29 @@ export class ConstructAgentViewPane extends ViewPane {
                 // Remove previous log if any
                 this.toolLogContainer?.remove();
 
-                this.toolLogContainer = dom.$('.construct-tool-log');
-                this.toolLogContainer.style.cssText = `
-                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border);
-                        border-radius: 6px; margin: 8px 0; font-size: 11px;
-                `;
+                // v2.0: use .kovix-msg--tool class from kovixAgentV2.css
+                // (left-border accent card, monospace, teal tool name)
+                this.toolLogContainer = dom.$('.kovix-msg--tool.construct-tool-log');
 
                 // Header with toggle
                 const header = dom.$('.construct-tool-log-header');
-                header.style.cssText = `
-                        display: flex; align-items: center; justify-content: space-between;
-                        padding: 6px 10px; cursor: pointer; color: var(--kovix-text-primary);
-                        font-weight: 600;
-                `;
                 header.textContent = `\uD83D\uDD27 Tool Activity (${this.toolLogEntries.length} calls)`;
 
                 const toggle = dom.$('.construct-tool-log-toggle');
-                toggle.style.cssText = `color: var(--kovix-text-tertiary); font-size: 10px;`;
                 toggle.textContent = this.toolLogCollapsed ? '[+]' : '[-]';
 
                 header.appendChild(toggle);
 
                 // Body
                 const body = dom.$('.construct-tool-log-body');
-                body.style.cssText = `
-                        padding: 0 10px 8px; display: ${this.toolLogCollapsed ? 'none' : 'block'};
-                `;
+                if (this.toolLogCollapsed) { body.style.display = 'none'; }
 
                 for (const entry of this.toolLogEntries) {
                         const row = dom.$('.construct-tool-log-entry');
-                        const statusIcon = entry.success ? '\u2705' : '\u274C'; // ✅ or ❌
+                        const statusIcon = entry.success ? '\u2705' : '\u274C';
                         const duration = entry.durationMs > 1000
                                 ? `${(entry.durationMs / 1000).toFixed(1)}s`
                                 : `${entry.durationMs}ms`;
-                        row.style.cssText = `
-                                padding: 3px 0; color: var(--kovix-text-secondary); font-family: monospace;
-                                border-bottom: 1px solid var(--kovix-border);
-                        `;
                         row.textContent = `${statusIcon} ${entry.toolName}${entry.target ? ': ' + entry.target : ''} (${duration})`;
                         body.appendChild(row);
                 }
@@ -1607,30 +1596,16 @@ export class ConstructAgentViewPane extends ViewPane {
         private showPendingDiff(filePath: string, changeType: 'write' | 'edit'): void {
                 const diffId = `diff-${++this.diffCounter}`;
 
-                const diffContainer = dom.$(`.construct-diff-${diffId}`);
-                diffContainer.style.cssText = `
-                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border);
-                        border-radius: 6px; margin: 8px 0; overflow: hidden;
-                `;
+                // v2.0: use .construct-diff class from kovixAgentV2.css
+                const diffContainer = dom.$(`.construct-diff.construct-diff-${diffId}`);
 
                 // File path header
                 const pathHeader = dom.$('.construct-diff-path');
-                pathHeader.style.cssText = `
-                        padding: 6px 10px; background: var(--kovix-bg-ink); color: var(--kovix-volt-400);
-                        font-size: 11px; font-family: monospace;
-                        border-bottom: 1px solid var(--kovix-border);
-                        display: flex; align-items: center; justify-content: space-between;
-                `;
                 const changeLabel = changeType === 'write' ? '[NEW]' : '[EDIT]';
                 pathHeader.textContent = `${changeLabel} ${filePath}`;
 
                 // Content area (async loaded)
                 const contentArea = dom.$('.construct-diff-content');
-                contentArea.style.cssText = `
-                        padding: 8px 10px; max-height: 200px; overflow-y: auto;
-                        font-family: monospace; font-size: 11px; color: var(--kovix-text-secondary);
-                        white-space: pre-wrap; background: var(--kovix-bg-ink);
-                `;
                 contentArea.textContent = 'Loading file content...';
 
                 // Load file content via diffApplier
@@ -1947,71 +1922,69 @@ export class ConstructAgentViewPane extends ViewPane {
         // --- Milestone Pause Controls ---
 
         private renderMilestonePauseControls(milestone: IMilestone): void {
-                const container = dom.$('.construct-milestone-pause');
-                container.style.cssText = `
-                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-volt-400);
-                        border-radius: 6px; padding: 12px; margin: 8px 0;
-                `;
+                // v2.0: uses .kovix-milestone-pause CSS classes from kovixAgentV2.css
+                // and the shared createButton factory from the component library.
+                // Zero inline styles, zero hardcoded hex.
+                const container = dom.$('.kovix-milestone-pause');
 
-                const header = dom.$('.construct-milestone-header');
-                header.style.cssText = `font-weight: 600; color: var(--kovix-volt-400); margin-bottom: 6px; font-size: 13px;`;
-                header.textContent = `\u23F8 Paused at: ${milestone.name}`;
+                const header = dom.$('.kovix-milestone-pause__header');
+                const icon = dom.$('.kovix-milestone-pause__icon');
+                icon.textContent = '\u23F8';
+                const title = dom.$('.kovix-milestone-pause__title');
+                title.textContent = 'Paused at:';
+                const name = dom.$('.kovix-milestone-pause__name');
+                name.textContent = milestone.name;
+                header.appendChild(icon);
+                header.appendChild(title);
+                header.appendChild(name);
                 container.appendChild(header);
 
-                const desc = dom.$('.construct-milestone-desc');
-                desc.style.cssText = `font-size: 12px; color: var(--kovix-text-secondary); margin-bottom: 10px;`;
-                desc.textContent = milestone.description;
-                container.appendChild(desc);
+                const body = dom.$('.kovix-milestone-pause__body');
+                body.textContent = milestone.description;
+                container.appendChild(body);
 
-                const btnContainer = dom.$('.construct-milestone-buttons');
-                btnContainer.style.cssText = `display: flex; gap: 8px;`;
+                const actions = dom.$('.kovix-milestone-pause__actions');
 
-                const continueBtn = dom.$('button') as HTMLButtonElement;
-                continueBtn.textContent = '\u25B6 Continue';
-                continueBtn.style.cssText = `
-                        background: var(--kovix-gradient); color: #FFFFFF; border: none;
-                        border-radius: var(--kovix-radius-md); padding: 6px 14px; cursor: pointer;
-                        font-size: 12px; font-weight: 500;
-                `;
-                continueBtn.onclick = () => {
-                        container.remove();
-                        this.agentLoop.resumeFromMilestone();
-                        this.setExecutionState('executing');
-                };
+                const continueBtn = createButton({
+                        label: '\u25B6 Continue',
+                        variant: 'primary',
+                        ariaLabel: 'Continue from milestone',
+                        onClick: () => {
+                                container.remove();
+                                this.agentLoop.resumeFromMilestone();
+                                this.setExecutionState('executing');
+                        },
+                });
 
-                const skipBtn = dom.$('button') as HTMLButtonElement;
-                skipBtn.textContent = '\u23ED Skip';
-                skipBtn.style.cssText = `
-                        background: transparent; color: var(--kovix-text-secondary); border: 1px solid var(--kovix-border);
-                        border-radius: var(--kovix-radius-md); padding: 6px 14px; cursor: pointer;
-                        font-size: 12px; font-weight: 500;
-                `;
-                skipBtn.onclick = () => {
-                        container.remove();
-                        this.agentLoop.skipCurrentMilestone();
-                        this.setExecutionState('executing');
-                };
+                const skipBtn = createButton({
+                        label: '\u23ED Skip',
+                        variant: 'secondary',
+                        ariaLabel: 'Skip this milestone',
+                        onClick: () => {
+                                container.remove();
+                                this.agentLoop.skipCurrentMilestone();
+                                this.setExecutionState('executing');
+                        },
+                });
 
-                const stopBtn = dom.$('button') as HTMLButtonElement;
-                stopBtn.textContent = '\u25A0 Stop';
-                stopBtn.style.cssText = `
-                        background: transparent; color: var(--kovix-state-error); border: 1px solid var(--kovix-state-error);
-                        border-radius: var(--kovix-radius-md); padding: 6px 14px; cursor: pointer;
-                        font-size: 12px; font-weight: 500;
-                `;
-                stopBtn.onclick = () => {
-                        container.remove();
-                        if (this._abortController) {
-                                this._abortController.abort();
-                                this._abortController = null;
-                        }
-                        this.setExecutionState('idle');
-                };
+                const stopBtn = createButton({
+                        label: '\u25A0 Stop',
+                        variant: 'destructive',
+                        ariaLabel: 'Stop agent execution',
+                        onClick: () => {
+                                container.remove();
+                                if (this._abortController) {
+                                        this._abortController.abort();
+                                        this._abortController = null;
+                                }
+                                this.setExecutionState('idle');
+                        },
+                });
 
-                btnContainer.appendChild(continueBtn);
-                btnContainer.appendChild(skipBtn);
-                btnContainer.appendChild(stopBtn);
-                container.appendChild(btnContainer);
+                actions.appendChild(continueBtn);
+                actions.appendChild(skipBtn);
+                actions.appendChild(stopBtn);
+                container.appendChild(actions);
 
                 this.messageContainer.appendChild(container);
                 this.scrollToBottom();
