@@ -307,7 +307,7 @@ export class KovixWelcomeView extends Disposable {
       display: inline-flex; align-items: center; gap: 8px;
       padding: 10px 18px;
       background: rgba(255, 255, 255, 0.04);
-      color: #E8EAED;
+      color: #E6EDF3;
       border: 1px solid rgba(255, 255, 255, 0.10);
       border-radius: 8px;
       font-family: inherit; font-size: 13px; font-weight: 500;
@@ -332,7 +332,7 @@ export class KovixWelcomeView extends Disposable {
     }
     .kovix-welcome__cta--ghost {
       background: transparent;
-      color: #9A9DA6;
+      color: #9DA7B0;
       border: 1px solid rgba(255, 255, 255, 0.06);
     }
     .kovix-welcome__cta-arrow { font-size: 14px; transition: transform 180ms ease; }
@@ -365,8 +365,8 @@ export class KovixWelcomeView extends Disposable {
       border-radius: 8px;
     }
     .kovix-welcome__feature-icon--swarm   { color: #2DD4BF; }
-    .kovix-welcome__feature-icon--memory  { color: #21D3A8; }
-    .kovix-welcome__feature-icon--skills  { color: #3DA9FC; }
+    .kovix-welcome__feature-icon--memory  { color: #3FB950; }
+    .kovix-welcome__feature-icon--skills  { color: #58A6FF; }
     .kovix-welcome__feature-title {
       font-size: 14px; font-weight: 600;
       color: #FFFFFF; margin-bottom: 6px;
@@ -374,7 +374,7 @@ export class KovixWelcomeView extends Disposable {
     }
     .kovix-welcome__feature-body {
       font-size: 12px; line-height: 1.5;
-      color: #9A9DA6;
+      color: #9DA7B0;
     }
     .kovix-welcome__skip {
       position: absolute;

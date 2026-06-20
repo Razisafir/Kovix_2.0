@@ -396,24 +396,24 @@ export class ConstructOnboardingWizard extends Disposable {
                                 /* Kovix design tokens — mirrored from kovix-tokens.css so the
                                    webview (sandboxed from the parent workbench CSS) renders
                                    against the same single source of truth. */
-                                --kovix-bg-ink: #0B0D10;
-                                --kovix-bg-surface: #13161B;
-                                --kovix-bg-raised: #1B1F26;
-                                --kovix-border: #2A2F38;
-                                --kovix-border-subtle: #1F232B;
-                                --kovix-text-primary: #E8EAED;
-                                --kovix-text-secondary: #9A9DA6;
-                                --kovix-text-tertiary: #5A5E68;
-                                --kovix-volt-400: #8A63FF;
-                                --kovix-volt-500: #6E42FF;
+                                --kovix-bg-ink: #0B1115;
+                                --kovix-bg-surface: #121A20;
+                                --kovix-bg-raised: #1A242C;
+                                --kovix-border: rgba(255, 255, 255, 0.08);
+                                --kovix-border-subtle: rgba(255, 255, 255, 0.06);
+                                --kovix-text-primary: #E6EDF3;
+                                --kovix-text-secondary: #9DA7B0;
+                                --kovix-text-tertiary: #5C6770;
+                                --kovix-accent-hover: #2DD4BF;
+                                --kovix-accent: #14B8A6;
                                 --kovix-volt-600: #4F2BCC;
-                                --kovix-ignite-400: #FF8A5C;
-                                --kovix-ignite-500: #FF5A36;
-                                --kovix-gradient: linear-gradient(135deg, #8A63FF 0%, #FF5A36 100%);
-                                --kovix-state-running: #21D3A8;
-                                --kovix-state-pending: #FFC233;
-                                --kovix-state-error: #FF4D5E;
-                                --kovix-state-info: #3DA9FC;
+                                --kovix-warning: #D29922;
+                                --kovix-error: #F85149;
+                                --kovix-accent-solid: #14B8A6;
+                                --kovix-state-running: #3FB950;
+                                --kovix-state-pending: #D29922;
+                                --kovix-state-error: #F85149;
+                                --kovix-state-info: #58A6FF;
                                 --kovix-badge-running-bg: rgba(33, 211, 168, 0.16);
                                 --kovix-badge-running-fg: #5FE8C6;
                                 --kovix-badge-pending-bg: rgba(255, 194, 51, 0.16);
@@ -429,7 +429,7 @@ export class ConstructOnboardingWizard extends Disposable {
                                 --kovix-font-mono: "JetBrains Mono", "Cascadia Code", "SF Mono", Consolas, monospace;
 
                                 --accent: var(--kovix-volt-500);
-                                --accent-dim: rgba(110, 66, 255, 0.40);
+                                --accent-dim: rgba(20, 184, 166, 0.40);
                                 --bg-primary: var(--kovix-bg-ink);
                                 --bg-secondary: var(--kovix-bg-surface);
                                 --bg-card: var(--kovix-bg-raised);

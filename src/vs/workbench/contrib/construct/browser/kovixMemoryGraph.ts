@@ -73,7 +73,7 @@ const CATEGORY_COLORS: Record<UniversalMemoryCategory, string> = {
         [UniversalMemoryCategory.Episodic]: '#4EC9B0',
         [UniversalMemoryCategory.Semantic]: '#C586C0',
         [UniversalMemoryCategory.Procedural]: '#D7BA7D',
-        [UniversalMemoryCategory.Universal]: '#6E42FF',
+        [UniversalMemoryCategory.Universal]: '#14B8A6',
         // Original seven categories (kept for completeness — Record<K,V> requires all keys)
         [UniversalMemoryCategory.Preference]: '#569CD6',
         [UniversalMemoryCategory.Pattern]: '#4EC9B0',

@@ -879,11 +879,20 @@ export class ConstructAgentViewPane extends ViewPane {
                 } catch (error) {
                         this.setExecutionState('error');
                         const msg = error instanceof Error ? error.message : String(error);
-                        this.updateMessageContent(planningMsg, `[FAIL] Planning failed: ${msg}`);
+                        this.updateMessageContent(planningMsg, '');
+                        // v2.0: render error using shared ErrorState component
+                        const errorEl = createErrorState({
+                                title: 'Planning failed',
+                                detail: msg,
+                                recovery: 'Try rephrasing the task or check your API key and network connection.',
+                                onRetry: () => { this.setExecutionState('idle'); },
+                                onDismiss: () => { this.setExecutionState('idle'); },
+                        });
+                        this.messageContainer.appendChild(errorEl);
                         this.logService.error('[AgentView] Planning error:', msg);
 
                         // Transition back to idle after showing error
-                        setTimeout(() => { this.setExecutionState('idle'); }, 2000);
+                        setTimeout(() => { this.setExecutionState('idle'); }, 5000);
                 } finally {
                         // BUG 6 FIX: Clean up cancellation state to prevent stale references
                         this.currentCancellationToken?.dispose();
@@ -1186,11 +1195,20 @@ export class ConstructAgentViewPane extends ViewPane {
                 } catch (error) {
                         this.setExecutionState('error');
                         const msg = error instanceof Error ? error.message : String(error);
-                        this.updateMessageContent(execMsg, `[FAIL] Error: ${msg}`);
+                        this.updateMessageContent(execMsg, '');
+                        // v2.0: render error using shared ErrorState component
+                        const errorEl = createErrorState({
+                                title: 'Execution failed',
+                                detail: msg,
+                                recovery: 'The agent encountered an error. Check the log for details, then retry.',
+                                onRetry: () => { this.setExecutionState('idle'); },
+                                onDismiss: () => { this.setExecutionState('idle'); },
+                        });
+                        this.messageContainer.appendChild(errorEl);
                         this.logService.error('[AgentView] Execution error:', msg);
 
                         // Transition back to idle after showing error
-                        setTimeout(() => { this.setExecutionState('idle'); }, 2000);
+                        setTimeout(() => { this.setExecutionState('idle'); }, 5000);
                 } finally {
                         // BUG 6 FIX: Clean up cancellation state to prevent stale references
                         this.currentCancellationToken?.dispose();

@@ -156,7 +156,7 @@ export class ConstructMemoryViewPane extends ViewPane {
                                 // Listen for initialization changes
                                 this._register(this.constructMemory.onDidChangeInitialization(() => {
                                                 statusText.className = 'kovix-badge ' + (this.constructMemory.isInitialized ? 'kovix-badge--info' : 'kovix-badge--idle');
-								statusText.textContent = this.constructMemory.isInitialized ? 'Vector search' : 'Keyword fallback';
+                                                                statusText.textContent = this.constructMemory.isInitialized ? 'Vector search' : 'Keyword fallback';
                                                 this.refresh();
                                 }));
 
@@ -258,20 +258,26 @@ export class ConstructMemoryViewPane extends ViewPane {
                 }
 
                 private renderTreeItem(item: IMemoryTreeItem): void {
-                                const row = dom.$('.construct-memory-item');
+                                const row = dom.$('.kovix-memory-entry');
                                 const bgColor = item.backgroundColor ?? 'transparent';
                                 row.style.cssText = `
-                                                display: flex; align-items: flex-start; padding: 4px 6px;
-                                                margin: 1px 0; border-radius: 3px; cursor: pointer;
+                                                display: flex; align-items: flex-start; padding: var(--kovix-space-1) var(--kovix-space-2);
+                                                margin: 1px 0; cursor: pointer;
                                                 background: ${bgColor}; border-left: 2px solid ${item.iconColor};
-                                                font-size: 11px;
                                 `;
                                 row.title = item.fullContent ?? item.label;
 
+                                // v2.0: Scope badge — project-scoped vs universal
+                                const isProject = item.category === MemoryCategory.WorkspaceContext;
+                                const scopeBadge = dom.$(`.kovix-memory-entry__scope--${isProject ? 'project' : 'universal'}`);
+                                scopeBadge.textContent = isProject ? 'PROJ' : 'UNIV';
+                                scopeBadge.title = isProject ? 'Project-scoped memory' : 'Universal cross-project memory';
+                                row.appendChild(scopeBadge);
+
                                 // Icon
-                                const icon = dom.$('.construct-memory-item-icon');
+                                const icon = dom.$('.kovix-memory-item-icon');
                                 icon.style.cssText = `
-                                                min-width: 16px; margin-right: 4px; font-size: 11px;
+                                                min-width: 16px; margin-right: var(--kovix-space-1); font-size: 11px;
                                 `;
                                 icon.textContent = item.icon;
                                 row.appendChild(icon);

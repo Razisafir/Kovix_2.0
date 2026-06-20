@@ -912,20 +912,20 @@
 }
 
 .kovix-slash-dropdown__item.is-active {
-	box-shadow: inset 2px 0 0 var(--kovix-accent, #C542FF);
+	box-shadow: inset 2px 0 0 var(--kovix-accent, #14B8A6);
 }
 
 .kovix-slash-dropdown__cmd {
 	font-family: var(--kovix-font-mono, "JetBrains Mono", monospace);
 	font-weight: 600;
-	color: var(--kovix-accent-hover, #D670FF);
+	color: var(--kovix-accent-hover, #2DD4BF);
 	min-width: 130px;
 	flex-shrink: 0;
 }
 
 .kovix-slash-dropdown__item:hover .kovix-slash-dropdown__cmd,
 .kovix-slash-dropdown__item.is-active .kovix-slash-dropdown__cmd {
-	color: var(--kovix-accent-hover, #D670FF);
+	color: var(--kovix-accent-hover, #2DD4BF);
 }
 
 .kovix-slash-dropdown__usage {
@@ -980,14 +980,14 @@
 /* Visually distinguish the secondary buttons with a subtle Volt tint on hover */
 .kovix-agent__header-secondary .kovix-icon-btn:hover {
 	background: var(--kovix-accent-subtle, rgba(197, 66, 255, 0.12));
-	color: var(--kovix-accent-hover, #D670FF);
+	color: var(--kovix-accent-hover, #2DD4BF);
 }
 
 /* Active state for the ponytail button — shows the current mode in the badge */
 .kovix-agent__header-secondary .kovix-icon-btn.is-active {
 	background: var(--kovix-accent-subtle, rgba(197, 66, 255, 0.12));
-	color: var(--kovix-accent-hover, #D670FF);
-	box-shadow: inset 0 -2px 0 var(--kovix-accent, #C542FF);
+	color: var(--kovix-accent-hover, #2DD4BF);
+	box-shadow: inset 0 -2px 0 var(--kovix-accent, #14B8A6);
 }
 
 /* ===========================================================================
@@ -1028,8 +1028,8 @@
 }
 
 .kovix-mode-badge:hover {
-	background: var(--kovix-accent, #C542FF) !important;
-	border-color: var(--kovix-accent, #C542FF) !important;
+	background: var(--kovix-accent, #14B8A6) !important;
+	border-color: var(--kovix-accent, #14B8A6) !important;
 	color: #FFFFFF !important;
 }
 
@@ -1043,7 +1043,7 @@
 }
 
 .kovix-agent__subline-seg:hover {
-	color: var(--kovix-accent-hover, #D670FF);
+	color: var(--kovix-accent-hover, #2DD4BF);
 	text-decoration: underline;
 }
 
@@ -1067,7 +1067,7 @@
 }
 
 .kovix-attach-btn:hover {
-	color: var(--kovix-accent-hover, #D670FF);
-	border-color: var(--kovix-accent, #C542FF);
+	color: var(--kovix-accent-hover, #2DD4BF);
+	border-color: var(--kovix-accent, #14B8A6);
 	background: var(--kovix-accent-subtle, rgba(197, 66, 255, 0.12));
 }
