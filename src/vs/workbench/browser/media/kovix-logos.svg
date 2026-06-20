@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet">
+  <!--
+    Kovix "K" logo sprite.
+    Single source of truth for every place the Kovix mark appears in the
+    workbench: activity bar (24px), status bar (16px), welcome screen (128px),
+    about dialog (128px), splash screen (192px).
+
+    The mark is a squared, slab-cut "K" sitting on a Volt gradient tile.
+    The hard inner bevel on the K's stem is intentional — it reads as a
+    chip / circuit trace, signalling "code-native" without resorting to
+    neon or terminal clichés.
+
+    Use as <use href="...#kovix-logo-{size}" />.
+    Sizes: 16, 24, 48, 128, 192.
+  -->
+
+  <defs>
+    <linearGradient id="kovix-volt-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#D670FF" />
+      <stop offset="55%"  stop-color="#C542FF" />
+      <stop offset="100%" stop-color="#A020E0" />
+    </linearGradient>
+
+    <linearGradient id="kovix-volt-gradient-bright" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#E89BFF" />
+      <stop offset="55%"  stop-color="#D670FF" />
+      <stop offset="100%" stop-color="#C542FF" />
+    </linearGradient>
+
+    <radialGradient id="kovix-volt-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"  stop-color="#C542FF" stop-opacity="0.55" />
+      <stop offset="60%" stop-color="#C542FF" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#C542FF" stop-opacity="0" />
+    </radialGradient>
+
+    <!--
+      The K glyph, designed to be dropped into a 1024×1024 tile.
+      Stroke width is calibrated so the mark stays legible at 16px.
+      Coordinates use a 1024 grid; the K occupies roughly the central 60%.
+    -->
+    <symbol id="kovix-k-glyph" viewBox="0 0 1024 1024">
+      <!--
+        K built from two trapezoids:
+          - vertical stem, 200 wide, full height
+          - diagonal arm, slightly heavier on top to give a chip-notch feel
+        White-on-gradient for max contrast at small sizes.
+      -->
+      <!-- Stem -->
+      <path d="M 320 200 H 480 V 824 H 320 Z" fill="#FFFFFF" />
+      <!-- Upper diagonal arm (notch at top to suggest a circuit trace) -->
+      <path d="M 480 480 L 760 200 L 880 200 L 880 320 L 600 600 L 880 880 L 880 1000 L 760 1000 L 480 720 Z"
+            fill="#FFFFFF" />
+      <!-- Notch chip — volt-bright accent on the K's inner elbow -->
+      <path d="M 480 480 L 600 480 L 540 540 Z" fill="url(#kovix-volt-gradient-bright)" />
+    </symbol>
+
+    <!-- The full logo = Volt gradient tile + K glyph + subtle inner ring -->
+    <symbol id="kovix-logo-tile" viewBox="0 0 1024 1024">
+      <!-- Outer gradient tile with rounded corners (radius 224 = 22% of 1024) -->
+      <rect x="0" y="0" width="1024" height="1024" rx="224" ry="224"
+            fill="url(#kovix-volt-gradient)" />
+      <!-- Subtle inner highlight ring -->
+      <rect x="32" y="32" width="960" height="960" rx="200" ry="200"
+            fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2" />
+      <!-- K glyph -->
+      <use href="#kovix-k-glyph" x="0" y="0" width="1024" height="1024" />
+    </symbol>
+
+    <!-- "Mark only" variant — tile-less, used inline (status bar, menu glyph) -->
+    <symbol id="kovix-logo-mark" viewBox="0 0 1024 1024">
+      <use href="#kovix-k-glyph" x="0" y="0" width="1024" height="1024" />
+    </symbol>
+
+    <!-- "With glow" variant — splash + welcome, sits on a dark canvas -->
+    <symbol id="kovix-logo-glow" viewBox="0 0 1024 1024">
+      <!-- Glow halo -->
+      <circle cx="512" cy="512" r="512" fill="url(#kovix-volt-glow)" />
+      <!-- Tile -->
+      <use href="#kovix-logo-tile" x="128" y="128" width="768" height="768" />
+    </symbol>
+  </defs>
+
+  <!--
+    Pre-sized instances that can be referenced directly.
+    <use href="#kovix-logo-16" width="16" height="16" />
+  -->
+  <symbol id="kovix-logo-16"  viewBox="0 0 1024 1024"><use href="#kovix-logo-tile" width="1024" height="1024" /></symbol>
+  <symbol id="kovix-logo-24"  viewBox="0 0 1024 1024"><use href="#kovix-logo-tile" width="1024" height="1024" /></symbol>
+  <symbol id="kovix-logo-48"  viewBox="0 0 1024 1024"><use href="#kovix-logo-tile" width="1024" height="1024" /></symbol>
+  <symbol id="kovix-logo-128" viewBox="0 0 1024 1024"><use href="#kovix-logo-glow" width="1024" height="1024" /></symbol>
+  <symbol id="kovix-logo-192" viewBox="0 0 1024 1024"><use href="#kovix-logo-glow" width="1024" height="1024" /></symbol>
+</svg>

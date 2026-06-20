@@ -18,6 +18,11 @@ import { ConstructMemoryViewPane } from './constructMemoryView.js';
 import { KovixMemoryGraphPane } from './kovixMemoryGraph.js';
 import { KovixAgentControlCenter } from './kovixAgentControlCenter.js';
 import { KovixAgentSettingsPane } from './kovixAgentSettings.js';
+import { KovixWelcomeContribution } from './kovixWelcome.js';
+import { KovixBrandChromeContribution } from './kovixBrandChrome.js';
+import { KovixSurfaceBrandingContribution } from './kovixSurfaceBranding.js';
+import { KovixSplashContribution } from './kovixSplash.js';
+import { KovixCommandBridgeContribution } from './kovixCommandBridge.js';
 import { IStatusbarService, StatusbarAlignment, IStatusbarEntryAccessor } from '../../../../workbench/services/statusbar/browser/statusbar.js';
 import { IWorkbenchContribution, Extensions as WorkbenchExtensions, IWorkbenchContributionsRegistry } from '../../../../workbench/common/contributions.js';
 import { LifecyclePhase } from '../../../../workbench/services/lifecycle/common/lifecycle.js';
@@ -323,6 +328,14 @@ class ConstructAutoOpenContribution extends Disposable implements IWorkbenchCont
 
 Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(ConstructStatusBarContribution, LifecyclePhase.Restored);
 Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(ConstructAutoOpenContribution, LifecyclePhase.Restored);
+Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(KovixWelcomeContribution, LifecyclePhase.Restored);
+Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(KovixBrandChromeContribution, LifecyclePhase.Restored);
+Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(KovixSurfaceBrandingContribution, LifecyclePhase.Restored);
+// The command bridge must install BEFORE the splash / brand-chrome contributions
+// run, so they can dispatch commands immediately. Starting is the earliest phase.
+Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(KovixCommandBridgeContribution, LifecyclePhase.Starting);
+// Splash also runs at Starting so the overlay mounts before any workbench DOM.
+Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(KovixSplashContribution, LifecyclePhase.Starting);
 
 // --- Construct Commands --------------------------------------------------------
 // NOTE: The `construct.focusPanel` command is auto-registered by the container's
@@ -402,6 +415,26 @@ registerAction2(class OpenControlCenterAction extends Action2 {
                 }
                 run(accessor: ServicesAccessor): void {
                                 accessor.get(IViewsService).openView('construct.controlCenter', true);
+                }
+});
+
+// Kovix Welcome — opens the first-launch welcome webview on demand.
+// Used by the activity-bar K-logo and the Help menu.
+registerAction2(class OpenKovixWelcomeAction extends Action2 {
+                constructor() {
+                                super({
+                                                id: 'kovix.welcome.open',
+                                                title: localize2('openKovixWelcome', "Kovix: Open Welcome Screen"),
+                                                f1: true,
+                                                category: localize2('kovixCategory', "Kovix"),
+                                });
+                }
+                run(accessor: ServicesAccessor): void {
+                                // Lazily create the welcome view via the instantiation service
+                                // so we don't pay the cost on every workbench startup.
+                                const inst = accessor.get(IInstantiationService);
+                                const view = inst.createInstance(KovixWelcomeView);
+                                view.show();
                 }
 });
 

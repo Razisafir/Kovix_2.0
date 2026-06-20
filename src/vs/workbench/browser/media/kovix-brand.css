@@ -1,0 +1,496 @@
+/*---------------------------------------------------------------------------------------------
+ *  Kovix Brand — VS Code theme variable overrides.
+ *
+ *  This is the single file that re-themes the entire VS Code workbench shell
+ *  without touching individual component CSS. Every `--vscode-*` color token
+ *  that ships with VS Code Dark+ is overridden here to map to a Kovix design
+ *  token, so the moment this file is `@import`-ed by style.css the whole
+ *  workbench (activity bar, sidebar, editor chrome, status bar, command
+ *  palette, settings UI, dialogs) visibly shifts from "VS Code dark" to
+ *  "Kovix dark".
+ *
+ *  All values reference `--kovix-*` tokens defined in kovix-tokens.css so the
+ *  palette stays in one place.
+ *
+ *  This file is additive — it does not delete VS Code CSS, only overrides
+ *  custom properties. Safe under upstream VS Code merges.
+ *--------------------------------------------------------------------------------------------*/
+
+.monaco-workbench {
+  /* ── Editor canvas ──────────────────────────────────────────────────────
+     VS Code Dark+ uses #1E1E1E for everything. Kovix uses true black for
+     the shell and a near-black elevated surface for the editor — so the
+     editor reads as a single elevated plane floating in a darker void. */
+
+  --vscode-editor-background: var(--kovix-bg-ink);
+  --vscode-editorGutter-background: var(--kovix-bg-ink);
+  --vscode-editorGutter-addedBackground: rgba(33, 211, 168, 0.35);
+  --vscode-editorGutter-deletedBackground: rgba(224, 161, 0, 0.35);
+  --vscode-editorGutter-modifiedBackground: rgba(197, 66, 255, 0.35);
+
+  --vscode-editor-foreground: var(--kovix-text-primary);
+  --vscode-editorLineNumber-foreground: var(--kovix-text-tertiary);
+  --vscode-editorLineNumber-activeForeground: var(--kovix-text-secondary);
+
+  --vscode-editor selection-background is exposed as a non-prefixed
+     CSS var by the editor itself; override via the theme token: */;
+  --vscode-editor-selectionBackground: rgba(197, 66, 255, 0.28);
+  --vscode-editor-inactiveSelectionBackground: rgba(197, 66, 255, 0.12);
+  --vscode-editor-wordHighlightBackground: rgba(255, 255, 255, 0.06);
+  --vscode-editor-wordHighlightStrongBackground: rgba(255, 255, 255, 0.10);
+
+  --vscode-editor-lineHighlightBackground: rgba(255, 255, 255, 0.03);
+  --vscode-editor-lineHighlightBorder: transparent;
+
+  --vscode-editorCursor-foreground: var(--kovix-volt-400);
+  --vscode-editorIndentGuide-background: rgba(255, 255, 255, 0.04);
+  --vscode-editorIndentGuide-activeBackground: rgba(255, 255, 255, 0.10);
+  --vscode-editorLink-activeForeground: var(--kovix-volt-400);
+
+  /* ── Workbench shell ──────────────────────────────────────────────────── */
+
+  --vscode-foreground: var(--kovix-text-primary);
+  --vscode-descriptionForeground: var(--kovix-text-secondary);
+  --vscode-icon-foreground: var(--kovix-text-primary);
+  --vscode-errorForeground: var(--kovix-state-error);
+  --vscode-focusBorder: var(--kovix-volt-500);
+
+  --vscode-sideBar-background: var(--kovix-bg-surface);
+  --vscode-sideBar-foreground: var(--kovix-text-secondary);
+  --vscode-sideBar-border: var(--kovix-hairline);
+  --vscode-sideBarTitle-foreground: var(--kovix-text-primary);
+  --vscode-sideBarSectionHeader-background: transparent;
+  --vscode-sideBarSectionHeader-foreground: var(--kovix-text-tertiary);
+  --vscode-sideBarSectionHeader-border: var(--kovix-hairline);
+
+  --vscode-activityBar-background: var(--kovix-bg-surface);
+  --vscode-activityBar-foreground: var(--kovix-text-secondary);
+  --vscode-activityBar-inactiveForeground: var(--kovix-text-tertiary);
+  --vscode-activityBar-activeBorder: var(--kovix-volt-500);
+  --vscode-activityBar-activeBackground: transparent;
+  --vscode-activityBar-activeFocusBorder: var(--kovix-volt-500);
+  --vscode-activityBarBadge-background: var(--kovix-volt-500);
+  --vscode-activityBarBadge-foreground: #FFFFFF;
+  --vscode-activityBarTop-background: var(--kovix-bg-surface);
+  --vscode-activityBarTop-foreground: var(--kovix-text-secondary);
+  --vscode-activityBarTop-inactiveForeground: var(--kovix-text-tertiary);
+  --vscode-activityBarTop-activeBorder: var(--kovix-volt-500);
+
+  --vscode-statusBar-background: var(--kovix-bg-surface);
+  --vscode-statusBar-foreground: var(--kovix-text-secondary);
+  --vscode-statusBar-border: var(--kovix-hairline);
+  --vscode-statusBar-noFolderBackground: var(--kovix-bg-surface);
+  --vscode-statusBar-noFolderForeground: var(--kovix-text-tertiary);
+  --vscode-statusBarItem-activeBackground: rgba(197, 66, 255, 0.20);
+  --vscode-statusBarItem-hoverBackground: rgba(197, 66, 255, 0.10);
+  --vscode-statusBarItem-compactHoverBackground: rgba(255, 255, 255, 0.06);
+  --vscode-statusBarItem-prominentBackground: rgba(197, 66, 255, 0.18);
+  --vscode-statusBarItem-prominentHoverBackground: rgba(197, 66, 255, 0.28);
+  --vscode-statusBarItem-errorBackground: rgba(224, 161, 0, 0.18);
+  --vscode-statusBarItem-errorForeground: var(--kovix-state-error);
+  --vscode-statusBarItem-warningBackground: rgba(255, 194, 51, 0.16);
+  --vscode-statusBarItem-warningForeground: var(--kovix-state-pending);
+
+  --vscode-titleBar-activeBackground: var(--kovix-bg-surface);
+  --vscode-titleBar-activeForeground: var(--kovix-text-primary);
+  --vscode-titleBar-inactiveBackground: var(--kovix-bg-surface);
+  --vscode-titleBar-inactiveForeground: var(--kovix-text-tertiary);
+
+  --vscode-menubar-selectionForeground: var(--kovix-text-primary);
+  --vscode-menubar-selectionBackground: rgba(197, 66, 255, 0.10);
+  --vscode-menubar-selectionBorder: transparent;
+
+  /* ── Editor tabs & panes ──────────────────────────────────────────────── */
+
+  --vscode-editorGroupHeader-tabsBackground: var(--kovix-bg-surface);
+  --vscode-editorGroupHeader-tabsBorder: var(--kovix-hairline);
+  --vscode-editorPane-background: var(--kovix-bg-ink);
+
+  --vscode-tab-activeBackground: var(--kovix-bg-ink);
+  --vscode-tab-activeForeground: var(--kovix-text-primary);
+  --vscode-tab-activeBorderTop: var(--kovix-volt-500);
+  --vscode-tab-activeBorderBottom: transparent;
+  --vscode-tab-activeBorder: transparent;
+  --vscode-tab-inactiveBackground: var(--kovix-bg-surface);
+  --vscode-tab-inactiveForeground: var(--kovix-text-tertiary);
+  --vscode-tab-border: var(--kovix-hairline);
+  --vscode-tab-hoverBackground: rgba(255, 255, 255, 0.03);
+  --vscode-tab-hoverForeground: var(--kovix-text-secondary);
+  --vscode-tab-hoverBorder: transparent;
+  --vscode-tab-unfocusedActiveBackground: var(--kovix-bg-surface);
+  --vscode-tab-unfocusedActiveForeground: var(--kovix-text-tertiary);
+  --vscode-tab-unfocusedInactiveBackground: var(--kovix-bg-surface);
+  --vscode-tab-unfocusedInactiveForeground: var(--kovix-text-tertiary);
+
+  --vscode-editorGroup-border: var(--kovix-hairline);
+  --vscode-editorGroup-dropBackground: rgba(197, 66, 255, 0.10);
+
+  --vscode-splitView-inactiveVisibleBorder: var(--kovix-hairline);
+  --vscode-splitView-activeVisibleBorder: var(--kovix-volt-500);
+
+  /* ── Lists & trees (file explorer, command palette, quick pick) ──────── */
+
+  --vscode-list-foreground: var(--kovix-text-secondary);
+  --vscode-list-activeSelectionBackground: rgba(197, 66, 255, 0.18);
+  --vscode-list-activeSelectionForeground: var(--kovix-text-primary);
+  --vscode-list-activeSelectionIconForeground: var(--kovix-volt-400);
+  --vscode-list-inactiveSelectionBackground: rgba(255, 255, 255, 0.05);
+  --vscode-list-inactiveSelectionForeground: var(--kovix-text-primary);
+  --vscode-list-hoverBackground: rgba(197, 66, 255, 0.08);
+  --vscode-list-hoverForeground: var(--kovix-text-primary);
+  --vscode-list-focusBackground: rgba(197, 66, 255, 0.14);
+  --vscode-list-focusForeground: var(--kovix-text-primary);
+  --vscode-list-focusOutline: var(--kovix-volt-500);
+  --vscode-list-highlightForeground: var(--kovix-volt-400);
+  --vscode-list-filterMatchBackground: rgba(255, 194, 51, 0.20);
+  --vscode-list-invalidItemForeground: var(--kovix-state-error);
+  --vscode-list-errorForeground: var(--kovix-state-error);
+  --vscode-list-warningForeground: var(--kovix-state-pending);
+  --vscode-tree-indentGuidesStroke: rgba(255, 255, 255, 0.06);
+
+  /* ── Inputs, dropdowns, buttons ──────────────────────────────────────── */
+
+  --vscode-input-background: var(--kovix-bg-input);
+  --vscode-input-foreground: var(--kovix-text-primary);
+  --vscode-input-border: var(--kovix-border);
+  --vscode-input-placeholderForeground: var(--kovix-text-tertiary);
+  --vscode-inputOption-activeBackground: rgba(197, 66, 255, 0.20);
+  --vscode-inputOption-activeBorder: var(--kovix-volt-500);
+  --vscode-inputOption-activeForeground: var(--kovix-text-primary);
+  --vscode-inputOption-hoverBackground: rgba(255, 255, 255, 0.06);
+
+  --vscode-dropdown-background: var(--kovix-bg-overlay);
+  --vscode-dropdown-foreground: var(--kovix-text-primary);
+  --vscode-dropdown-border: var(--kovix-border);
+
+  --vscode-button-background: var(--kovix-volt-500);
+  --vscode-button-foreground: #FFFFFF;
+  --vscode-button-hoverBackground: var(--kovix-volt-400);
+  --vscode-button-secondaryBackground: rgba(255, 255, 255, 0.06);
+  --vscode-button-secondaryForeground: var(--kovix-text-primary);
+  --vscode-button-secondaryHoverBackground: rgba(255, 255, 255, 0.10);
+  --vscode-button-border: transparent;
+
+  /* ── Scrolls & progress ──────────────────────────────────────────────── */
+
+  --vscode-scrollbar-shadow: rgba(0, 0, 0, 0.4);
+  --vscode-scrollbarSlider-background: rgba(255, 255, 255, 0.08);
+  --vscode-scrollbarSlider-hoverBackground: rgba(255, 255, 255, 0.14);
+  --vscode-scrollbarSlider-activeBackground: var(--kovix-volt-500);
+  --vscode-progressBar-background: var(--kovix-gradient-volt);
+
+  /* ── Badges, chips, banners ──────────────────────────────────────────── */
+
+  --vscode-badge-background: var(--kovix-volt-500);
+  --vscode-badge-foreground: #FFFFFF;
+
+  --vscode-banner-background: var(--kovix-bg-overlay);
+  --vscode-banner-foreground: var(--kovix-text-primary);
+  --vscode-banner-iconForeground: var(--kovix-volt-400);
+
+  /* ── Quick pick / command palette ────────────────────────────────────── */
+
+  --vscode-quickInput-background: var(--kovix-bg-overlay);
+  --vscode-quickInput-foreground: var(--kovix-text-primary);
+  --vscode-quickInputTitle-background: transparent;
+  --vscode-quickInputList-focusBackground: rgba(197, 66, 255, 0.18);
+  --vscode-quickInputList-focusForeground: var(--kovix-text-primary);
+  --vscode-quickInputList-focusIconForeground: var(--kovix-volt-400);
+  --vscode-pickerGroup-foreground: var(--kovix-text-tertiary);
+  --vscode-pickerGroup-border: var(--kovix-hairline);
+
+  /* ── Settings UI ─────────────────────────────────────────────────────── */
+
+  --vscode-settings-headerForeground: var(--kovix-text-primary);
+  --vscode-settings-modifiedItemIndicator: var(--kovix-volt-500);
+  --vscode-settings-headerBorder: var(--kovix-hairline);
+  --vscode-settings-sashBorder: var(--kovix-hairline);
+  --vscode-settings-dropdownBackground: var(--kovix-bg-overlay);
+  --vscode-settings-dropdownForeground: var(--kovix-text-primary);
+  --vscode-settings-dropdownBorder: var(--kovix-border);
+  --vscode-settings-dropdownListBorder: var(--kovix-hairline);
+  --vscode-settings-checkboxBackground: var(--kovix-bg-input);
+  --vscode-settings-checkboxBorder: var(--kovix-border);
+  --vscode-settings-checkboxForeground: var(--kovix-volt-400);
+  --vscode-settings-textInputBackground: var(--kovix-bg-input);
+  --vscode-settings-textInputForeground: var(--kovix-text-primary);
+  --vscode-settings-textInputBorder: var(--kovix-border);
+  --vscode-settings-numberInputBackground: var(--kovix-bg-input);
+  --vscode-settings-numberInputForeground: var(--kovix-text-primary);
+  --vscode-settings-numberInputBorder: var(--kovix-border);
+  --vscode-settings-focusedRowBackground: rgba(197, 66, 255, 0.06);
+  --vscode-settings-rowHoverBackground: rgba(255, 255, 255, 0.03);
+
+  /* ── Notifications, dialogs ──────────────────────────────────────────── */
+
+  --vscode-notifications-background: var(--kovix-bg-overlay);
+  --vscode-notifications-foreground: var(--kovix-text-primary);
+  --vscode-notifications-border: var(--kovix-border);
+  --vscode-notificationLink-foreground: var(--kovix-volt-400);
+  --vscode-notificationCenterHeader-background: var(--kovix-bg-surface);
+  --vscode-notificationToast-background: var(--kovix-bg-overlay);
+
+  --vscode-dialog-background: var(--kovix-bg-overlay);
+  --vscode-dialog-foreground: var(--kovix-text-primary);
+  --vscode-dialog-border: var(--kovix-border);
+
+  /* ── Git / SCM ───────────────────────────────────────────────────────── */
+
+  --vscode-gitDecoration-addedResourceForeground: #21D3A8;
+  --vscode-gitDecoration-modifiedResourceForeground: var(--kovix-volt-400);
+  --vscode-gitDecoration-deletedResourceForeground: var(--kovix-state-error);
+  --vscode-gitDecoration-untrackedResourceForeground: #3DA9FC;
+  --vscode-gitDecoration-ignoredResourceForeground: var(--kovix-text-tertiary);
+  --vscode-gitDecoration-conflictingResourceForeground: var(--kovix-state-pending);
+
+  --vscode-scmGraph-foreground: var(--kovix-text-secondary);
+  --vscode-scmGraph-historyItemHoverLabelForeground: var(--kovix-volt-400);
+
+  /* ── Terminal ────────────────────────────────────────────────────────── */
+
+  --vscode-terminal-background: var(--kovix-bg-ink);
+  --vscode-terminal-foreground: var(--kovix-text-primary);
+  --vscode-terminal-ansiBlack: #050507;
+  --vscode-terminal-ansiRed: #FF4D5E;
+  --vscode-terminal-ansiGreen: #21D3A8;
+  --vscode-terminal-ansiYellow: #FFC233;
+  --vscode-terminal-ansiBlue: #3DA9FC;
+  --vscode-terminal-ansiMagenta: #C542FF;
+  --vscode-terminal-ansiCyan: #00E5FF;
+  --vscode-terminal-ansiWhite: #E8EAED;
+  --vscode-terminal-ansiBrightBlack: #5A5E68;
+  --vscode-terminal-ansiBrightRed: #FF8A96;
+  --vscode-terminal-ansiBrightGreen: #5FE8C6;
+  --vscode-terminal-ansiBrightYellow: #FFD466;
+  --vscode-terminal-ansiBrightBlue: #7CC4FD;
+  --vscode-terminal-ansiBrightMagenta: #D670FF;
+  --vscode-terminal-ansiBrightCyan: #4DECFF;
+  --vscode-terminal-ansiBrightWhite: #FFFFFF;
+
+  /* ── Editor syntax (overrides for VS Code Dark+ token colors) ────────── */
+
+  --vscode-symbolIcon-arrayForeground: #FFC233;
+  --vscode-symbolIcon-booleanForeground: #3DA9FC;
+  --vscode-symbolIcon-classForeground: var(--kovix-volt-400);
+  --vscode-symbolIcon-functionForeground: #5FE8C6;
+  --vscode-symbolIcon-interfaceForeground: var(--kovix-volt-400);
+  --vscode-symbolIcon-variableForeground: #E8EAED;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Kovix-specific surface tweaks that aren't expressible as theme tokens.
+   These are scoped to the workbench only — they don't leak into webviews
+   or iframes, and they're additive (no `display:none`, no layout breaks).
+   ───────────────────────────────────────────────────────────────────────── */
+
+.monaco-workbench .activitybar {
+  /* Push the activity bar content down so the Kovix K logo can sit
+     above the default VS Code icons. The logo itself is injected by
+     kovixWelcome.ts (Phase 2 contribution) — this just reserves space. */
+  padding-top: 0;
+  background: var(--kovix-bg-surface);
+  border-right: 1px solid var(--kovix-hairline);
+}
+
+/* The Kovix K mark at the top of the activity bar. */
+.monaco-workbench .activitybar .kovix-activity-logo {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+  transition: filter var(--kovix-motion-fast) ease;
+}
+.monaco-workbench .activitybar .kovix-activity-logo:hover {
+  filter: drop-shadow(0 0 8px rgba(197, 66, 255, 0.55));
+}
+.monaco-workbench .activitybar .kovix-activity-logo svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+/* Status bar — the Kovix logo sits at the far left, before any VS Code entry. */
+.monaco-workbench .statusbar .kovix-status-logo {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 6px 0 8px;
+  height: 100%;
+}
+.monaco-workbench .statusbar .kovix-status-logo svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+/* Volt pulsing dot — used by the status bar when the agent is actively working. */
+.monaco-workbench .statusbar .kovix-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--kovix-volt-400);
+  box-shadow: 0 0 0 0 rgba(197, 66, 255, 0.55);
+  display: inline-block;
+  margin-right: 6px;
+  animation: kovix-status-pulse 1600ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+.monaco-workbench .statusbar.is-kovix-idle .kovix-status-dot {
+  background: var(--kovix-text-tertiary);
+  animation: none;
+  box-shadow: none;
+}
+.monaco-workbench .statusbar.is-kovix-pending .kovix-status-dot {
+  background: var(--kovix-state-pending);
+  animation: kovix-status-pulse-amber 1600ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+.monaco-workbench .statusbar.is-kovix-error .kovix-status-dot {
+  background: var(--kovix-state-error);
+  animation: none;
+  box-shadow: none;
+}
+@keyframes kovix-status-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(197, 66, 255, 0.55); }
+  70%  { box-shadow: 0 0 0 8px rgba(197, 66, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(197, 66, 255, 0); }
+}
+@keyframes kovix-status-pulse-amber {
+  0%   { box-shadow: 0 0 0 0 rgba(255, 194, 51, 0.55); }
+  70%  { box-shadow: 0 0 0 8px rgba(255, 194, 51, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 194, 51, 0); }
+}
+
+/* Command palette — Kovix title + logo. The markup is injected by a
+   workbench contribution; this just styles it. */
+.monaco-workbench .quick-input-widget .kovix-quickinput-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 8px 12px;
+  border-bottom: 1px solid var(--kovix-hairline);
+  background: var(--kovix-bg-overlay);
+}
+.monaco-workbench .quick-input-widget .kovix-quickinput-header svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.monaco-workbench .quick-input-widget .kovix-quickinput-title {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--kovix-text-secondary);
+  font-weight: 600;
+}
+.monaco-workbench .quick-input-widget .kovix-quickinput-subtitle {
+  font-size: 11px;
+  color: var(--kovix-text-tertiary);
+  margin-left: auto;
+}
+.monaco-workbench .quick-input-widget .kovix-quickinput-active-marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--kovix-volt-500);
+  border-radius: 2px;
+}
+
+/* Settings UI — Kovix header band (injects above the standard Settings header) */
+.monaco-workbench .settings-editor .kovix-settings-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 24px;
+  background:
+    linear-gradient(180deg, rgba(197, 66, 255, 0.08) 0%, rgba(197, 66, 255, 0) 100%),
+    var(--kovix-bg-surface);
+  border-bottom: 1px solid var(--kovix-hairline);
+}
+.monaco-workbench .settings-editor .kovix-settings-header svg {
+  width: 28px;
+  height: 28px;
+}
+.monaco-workbench .settings-editor .kovix-settings-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--kovix-text-primary);
+  letter-spacing: 0.02em;
+}
+.monaco-workbench .settings-editor .kovix-settings-tagline {
+  font-size: 11px;
+  color: var(--kovix-text-tertiary);
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
+.monaco-workbench .settings-editor .kovix-settings-cta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--kovix-volt-500);
+  color: #FFFFFF;
+  border-radius: var(--kovix-radius-md);
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background var(--kovix-motion-fast) ease;
+}
+.monaco-workbench .settings-editor .kovix-settings-cta:hover {
+  background: var(--kovix-volt-400);
+}
+
+/* About dialog — the Kovix brand panel that replaces VS Code's About content. */
+.monaco-workbench .dialog .kovix-about-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.monaco-workbench .dialog .kovix-about-row svg {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 12px rgba(197, 66, 255, 0.35));
+}
+.monaco-workbench .dialog .kovix-about-titles { flex: 1; min-width: 0; }
+.monaco-workbench .dialog .kovix-about-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--kovix-text-primary);
+  letter-spacing: 0.04em;
+}
+.monaco-workbench .dialog .kovix-about-version {
+  font-size: 11px;
+  color: var(--kovix-text-tertiary);
+  margin-top: 2px;
+  font-family: var(--kovix-font-mono);
+}
+.monaco-workbench .dialog .kovix-about-tagline {
+  font-size: 12px;
+  color: var(--kovix-text-secondary);
+  margin-top: 4px;
+}
+.monaco-workbench .dialog .kovix-about-credit {
+  font-size: 11px;
+  color: var(--kovix-text-tertiary);
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--kovix-hairline);
+}
+.monaco-workbench .dialog .kovix-about-credit a {
+  color: var(--kovix-volt-400);
+  text-decoration: none;
+}
+.monaco-workbench .dialog .kovix-about-credit a:hover {
+  color: var(--kovix-volt-400);
+  text-decoration: underline;
+}

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline';" />
+  <title>Kovix</title>
+  <style>
+    /*
+      Kovix launch splash.
+      Loaded by the Electron main process for ~800ms while the workbench DOM
+      boots. The single most important "this is not VS Code" signal — a user
+      should see the K mark glow against a near-black canvas before any
+      VS Code chrome is visible.
+    */
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000000;
+      color: #FFFFFF;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .stage {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 42%, rgba(197, 66, 255, 0.18) 0%, rgba(197, 66, 255, 0) 55%),
+        radial-gradient(circle at 50% 80%, rgba(160, 32, 224, 0.08) 0%, rgba(0, 0, 0, 0) 60%),
+        #000000;
+    }
+
+    .mark {
+      width: 192px;
+      height: 192px;
+      filter: drop-shadow(0 0 32px rgba(197, 66, 255, 0.55));
+      animation: kovix-splash-pulse 1200ms cubic-bezier(0.4, 0, 0.2, 1) 1 both;
+    }
+
+    .wordmark {
+      position: absolute;
+      bottom: 22vh;
+      left: 0;
+      right: 0;
+      text-align: center;
+      letter-spacing: 0.42em;
+      font-weight: 600;
+      font-size: 22px;
+      color: #FFFFFF;
+      opacity: 0;
+      animation: kovix-splash-fade-up 700ms cubic-bezier(0.4, 0, 0.2, 1) 300ms 1 both;
+    }
+
+    .wordmark .accent {
+      color: #D670FF;
+    }
+
+    .tagline {
+      position: absolute;
+      bottom: 16vh;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      color: rgba(255, 255, 255, 0.55);
+      text-transform: uppercase;
+      opacity: 0;
+      animation: kovix-splash-fade-up 700ms cubic-bezier(0.4, 0, 0.2, 1) 500ms 1 both;
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 24px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: rgba(255, 255, 255, 0.30);
+      text-transform: uppercase;
+      opacity: 0;
+      animation: kovix-splash-fade-up 600ms ease 700ms 1 both;
+    }
+
+    /* Stages: pulse the mark in, then fade the whole splash out at ~800ms. */
+    @keyframes kovix-splash-pulse {
+      0%   { transform: scale(0.86); opacity: 0; }
+      35%  { transform: scale(1.04); opacity: 1; }
+      60%  { transform: scale(1.00); opacity: 1; }
+      100% { transform: scale(1.00); opacity: 1; }
+    }
+
+    @keyframes kovix-splash-fade-up {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Final fade — applied by the host when it's time to dismiss. */
+    .stage.is-dismissing {
+      animation: kovix-splash-dismiss 320ms cubic-bezier(0.4, 0, 0.2, 1) 1 forwards;
+    }
+    @keyframes kovix-splash-dismiss {
+      from { opacity: 1; }
+      to   { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage" id="kovix-splash-stage">
+    <!-- Inline SVG so the splash has zero network/file dependencies. -->
+    <svg class="mark" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <linearGradient id="kovix-splash-volt" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%"   stop-color="#D670FF" />
+          <stop offset="55%"  stop-color="#C542FF" />
+          <stop offset="100%" stop-color="#A020E0" />
+        </linearGradient>
+        <radialGradient id="kovix-splash-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"  stop-color="#C542FF" stop-opacity="0.55" />
+          <stop offset="60%" stop-color="#C542FF" stop-opacity="0.15" />
+          <stop offset="100%" stop-color="#C542FF" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="512" cy="512" r="512" fill="url(#kovix-splash-glow)" />
+      <rect x="128" y="128" width="768" height="768" rx="170" ry="170" fill="url(#kovix-splash-volt)" />
+      <rect x="160" y="160" width="704" height="704" rx="150" ry="150"
+            fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2" />
+      <!-- K stem -->
+      <path d="M 360 230 H 470 V 794 H 360 Z" fill="#FFFFFF" />
+      <!-- K arm with notch -->
+      <path d="M 470 480 L 720 230 H 830 V 330 L 600 560 L 830 790 V 890 H 720 L 470 640 Z"
+            fill="#FFFFFF" />
+      <path d="M 470 480 L 580 480 L 525 535 Z" fill="#D670FF" />
+    </svg>
+
+    <div class="wordmark">KOV<span class="accent">I</span>X</div>
+    <div class="tagline">AI-native development environment</div>
+    <div class="footer">Powered by VS Code's Monaco Editor</div>
+  </div>
+
+  <script>
+    // The host (Electron main) hides this window when the workbench is ready.
+    // No JS work is required here — but expose a dismiss hook so the host
+    // can trigger the fade-out cleanly without flashing.
+    window.kovixSplash = {
+      dismiss: function () {
+        var stage = document.getElementById('kovix-splash-stage');
+        if (stage) { stage.classList.add('is-dismissing'); }
+      }
+    };
+  </script>
+</body>
+</html>
