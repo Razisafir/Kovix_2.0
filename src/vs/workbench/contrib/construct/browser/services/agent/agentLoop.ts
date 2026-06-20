@@ -11,7 +11,6 @@ import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { IWorkspaceContextService } from '../../../../../../platform/workspace/common/workspace.js';
 import { IAgentLoop, AgentLoopEvent, IPlanResult, IPlanStep } from '../../../../../../platform/construct/common/agent/agentLoop.js';
 import { IApprovedPlan, IMilestone, ExecutionState } from '../../../../../../platform/construct/common/agent/milestoneStateMachine.js';
-import { ExecutionMode } from '../../../../../../platform/construct/common/agent/executionMode.js';
 import { LoadingState, FileChangeEntry } from '../../../../../../platform/construct/common/agent/loadingState.js';
 import { IConstructAIService } from '../../../../../../platform/construct/common/llm/constructAIService.js';
 import { IChatMessage, IToolDefinition, IToolCall } from '../../../../../../platform/construct/common/llm/constructAIProvider.js';

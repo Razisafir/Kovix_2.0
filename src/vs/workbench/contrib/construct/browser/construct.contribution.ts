@@ -24,7 +24,7 @@ import { KovixSurfaceBrandingContribution } from './kovixSurfaceBranding.js';
 import { KovixSplashContribution } from './kovixSplash.js';
 import { KovixCommandBridgeContribution } from './kovixCommandBridge.js';
 import { IStatusbarService, StatusbarAlignment, IStatusbarEntryAccessor } from '../../../../workbench/services/statusbar/browser/statusbar.js';
-import { IWorkbenchContribution, Extensions as WorkbenchExtensions, IWorkbenchContributionsRegistry, WorkbenchPhase } from '../../../../workbench/common/contributions.js';
+import { IWorkbenchContribution, Extensions as WorkbenchExtensions, IWorkbenchContributionsRegistry, WorkbenchPhase, registerWorkbenchContribution2 } from '../../../../workbench/common/contributions.js';
 import { LifecyclePhase } from '../../../../workbench/services/lifecycle/common/lifecycle.js';
 import { Disposable } from '../../../../base/common/lifecycle.js';
 import { Action2, registerAction2 } from '../../../../platform/actions/common/actions.js';
@@ -343,11 +343,12 @@ Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).regi
 Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution(KovixSurfaceBrandingContribution, LifecyclePhase.Restored);
 // The command bridge must install BEFORE the splash / brand-chrome contributions
 // run, so they can dispatch commands immediately. BlockStartup is the earliest phase
-// (maps to LifecyclePhase.Starting) — requires registerWorkbenchContribution2.
-Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution2(
+// (maps to LifecyclePhase.Starting) — requires registerWorkbenchContribution2
+// (the top-level export, not the deprecated registry method).
+registerWorkbenchContribution2(
         KovixCommandBridgeContribution.ID, KovixCommandBridgeContribution, WorkbenchPhase.BlockStartup);
 // Splash also runs at BlockStartup so the overlay mounts before any workbench DOM.
-Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).registerWorkbenchContribution2(
+registerWorkbenchContribution2(
         KovixSplashContribution.ID, KovixSplashContribution, WorkbenchPhase.BlockStartup);
 
 // --- Construct Commands --------------------------------------------------------
