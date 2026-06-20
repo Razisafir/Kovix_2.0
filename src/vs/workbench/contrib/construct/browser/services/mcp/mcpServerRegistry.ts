@@ -42,6 +42,8 @@ interface ISerializedServer {
         installPath?: string;
         isBuiltin?: boolean;
         secretEnvKeys?: string[];
+        /** SEC-7 (H2 follow-up): persisted alongside the server definition. */
+        userApproved?: boolean;
 }
 
 export class MCPServerRegistry extends Disposable {
@@ -82,7 +84,10 @@ export class MCPServerRegistry extends Disposable {
                                         categories: serialized.categories ?? [],
                                         installPath: serialized.installPath,
                                         isBuiltin: serialized.isBuiltin ?? false,
-                                        secretEnvKeys: serialized.secretEnvKeys
+                                        secretEnvKeys: serialized.secretEnvKeys,
+                                        // SEC-7 (H2 follow-up): round-trip the approval flag.
+                                        // Built-ins are always pre-approved regardless of stored value.
+                                        userApproved: serialized.isBuiltin ? true : (serialized.userApproved ?? false)
                                 };
                                 this.servers.set(server.name, server);
                         }
@@ -190,10 +195,43 @@ export class MCPServerRegistry extends Disposable {
                         categories: s.categories,
                         installPath: s.installPath,
                         isBuiltin: s.isBuiltin,
-                        secretEnvKeys: this.credentialKeys.get(s.name) ?? []
+                        secretEnvKeys: this.credentialKeys.get(s.name) ?? [],
+                        // SEC-7 (H2 follow-up): persist approval flag so the user
+                        // doesn't have to re-approve on every Kovix restart.
+                        userApproved: s.userApproved ?? s.isBuiltin ?? false
                 }));
 
                 await this.configurationService.updateValue(MCP_CONFIG_KEY, serialized);
+        }
+
+        /**
+         * SEC-7 (H2 follow-up): Mark a server as user-approved. The approval is
+         * persisted in the server configuration (construct.mcp.servers) so it
+         * survives restarts. Once approved, MCPConnectionPool's consent gate
+         * will let the server spawn.
+         *
+         * Built-in servers are pre-approved (no-op, but doesn't throw). Throws
+         * if the server is not registered.
+         */
+        async approveServer(name: string): Promise<void> {
+                const existing = this.servers.get(name);
+                if (!existing) {
+                        throw new Error(`Cannot approve unknown MCP server: ${name}`);
+                }
+                if (existing.isBuiltin) {
+                        // Built-ins are always pre-approved; nothing to do.
+                        this.logService.info(`[MCP Registry] Approve called on built-in server ${name} (no-op)`);
+                        return;
+                }
+                if (existing.userApproved) {
+                        this.logService.info(`[MCP Registry] Server ${name} already approved (no-op)`);
+                        return;
+                }
+                // Update the in-memory definition (immutable replace).
+                this.servers.set(name, { ...existing, userApproved: true });
+                await this.saveServers();
+                this._onDidChangeServers.fire();
+                this.logService.info(`[MCP Registry] Server ${name} approved by user`);
         }
 
         /** Detect likely secrets by key name patterns. */

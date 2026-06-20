@@ -463,23 +463,68 @@ export class KovixAgentSettingsPane extends ViewPane {
                         } else {
                                 for (const s of servers) {
                                         const status = this.mcpManager.getServerStatus(s.name);
+                                        // SEC-7 (H2 follow-up): Compute approval state.
+                                        // Built-ins are always pre-approved; marketplace servers
+                                        // require explicit user approval before they can spawn.
+                                        const isApproved = !!(s.isBuiltin || s.userApproved);
                                         const card = dom.$('.kovix-card');
                                         const icon = dom.$('.kovix-card__icon');
                                         icon.innerHTML = `<span class="codicon codicon-${status === 'running' ? 'circle-filled' : 'circle-outline'}"></span>`; // status is internal state, no escaping needed
                                         const body = dom.$('.kovix-card__body');
                                         const title = dom.$('.kovix-card__title');
-                                        title.innerHTML = `<strong>${escapeHtml(s.name)}</strong> <span class="kovix-muted">· ${escapeHtml(status)}</span>`;
+                                        const approvalBadge = isApproved
+                                                ? '<span class="kovix-muted">· approved</span>'
+                                                : '<span class="kovix-warn" style="color:var(--kovix-warn-500,#f0a020)">· needs approval</span>';
+                                        title.innerHTML = `<strong>${escapeHtml(s.name)}</strong> <span class="kovix-muted">· ${escapeHtml(status)}</span> ${approvalBadge}`;
                                         const sub = dom.$('.kovix-card__desc');
                                         sub.textContent = `${s.command} ${(s.args || []).join(' ')}`.slice(0, 120);
                                         body.append(title, sub);
+
+                                        // SEC-7 (H2 follow-up): For unapproved marketplace servers,
+                                        // show the env keys (redacted) so the user can review what
+                                        // credentials/flags will be passed before approving.
+                                        if (!isApproved) {
+                                                const envPreview = dom.$('.kovix-card__desc');
+                                                const envKeys = Object.keys(s.env ?? {});
+                                                const envSummary = envKeys.length === 0
+                                                        ? '(no env vars)'
+                                                        : envKeys.map(k => k.endsWith('_KEY') || k.endsWith('_TOKEN') || k.includes('SECRET') ? `${k}=<redacted>` : `${k}`).join(', ');
+                                                envPreview.textContent = `env: ${envSummary}`;
+                                                envPreview.style.fontSize = '11px';
+                                                envPreview.style.opacity = '0.7';
+                                                body.appendChild(envPreview);
+                                        }
+
                                         card.append(icon, body);
 
                                         const cardActions = dom.$('.kovix-card__actions');
+
+                                        // SEC-7 (H2 follow-up): Approve button for unapproved
+                                        // non-builtin servers. Clicking it calls
+                                        // mcpManager.approveServer(name), which persists the
+                                        // approval flag and re-renders the tab.
+                                        if (!isApproved) {
+                                                const approve = this.makeBtn('check', 'Approve', 'Review command/env above, then approve to allow spawning');
+                                                approve.onclick = async () => {
+                                                        try {
+                                                                await this.mcpManager.approveServer(s.name);
+                                                                this.notificationService.info(`Approved MCP server: ${s.name}`);
+                                                                this.renderMcPTab();
+                                                        } catch (e) {
+                                                                this.notificationService.error(`Approve failed: ${e instanceof Error ? e.message : String(e)}`);
+                                                        }
+                                                };
+                                                cardActions.appendChild(approve);
+                                        }
+
                                         if (status === 'running') {
                                                 const stop = this.makeIconBtn('debug-stop', 'Stop');
                                                 stop.onclick = () => this.commandService.executeCommand('construct.mcp.stopServer');
                                                 cardActions.appendChild(stop);
-                                        } else {
+                                        } else if (isApproved) {
+                                                // Only show Start if approved; unapproved servers
+                                                // get the Approve button instead (clicking Start
+                                                // would just fail with the consent-gate error).
                                                 const start = this.makeIconBtn('play', 'Start');
                                                 start.onclick = () => this.commandService.executeCommand('construct.mcp.startServer');
                                                 cardActions.appendChild(start);

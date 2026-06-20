@@ -17,8 +17,11 @@ import { IConstructVectorStore } from '../../../../../../platform/construct/comm
 import {
         IConstructToolRegistry, IToolDefinition, IToolResult, assertWithinWorkspace
 } from '../../../../../../platform/construct/common/tools/constructToolRegistry.js';
-import { ITerminalExecutor } from '../../../../../../platform/construct/common/terminal/terminalExecutor.js';
+import { ITerminalExecutor, isInterpreterCommand } from '../../../../../../platform/construct/common/terminal/terminalExecutor.js';
 import { IPendingChangesService } from '../../../../../../platform/construct/common/diff/pendingChanges.js';
+// SEC-7 (H4 follow-up): Modal confirmation dialog for interpreter commands.
+import { IDialogService } from '../../../../../../platform/dialogs/common/dialogs.js';
+import Severity from '../../../../../../base/common/severity.js';
 import { nmapToolDefinition } from '../../tools/security/nmapTool.js';
 import { ghidraToolDefinition } from '../../tools/security/ghidraTool.js';
 import { nucleiToolDefinition } from '../../tools/security/nucleiTool.js';
@@ -79,6 +82,7 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                 @IConstructVectorStore private readonly vectorStore: IConstructVectorStore,
                 @ITerminalExecutor private readonly terminalExecutor: ITerminalExecutor,
                 @IPendingChangesService private readonly pendingChanges: IPendingChangesService,
+                @IDialogService private readonly dialogService: IDialogService,
         ) {
                 super();
 
@@ -999,6 +1003,40 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
 
                 const timeout = (input.timeout as number ?? 30) * 1000;
                 const cwd = input.cwd as string | undefined;
+
+                // SEC-7 (H4 follow-up): Interpreter-command confirmation dialog.
+                // Mirrors the agentLoop run_command gate and the edit_file
+                // diff-approval flow: commands that can execute arbitrary code
+                // via crafted arguments (node, python, npx, curl, docker, etc.)
+                // require explicit user consent before spawning. If the user
+                // declines, we return an error to the caller so it can re-plan.
+                //
+                // Restricted mode (the default) already blocks these via the
+                // allowlist before this code runs. This gate covers the case
+                // where the user has disabled restricted mode — every
+                // interpreter invocation now pops a modal instead of running
+                // silently. Note: we check the ORIGINAL command (before WSL
+                // wrapping) so `node -e "..."` inside a WSL context is also
+                // gated.
+                if (isInterpreterCommand(command)) {
+                        const confirmed = await this.dialogService.confirm({
+                                type: Severity.Warning,
+                                title: 'Approve command execution',
+                                message: `The agent wants to run a command that can execute arbitrary code.`,
+                                detail: `Command: ${command}${cwd ? `\nWorking directory: ${cwd}` : ''}\n\nThis command is on the interpreter allowlist (node, python, npx, curl, docker, etc.) because it can run arbitrary code through crafted arguments. Review the command carefully before approving.`,
+                                primaryButton: 'Run once',
+                                cancelButton: 'Cancel',
+                        });
+                        if (!confirmed.confirmed) {
+                                this.logService.info(`[ToolRegistry] User declined interpreter command: ${command}`);
+                                return {
+                                        success: false,
+                                        output: 'User declined to run this command. Re-plan without invoking an interpreter, or ask the user to run it manually.',
+                                        truncated: false,
+                                };
+                        }
+                        this.logService.info(`[ToolRegistry] User approved interpreter command: ${command}`);
+                }
 
                 try {
                         // SEC-7 (C3 fix): WSL command wrapping must not be injectable.

@@ -213,6 +213,17 @@ export class MCPServerManagerService extends Disposable implements IMCPServerMan
                 await this.startServer(name);
         }
 
+        /**
+         * SEC-7 (H2 follow-up): Delegates to MCPServerRegistry.approveServer.
+         * Called by the MCP settings UI when the user clicks the "Approve"
+         * button on a non-builtin server card. After approval, startServer()
+         * will succeed; before approval, MCPConnectionPool refuses to spawn.
+         */
+        async approveServer(name: string): Promise<void> {
+                this.logService.info(`[MCP Manager] Approving server ${name}`);
+                await this.registry.approveServer(name);
+        }
+
         listInstalledServers(): IMCPServerDefinition[] {
                 return this.registry.getAllServers();
         }

@@ -44,6 +44,18 @@ export interface IMCPServerManager extends IDisposable {
         /** Stop then start. */
         restartServer(name: string): Promise<void>;
 
+        /**
+         * SEC-7 (H2 follow-up): Mark a non-builtin MCP server as user-approved.
+         * Marketplace-installed servers refuse to spawn until explicitly approved
+         * (see MCPConnectionPool.connectRawStdio consent gate). This method is
+         * the programmatic hook the settings UI calls when the user clicks the
+         * "Approve" button on a server card.
+         *
+         * No-op for built-in servers (they are pre-approved). Throws if the
+         * server is not in the registry.
+         */
+        approveServer(name: string): Promise<void>;
+
         /** List all installed server definitions. */
         listInstalledServers(): IMCPServerDefinition[];
 

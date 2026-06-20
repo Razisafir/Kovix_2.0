@@ -17,7 +17,10 @@ import { IConstructAIService } from '../../../../../../platform/construct/common
 import { IChatMessage, IToolDefinition, IToolCall } from '../../../../../../platform/construct/common/llm/constructAIProvider.js';
 import { IMCPProcess } from '../../../../../../platform/construct/common/mcp/mcpProcess.js';
 import { IMCPServerManager } from '../../../../../../platform/construct/common/mcp/mcpServerManager.js';
-import { ITerminalExecutor } from '../../../../../../platform/construct/common/terminal/terminalExecutor.js';
+import { ITerminalExecutor, isInterpreterCommand } from '../../../../../../platform/construct/common/terminal/terminalExecutor.js';
+// SEC-7 (H4 follow-up): Modal confirmation dialog for interpreter commands + severity.
+import { IDialogService } from '../../../../../../platform/dialogs/common/dialogs.js';
+import Severity from '../../../../../../base/common/severity.js';
 import { IDiffApplier } from '../../../../../../platform/construct/common/editor/diffApplier.js';
 import { IMemoryOrchestrator } from '../../../../../../platform/construct/common/memory/memoryOrchestrator.js';
 import { IConstructMemoryService } from '../../../../../../platform/construct/common/memory/constructMemory.js';
@@ -203,6 +206,7 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                 @IMCPServerManager private readonly mcpServerManager: IMCPServerManager,
                 @IUniversalMemoryService private readonly universalMemory: IUniversalMemoryService,
                 @ISkillRegistry private readonly skillRegistry: ISkillRegistry,
+                @IDialogService private readonly dialogService: IDialogService,
         ) {
                 super();
                 this.logService.info('[AgentLoop] Service created with error recovery, snapshots, file watcher, pending changes, universal memory, and skill registry');
@@ -816,6 +820,33 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                         const command = args.command;
                                         if (!command) { return 'Error: command is required'; }
                                         const cwd = args.cwd;
+                                        // SEC-7 (H4 follow-up): Interpreter-command confirmation dialog.
+                                        // Mirrors the edit_file diff-approval flow: commands that can
+                                        // execute arbitrary code via crafted arguments (node, python,
+                                        // npx, npm, curl, wget, docker, etc. — see INTERPRETER_COMMANDS)
+                                        // require explicit user consent before spawning. If the user
+                                        // declines, we return an error to the LLM so it can re-plan.
+                                        //
+                                        // Restricted mode (construct.terminal.restrictedMode=true,
+                                        // the default) already blocks interpreters via the allowlist
+                                        // before this code runs. This gate covers the case where the
+                                        // user has disabled restricted mode — every interpreter
+                                        // invocation now pops a modal instead of running silently.
+                                        if (isInterpreterCommand(command)) {
+                                                const confirmed = await this.dialogService.confirm({
+                                                        type: Severity.Warning,
+                                                        title: 'Approve command execution',
+                                                        message: `The agent wants to run a command that can execute arbitrary code.`,
+                                                        detail: `Command: ${command}${cwd ? `\nWorking directory: ${cwd}` : ''}\n\nThis command is on the interpreter allowlist (node, python, npx, curl, docker, etc.) because it can run arbitrary code through crafted arguments. Review the command carefully before approving.`,
+                                                        primaryButton: 'Run once',
+                                                        cancelButton: 'Cancel',
+                                                });
+                                                if (!confirmed.confirmed) {
+                                                        this.logService.info(`[AgentLoop] User declined interpreter command: ${command}`);
+                                                        return 'Error: user declined to run this command. Re-plan without invoking an interpreter, or ask the user to run it manually.';
+                                                }
+                                                this.logService.info(`[AgentLoop] User approved interpreter command: ${command}`);
+                                        }
                                         const result = await this.terminalExecutor.execute(command, cwd, 60000);
                                         let output = '';
                                         if (result.stdout) { output += result.stdout; }
