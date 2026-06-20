@@ -92,8 +92,9 @@ function generateDelimiterId(): string {
         try {
                 // Use globalThis indirection so this file type-checks under Monaco's
                 // tsconfig (which lacks @types/node). The runtime path still resolves
-                // to Node's require() in Electron main / Node test runners.
-                const g = globalThis as unknown as { require?: (mod: string) => { randomBytes?: (n: number) => Buffer } };
+                // to Node's require() in Electron main / Node test runners. Type only
+                // the shape we consume (no Buffer reference — that needs @types/node).
+                const g = globalThis as unknown as { require?: (mod: string) => { randomBytes?: (n: number) => { toString(encoding?: string): string } } };
                 const nodeCrypto = g.require?.('crypto');
                 if (nodeCrypto && typeof nodeCrypto.randomBytes === 'function') {
                         return nodeCrypto.randomBytes(16).toString('hex');
