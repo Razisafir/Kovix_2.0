@@ -624,3 +624,31 @@
   background: var(--kovix-error-bg);
   color: var(--kovix-error);
 }
+
+/* Plan card summary (when no structured steps) */
+.kovix-plan-card__summary {
+  font-family: var(--kovix-font-mono);
+  font-size: var(--kovix-text-sm);
+  color: var(--kovix-text-secondary);
+  white-space: pre-wrap;
+  max-height: 180px;
+  overflow-y: auto;
+  padding: var(--kovix-space-2);
+  background: var(--kovix-bg-base);
+  border-radius: var(--kovix-radius-sm);
+  margin-bottom: var(--kovix-space-3);
+}
+
+/* Plan step row needs to align checkbox + label properly */
+.kovix-plan-step .kovix-checkbox {
+  width: 100%;
+  align-items: flex-start;
+}
+
+.kovix-plan-step .kovix-checkbox__label {
+  font-family: var(--kovix-font-mono);
+  font-size: var(--kovix-text-sm);
+  color: var(--kovix-text-primary);
+  line-height: var(--kovix-leading-normal);
+  word-break: break-word;
+}

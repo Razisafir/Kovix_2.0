@@ -898,158 +898,128 @@ export class ConstructAgentViewPane extends ViewPane {
         private selectableSteps: ISelectablePlanStep[] = [];
 
         private renderPlan(plan: IPlanResult, task: string): void {
-                // Remove any existing plan container
-                this.planContainer?.remove();
+		// Remove any existing plan container
+		this.planContainer?.remove();
 
-                // Create selectable steps from the plan
-                this.selectableSteps = plan.steps.map((step, idx) => ({
-                        index: idx,
-                        action: step.action,
-                        target: step.target,
-                        description: step.description,
-                        selected: true,
-                }));
+		// Create selectable steps from the plan
+		this.selectableSteps = plan.steps.map((step, idx) => ({
+			index: idx,
+			action: step.action,
+			target: step.target,
+			description: step.description,
+			selected: true,
+		}));
 
-                this.planContainer = dom.$('.construct-plan');
-                this.planContainer.style.cssText = `
-                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border);
-                        border-radius: 6px; padding: 12px; margin: 8px 0;
-                `;
+		// v2.0: use .kovix-plan-card class from kovixAgentV2.css
+		this.planContainer = dom.$('.kovix-plan-card');
 
-                // Plan header
-                const header = dom.$('.construct-plan-header');
-                header.style.cssText = `font-weight: 600; color: var(--kovix-text-primary); margin-bottom: 8px; font-size: 13px;`;
-                header.textContent = `\uD83D\uDCA1 Plan ready \u2014 ${plan.steps.length} steps`;
-                this.planContainer.appendChild(header);
+		// Plan header
+		const header = dom.$('.kovix-plan-card__header');
+		const title = dom.$('.kovix-plan-card__title');
+		title.textContent = `\uD83D\uDCA1 Plan ready`;
+		const meta = dom.$('.kovix-plan-card__meta');
+		meta.textContent = `${plan.steps.length} steps`;
+		header.appendChild(title);
+		header.appendChild(meta);
+		this.planContainer.appendChild(header);
 
-                // Select All / Deselect All controls
-                if (this.selectableSteps.length > 0) {
-                        const controlBar = dom.$('.construct-plan-controls');
-                        controlBar.style.cssText = `display: flex; gap: 8px; margin-bottom: 8px;`;
+		// Steps container
+		const stepsContainer = dom.$('.kovix-plan-card__steps');
 
-                        const selectAllBtn = dom.$('button') as HTMLButtonElement;
-                        selectAllBtn.textContent = 'Select All';
-                        selectAllBtn.style.cssText = `
-                                background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border); border-radius: 3px;
-                                color: var(--kovix-text-primary); font-size: 11px; padding: 3px 8px; cursor: pointer;
-                        `;
-                        selectAllBtn.onclick = () => {
-                                this.selectableSteps.forEach(s => s.selected = true);
-                                this.planContainer?.querySelectorAll<HTMLInputElement>('.construct-step-checkbox').forEach(cb => { cb.checked = true; });
-                                this.planContainer?.querySelectorAll('.construct-step-text').forEach(el => { (el as HTMLElement).style.textDecoration = 'none'; });
-                        };
+		// Select All / Deselect All controls
+		if (this.selectableSteps.length > 0) {
+			const controls = dom.$('.kovix-plan-card__controls');
+			const selectAllBtn = dom.$('button.kovix-plan-card__select-all') as HTMLButtonElement;
+			selectAllBtn.textContent = 'Select All';
+			selectAllBtn.onclick = () => {
+				this.selectableSteps.forEach(s => s.selected = true);
+				this.planContainer?.querySelectorAll<HTMLInputElement>('.kovix-plan-card__steps .kovix-checkbox__input').forEach(cb => { cb.checked = true; });
+				this.planContainer?.querySelectorAll('.kovix-plan-step').forEach(el => { el.classList.remove('is-failed'); });
+			};
+			const deselectAllBtn = dom.$('button.kovix-plan-card__select-all') as HTMLButtonElement;
+			deselectAllBtn.textContent = 'Deselect All';
+			deselectAllBtn.onclick = () => {
+				this.selectableSteps.forEach(s => s.selected = false);
+				this.planContainer?.querySelectorAll<HTMLInputElement>('.kovix-plan-card__steps .kovix-checkbox__input').forEach(cb => { cb.checked = false; });
+			};
+			controls.appendChild(selectAllBtn);
+			controls.appendChild(deselectAllBtn);
+			this.planContainer.appendChild(controls);
+		}
 
-                        const deselectAllBtn = dom.$('button') as HTMLButtonElement;
-                        deselectAllBtn.textContent = 'Deselect All';
-                        deselectAllBtn.style.cssText = `
-                                background: var(--kovix-bg-raised); border: 1px solid var(--kovix-border); border-radius: 3px;
-                                color: var(--kovix-text-primary); font-size: 11px; padding: 3px 8px; cursor: pointer;
-                        `;
-                        deselectAllBtn.onclick = () => {
-                                this.selectableSteps.forEach(s => s.selected = false);
-                                this.planContainer?.querySelectorAll<HTMLInputElement>('.construct-step-checkbox').forEach(cb => { cb.checked = false; });
-                                this.planContainer?.querySelectorAll('.construct-step-text').forEach(el => { (el as HTMLElement).style.textDecoration = 'line-through'; });
-                        };
+		// Plan steps with checkboxes (using shared createCheckbox)
+		if (this.selectableSteps.length > 0) {
+			for (const step of this.selectableSteps) {
+				const stepRow = dom.$('.kovix-plan-step');
+				const icon = this.getActionIcon(step.action);
+				const { container: checkboxContainer } = createCheckbox({
+					label: `${icon} ${step.action}: ${step.target}`,
+					checked: step.selected,
+					onChange: (checked) => {
+						step.selected = checked;
+						stepRow.classList.toggle('is-complete', !checked);
+					},
+				});
+				stepRow.appendChild(checkboxContainer);
+				stepsContainer.appendChild(stepRow);
+			}
+			this.planContainer.appendChild(stepsContainer);
+		} else {
+			// No structured steps — show the raw summary
+			const summaryEl = dom.$('.kovix-plan-card__summary');
+			summaryEl.textContent = plan.summary.substring(0, 500);
+			this.planContainer.appendChild(summaryEl);
+		}
 
-                        controlBar.appendChild(selectAllBtn);
-                        controlBar.appendChild(deselectAllBtn);
-                        this.planContainer.appendChild(controlBar);
-                }
+		// Buttons (using shared createButton)
+		const btnContainer = dom.$('.kovix-plan-card__actions');
 
-                // Plan steps with checkboxes
-                if (this.selectableSteps.length > 0) {
-                        for (const step of this.selectableSteps) {
-                                const stepRow = dom.$('.construct-plan-step');
-                                stepRow.style.cssText = `display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 12px;`;
+		const approveBtn = createButton({
+			label: '\u2705 Approve',
+			variant: 'primary',
+			ariaLabel: 'Approve plan and start execution',
+			onClick: async () => {
+				// Show stop mode picker
+				const milestones = this.agentLoop.extractMilestonesFromPlan(plan.steps);
+				const pickResult = await showStopModePicker(this.quickInputService, milestones);
+				if (!pickResult) { return; } // cancelled
 
-                                const checkbox = document.createElement('input');
-                                checkbox.type = 'checkbox';
-                                checkbox.checked = step.selected;
-                                checkbox.className = 'construct-step-checkbox';
-                                checkbox.style.cssText = `accent-color: var(--kovix-volt-400); cursor: pointer;`;
-                                checkbox.onchange = () => {
-                                        step.selected = checkbox.checked;
-                                        const textEl = stepRow.querySelector('.construct-step-text') as HTMLElement;
-                                        if (textEl) {
-                                                textEl.style.textDecoration = checkbox.checked ? 'none' : 'line-through';
-                                                textEl.style.color = checkbox.checked ? 'var(--kovix-text-secondary)' : 'var(--kovix-text-tertiary)';
-                                        }
-                                };
+				const approvedPlan: IApprovedPlan = {
+					task,
+					steps: this.selectableSteps,
+					executionMode: pickResult.mode,
+					selectedMilestoneIds: pickResult.selectedMilestoneIds,
+					milestones,
+					approved: true,
+					approvedAt: Date.now(),
+				};
 
-                                const icon = this.getActionIcon(step.action);
-                                const stepText = dom.$('.construct-step-text');
-                                stepText.style.cssText = `color: var(--kovix-text-secondary);`;
-                                stepText.textContent = `${icon} ${step.action}: ${step.target}`;
+				this.planContainer?.remove();
+				this.planContainer = null;
+				this.runExecution(task, approvedPlan);
+			},
+		});
 
-                                stepRow.appendChild(checkbox);
-                                stepRow.appendChild(stepText);
-                                this.planContainer.appendChild(stepRow);
-                        }
-                } else {
-                        // No structured steps -- show the raw summary
-                        const summaryEl = dom.$('.construct-plan-summary');
-                        summaryEl.style.cssText = `font-size: 12px; color: var(--kovix-text-secondary); white-space: pre-wrap; max-height: 150px; overflow-y: auto;`;
-                        summaryEl.textContent = plan.summary.substring(0, 500);
-                        this.planContainer.appendChild(summaryEl);
-                }
+		const cancelBtn = createButton({
+			label: '\u274C Cancel',
+			variant: 'ghost',
+			ariaLabel: 'Cancel plan',
+			onClick: () => {
+				this.planContainer?.remove();
+				this.planContainer = null;
+				this.addAgentMessage('[CANCEL] Task cancelled', 'info');
+				this.setExecutionState('idle');
+				this.progressPanel?.clear();
+			},
+		});
 
-                // Buttons
-                const btnContainer = dom.$('.construct-plan-buttons');
-                btnContainer.style.cssText = `display: flex; gap: 8px; margin-top: 10px;`;
+		btnContainer.appendChild(approveBtn);
+		btnContainer.appendChild(cancelBtn);
+		this.planContainer.appendChild(btnContainer);
 
-                const approveBtn = dom.$('button') as HTMLButtonElement;
-                approveBtn.textContent = '\u2705 Approve';
-                approveBtn.style.cssText = `
-                        background: var(--kovix-gradient); color: #FFFFFF; border: none;
-                        border-radius: var(--kovix-radius-md); padding: 6px 14px; cursor: pointer;
-                        font-size: 12px; font-weight: 500;
-                `;
-
-                const cancelBtn = dom.$('button') as HTMLButtonElement;
-                cancelBtn.textContent = '\u274C Cancel';
-                cancelBtn.style.cssText = `
-                        background: transparent; color: var(--kovix-text-secondary); border: 1px solid var(--kovix-border);
-                        border-radius: var(--kovix-radius-md); padding: 6px 14px; cursor: pointer;
-                        font-size: 12px; font-weight: 500;
-                `;
-
-                approveBtn.onclick = async () => {
-                        // Show stop mode picker
-                        const milestones = this.agentLoop.extractMilestonesFromPlan(plan.steps);
-                        const pickResult = await showStopModePicker(this.quickInputService, milestones);
-                        if (!pickResult) { return; } // cancelled
-
-                        const approvedPlan: IApprovedPlan = {
-                                task,
-                                steps: this.selectableSteps,
-                                executionMode: pickResult.mode,
-                                // Fix for F-007 (#77): pass the user's milestone selection through to the plan
-                                selectedMilestoneIds: pickResult.selectedMilestoneIds,
-                                milestones,
-                                approved: true,
-                                approvedAt: Date.now(),
-                        };
-
-                        this.planContainer?.remove();
-                        this.planContainer = null;
-                        this.runExecution(task, approvedPlan);
-                };
-
-                cancelBtn.onclick = () => {
-                        this.planContainer?.remove();
-                        this.planContainer = null;
-                        this.addAgentMessage('[CANCEL] Task cancelled', 'info');
-                        this.setExecutionState('idle');
-                        this.progressPanel?.clear();
-                };
-
-                btnContainer.appendChild(approveBtn);
-                btnContainer.appendChild(cancelBtn);
-                this.planContainer.appendChild(btnContainer);
-
-                this.messageContainer.appendChild(this.planContainer);
-                this.scrollToBottom();
-        }
+		this.messageContainer.appendChild(this.planContainer);
+		this.scrollToBottom();
+	}
 
         /**
          * Run the execution phase with full tool access.
