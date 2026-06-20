@@ -197,8 +197,66 @@ export class MCPConnectionPool extends Disposable {
                 const { spawn } = await import('child_process');
                 const def = entry.definition;
 
+                // SEC-7 (H2 fix): Consent gate for non-builtin MCP servers.
+                // Marketplace-installed servers can ship arbitrary command/args/env.
+                // Until the user explicitly approves a server (via the MCP settings
+                // UI — see IMCPServerDefinition.userApproved), we refuse to spawn it.
+                // Built-in servers (agent-reach, ponytail, ui-ux-pro-max) are
+                // pre-approved because they ship with Kovix itself.
+                if (!def.isBuiltin && !def.userApproved) {
+                        const argPreview = def.args.map(a => a.includes(' ') ? `"${a}"` : a).join(' ');
+                        const envKeys = Object.keys(def.env ?? {});
+                        const envPreview = envKeys.length === 0
+                                ? '(none)'
+                                : envKeys.map(k => k.endsWith('_KEY') || k.endsWith('_TOKEN') || k.includes('SECRET') ? `${k}=<redacted>` : `${k}=${def.env[k]}`).join(' ');
+                        this.logService.warn(`[MCP] Refusing to spawn unapproved server "${def.name}". Command: ${def.command} ${argPreview}. Env: ${envPreview}. User must approve via MCP settings.`);
+                        throw new Error(
+                                `MCP server "${def.name}" has not been approved. For your safety, Kovix refuses to spawn ` +
+                                `non-built-in MCP servers until you review and approve them.\n\n` +
+                                `Command: ${def.command} ${argPreview}\n` +
+                                `Env: ${envPreview}\n\n` +
+                                `Open the MCP settings pane (Kovix → MCP Servers) to review and approve this server.`
+                        );
+                }
+                // SEC-7 (H2 fix): Build a minimal env for the spawned MCP server.
+                // Previous code spread the entire parent process.env into the child,
+                // which let a malicious marketplace entry set NODE_OPTIONS=--require
+                // /tmp/payload.js or LD_PRELOAD=/tmp/evil.so in def.env — and those
+                // env vars would then apply to EVERY spawned MCP server (not just
+                // the malicious one) because they leaked through process.env.
+                //
+                // Now we only pass through a curated allowlist of env vars that MCP
+                // servers actually need (PATH for binary resolution, HOME/USERPROFILE
+                // for config-file lookup, LANG/LC_* for locale, plus shell-essential
+                // vars). Server-specific env vars from def.env are layered on top.
+                const PARENT_ENV_ALLOWLIST = [
+                        'PATH', 'PATHEXT', 'Path',
+                        'HOME', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'XDG_CONFIG_HOME', 'XDG_DATA_HOME',
+                        'LANG', 'LC_ALL', 'LC_CTYPE', 'LC_MESSAGES',
+                        'USER', 'LOGNAME', 'SHELL', 'TERM',
+                        'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP', 'TMPDIR',
+                        // Kovix-specific (read-only config flags, not secrets)
+                        'KOVIX_ALLOW_PRIVATE_NET', 'KOVIX_ALLOW_LOOPBACK',
+                        'PONYTAIL_DEFAULT_MODE',
+                ];
+                const childEnv: Record<string, string> = {};
+                const parentEnv = process.env as Record<string, string>;
+                for (const key of PARENT_ENV_ALLOWLIST) {
+                        if (parentEnv[key] !== undefined) {
+                                childEnv[key] = parentEnv[key];
+                        }
+                }
+                // Layer server-specific env on top (def.env is from the marketplace
+                // entry or user config — e.g. BRAVE_API_KEY, FIGMA_ACCESS_TOKEN).
+                // These are scoped to this one server, not leaked to others.
+                if (def.env) {
+                        for (const [k, v] of Object.entries(def.env)) {
+                                childEnv[k] = v as string;
+                        }
+                }
+
                 const childProcess: any = spawn(def.command, def.args, {
-                        env: { ...process.env as Record<string, string>, ...def.env },
+                        env: childEnv,
                         stdio: ['pipe', 'pipe', 'pipe']
                 });
 

@@ -942,7 +942,14 @@ Guidelines:
                         try {
                                 const universalContext = await this.universalMemory.getContextForTask(task, 5);
                                 if (universalContext) {
-                                        prompt += `\n\n[Universal Knowledge]\n${universalContext}`;
+                                        // SEC-7 (H3 fix): Sanitise memory context before injection.
+                                        // Previous code concatenated universalMemory context RAW
+                                        // into the system prompt, bypassing the PromptSanitiser
+                                        // applied to file reads / search results / terminal output.
+                                        // A memory entry containing "ignore previous instructions"
+                                        // or a prompt-injection payload scraped from a web page
+                                        // would land in the system prompt verbatim.
+                                        prompt += `\n\n[Universal Knowledge]\n${PromptSanitiser.sanitise(universalContext)}`;
                                 }
                         } catch (error) {
                                 this.logService.warn('[AgentLoop] Universal memory context injection failed:', error instanceof Error ? error.message : String(error));
@@ -958,7 +965,13 @@ Guidelines:
                         try {
                                 const skillContext = await this.skillRegistry.getContextForTask(task, 3);
                                 if (skillContext) {
-                                        prompt += skillContext;
+                                        // SEC-7 (H3 fix): Sanitise skill context too — skills can
+                                        // come from cloned repos or the marketplace and may contain
+                                        // prompt-injection payloads. The PromptSanitiser wraps the
+                                        // content in safety delimiters and filters known injection
+                                        // prefixes. Defense-in-depth: the user should still review
+                                        // any /<slug> invocation before the agent acts on it.
+                                        prompt += PromptSanitiser.sanitise(skillContext);
                                 }
                         } catch (error) {
                                 this.logService.warn('[AgentLoop] Skill context injection failed:', error instanceof Error ? error.message : String(error));

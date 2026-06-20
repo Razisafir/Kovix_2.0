@@ -8,7 +8,7 @@
 import { Disposable } from '../../../../../../base/common/lifecycle.js';
 import { ILogService } from '../../../../../../platform/log/common/log.js';
 import { IWorkspaceContextService } from '../../../../../../platform/workspace/common/workspace.js';
-import { ITerminalExecutor, ITerminalExecResult, TerminalRateLimiter, detectShellMetacharInArgs, isCommandInAllowlist, sanitiseForAuditLog } from '../../../../../../platform/construct/common/terminal/terminalExecutor.js';
+import { ITerminalExecutor, ITerminalExecResult, TerminalRateLimiter, detectShellMetacharInArgs, isCommandInAllowlist, isInterpreterCommand as isInterpreterCmd, sanitiseForAuditLog } from '../../../../../../platform/construct/common/terminal/terminalExecutor.js';
 import { ITerminalService } from '../../../../terminal/browser/terminal.js';
 import { IShellLaunchConfig } from '../../../../../../platform/terminal/common/terminal.js';
 import { URI } from '../../../../../../base/common/uri.js';
@@ -65,6 +65,22 @@ export class TerminalExecutorService extends Disposable implements ITerminalExec
                 return false;
         }
 
+        /**
+         * SEC-7 (H4 fix): Detect interpreter-style commands that can execute
+         * arbitrary code via crafted arguments. The agent UI should call this
+         * before executing and show an interactive confirmation dialog if true.
+         *
+         * Until the confirmation UI is wired up, we log a warning so interpreter
+         * invocations are at least auditable in the Kovix log.
+         */
+        isInterpreterCommand(command: string): boolean {
+                const isInterp = isInterpreterCmd(command);
+                if (isInterp) {
+                        this.logService.warn(`[TerminalExecutor] Interpreter command (can execute arbitrary code): ${sanitiseForAuditLog(command)}`);
+                }
+                return isInterp;
+        }
+
         async execute(
                 command: string,
                 cwd?: string,
@@ -92,6 +108,11 @@ export class TerminalExecutorService extends Disposable implements ITerminalExec
                 if (restrictedMode && !isCommandInAllowlist(command)) {
                         throw new Error(`Command rejected in restricted mode: "${command.split(/\s+/)[0]}" is not in the allowed command list. Disable construct.terminal.restrictedMode to allow all commands.`);
                 }
+
+                // SEC-7 (H4 fix): Audit-log interpreter commands even when
+                // restricted mode is off. When the agent UI wires up the
+                // confirmation dialog, this is the hook point.
+                this.isInterpreterCommand(command);
 
                 // SEC-3: Working directory jail
                 const workspaceRoot = this.workspaceContextService.getWorkspace().folders[0]?.uri.fsPath;

@@ -15,6 +15,8 @@ import { ISkillRegistry, IKovixSkill, ISkillMatch, ICreateSkillOptions } from '.
 import * as arrays from '../../../../../../base/common/arrays.js';
 import * as path from '../../../../../../base/common/path.js';
 import { VSBuffer } from '../../../../../../base/common/buffer.js';
+// SEC-7 (H1 fix): SSRF guard for the skill URL importer.
+import { safeFetch } from '../../../../../../platform/construct/common/security/urlGuard.js';
 
 const SKILLS_STATE_FILE = 'kovix-skills-state.json';
 
@@ -411,7 +413,12 @@ export class SkillRegistryService extends Disposable implements ISkillRegistry {
         }
 
         async importFromUrl(url: string, scope: 'user' | 'project' = 'user'): Promise<IKovixSkill> {
-                const res = await fetch(url);
+                // SEC-7 (H1 fix): Use safeFetch() — validates URL against SSRF
+                // blocklist (loopback, link-local/cloud-metadata, private IPs) and
+                // re-validates every redirect hop. Previous code did a bare fetch()
+                // which could be pointed at http://169.254.169.254/... via the
+                // "Import from URL" UI.
+                const res = await safeFetch(url);
                 if (!res.ok) {
                         throw new Error(`Failed to fetch skill from ${url}: ${res.status} ${res.statusText}`);
                 }

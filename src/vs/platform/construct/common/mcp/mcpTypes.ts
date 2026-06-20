@@ -46,6 +46,15 @@ export interface IMCPServerDefinition {
         readonly icon?: string;
         /** Keys that should be stored in ISecretStorage (never plaintext) */
         readonly secretEnvKeys?: string[];
+        /**
+         * SEC-7 (H2 fix): Whether the user has explicitly approved running this
+         * server's command + args + env. Until approved, the connection pool
+         * refuses to spawn the server and surfaces a consent prompt to the UI.
+         *
+         * Built-in servers (isBuiltin=true) are pre-approved.
+         * Marketplace-installed servers require explicit approval on first run.
+         */
+        readonly userApproved?: boolean;
 }
 
 // --- Tool, Resource, Prompt ------------------------------------------------

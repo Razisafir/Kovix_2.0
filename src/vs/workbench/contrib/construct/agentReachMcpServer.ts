@@ -40,6 +40,9 @@ import * as readline from 'readline';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+// SEC-7 (H1 fix): SSRF guard — blocks 169.254.169.254 (cloud metadata), loopback,
+// and private IPs from user-supplied URLs the agent fetches.
+import { assertSafeUrl } from '../../../platform/construct/common/security/urlGuard.js';
 
 // ─── JSON-RPC 2.0 Types ─────────────────────────────────────────────────────
 
@@ -305,6 +308,10 @@ const TOOL_COMMANDS: Record<string, (args: any, env: Record<string, string>) => 
                 if (!url) {
                         throw new Error('Missing required parameter: "url"');
                 }
+                // SEC-7 (H1 fix): SSRF guard — even though jina.ai is the actual
+                // fetcher, blocking private IPs at the source prevents the user's
+                // machine from being a relay for SSRF attacks against cloud metadata.
+                assertSafeUrl(url);
                 // Validate URL to prevent command injection
                 const validatedUrl = encodeURIComponent(url);
                 return {
@@ -343,6 +350,9 @@ const TOOL_COMMANDS: Record<string, (args: any, env: Record<string, string>) => 
                 if (!url) {
                         throw new Error('Missing required parameter: "url"');
                 }
+                // SEC-7 (H1 fix): SSRF guard — yt-dlp fetches the URL from the user's
+                // machine, so private IPs are reachable. Block them.
+                assertSafeUrl(url);
                 // Validate language code to prevent injection (only alphanumeric and hyphen)
                 const validatedLang = lang.replace(/[^a-zA-Z0-9-]/g, '');
                 return {
@@ -471,12 +481,11 @@ const TOOL_COMMANDS: Record<string, (args: any, env: Record<string, string>) => 
                 if (!url) {
                         throw new Error('Missing required parameter: "url"');
                 }
-                // Validate URL
-                try {
-                        new URL(url);
-                } catch {
-                        throw new Error(`Invalid URL: "${url}"`);
-                }
+                // SEC-7 (H1 fix): SSRF guard — reject loopback, link-local (incl. cloud
+                // metadata 169.254.169.254), and private IPs. new URL() only validates
+                // syntax; without this check a prompt-injected LLM could exfiltrate
+                // cloud creds by passing http://169.254.169.254/... as the feed URL.
+                assertSafeUrl(url);
 
                 // Use Python with feedparser if available, otherwise fallback to curl + basic parsing
                 const pythonScript = `
