@@ -36,6 +36,20 @@ import {
  * - The actual model loading and inference runs in a Worker thread to
  *   avoid blocking the main process.
  * - Communication is via postMessage with structured-clone-compatible data.
+ *
+ * Trust model (SEC-7 L4):
+ * - The model file is loaded from `~/.kovix/models/` or a CDN URL configured
+ *   by the user. A compromised model file can execute arbitrary code inside
+ *   the Worker thread (any browser API available to workers is reachable).
+ * - In Electron desktop: the sandboxed renderer blocks Worker creation, so
+ *   this provider always reports Unreachable — the L4 attack surface does
+ *   not exist on desktop builds.
+ * - In vscode-web (browser): Workers ARE available. The user explicitly
+ *   chose the model, so this is "user-accepted risk" — but a future
+ *   hardening pass should run the Worker inside a `sandbox` iframe with
+ *   `allow-scripts` and NO `allow-same-origin`, so a malicious model
+ *   cannot read the parent's localStorage / IndexedDB / cookies.
+ *   See https://developer.mozilla.org/en-US/docs/Web/HTML/Element/iframe#attr-sandbox
  */
 export class XenovaProvider extends Disposable implements IConstructAIProvider {
         readonly _serviceBrand: undefined;

@@ -162,7 +162,7 @@ export class MCPConnectionPool extends Disposable {
                                 transport = new StdioClientTransport({
                                         command: def.command,
                                         args: def.args,
-                                        env: { ...process.env as Record<string, string>, ...def.env }
+                                        env: this._buildChildEnv(def.env)
                                 });
                         } else {
                                 const { SSEClientTransport } = await import('@modelcontextprotocol/sdk/client/sse.js');
@@ -270,42 +270,10 @@ export class MCPConnectionPool extends Disposable {
                                 `Open the MCP settings pane (Kovix → MCP Servers) to review and approve this server.`
                         );
                 }
-                // SEC-7 (H2 fix): Build a minimal env for the spawned MCP server.
-                // Previous code spread the entire parent process.env into the child,
-                // which let a malicious marketplace entry set NODE_OPTIONS=--require
-                // /tmp/payload.js or LD_PRELOAD=/tmp/evil.so in def.env — and those
-                // env vars would then apply to EVERY spawned MCP server (not just
-                // the malicious one) because they leaked through process.env.
-                //
-                // Now we only pass through a curated allowlist of env vars that MCP
-                // servers actually need (PATH for binary resolution, HOME/USERPROFILE
-                // for config-file lookup, LANG/LC_* for locale, plus shell-essential
-                // vars). Server-specific env vars from def.env are layered on top.
-                const PARENT_ENV_ALLOWLIST = [
-                        'PATH', 'PATHEXT', 'Path',
-                        'HOME', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'XDG_CONFIG_HOME', 'XDG_DATA_HOME',
-                        'LANG', 'LC_ALL', 'LC_CTYPE', 'LC_MESSAGES',
-                        'USER', 'LOGNAME', 'SHELL', 'TERM',
-                        'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP', 'TMPDIR',
-                        // Kovix-specific (read-only config flags, not secrets)
-                        'KOVIX_ALLOW_PRIVATE_NET', 'KOVIX_ALLOW_LOOPBACK',
-                        'PONYTAIL_DEFAULT_MODE',
-                ];
-                const childEnv: Record<string, string> = {};
-                const parentEnv = process.env as Record<string, string>;
-                for (const key of PARENT_ENV_ALLOWLIST) {
-                        if (parentEnv[key] !== undefined) {
-                                childEnv[key] = parentEnv[key];
-                        }
-                }
-                // Layer server-specific env on top (def.env is from the marketplace
-                // entry or user config — e.g. BRAVE_API_KEY, FIGMA_ACCESS_TOKEN).
-                // These are scoped to this one server, not leaked to others.
-                if (def.env) {
-                        for (const [k, v] of Object.entries(def.env)) {
-                                childEnv[k] = v as string;
-                        }
-                }
+                // SEC-7 (H2 fix): Build a minimal env for the spawned MCP server
+                // via the shared _buildChildEnv() helper. See that method for the
+                // rationale and the curated PARENT_ENV_ALLOWLIST.
+                const childEnv = this._buildChildEnv(def.env);
 
                 const childProcess: any = spawn(def.command, def.args, {
                         env: childEnv,
@@ -473,7 +441,7 @@ export class MCPConnectionPool extends Disposable {
                         transport = new StdioClientTransport({
                                 command: def.command,
                                 args: def.args,
-                                env: { ...process.env as Record<string, string>, ...def.env }
+                                env: this._buildChildEnv(def.env)
                         });
                 } else {
                         const { SSEClientTransport } = await import('@modelcontextprotocol/sdk/client/sse.js');
@@ -502,6 +470,51 @@ export class MCPConnectionPool extends Disposable {
                         message.includes('timeout') ||
                         message.includes('closed') ||
                         message.includes('disconnected');
+        }
+
+        /**
+         * SEC-7 (H2 fix): Build a minimal env for a spawned MCP server child process.
+         *
+         * Spreading the entire parent `process.env` into the child lets a malicious
+         * marketplace entry set `NODE_OPTIONS=--require /tmp/payload.js` or
+         * `LD_PRELOAD=/tmp/evil.so` in `def.env` — and those env vars would then
+         * apply to EVERY spawned MCP server (not just the malicious one) because
+         * they leaked through `process.env`.
+         *
+         * This helper only passes through a curated allowlist of env vars that MCP
+         * servers actually need (PATH for binary resolution, HOME/USERPROFILE for
+         * config-file lookup, LANG/LC_* for locale, plus shell-essential vars).
+         * Server-specific env vars from `def.env` are layered on top, scoped to
+         * this one server.
+         *
+         * Used by both the raw `spawn()` path and the `StdioClientTransport` path
+         * (the previous StdioClientTransport sites at connect() and reconnect()
+         * were still spreading `process.env` — closed in this same SEC-7 pass).
+         */
+        private _buildChildEnv(serverEnv?: Record<string, string>): Record<string, string> {
+                const PARENT_ENV_ALLOWLIST = [
+                        'PATH', 'PATHEXT', 'Path',
+                        'HOME', 'USERPROFILE', 'APPDATA', 'LOCALAPPDATA', 'XDG_CONFIG_HOME', 'XDG_DATA_HOME',
+                        'LANG', 'LC_ALL', 'LC_CTYPE', 'LC_MESSAGES',
+                        'USER', 'LOGNAME', 'SHELL', 'TERM',
+                        'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP', 'TMPDIR',
+                        // Kovix-specific (read-only config flags, not secrets)
+                        'KOVIX_ALLOW_PRIVATE_NET', 'KOVIX_ALLOW_LOOPBACK',
+                        'PONYTAIL_DEFAULT_MODE',
+                ];
+                const childEnv: Record<string, string> = {};
+                const parentEnv = process.env as Record<string, string>;
+                for (const key of PARENT_ENV_ALLOWLIST) {
+                        if (parentEnv[key] !== undefined) {
+                                childEnv[key] = parentEnv[key];
+                        }
+                }
+                if (serverEnv) {
+                        for (const [k, v] of Object.entries(serverEnv)) {
+                                childEnv[k] = v as string;
+                        }
+                }
+                return childEnv;
         }
 
         private delay(ms: number): Promise<void> {
