@@ -1,14 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet">
   <!--
-    Kovix "K" logo sprite.
+    Kovix "K" logo sprite — v2.0 Teal Identity.
+    Replaces the previous Volt-violet (#D670FF→#A020E0) gradient with
+    teal (#2DD4BF→#0F766E) per KOVIX_DESIGN_SYSTEM_FOUNDATION.md.
+
+    The mark is a squared, slab-cut "K" sitting on a teal gradient tile.
+    The hard inner bevel on the K's stem reads as a chip / circuit trace,
+    signalling "code-native" without resorting to neon or terminal clichés.
+
     Single source of truth for every place the Kovix mark appears in the
     workbench: activity bar (24px), status bar (16px), welcome screen (128px),
     about dialog (128px), splash screen (192px).
-
-    The mark is a squared, slab-cut "K" sitting on a Volt gradient tile.
-    The hard inner bevel on the K's stem is intentional — it reads as a
-    chip / circuit trace, signalling "code-native" without resorting to
-    neon or terminal clichés.
 
     Use as <use href="...#kovix-logo-{size}" />.
     Sizes: 16, 24, 48, 128, 192.
@@ -16,21 +18,21 @@
 
   <defs>
     <linearGradient id="kovix-volt-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%"   stop-color="#D670FF" />
-      <stop offset="55%"  stop-color="#C542FF" />
-      <stop offset="100%" stop-color="#A020E0" />
+      <stop offset="0%"   stop-color="#2DD4BF" />
+      <stop offset="55%"  stop-color="#14B8A6" />
+      <stop offset="100%" stop-color="#0F766E" />
     </linearGradient>
 
     <linearGradient id="kovix-volt-gradient-bright" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%"   stop-color="#E89BFF" />
-      <stop offset="55%"  stop-color="#D670FF" />
-      <stop offset="100%" stop-color="#C542FF" />
+      <stop offset="0%"   stop-color="#5EEAD4" />
+      <stop offset="55%"  stop-color="#2DD4BF" />
+      <stop offset="100%" stop-color="#14B8A6" />
     </linearGradient>
 
     <radialGradient id="kovix-volt-glow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%"  stop-color="#C542FF" stop-opacity="0.55" />
-      <stop offset="60%" stop-color="#C542FF" stop-opacity="0.15" />
-      <stop offset="100%" stop-color="#C542FF" stop-opacity="0" />
+      <stop offset="0%"  stop-color="#14B8A6" stop-opacity="0.55" />
+      <stop offset="60%" stop-color="#14B8A6" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#14B8A6" stop-opacity="0" />
     </radialGradient>
 
     <!--
@@ -43,18 +45,18 @@
         K built from two trapezoids:
           - vertical stem, 200 wide, full height
           - diagonal arm, slightly heavier on top to give a chip-notch feel
-        White-on-gradient for max contrast at small sizes.
+        White-on-teal-gradient for max contrast at small sizes.
       -->
       <!-- Stem -->
       <path d="M 320 200 H 480 V 824 H 320 Z" fill="#FFFFFF" />
       <!-- Upper diagonal arm (notch at top to suggest a circuit trace) -->
       <path d="M 480 480 L 760 200 L 880 200 L 880 320 L 600 600 L 880 880 L 880 1000 L 760 1000 L 480 720 Z"
             fill="#FFFFFF" />
-      <!-- Notch chip — volt-bright accent on the K's inner elbow -->
+      <!-- Notch chip — teal-bright accent on the K's inner elbow -->
       <path d="M 480 480 L 600 480 L 540 540 Z" fill="url(#kovix-volt-gradient-bright)" />
     </symbol>
 
-    <!-- The full logo = Volt gradient tile + K glyph + subtle inner ring -->
+    <!-- The full logo = teal gradient tile + K glyph + subtle inner ring -->
     <symbol id="kovix-logo-tile" viewBox="0 0 1024 1024">
       <!-- Outer gradient tile with rounded corners (radius 224 = 22% of 1024) -->
       <rect x="0" y="0" width="1024" height="1024" rx="224" ry="224"

@@ -179,14 +179,14 @@ export class KovixWelcomeView extends Disposable {
         <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <linearGradient id="kovix-welcome-volt" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#D670FF" />
-              <stop offset="55%" stop-color="#C542FF" />
-              <stop offset="100%" stop-color="#A020E0" />
+              <stop offset="0%" stop-color="#2DD4BF" />
+              <stop offset="55%" stop-color="#14B8A6" />
+              <stop offset="100%" stop-color="#0F766E" />
             </linearGradient>
             <radialGradient id="kovix-welcome-glow" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stop-color="#C542FF" stop-opacity="0.55" />
-              <stop offset="60%" stop-color="#C542FF" stop-opacity="0.15" />
-              <stop offset="100%" stop-color="#C542FF" stop-opacity="0" />
+              <stop offset="0%" stop-color="#14B8A6" stop-opacity="0.55" />
+              <stop offset="60%" stop-color="#14B8A6" stop-opacity="0.15" />
+              <stop offset="100%" stop-color="#14B8A6" stop-opacity="0" />
             </radialGradient>
           </defs>
           <circle cx="512" cy="512" r="512" fill="url(#kovix-welcome-glow)" />
@@ -195,7 +195,7 @@ export class KovixWelcomeView extends Disposable {
                 fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2" />
           <path d="M 360 230 H 470 V 794 H 360 Z" fill="#FFFFFF" />
           <path d="M 470 480 L 720 230 H 830 V 330 L 600 560 L 830 790 V 890 H 720 L 470 640 Z" fill="#FFFFFF" />
-          <path d="M 470 480 L 580 480 L 525 535 Z" fill="#D670FF" />
+          <path d="M 470 480 L 580 480 L 525 535 Z" fill="#2DD4BF" />
         </svg>
       </div>
       <div class="kovix-welcome__wordmark">KOV<span class="kovix-welcome__wordmark-accent">I</span>X</div>
@@ -266,8 +266,8 @@ export class KovixWelcomeView extends Disposable {
       padding: 56px 24px;
       box-sizing: border-box;
       background:
-        radial-gradient(circle at 50% 28%, rgba(197, 66, 255, 0.18) 0%, rgba(197, 66, 255, 0) 55%),
-        radial-gradient(circle at 50% 90%, rgba(160, 32, 224, 0.06) 0%, rgba(0, 0, 0, 0) 60%),
+        radial-gradient(circle at 50% 28%, rgba(20, 184, 166, 0.18) 0%, rgba(20, 184, 166, 0) 55%),
+        radial-gradient(circle at 50% 90%, rgba(15, 118, 110, 0.06) 0%, rgba(0, 0, 0, 0) 60%),
         #000000;
       position: relative;
     }
@@ -283,7 +283,7 @@ export class KovixWelcomeView extends Disposable {
     }
     .kovix-welcome__mark {
       width: 128px; height: 128px;
-      filter: drop-shadow(0 0 32px rgba(197, 66, 255, 0.55));
+      filter: drop-shadow(0 0 32px rgba(20, 184, 166, 0.55));
       animation: kovix-welcome-pulse 1600ms cubic-bezier(0.4, 0, 0.2, 1) 1 both;
     }
     .kovix-welcome__mark svg { width: 100%; height: 100%; display: block; }
@@ -292,7 +292,7 @@ export class KovixWelcomeView extends Disposable {
       letter-spacing: 0.42em;
       color: #FFFFFF; margin-top: 8px;
     }
-    .kovix-welcome__wordmark-accent { color: #D670FF; }
+    .kovix-welcome__wordmark-accent { color: #2DD4BF; }
     .kovix-welcome__tagline {
       font-size: 13px;
       color: rgba(255, 255, 255, 0.55);
@@ -315,19 +315,19 @@ export class KovixWelcomeView extends Disposable {
       transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
     }
     .kovix-welcome__cta:hover {
-      background: rgba(197, 66, 255, 0.10);
-      border-color: rgba(197, 66, 255, 0.40);
+      background: rgba(20, 184, 166, 0.10);
+      border-color: rgba(20, 184, 166, 0.40);
       color: #FFFFFF;
     }
     .kovix-welcome__cta--primary {
-      background: linear-gradient(135deg, #C542FF 0%, #A020E0 100%);
+      background: linear-gradient(135deg, #14B8A6 0%, #0F766E 100%);
       color: #FFFFFF;
       border: 1px solid transparent;
-      box-shadow: 0 4px 16px rgba(197, 66, 255, 0.30);
+      box-shadow: 0 4px 16px rgba(20, 184, 166, 0.30);
     }
     .kovix-welcome__cta--primary:hover {
-      background: linear-gradient(135deg, #D670FF 0%, #C542FF 100%);
-      box-shadow: 0 6px 20px rgba(197, 66, 255, 0.45);
+      background: linear-gradient(135deg, #2DD4BF 0%, #14B8A6 100%);
+      box-shadow: 0 6px 20px rgba(20, 184, 166, 0.45);
       color: #FFFFFF;
     }
     .kovix-welcome__cta--ghost {
@@ -352,19 +352,19 @@ export class KovixWelcomeView extends Disposable {
       transition: border-color 200ms ease, background 200ms ease;
     }
     .kovix-welcome__feature:hover {
-      background: rgba(197, 66, 255, 0.04);
-      border-color: rgba(197, 66, 255, 0.20);
+      background: rgba(20, 184, 166, 0.04);
+      border-color: rgba(20, 184, 166, 0.20);
     }
     .kovix-welcome__feature-icon {
       width: 32px; height: 32px;
       display: grid; place-items: center;
       font-size: 18px;
-      color: #D670FF;
+      color: #2DD4BF;
       margin-bottom: 12px;
-      background: rgba(197, 66, 255, 0.10);
+      background: rgba(20, 184, 166, 0.10);
       border-radius: 8px;
     }
-    .kovix-welcome__feature-icon--swarm   { color: #D670FF; }
+    .kovix-welcome__feature-icon--swarm   { color: #2DD4BF; }
     .kovix-welcome__feature-icon--memory  { color: #21D3A8; }
     .kovix-welcome__feature-icon--skills  { color: #3DA9FC; }
     .kovix-welcome__feature-title {

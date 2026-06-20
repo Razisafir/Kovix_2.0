@@ -27,9 +27,9 @@ const KOVIX_K_SVG_18 = `
 <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
     <linearGradient id="kovix-surface-volt-18" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#D670FF" />
-      <stop offset="55%" stop-color="#C542FF" />
-      <stop offset="100%" stop-color="#A020E0" />
+      <stop offset="0%" stop-color="#2DD4BF" />
+      <stop offset="55%" stop-color="#14B8A6" />
+      <stop offset="100%" stop-color="#0F766E" />
     </linearGradient>
   </defs>
   <rect x="0" y="0" width="1024" height="1024" rx="224" ry="224" fill="url(#kovix-surface-volt-18)" />
@@ -42,13 +42,13 @@ const KOVIX_K_SVG_64 = `
 <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
     <linearGradient id="kovix-surface-volt-64" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#D670FF" />
-      <stop offset="55%" stop-color="#C542FF" />
-      <stop offset="100%" stop-color="#A020E0" />
+      <stop offset="0%" stop-color="#2DD4BF" />
+      <stop offset="55%" stop-color="#14B8A6" />
+      <stop offset="100%" stop-color="#0F766E" />
     </linearGradient>
     <radialGradient id="kovix-surface-glow-64" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#C542FF" stop-opacity="0.30" />
-      <stop offset="100%" stop-color="#C542FF" stop-opacity="0" />
+      <stop offset="0%" stop-color="#14B8A6" stop-opacity="0.30" />
+      <stop offset="100%" stop-color="#14B8A6" stop-opacity="0" />
     </radialGradient>
   </defs>
   <circle cx="512" cy="512" r="512" fill="url(#kovix-surface-glow-64)" />
@@ -57,7 +57,7 @@ const KOVIX_K_SVG_64 = `
         fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2" />
   <path d="M 320 200 H 480 V 824 H 320 Z" fill="#FFFFFF" />
   <path d="M 480 480 L 760 200 L 880 200 L 880 320 L 600 600 L 880 880 L 880 1000 L 760 1000 L 480 720 Z" fill="#FFFFFF" />
-  <path d="M 480 480 L 600 480 L 540 540 Z" fill="#D670FF" />
+  <path d="M 480 480 L 600 480 L 540 540 Z" fill="#2DD4BF" />
 </svg>`;
 
 /** Read version from the global package.json (injected at build time). */

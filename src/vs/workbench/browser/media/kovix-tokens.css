@@ -1,477 +1,241 @@
 /*---------------------------------------------------------------------------------------------
  *  Kovix Design Tokens — single source of truth for the Kovix visual identity.
  *
- *  These custom properties are scoped to .monaco-workbench so they are
- *  available everywhere in the workbench DOM (activity bar, sidebar, editor,
- *  panel, status bar, and all Construct/Kovix contribution views).
+ *  v2.0 — Teal Identity Release.
+ *  Discards the previous Volt-violet (#6E42FF) + Ignite-orange (#FF5A36) palette.
+ *  New signature: teal #14B8A6 on blue-black #0B1115.
  *
- *  Color values are mirrored from the "Kovix Dark" VS Code color theme so
- *  CSS authored against these tokens and the theme JSON never drift apart.
- *
+ *  Source of truth: KOVIX_DESIGN_SYSTEM_FOUNDATION.md (repo root).
  *  No UI code should hardcode hex values — reference these tokens instead.
+ *
+ *  Scoped to .monaco-workbench so they're available everywhere in the
+ *  workbench DOM. Webviews (splash, welcome, onboarding) duplicate the
+ *  values inline because they don't inherit workbench CSS.
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-workbench {
-        /* ──────────────────────────────────────────────────────────────
-           SURFACES (dark theme — default and only theme at launch)
-           ────────────────────────────────────────────────────────────── */
-        --kovix-bg-ink: #0B0D10;          /* editor background, deepest layer */
-        --kovix-bg-surface: #13161B;      /* panels: sidebar, agent panel, status bar idle */
-        --kovix-bg-raised: #1B1F26;       /* cards, hover states, dropdowns */
-        --kovix-border: #2A2F38;          /* all hairline borders, 0.5-1px */
-        --kovix-border-subtle: #1F232B;   /* quieter dividers, e.g. tab separators */
+  /* ─────────────────────────────────────────────────────────────────────
+     SURFACES — blue-black background scale, NOT pure black, NOT VS Code gray
+     ───────────────────────────────────────────────────────────────────── */
+  --kovix-bg-base:      #0B1115;  /* deepest: app background behind everything */
+  --kovix-bg-surface:   #121A20;  /* panels: activity bar, sidebar, status bar */
+  --kovix-bg-elevated:  #1A242C;  /* cards, dropdowns, popovers, command palette */
+  --kovix-bg-input:     #0E1419;  /* text inputs, textarea — recedes until focused */
+  --kovix-bg-overlay:   rgba(11, 17, 21, 0.85); /* modal scrims */
 
-        /* ──────────────────────────────────────────────────────────────
-           TEXT
-           ────────────────────────────────────────────────────────────── */
-        --kovix-text-primary: #E8EAED;
-        --kovix-text-secondary: #9A9DA6;
-        --kovix-text-tertiary: #5A5E68;   /* line numbers, disabled, placeholder */
+  /* ─────────────────────────────────────────────────────────────────────
+     TEXT — WCAG AAA against bg-base where it matters
+     ───────────────────────────────────────────────────────────────────── */
+  --kovix-text-primary:    #E6EDF3;  /* main text — 15.2:1 against bg-base (AAA) */
+  --kovix-text-secondary:  #9DA7B0;  /* labels, metadata — 7.4:1 (AAA) */
+  --kovix-text-muted:      #5C6770;  /* line numbers, disabled, placeholder — 3.6:1 (AA large only) */
+  --kovix-text-on-accent:  #0B1115;  /* text on teal surfaces — dark-on-teal for contrast */
 
-        /* ──────────────────────────────────────────────────────────────
-           BRAND — Volt (violet) + Ignite (orange)
-           ────────────────────────────────────────────────────────────── */
-        --kovix-volt-400: #8A63FF;
-        --kovix-volt-500: #6E42FF;        /* primary brand color, agent accent */
-        --kovix-volt-600: #4F2BCC;        /* pressed/active states */
+  /* ─────────────────────────────────────────────────────────────────────
+     ACCENT — teal #14B8A6, the Kovix signature
+     The only hue in the system. No purple, no blue, no gradients.
+     ───────────────────────────────────────────────────────────────────── */
+  --kovix-accent:         #14B8A6;  /* primary brand color */
+  --kovix-accent-hover:   #0D9488;  /* -8% lightness on hover */
+  --kovix-accent-active:  #0F766E;  /* -16% lightness on press */
+  --kovix-accent-subtle:  rgba(20, 184, 166, 0.10);  /* tinted backgrounds, active items */
+  --kovix-accent-glow:    rgba(20, 184, 166, 0.35);  /* box-shadow on focused inputs, working dot */
 
-        --kovix-ignite-400: #FF8A5C;
-        --kovix-ignite-500: #FF5A36;      /* CTA buttons, primary actions, energy accent */
+  /* ─────────────────────────────────────────────────────────────────────
+     BORDERS — hairline scale
+     ───────────────────────────────────────────────────────────────────── */
+  --kovix-border:        rgba(255, 255, 255, 0.08);  /* default hairline */
+  --kovix-border-strong: rgba(255, 255, 255, 0.14);  /* active container outlines */
+  --kovix-border-accent: rgba(20, 184, 166, 0.30);   /* active tab, focus ring outer */
 
-        --kovix-gradient: linear-gradient(135deg, #8A63FF 0%, #FF5A36 100%);
+  /* ─────────────────────────────────────────────────────────────────────
+     STATUS — semantic, GitHub-derived for developer familiarity
+     ───────────────────────────────────────────────────────────────────── */
+  --kovix-success: #3FB950;  /* shipped/merged, diff-added */
+  --kovix-warning: #D29922;  /* awaiting approval */
+  --kovix-error:   #F85149;  /* diff-removed, destructive */
+  --kovix-info:    #58A6FF;  /* non-accent info (remote, web results) — never as brand */
 
-        /* ──────────────────────────────────────────────────────────────
-           FUNCTION / AGENT STATE
-           These map directly to agent lifecycle states — use them
-           consistently everywhere the agent surfaces status.
-           ────────────────────────────────────────────────────────────── */
-        --kovix-state-running: #21D3A8;   /* agent actively working */
-        --kovix-state-pending: #FFC233;   /* awaiting user approval — diff review */
-        --kovix-state-error: #FF4D5E;     /* blocked, failed, rejected */
-        --kovix-state-info: #3DA9FC;      /* local/offline model indicator, neutral info */
+  /* Status-tinted backgrounds (low-opacity) for badges, banners, toasts */
+  --kovix-success-bg: rgba(63, 185, 80, 0.12);
+  --kovix-warning-bg: rgba(210, 153, 34, 0.12);
+  --kovix-error-bg:   rgba(248, 81, 73, 0.12);
+  --kovix-info-bg:    rgba(88, 166, 255, 0.12);
 
-        /* Paired low-opacity backgrounds + bright foregrounds for badges/chips */
-        --kovix-badge-running-bg: rgba(33, 211, 168, 0.16);
-        --kovix-badge-running-fg: #5FE8C6;
+  /* ─────────────────────────────────────────────────────────────────────
+     DIFF — added / removed (editor + chat diff cards)
+     ───────────────────────────────────────────────────────────────────── */
+  --kovix-diff-added-bg:   rgba(63, 185, 80, 0.15);
+  --kovix-diff-added-fg:   #3FB950;
+  --kovix-diff-removed-bg: rgba(248, 81, 73, 0.15);
+  --kovix-diff-removed-fg: #F85149;
 
-        --kovix-badge-pending-bg: rgba(255, 194, 51, 0.16);
-        --kovix-badge-pending-fg: #FFD466;
+  /* ─────────────────────────────────────────────────────────────────────
+     SYNTAX — GitHub-Dark-derived, high familiarity for developers
+     ───────────────────────────────────────────────────────────────────── */
+  --kovix-syntax-keyword:  #FF7B72;
+  --kovix-syntax-string:   #A5D6FF;
+  --kovix-syntax-function: #D2A8FF;
+  --kovix-syntax-variable: #FFA657;
+  --kovix-syntax-comment:  #8B949E;
+  --kovix-syntax-constant: #79C0FF;
+  --kovix-syntax-type:     #7EE787;
 
-        --kovix-badge-error-bg: rgba(255, 77, 94, 0.16);
-        --kovix-badge-error-fg: #FF8A96;
+  /* ─────────────────────────────────────────────────────────────────────
+     TYPOGRAPHY — Inter (UI + chat) + JetBrains Mono (editor + inline code)
+     Two families, not three — the chat panel is part of the workbench.
+     ───────────────────────────────────────────────────────────────────── */
+  --kovix-font-ui:   "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --kovix-font-mono: "JetBrains Mono", "SF Mono", "Cascadia Code", "Menlo", "Consolas", monospace;
 
-        --kovix-badge-info-bg: rgba(61, 169, 252, 0.16);
-        --kovix-badge-info-fg: #7CC4FD;
+  /* Type scale (Inter base) */
+  --kovix-text-xs:   11px;  /* status bar, tab metadata, tooltips */
+  --kovix-text-sm:   12px;  /* sidebar items, command palette items */
+  --kovix-text-base: 13px;  /* UI chrome default, button labels, settings rows */
+  --kovix-text-md:   14px;  /* chat body, editor-adjacent prose */
+  --kovix-text-lg:   16px;  /* section headers, modal titles */
+  --kovix-text-xl:   20px;  /* empty-state headlines, onboarding step titles */
+  --kovix-text-2xl:  28px;  /* welcome screen headline only */
 
-        /* Pending diff card tints (softer than badge bg, used as card fill) */
-        --kovix-pending-card-bg: rgba(255, 194, 51, 0.08);
-        --kovix-pending-card-border: rgba(255, 194, 51, 0.30);
+  /* Line-heights */
+  --kovix-leading-tight:  1.3;
+  --kovix-leading-normal: 1.5;
+  --kovix-leading-relaxed: 1.6;
 
-        /* ──────────────────────────────────────────────────────────────
-           TYPOGRAPHY
-           ────────────────────────────────────────────────────────────── */
-        --kovix-font-ui: "Inter", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        --kovix-font-mono: "JetBrains Mono", "Cascadia Code", "SF Mono", Consolas, monospace;
+  /* Font weights */
+  --kovix-weight-regular:  400;
+  --kovix-weight-medium:   500;
+  --kovix-weight-semibold: 600;
+  --kovix-weight-bold:     700;
 
-        /* ──────────────────────────────────────────────────────────────
-           RADIUS
-           ────────────────────────────────────────────────────────────── */
-        --kovix-radius-sm: 5px;           /* badges, chips, small buttons */
-        --kovix-radius-md: 7px;           /* buttons, inputs, list items */
-        --kovix-radius-lg: 10px;          /* cards, panels, modals */
+  /* ─────────────────────────────────────────────────────────────────────
+     SPACING — 4px base, near-Fibonacci step
+     ───────────────────────────────────────────────────────────────────── */
+  --kovix-space-0:  0;
+  --kovix-space-1:  4px;   /* icon-to-label gap, tight inline padding */
+  --kovix-space-2:  8px;   /* default inline gap, button padding-y */
+  --kovix-space-3:  12px;  /* button padding-x, list-item padding-y */
+  --kovix-space-4:  16px;  /* card padding, section gap inside a panel */
+  --kovix-space-6:  24px;  /* modal padding, panel section gap */
+  --kovix-space-8:  32px;  /* empty-state container padding */
+  --kovix-space-12: 48px;  /* welcome screen section gap */
+  --kovix-space-16: 64px;  /* welcome screen hero padding */
 
-        /* ──────────────────────────────────────────────────────────────
-           ALIASES — `--construct-*` tokens already referenced by existing
-           Construct/Kovix CSS files. Mapping them here means all existing
-           `var(--construct-*)` references resolve to the new Kovix palette
-           without a file-by-file rewrite.
-           ────────────────────────────────────────────────────────────── */
-        --construct-editor-background: var(--kovix-bg-ink);
-        --construct-foreground: var(--kovix-text-primary);
-        --construct-descriptionForeground: var(--kovix-text-secondary);
-        --construct-errorForeground: var(--kovix-state-error);
-        --construct-focusBorder: var(--kovix-volt-400);
-        --construct-panel-border: var(--kovix-border);
-        --construct-input-background: var(--kovix-bg-raised);
-        --construct-input-foreground: var(--kovix-text-primary);
-        --construct-input-placeholderForeground: var(--kovix-text-tertiary);
-        --construct-button-background: var(--kovix-ignite-500);
-        --construct-button-foreground: #FFFFFF;
-        --construct-button-hoverBackground: var(--kovix-ignite-400);
-        --construct-button-secondaryBackground: var(--kovix-bg-raised);
-        --construct-button-secondaryForeground: var(--kovix-text-secondary);
-        --construct-sideBar-background: var(--kovix-bg-surface);
-        --construct-tab-activeBackground: var(--kovix-bg-ink);
-        --construct-tab-activeForeground: var(--kovix-volt-400);
-        --construct-tab-inactiveBackground: var(--kovix-bg-surface);
-        --construct-tab-inactiveForeground: var(--kovix-text-tertiary);
-        --construct-progressBar-background: var(--kovix-volt-500);
-        --construct-editor-font-family: var(--kovix-font-mono);
+  /* ─────────────────────────────────────────────────────────────────────
+     RADIUS — sharp for code, soft for chrome, pill for tags
+     ───────────────────────────────────────────────────────────────────── */
+  --kovix-radius-sharp: 0;       /* code blocks, diff lines, editor gutter */
+  --kovix-radius-sm:    3px;     /* inputs, textareas, buttons */
+  --kovix-radius-md:    6px;     /* cards, dropdown menus, command palette */
+  --kovix-radius-lg:    10px;    /* modals, popovers, chat composer */
+  --kovix-radius-pill:  9999px;  /* tags, badges, status dots, primary CTA */
 
-        /* ──────────────────────────────────────────────────────────────
-           EXTENDED TOKENS (v1.3.0) — needed by the new agent panel,
-           memory graph, control center, and accessibility contributions.
-           ────────────────────────────────────────────────────────────── */
-        --kovix-bg-overlay: #232730;        /* popovers, dropdowns, raised overlays */
-        --kovix-bg-input: #0F1217;          /* input fields, slightly darker than ink */
+  /* ─────────────────────────────────────────────────────────────────────
+     ELEVATION — only 3 levels. Hierarchy comes from bg lightness step,
+     not shadow. Shadow only on floating elements.
+     ───────────────────────────────────────────────────────────────────── */
+  --kovix-shadow-none:    none;
+  --kovix-shadow-sm:      0 1px 2px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--kovix-border);
+  --kovix-shadow-md:      0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px var(--kovix-border-strong);
+  --kovix-shadow-accent:  0 0 0 1px var(--kovix-border-accent), 0 0 0 4px var(--kovix-accent-glow);
 
-        --kovix-volt-700: #4A22B8;          /* deeper pressed state */
-        --kovix-volt-glow: rgba(110, 66, 255, 0.35);
-        --kovix-volt-subtle: rgba(110, 66, 255, 0.12);
-
-        --kovix-ignite-600: #E03E1A;        /* deeper pressed state */
-        --kovix-ignite-glow: rgba(255, 90, 54, 0.30);
-
-        --kovix-cyber-500: #00E5FF;         /* tertiary accent — live state, info */
-        --kovix-cyber-400: #4DECFF;
-
-        --kovix-text-on-volt: #FFFFFF;
-        --kovix-text-on-ignite: #FFFFFF;
-        --kovix-text-inverse: #0B0D10;
-
-        --kovix-hairline: rgba(255, 255, 255, 0.06);
-        --kovix-hairline-bold: rgba(255, 255, 255, 0.10);
-        --kovix-hairline-volt: rgba(110, 66, 255, 0.30);
-
-        --kovix-state-success: var(--kovix-state-running);
-
-        --kovix-font-display: "Inter Display", "Inter", system-ui, sans-serif;
-
-        --kovix-radius-xs: 3px;
-        --kovix-radius-xl: 12px;
-        --kovix-radius-pill: 999px;
-
-        --kovix-space-1: 4px;
-        --kovix-space-2: 8px;
-        --kovix-space-3: 12px;
-        --kovix-space-4: 16px;
-        --kovix-space-5: 24px;
-        --kovix-space-6: 32px;
-
-        --kovix-motion-fast: 120ms cubic-bezier(0.4, 0, 0.2, 1);
-        --kovix-motion-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
-        --kovix-motion-slow: 320ms cubic-bezier(0.4, 0, 0.2, 1);
-
-        --kovix-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-        --kovix-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-        --kovix-shadow-volt: 0 0 0 1px var(--kovix-volt-glow), 0 4px 16px rgba(110, 66, 255, 0.3);
-
-        --kovix-gradient-volt: linear-gradient(135deg, #6E42FF 0%, #8A63FF 100%);
-        --kovix-gradient-ignite: linear-gradient(135deg, #FF5A36 0%, #FF8A5C 100%);
-        --kovix-gradient-ink: linear-gradient(180deg, #13161B 0%, #0B0D10 100%);
-        --kovix-gradient-statusbar: linear-gradient(90deg, #6E42FF 0%, #4F2BCC 100%);
+  /* ─────────────────────────────────────────────────────────────────────
+     MOTION — 150ms default, 300ms ceiling for modals. Reduced-motion = 0ms.
+     ───────────────────────────────────────────────────────────────────── */
+  --kovix-motion-instant: 0ms linear;
+  --kovix-motion-fast:    120ms cubic-bezier(0.4, 0, 0.2, 1);
+  --kovix-motion-base:    200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --kovix-motion-slow:    300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --kovix-motion-exit:    150ms cubic-bezier(0.4, 0, 1, 1);  /* 60-70% of enter */
 }
 
-/* ──────────────────────────────────────────────────────────────────
-   Kovix badge utility classes — use these directly in TS-built DOM
-   for status pills so badge styling stays consistent everywhere.
-   ────────────────────────────────────────────────────────────────── */
-.monaco-workbench .kovix-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 2px 8px;
-        border-radius: var(--kovix-radius-sm);
-        font-size: 11px;
-        font-weight: 500;
-        line-height: 1.4;
-        letter-spacing: 0.01em;
-        white-space: nowrap;
+/* ─────────────────────────────────────────────────────────────────────────
+   Reduced motion — all transitions become instant. No exceptions.
+   ───────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .monaco-workbench {
+    --kovix-motion-instant: 0ms linear;
+    --kovix-motion-fast:    0ms linear;
+    --kovix-motion-base:    0ms linear;
+    --kovix-motion-slow:    0ms linear;
+    --kovix-motion-exit:    0ms linear;
+  }
 }
 
-.monaco-workbench .kovix-badge::before {
-        content: '';
-        display: inline-block;
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: currentColor;
-        flex-shrink: 0;
-}
+/* ─────────────────────────────────────────────────────────────────────────
+   Backward-compatibility aliases — old Volt-violet token names map to the
+   new teal equivalents so existing CSS that references --kovix-volt-* or
+   --kovix-bg-ink doesn't break during the transition.
+   Once all references are migrated (Prompt 5 token audit), these aliases
+   can be deleted.
+   ───────────────────────────────────────────────────────────────────────── */
+.monaco-workbench {
+  /* Old bg tokens → new bg tokens */
+  --kovix-bg-ink:      var(--kovix-bg-base);
+  --kovix-bg-raised:   var(--kovix-bg-elevated);
+  --kovix-border-subtle: var(--kovix-border);
 
-.monaco-workbench .kovix-badge.kovix-badge--running {
-        background: var(--kovix-badge-running-bg);
-        color: var(--kovix-badge-running-fg);
-}
+  /* Old text tokens → new text tokens */
+  --kovix-text-tertiary: var(--kovix-text-muted);
 
-.monaco-workbench .kovix-badge.kovix-badge--pending {
-        background: var(--kovix-badge-pending-bg);
-        color: var(--kovix-badge-pending-fg);
-}
+  /* Old Volt-violet tokens → teal accent (transitional aliases) */
+  --kovix-volt-400:    #2DD4BF;  /* lighter teal for old --kovix-volt-400 callers */
+  --kovix-volt-500:    var(--kovix-accent);
+  --kovix-volt-600:    var(--kovix-accent-active);
+  --kovix-volt-glow:   var(--kovix-accent-glow);
+  --kovix-volt-subtle: var(--kovix-accent-subtle);
+  --kovix-hairline-volt: var(--kovix-border-accent);
 
-.monaco-workbench .kovix-badge.kovix-badge--error {
-        background: var(--kovix-badge-error-bg);
-        color: var(--kovix-badge-error-fg);
-}
+  /* Old state tokens (mostly compatible — slightly different hues) */
+  --kovix-state-running:  #58A6FF;   /* was #21D3A8 — info-blue for "working" */
+  --kovix-state-pending:  var(--kovix-warning);
+  --kovix-state-error:    var(--kovix-error);
+  --kovix-state-success:  var(--kovix-success);
+  --kovix-state-info:     var(--kovix-info);
 
-.monaco-workbench .kovix-badge.kovix-badge--info {
-        background: var(--kovix-badge-info-bg);
-        color: var(--kovix-badge-info-fg);
-}
+  /* Old badge backgrounds */
+  --kovix-badge-running-bg: var(--kovix-info-bg);
+  --kovix-badge-running-fg: var(--kovix-info);
+  --kovix-badge-pending-bg: var(--kovix-warning-bg);
+  --kovix-badge-pending-fg: var(--kovix-warning);
+  --kovix-badge-error-bg:   var(--kovix-error-bg);
+  --kovix-badge-error-fg:   var(--kovix-error);
+  --kovix-badge-info-bg:    var(--kovix-info-bg);
+  --kovix-badge-info-fg:    var(--kovix-info);
 
-/* Idle state — no badge background, just tertiary text */
-.monaco-workbench .kovix-badge.kovix-badge--idle {
-        background: transparent;
-        color: var(--kovix-text-tertiary);
-}
-.monaco-workbench .kovix-badge.kovix-badge--idle::before { display: none; }
+  /* OldIgnite tokens — keep amber for destructive/warning to preserve intent */
+  --kovix-ignite-400:  var(--kovix-warning);
+  --kovix-ignite-500:  var(--kovix-warning);
+  --kovix-ignite-600:  #B07F00;
+  --kovix-ignite-glow: rgba(210, 153, 34, 0.30);
 
-/* ──────────────────────────────────────────────────────────────────
-   Kovix button utilities — Approve (gradient) and Reject (ghost).
-   The Approve button is always visually heavier than Reject; this is
-   the safe-default visual hierarchy for an approval-gated agent.
-   ────────────────────────────────────────────────────────────────── */
-.monaco-workbench .kovix-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding: 6px 14px;
-        font-size: 12px;
-        font-weight: 500;
-        font-family: var(--kovix-font-ui);
-        border-radius: var(--kovix-radius-md);
-        border: 1px solid transparent;
-        cursor: pointer;
-        transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-        white-space: nowrap;
-}
+  /* Old gradients — explicitly disabled. Anti-pattern: no gradients. */
+  --kovix-gradient:       var(--kovix-accent);
+  --kovix-gradient-volt:  var(--kovix-accent);
+  --kovix-gradient-ignite: var(--kovix-warning);
+  --kovix-gradient-ink:   var(--kovix-bg-base);
+  --kovix-gradient-statusbar: var(--kovix-bg-surface);
 
-.monaco-workbench .kovix-btn--primary {
-        background: var(--kovix-gradient);
-        color: #FFFFFF;
-        border: none;
-        font-weight: 500;
-}
-.monaco-workbench .kovix-btn--primary:hover {
-        filter: brightness(1.08);
-}
+  /* Old font tokens → new font tokens */
+  --kovix-font-display: var(--kovix-font-ui);
+  --kovix-font-mono-orig: var(--kovix-font-mono);
 
-.monaco-workbench .kovix-btn--ghost {
-        background: transparent;
-        color: var(--kovix-text-secondary);
-        border: 1px solid var(--kovix-border);
-}
-.monaco-workbench .kovix-btn--ghost:hover {
-        background: var(--kovix-bg-raised);
-        color: var(--kovix-text-primary);
-}
+  /* Old hairline tokens */
+  --kovix-hairline:        var(--kovix-border);
+  --kovix-hairline-bold:   var(--kovix-border-strong);
 
-/* ──────────────────────────────────────────────────────────────────
-   Kovix action card — used by agent panel + security tooling panels.
-   Pending state adds the amber tint + amber border for awaiting-approval.
-   ────────────────────────────────────────────────────────────────── */
-.monaco-workbench .kovix-action-card {
-        background: var(--kovix-bg-raised);
-        border: 1px solid var(--kovix-border-subtle);
-        border-radius: var(--kovix-radius-md);
-        padding: 8px 10px;
-}
+  /* Old radius tokens (compatible values) */
+  --kovix-radius-xs:  0;
+  --kovix-radius-xl:  var(--kovix-radius-lg);
 
-.monaco-workbench .kovix-action-card.kovix-action-card--pending {
-        background: var(--kovix-pending-card-bg);
-        border-color: var(--kovix-pending-card-border);
-}
+  /* Old spacing tokens (5 → 6 alias, otherwise compatible) */
+  --kovix-space-5: var(--kovix-space-6);
 
-/* ──────────────────────────────────────────────────────────────────
-   Status bar running state — when an agent task is actively running,
-   the status bar shifts to solid Volt-500 with white text. This class
-   is added/removed programmatically by ConstructProgressPanel.
-   ────────────────────────────────────────────────────────────────── */
-.monaco-workbench .part.statusbar.kovix-status-running {
-        background: var(--kovix-volt-500) !important;
-        color: #FFFFFF !important;
-        transition: background 0.25s ease, color 0.25s ease;
-}
-.monaco-workbench .part.statusbar.kovix-status-running .statusbar-item,
-.monaco-workbench .part.statusbar.kovix-status-running .statusbar-item span {
-        color: #FFFFFF !important;
-}
+  /* Old motion tokens */
+  --kovix-motion-fast-orig: var(--kovix-motion-fast);
+  --kovix-motion-normal:    var(--kovix-motion-base);
 
-/* ──────────────────────────────────────────────────────────────────
-   Kovix Agent activity-bar icon — permanent subtle highlight, even
-   when inactive, so the agent reads as the main feature of the product.
-   Targets the view container whose icon is registered as
-   `construct-view-icon` (CSS class `.codicon-construct-view-icon`).
-   ────────────────────────────────────────────────────────────────── */
-.monaco-workbench .activitybar .action-item:has(.codicon-construct-view-icon) .action-label {
-        background: rgba(110, 66, 255, 0.12);
-        border-radius: 6px;
-}
-.monaco-workbench .activitybar .action-item.checked:has(.codicon-construct-view-icon) .action-label {
-        background: rgba(110, 66, 255, 0.22);
-}
-/* Fallback for browsers without :has() — apply via the icon class itself */
-.monaco-workbench .activitybar .action-label.codicon-construct-view-icon {
-        background: rgba(110, 66, 255, 0.12);
-        border-radius: 6px;
-}
-.monaco-workbench .activitybar .action-item.checked .action-label.codicon-construct-view-icon {
-        background: rgba(110, 66, 255, 0.22);
-}
-
-/* ──────────────────────────────────────────────────────────────────
-   LUXURY CHROMIUM CHROME — title bar, status bar, auxiliary bar
-   Inspired by Antigravity IDE: dark surfaces with brand-tinted accents,
-   hairline borders, and a permanent subtle brand presence.
-   ────────────────────────────────────────────────────────────────── */
-
-/* Title bar — deeper ink, brand-tinted bottom hairline, crisper text */
-.monaco-workbench .part.titlebar {
-        background: var(--kovix-bg-ink) !important;
-        border-bottom: 1px solid var(--kovix-border-subtle) !important;
-        color: var(--kovix-text-primary) !important;
-        font-family: var(--kovix-font-ui);
-        -webkit-font-smoothing: antialiased;
-}
-.monaco-workbench .part.titlebar .window-title,
-.monaco-workbench .part.titlebar .monaco-actionbar .action-label {
-        color: var(--kovix-text-secondary) !important;
-}
-.monaco-workbench .part.titlebar.active .window-title,
-.monaco-workbench .part.titlebar.active .monaco-actionbar .action-label {
-        color: var(--kovix-text-primary) !important;
-}
-
-/* Status bar — Kovix brand surface (Volt-600 dark pressed) with bright text.
-   Reads as a luxury chrome footer even when the agent is idle. */
-.monaco-workbench .part.statusbar {
-        background: var(--kovix-volt-600) !important;
-        color: #FFFFFF !important;
-        border-top: 1px solid rgba(138, 99, 255, 0.35) !important;
-        font-family: var(--kovix-font-ui);
-}
-.monaco-workbench .part.statusbar .statusbar-item,
-.monaco-workbench .part.statusbar .statusbar-item span {
-        color: rgba(255, 255, 255, 0.92) !important;
-}
-.monaco-workbench .part.statusbar .statusbar-item a:hover {
-        background: rgba(255, 255, 255, 0.10) !important;
-}
-
-/* Auxiliary bar (right-hand panel — Antigravity-style agent dock)
-   Slightly raised surface, brand-tinted header, hairline left border. */
-.monaco-workbench .part.auxiliarybar {
-        background: var(--kovix-bg-surface) !important;
-        border-left: 1px solid var(--kovix-border-subtle) !important;
-}
-.monaco-workbench .part.auxiliarybar .composite.title {
-        background: var(--kovix-bg-ink) !important;
-        border-bottom: 1px solid var(--kovix-border-subtle) !important;
-}
-.monaco-workbench .part.auxiliarybar .title-label h2 {
-        color: var(--kovix-text-primary) !important;
-        font-weight: 600;
-        letter-spacing: 0.01em;
-}
-
-/* Sidebar (left) — slightly darker than editor for depth */
-.monaco-workbench .part.sidebar {
-        background: var(--kovix-bg-surface) !important;
-        border-right: 1px solid var(--kovix-border-subtle) !important;
-}
-
-/* Activity bar — match sidebar, no extra border */
-.monaco-workbench .part.activitybar {
-        background: var(--kovix-bg-ink) !important;
-        border-right: 1px solid var(--kovix-border-subtle) !important;
-}
-
-/* Editor area — keep the deepest ink for focus */
-.monaco-workbench .editor-group-container,
-.monaco-workbench .editor-group-container .editor-container {
-        background: var(--kovix-bg-ink) !important;
-}
-
-/* Tab strip — flatter, brand-tinted active tab */
-.monaco-workbench .tabs-container .tab {
-        background: var(--kovix-bg-surface) !important;
-        border-top: 1px solid transparent !important;
-}
-.monaco-workbench .tabs-container .tab.active {
-        background: var(--kovix-bg-ink) !important;
-        border-top: 2px solid var(--kovix-volt-500) !important;
-        color: var(--kovix-text-primary) !important;
-}
-.monaco-workbench .tabs-container .tab.active .tab-label {
-        color: var(--kovix-text-primary) !important;
-}
-.monaco-workbench .tabs-container .tab .tab-label {
-        color: var(--kovix-text-tertiary) !important;
-}
-
-/* ──────────────────────────────────────────────────────────────────
-   ACCESSIBILITY (v1.3.0) — toggled by KovixAccessibilityContribution
-   .kovix-font-scale-{sm|md|lg|xl}     — UI font scaling
-   .kovix-high-contrast                 — pure black + brighter Volt
-   .kovix-reduced-motion                — disable all animations
-   .kovix-colorblind-{protanopia|deuteranopia|tritanopia}
-   .kovix-statusbar-{volt|ink|gradient}
-   ────────────────────────────────────────────────────────────────── */
-.monaco-workbench.kovix-font-scale-sm { font-size: 12px; }
-.monaco-workbench.kovix-font-scale-md { font-size: 13px; }
-.monaco-workbench.kovix-font-scale-lg { font-size: 14px; }
-.monaco-workbench.kovix-font-scale-xl { font-size: 16px; }
-
-.monaco-workbench.kovix-high-contrast {
-        --kovix-bg-ink: #000000;
-        --kovix-bg-surface: #050507;
-        --kovix-bg-raised: #0A0A0F;
-        --kovix-bg-overlay: #14141C;
-        --kovix-volt-500: #8B6BFF;
-        --kovix-volt-400: #A88BFF;
-        --kovix-hairline: rgba(255, 255, 255, 0.20);
-        --kovix-hairline-bold: rgba(255, 255, 255, 0.35);
-        --kovix-border: rgba(255, 255, 255, 0.20);
-        --kovix-border-subtle: rgba(255, 255, 255, 0.15);
-        --kovix-text-primary: #FFFFFF;
-        --kovix-text-secondary: #C8CCD4;
-        --kovix-text-tertiary: #8A8F9C;
-}
-
-.monaco-workbench.kovix-reduced-motion * {
-        animation-duration: 0.01ms !important;
-        transition-duration: 0.01ms !important;
-}
-
-.monaco-workbench.kovix-colorblind-protanopia {
-        --kovix-ignite-500: #E0A100;
-        --kovix-ignite-400: #FFC233;
-        --kovix-ignite-600: #B07F00;
-        --kovix-state-error: #E0A100;
-}
-
-.monaco-workbench.kovix-colorblind-deuteranopia {
-        --kovix-state-running: #3DA9FC;
-        --kovix-state-success: #3DA9FC;
-}
-
-.monaco-workbench.kovix-colorblind-tritanopia {
-        --kovix-volt-500: #C542FF;
-        --kovix-volt-400: #D670FF;
-        --kovix-volt-600: #A020E0;
-        --kovix-volt-glow: rgba(197, 66, 255, 0.35);
-        --kovix-volt-subtle: rgba(197, 66, 255, 0.12);
-        --kovix-hairline-volt: rgba(197, 66, 255, 0.30);
-}
-
-.monaco-workbench.kovix-statusbar-ink .part.statusbar {
-        background: var(--kovix-bg-ink) !important;
-        color: var(--kovix-text-primary) !important;
-        border-top: 1px solid var(--kovix-volt-500) !important;
-}
-
-.monaco-workbench.kovix-statusbar-gradient .part.statusbar {
-        background: linear-gradient(90deg, var(--kovix-volt-500) 0%, var(--kovix-ignite-500) 100%) !important;
-}
-
-.monaco-workbench.kovix-keyboard-nav .kovix-icon-btn,
-.monaco-workbench.kovix-keyboard-nav .kovix-btn,
-.monaco-workbench.kovix-keyboard-nav .kovix-send,
-.monaco-workbench.kovix-keyboard-nav .kovix-model-pill,
-.monaco-workbench.kovix-keyboard-nav .kovix-session-tab,
-.monaco-workbench.kovix-keyboard-nav .kovix-memory-pill,
-.monaco-workbench.kovix-keyboard-nav .kovix-ponytail-badge {
-        outline: 1px dashed var(--kovix-volt-400);
-        outline-offset: 1px;
+  /* Old shadow tokens */
+  --kovix-shadow-volt: var(--kovix-shadow-accent);
+  --kovix-shadow-lg:   var(--kovix-shadow-md);
 }

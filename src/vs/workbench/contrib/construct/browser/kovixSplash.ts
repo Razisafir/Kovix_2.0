@@ -144,14 +144,14 @@ const KOVIX_SPLASH_HTML = `
       <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <linearGradient id="kovix-splash-overlay-volt" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#D670FF" />
-            <stop offset="55%" stop-color="#C542FF" />
-            <stop offset="100%" stop-color="#A020E0" />
+            <stop offset="0%" stop-color="#2DD4BF" />
+            <stop offset="55%" stop-color="#14B8A6" />
+            <stop offset="100%" stop-color="#0F766E" />
           </linearGradient>
           <radialGradient id="kovix-splash-overlay-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#C542FF" stop-opacity="0.55" />
-            <stop offset="60%" stop-color="#C542FF" stop-opacity="0.15" />
-            <stop offset="100%" stop-color="#C542FF" stop-opacity="0" />
+            <stop offset="0%" stop-color="#14B8A6" stop-opacity="0.55" />
+            <stop offset="60%" stop-color="#14B8A6" stop-opacity="0.15" />
+            <stop offset="100%" stop-color="#14B8A6" stop-opacity="0" />
           </radialGradient>
         </defs>
         <circle cx="512" cy="512" r="512" fill="url(#kovix-splash-overlay-glow)" />
@@ -160,7 +160,7 @@ const KOVIX_SPLASH_HTML = `
               fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="2" />
         <path d="M 360 230 H 470 V 794 H 360 Z" fill="#FFFFFF" />
         <path d="M 470 480 L 720 230 H 830 V 330 L 600 560 L 830 790 V 890 H 720 L 470 640 Z" fill="#FFFFFF" />
-        <path d="M 470 480 L 580 480 L 525 535 Z" fill="#D670FF" />
+        <path d="M 470 480 L 580 480 L 525 535 Z" fill="#2DD4BF" />
       </svg>
     </div>
     <div class="kovix-splash__wordmark">KOV<span class="kovix-splash__wordmark-accent">I</span>X</div>
@@ -174,8 +174,8 @@ const KOVIX_SPLASH_CSS = `
     inset: 0;
     z-index: 99999;
     background:
-      radial-gradient(circle at 50% 42%, rgba(197, 66, 255, 0.18) 0%, rgba(197, 66, 255, 0) 55%),
-      radial-gradient(circle at 50% 80%, rgba(160, 32, 224, 0.08) 0%, rgba(0, 0, 0, 0) 60%),
+      radial-gradient(circle at 50% 42%, rgba(20, 184, 166, 0.18) 0%, rgba(20, 184, 166, 0) 55%),
+      radial-gradient(circle at 50% 80%, rgba(15, 118, 110, 0.08) 0%, rgba(0, 0, 0, 0) 60%),
       #000000;
     color: #FFFFFF;
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -199,7 +199,7 @@ const KOVIX_SPLASH_CSS = `
     grid-row: 2;
     width: 128px;
     height: 128px;
-    filter: drop-shadow(0 0 32px rgba(197, 66, 255, 0.55));
+    filter: drop-shadow(0 0 32px rgba(20, 184, 166, 0.55));
     animation: kovix-splash-pulse 1200ms cubic-bezier(0.4, 0, 0.2, 1) 1 both;
   }
   #kovix-splash-overlay .kovix-splash__stage > .kovix-splash__mark svg {
@@ -215,7 +215,7 @@ const KOVIX_SPLASH_CSS = `
     margin-top: 24px;
     animation: kovix-splash-fade-up 700ms cubic-bezier(0.4, 0, 0.2, 1) 250ms 1 both;
   }
-  #kovix-splash-overlay .kovix-splash__wordmark-accent { color: #D670FF; }
+  #kovix-splash-overlay .kovix-splash__wordmark-accent { color: #2DD4BF; }
   #kovix-splash-overlay .kovix-splash__tagline {
     grid-row: 3;
     font-size: 12px;
