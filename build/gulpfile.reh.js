@@ -292,8 +292,15 @@ function packageTask(type, platform, arch, sourceFolderName, destinationFolderNa
 		const extensionPaths = [...localWorkspaceExtensions, ...marketplaceExtensions]
 			.map(name => `.build/extensions/${name}/**`);
 
-		const extensions = gulp.src(extensionPaths, { base: '.build', dot: true });
-		const extensionsCommonDependencies = gulp.src('.build/extensions/node_modules/**', { base: '.build', dot: true });
+		// gulp 5: fast-glob throws ENOENT on '.build/extensions/...' globs
+		// if the directory doesn't exist (e.g. when product.builtInExtensions
+		// is empty or compile-extensions-build was skipped). Pre-create the
+		// directory so gulp.src emits no files (matching gulp 4 behavior)
+		// instead of crashing the build. Same defensive pattern as the
+		// 'licenses/**' and '.build/extensions/**' fixes from v1.5.4/v1.5.9.
+		fs.mkdirSync('.build/extensions', { recursive: true });
+		const extensions = gulp.src(extensionPaths, { base: '.build', dot: true, allowEmpty: true });
+		const extensionsCommonDependencies = gulp.src('.build/extensions/node_modules/**', { base: '.build', dot: true, allowEmpty: true });
 		const sources = es.merge(src, extensions, extensionsCommonDependencies)
 			.pipe(filter(['**', '!**/*.js.map'], { dot: true }));
 

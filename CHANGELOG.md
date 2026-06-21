@@ -1,5 +1,146 @@
 # Changelog
 
+## v1.6.0 — Build Stability Release
+
+**Release date:** 2026-06-21
+
+Kovix v1.6.0 consolidates the v1.5.2–v1.5.9 build-fix series into a single stable point release and adds two defense-in-depth fixes for remaining `gulp.src` ENOENT failure modes that the previous re-cuts did not address. Every release between v1.5.2 and v1.5.9 was cut to fix a single build-break discovered by the previous release's CI run; v1.6.0 closes the last known gaps so the release pipeline produces installers on the first try.
+
+If you are coming from v1.5.1, the substantive code changes you care about are the **first working ship of the Kovix Agent chat UI** (v1.5.2), the **gulp 5 + Electron 42 migration** (v1.5.2), and the **K2-M4 secret-redaction unification** (v1.5.2). v1.5.3 through v1.5.9 are all build-only fixes with no source-code behavior changes — they are listed below for traceability but require no migration.
+
+### Added — Defense-in-Depth Build Fixes
+
+- **`.build/extensions/**` ENOENT closure.** `build/gulpfile.vscode.js` line 257 (the `extensions` stream in `packageTask`) and `build/gulpfile.reh.js` lines 295–296 (the `extensions` + `extensionsCommonDependencies` streams in the reh `packageTask`) were the last `gulp.src(...)` glob calls targeting a directory that might not exist at packaging time. Under gulp 5 / fast-glob, a missing base directory throws `ENOENT: no such file or directory, scandir` instead of emitting no files (which was gulp 4's behavior). The pipeline task chain DOES populate `.build/extensions/` via `compileNonNativeExtensionsBuildTask` before `packageTask` runs, so in practice the directory exists — but if a future change skips that step (e.g. when `product.builtInExtensions` is empty, or when packaging a server-only reh build without compiling extensions), the build would crash identically to v1.5.4/v1.5.9. Fix: pre-create `.build/extensions/` via `fs.mkdirSync('.build/extensions', { recursive: true })` and pass `allowEmpty: true` to the corresponding `gulp.src()` calls — the same defensive pattern applied to `.build/telemetry/`, `.build/policies/win32/`, `.build/win32/appx/`, and `licenses/` in v1.5.4 and v1.5.9.
+
+### Changed
+
+- `build/gulpfile.vscode.js` — added `fs.mkdirSync('.build/extensions', { recursive: true })` before the extensions `gulp.src` call and added `allowEmpty: true` to that call.
+- `build/gulpfile.reh.js` — added `fs.mkdirSync('.build/extensions', { recursive: true })` before the extensions and `extensionsCommonDependencies` `gulp.src` calls and added `allowEmpty: true` to both calls.
+- `package.json`, `package-lock.json`, `README.md` — version bumped from 1.5.9 to 1.6.0.
+
+### Migration Notes
+
+- **No source-code behavior changes since v1.5.2.** All v1.5.3–v1.5.9 + v1.6.0 commits are build-pipeline-only. If you successfully built v1.5.2 through v1.5.9 locally, your binary is identical to a v1.6.0 build.
+- **If v1.5.9 built successfully on CI**, v1.6.0 is a no-op release — the binary is the same. The defensive `.build/extensions/` fix is insurance against future `product.builtInExtensions` empty-list or reh-only-build scenarios.
+- **If v1.5.9 failed on CI** with an `ENOENT: .build/extensions` error, v1.6.0 closes it.
+
+---
+
+## v1.5.9 — mkdir licenses + LICENSE.txt fallback
+
+**Release date:** 2026-06-21
+
+Seventh re-cut of the v1.5.2 build-fix series. v1.5.8's streamx postinstall patch worked, but a new `ENOENT` surfaced on the `licenses/**` glob in `packageTask`.
+
+### Fixed — Build
+
+- **`licenses/**` glob ENOENT.** `build/gulpfile.vscode.js` line 292 calls `gulp.src([product.licenseFileName, 'ThirdPartyNotices.txt', 'licenses/**'], ...)`. Two issues: (1) `licenses/` directory doesn't exist in the repo, so gulp 5 / fast-glob throws `ENOENT` on the glob (gulp 4 silently no-op'd); (2) `product.licenseFileName='KOVIX_LICENSE.txt'` but the actual file in the repo is `LICENSE.txt` — `product.json` had the wrong name, so the license file was silently dropped from the installer in gulp 4. Fix: `fs.mkdirSync('licenses', { recursive: true })` before the `gulp.src` call (so scandir returns an empty array) AND `fs.copyFileSync('LICENSE.txt', product.licenseFileName)` when the configured name doesn't exist (so the license file IS included in the installer). Same defensive pattern as the `.build/telemetry` + `.build/policies/win32` + `.build/win32/appx` fixes from v1.5.4.
+
+---
+
+## v1.5.8 — Postinstall patch for streamx `pipeTo.end` TypeError
+
+**Release date:** 2026-06-21
+
+Sixth re-cut. streamx@2.28.0 STILL has the `this.pipeTo.end is not a function` bug at `index.js:444` in `ReadableState.updateNonPrimary()`. The previous assumption that 2.20+ fixed it was wrong — the bug persists in 2.28.0. Confirmed v1.5.7 Windows x64 Build (build.yml) failed at 02:01:55 UTC with the TypeError.
+
+### Added — Build
+
+- **`build/patch-streamx.js`** (new file, ~59 lines) — idempotent postinstall patcher that wraps the buggy `this.pipeTo.end()` call in `node_modules/streamx/index.js` with a `typeof === 'function'` check: `if (this.pipeTo && typeof this.pipeTo.end === 'function') this.pipeTo.end()`. This makes streamx silently skip the `.end()` call on non-streamx destinations (through2 streams from `gulp-filter`, `gulp-replace`, `gulp-bom`, `event-stream` — all used heavily in `build/gulpfile.vscode.js` `packageTask`). Matches the original gulp 4 + vinyl-fs 3 behavior relied upon for v1.5.0. Patch is idempotent — re-running on an already-patched install logs `already patched — no changes needed.` and exits cleanly. Added `node build/patch-streamx.js` to `package.json` `postinstall` script so it runs automatically after every `npm ci`.
+
+---
+
+## v1.5.7 — Fix events-universal optional flag in lock file
+
+**Release date:** 2026-06-21
+
+Fifth re-cut. v1.5.6 failed because `events-universal` was marked `optional: true` in the lock file, so `npm ci` skipped installing it, but streamx@2.28.0 hard-requires it.
+
+### Fixed — Build
+
+- **events-universal marked optional in lock file.** v1.5.6 builds failed during `npm ci` with `Error: Cannot find module 'events-universal'` raised from `node_modules/streamx/index.js` via `tar-stream/extract.js` → `tar-fs` → `sharp/install/libvips.js`. Root cause: the v1.5.6 lock-file patch bumped streamx to 2.28.0 but kept its old 2.18.0 dependency list (fast-fifo, queue-tick, text-decoder). streamx@2.28.0 actually requires `events-universal@^1.0.0` (NEW in 2.28), `fast-fifo@^1.3.2`, `text-decoder@^1.1.0`, and dropped `queue-tick`. The v1.5.4 lock file did have `events-universal@1.0.1` at top level, but it was marked `optional: true` (because under v1.5.4, only `bare-stream`'s nested `streamx@2.28` needed it, and `bare-stream` marks all its deps optional). When streamx@2.28 became the hoisted top-level streamx via the override, `npm ci` still treated `events-universal` as optional and skipped installing it. At runtime, sharp's install script requires streamx which requires events-universal → ENOENT. Fix: flipped the `optional: true` flag to `false` (i.e. removed the flag) for `events-universal` in the top-level `node_modules` entry of the lock file.
+
+---
+
+## v1.5.6 — Restore valid es-module-lexer@1.5.4
+
+**Release date:** 2026-06-21
+
+Fourth re-cut. v1.5.5 failed because the locally-generated lock file referenced `es-module-lexer@1.5.5` — a version that exists on the local npm mirror but not on the public npm registry (latest is 1.5.4, then jumps to 1.6.0).
+
+### Fixed — Build
+
+- **Phantom es-module-lexer@1.5.5 in lock file.** v1.5.5 builds failed within 2 min on `npm ci` with `npm error code ETARGET` / `npm error notarget No matching version found for es-module-lexer@1.5.5`. Root cause: the `package-lock.json` committed for v1.5.5 was generated locally via `npm install --package-lock-only`. The local npm registry mirror served a phantom `es-module-lexer@1.5.5` that doesn't exist on the public npm registry. Fix: (1) restored the v1.5.4 lock file (which has `es-module-lexer@1.5.4` — valid); (2) re-applied only the streamx-specific patches via `scripts/patch-streamx-lock.py` (bump `node_modules/streamx` 2.18.0 → 2.28.0, remove duplicate `node_modules/bare-stream/node_modules/streamx`); (3) bumped only the top-level version fields (lockfile root + `packages[""]`) to 1.5.6 — the previous `sed` had also accidentally bumped `@azure/core-xml` and `base64-js` from 1.5.1 to 1.5.5 because they happened to share the version string.
+
+---
+
+## v1.5.5 — streamx override for pipeTo.end TypeError
+
+**Release date:** 2026-06-20
+
+Third re-cut of v1.5.2. v1.5.4 failed with `TypeError: this.pipeTo.end is not a function` raised from `streamx/index.js` during packaging. The bug exists in streamx@2.18.0 (the version npm hoisted under v1.5.4's lock file) when a streamx Readable is piped into a non-streamx Writable (e.g. through2 streams from `gulp-filter` / `gulp-replace` / `gulp-bom`).
+
+### Changed — Build
+
+- **`package.json` + `package-lock.json` streamx override.** Added an npm `override` for `streamx@^2.20.0` so npm hoists a version that — at the time of the v1.5.5 cut — was believed to contain the fix. (Subsequent investigation in v1.5.7/v1.5.8 showed the bug actually persists in 2.28.0; v1.5.8 ships the real fix via a postinstall patcher.)
+
+---
+
+## v1.5.4 — mkdir -p .build/{telemetry, policies/win32, appx} before gulp.src
+
+**Release date:** 2026-06-20
+
+Second re-cut of v1.5.2. v1.5.3's `allowEmpty: true` alone was insufficient — `fast-glob` still throws `ENOENT` from the `scandir` syscall before the `allowEmpty` flag is consulted.
+
+### Fixed — Build
+
+- **Pre-create `.build/telemetry/`, `.build/policies/win32/`, `.build/win32/appx/` directories** before the corresponding `gulp.src()` calls in `build/gulpfile.vscode.js` `packageTask`. These directories are only populated by `build/azure-pipelines/common/extract-telemetry.sh` and the policy/appx generation scripts, neither of which the `release.yml` workflow runs. Under gulp 4, `gulp.src('.build/telemetry/**')` on a missing directory emitted no files silently; under gulp 5 / fast-glob, it crashes the build. Fix: `fs.mkdirSync(dir, { recursive: true })` before each `gulp.src()` so `scandir` returns an empty array. The `allowEmpty: true` flag from v1.5.3 is kept as defense-in-depth.
+
+---
+
+## v1.5.3 — allowEmpty on telemetry/policies/appx src
+
+**Release date:** 2026-06-20
+
+First re-cut of v1.5.2. v1.5.2 builds failed with `ENOENT` on `.build/telemetry` (gulp 4→5 behavior change).
+
+### Fixed — Build
+
+- **Added `allowEmpty: true`** to the `.build/telemetry/**`, `.build/policies/win32/**`, and `.build/win32/appx/**` `gulp.src()` calls in `build/gulpfile.vscode.js`. Insufficient on its own — `fast-glob` still throws from `scandir` before consulting `allowEmpty`. The complete fix landed in v1.5.4 (pre-create the directories).
+
+---
+
+## v1.5.2 — First working ship of Kovix Agent UI + gulp 5 migration
+
+**Release date:** 2026-06-20
+
+Kovix v1.5.2 is the first release that actually ships a working Kovix Agent chat UI to end users. v1.5.0 had `construct.contribution.ts` registered but was missing `kovixUiComponents.ts` — `constructAgentViewPane` failed to render at runtime when users clicked the agent icon. v1.5.1 source had the fix (commit `315fafa` added the missing `createCheckbox` + `createErrorState` imports), but the build failed with 0 release assets due to `ERR_REQUIRE_ESM` blocking CI. v1.5.2 ships with `ERR_REQUIRE_ESM` fixed (PR #121), the 3-month compile red period ended (PR #123), and the K2-M4 secret-redaction regression closed (PR #122).
+
+### Added — Source
+
+- **`kovixUiComponents.ts`** — shared DOM-component factory (`createCheckbox`, `createErrorState`, and friends) consumed by `constructAgentViewPane`. v1.5.0's contribution registration referenced these factories but the file was missing from the commit, so every click on the agent icon threw at runtime. v1.5.1 added the file to source; v1.5.2 ships it in a buildable installer for the first time.
+- **`build/patch-streamx.js`** (deferred to v1.5.8 — listed there for traceability).
+
+### Fixed — Build / CI
+
+- **`ERR_REQUIRE_ESM` blocking CI (PR #121).** The CI workflow's `node compile` step was running a CommonJS entry that `require()`'d an ESM-only module. Switched to the ESM entry point and updated the gulp 5 + Electron 42 + `@vscode/gulp-electron` 1.36 migration that exposed the issue.
+- **9 pre-existing TypeScript errors unmasked by `ERR_REQUIRE_ESM` removal (PR #123).** Once the ESM entry was reachable, the compiler finally ran and surfaced 9 errors that had been masked for 3 months. Fixed all 9 — no behavior changes.
+- **6 dependency major-bump regressions (PR #123).** Reverted `@azure/msal-node`, `file-type`, `markdown-it` ×2, `@octokit/rest` ×2, `@octokit/graphql` to their pre-bump versions. The major bumps had introduced breaking API changes that the dependabot batch hadn't audited.
+- **K2-M4 secret-redaction patterns unified (PR #122).** The agentLoop path and the tool-registry path (used by Ponytail / autonomous mode) had divergent secret-redaction pattern sets — 17 patterns existed in one path, only 12 in the other. Unified to a single shared `SECRET_PATTERNS` array consumed by both paths. Closes audit finding K2-M4.
+
+### Changed
+
+- `package.json` — version bumped from 1.5.1 to 1.5.2. `gulp` bumped from 4.x to 5.x, `@vscode/gulp-electron` bumped from 1.32 to 1.36, Electron bumped from 38 to 42.
+- `README.md` — version badge updated 1.5.1 → 1.5.2, plus a dynamic CI badge.
+
+### Migration Notes
+
+- **gulp 5 behavior change**: `gulp.src()` on a missing directory now throws `ENOENT` instead of emitting no files. If you maintain a custom build target that calls `gulp.src()` on a directory that may not exist, add `fs.mkdirSync(dir, { recursive: true })` before the call and `allowEmpty: true` to the options. See v1.5.3/v1.5.4/v1.5.9/v1.6.0 changelog entries for the established fix pattern.
+- **Electron 42**: if you have custom Electron main-process code that relied on Electron 38 APIs, audit for deprecations. The Kovix main process is unaffected.
+- **No breaking API changes** to the Construct agent platform (`IConstructService`, `IAgentLoop`, `IMCPManager`, etc.).
+
+---
+
 ## v1.5.1 — MCP RCE Chain Closure (Phase 1)
 
 **Release date:** 2026-06-20

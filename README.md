@@ -4,7 +4,7 @@
 
 **AI-native development environment — Claude Code, in your IDE, with its own OS.**
 
-[![Version](https://img.shields.io/badge/version-v1.5.9-blue.svg)](https://github.com/Razisafir/KOVIX/releases)
+[![Version](https://img.shields.io/badge/version-v1.6.0-blue.svg)](https://github.com/Razisafir/KOVIX/releases)
 [![License](https://img.shields.io/badge/license-Proprietary-red.svg)](./KOVIX_LICENSE.txt)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/Razisafir/KOVIX/releases)
 [![Build](https://github.com/Razisafir/KOVIX/actions/workflows/ci.yml/badge.svg)](https://github.com/Razisafir/KOVIX/actions)
