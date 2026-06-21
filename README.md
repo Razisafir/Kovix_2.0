@@ -5,7 +5,7 @@
 **AI-native development environment — Claude Code, in your IDE, with its own OS.**
 
 [![Version](https://img.shields.io/badge/version-v1.6.0-blue.svg)](https://github.com/Razisafir/KOVIX/releases)
-[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](./KOVIX_LICENSE.txt)
+[![License](https://img.shields.io/badge/license-Proprietary-red.svg)](./LICENSE.txt)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/Razisafir/KOVIX/releases)
 [![Build](https://github.com/Razisafir/KOVIX/actions/workflows/ci.yml/badge.svg)](https://github.com/Razisafir/KOVIX/actions)
 
@@ -15,15 +15,22 @@
 
 ## Download
 
-Grab the latest release for your platform from [GitHub Releases](https://github.com/Razisafir/KOVIX/releases/latest):
+Grab the latest release for your platform from [GitHub Releases](https://github.com/Razisafir/KOVIX/releases/latest). Asset names follow the pattern `KovixSetup-x64-v<version>.exe` / `kovix-darwin-x64.zip` / `kovix_<version>_amd64.deb` (plus `.rpm` and `.tar.gz` variants on Linux):
 
 | Platform | Download | Size |
 |---|---|---|
-| Windows | `KovixSetup-x64-1.2.0.exe` | ~160 MB |
-| macOS (Intel) | `Kovix-darwin-x64-1.2.0.zip` | ~95 MB |
-| Linux (Debian/Ubuntu) | `Kovix-debian-amd64-1.2.0.deb` | ~150 MB |
+| Windows (x64, system installer) | `KovixSetup-x64-v1.6.0.exe` | ~170 MB |
+| macOS (Intel) | `kovix-darwin-x64.zip` | ~95 MB |
+| macOS (Apple Silicon) | build from source — see [INSTALL.md](./INSTALL.md) | — |
+| Linux (Debian/Ubuntu) | `kovix_1.6.0_amd64.deb` | ~150 MB |
+| Linux (Fedora/RHEL) | `kovix-1.6.0.x86_64.rpm` | ~150 MB |
+| Linux (universal) | `kovix-1.6.0.tar.gz` | ~140 MB |
 
-Verify download integrity with the included `checksums-sha256.txt`.
+Every release ships a `checksums.txt` alongside the assets — verify the download before installing:
+
+```bash
+sha256sum -c checksums.txt --ignore-missing
+```
 
 ---
 
@@ -54,7 +61,7 @@ Kovix is an AI-native development environment built on a VS Code fork. The headl
 
 ## Supported LLM Providers
 
-Kovix v1.2.0 supports 13 first-class providers, all configured via the **Kovix: Manage API Keys** command (`Ctrl+Shift+P` → "Manage API Keys"):
+Kovix v1.6.0 supports 13 first-class providers, all configured via the **Kovix: Manage API Keys** command (`Ctrl+Shift+P` → "Manage API Keys"):
 
 | Provider | Endpoint | Auth | Notes |
 |---|---|---|---|
@@ -76,7 +83,7 @@ All API keys are stored in the OS keychain (macOS Keychain / Windows Credential 
 
 ## Agent Modes & Multi-Agent Swarms
 
-Kovix v1.2.0 introduces **agent modes** (inspired by Roo Code's custom modes pattern). Each mode defines a role, a set of tools, and optionally a specific model. Switch modes from the Command Palette (`Ctrl+Shift+P` → "Switch Agent Mode") or create your own.
+Kovix v1.6.0 ships **agent modes** (inspired by Roo Code's custom modes pattern). Each mode defines a role, a set of tools, and optionally a specific model. Switch modes from the Command Palette (`Ctrl+Shift+P` → "Switch Agent Mode") or create your own.
 
 ### Built-in Modes
 
@@ -134,7 +141,7 @@ All Kovix commands are available from the Command Palette (`Ctrl+Shift+P` / `Cmd
 | `construct.switchAgentMode` | Switch active agent mode (general/architect/coder/reviewer/debugger/ask) |
 | `construct.openApiSettings` | Open Kovix API settings |
 
-### Agent Modes & Swarm (v1.2.0)
+### Agent Modes & Swarm (v1.6.0)
 | Command | Description |
 |---|---|
 | `construct.createAgentMode` | Create a custom agent mode with its own model + tools |
@@ -285,22 +292,21 @@ git clone https://github.com/Razisafir/KOVIX
 cd KOVIX
 npm install
 NODE_OPTIONS="--max-old-space-size=8192" npm run compile
-./scripts/code.sh        # Linux/macOS
-.\scripts\code.bat       # Windows
+./scripts/construct.sh   # Linux/macOS — Kovix-branded launcher
+.\scripts\construct.bat  # Windows — Kovix-branded launcher
+# (the upstream code.sh / code.bat launchers also still work)
 ```
 
-For detailed build instructions, see [BUILD.md](./BUILD.md).
+For detailed build instructions, see [BUILD.md](./BUILD.md). For packaging into installers (.deb/.rpm/.exe/.zip), see [PACKAGING.md](./PACKAGING.md).
 
 ## License
 
-This project is licensed under a Proprietary license. See [KOVIX_LICENSE.txt](./KOVIX_LICENSE.txt) for details.
-
-Kovix is a fork of [Code-OSS](https://github.com/microsoft/vscode) by Microsoft, used under the MIT License.
+This project is licensed under a Proprietary license. See [LICENSE.txt](./LICENSE.txt) for the full terms. Kovix is a fork of [Code-OSS](https://github.com/microsoft/vscode) by Microsoft, used under the MIT License — see [NOTICE.md](./NOTICE.md) and [ThirdPartyNotices.txt](./ThirdPartyNotices.txt) for third-party attribution.
 
 ---
 
 <div align="center">
 
-**[Download Kovix v1.2.0](https://github.com/Razisafir/KOVIX/releases/latest)** · **[Report an Issue](https://github.com/Razisafir/KOVIX/issues)** · **[Read the Changelog](./CHANGELOG.md)**
+**[Download Kovix v1.6.0](https://github.com/Razisafir/KOVIX/releases/latest)** · **[Report an Issue](https://github.com/Razisafir/KOVIX/issues)** · **[Read the Changelog](./CHANGELOG.md)** · **[Security Policy](./SECURITY.md)** · **[Privacy Policy](./PRIVACY.md)**
 
 </div>

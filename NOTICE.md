@@ -6,4 +6,4 @@ Licensed under the MIT License.
 
 The Kovix IDE additions, modifications, and proprietary code are:
 Copyright (c) 2025-2026 Razisafir. All rights reserved.
-See KOVIX_LICENSE.txt for proprietary license terms.
+See [LICENSE.txt](./LICENSE.txt) for proprietary license terms.

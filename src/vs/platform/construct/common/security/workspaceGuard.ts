@@ -1,9 +1,9 @@
-// Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See KOVIX_LICENSE.txt.
 /*---------------------------------------------------------------------------------------------
  *  Copyright (c) Microsoft Corporation. All rights reserved.
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
+// Copyright (c) 2025 Razisafir. All rights reserved.
+// Kovix proprietary code. See LICENSE.txt for proprietary license terms.
 
 import { IWorkspaceContextService } from '../../../workspace/common/workspace.js';
 // Use VS Code's browser-safe path utilities — Node 'path' is NOT available in the renderer

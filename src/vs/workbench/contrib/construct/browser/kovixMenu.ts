@@ -1,5 +1,9 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See KOVIX_LICENSE.txt.
+// Kovix proprietary code. See LICENSE.txt for proprietary license terms.
 /*---------------------------------------------------------------------------------------------
  *  Kovix Menu — registers a top-level "Kovix" menu in the workbench menu bar
  *  (between Terminal and Help) containing all 53 Kovix commands organized

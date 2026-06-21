@@ -13,14 +13,16 @@ Please do not file public issues for security vulnerabilities. We aim to acknowl
 
 | Version | Supported |
 | ------- | --------- |
-| v1.0.x  | ✅ Yes    |
+| v1.6.x  | ✅ Yes    |
+| v1.5.x  | ✅ Yes (security fixes only — upgrade to v1.6.x recommended) |
+| v1.0.x – v1.4.x | ⚠️ Best-effort (no further patches) |
 | < v1.0  | ❌ No     |
 
-Only the latest patch release within the v1.0.x line receives security updates. We encourage all users to upgrade to the most recent release.
+Only the latest patch release within the v1.6.x line receives security updates. We encourage all users to upgrade to the most recent release.
 
 ## Security Update Policy
 
-- Security patches are released as patch versions (e.g., v1.0.1 → v1.0.2) and are published through the standard GitHub Releases workflow.
+- Security patches are released as patch versions (e.g., v1.6.0 → v1.6.1) and are published through the standard GitHub Releases workflow.
 - Critical vulnerabilities are addressed with the highest priority and typically patched within 72 hours of confirmation.
 - Medium and low-severity issues are triaged into the next scheduled release.
 - All security fixes are documented in [CHANGELOG.md](./CHANGELOG.md) and referenced in [SECURITY_AUDIT.md](./SECURITY_AUDIT.md).
@@ -29,7 +31,7 @@ Only the latest patch release within the v1.0.x line receives security updates. 
 
 ### No Code Signing
 
-Kovix v1.0.x builds are **not code-signed**. This means:
+Kovix v1.6.x builds are **not code-signed**. This means:
 
 - **Windows**: SmartScreen will display a warning on first launch ("Windows protected your PC"). Users must click "More info" → "Run anyway" to proceed.
 - **macOS**: Gatekeeper will block the application on first launch. Users must right-click → "Open" or bypass via System Preferences → Security & Privacy.

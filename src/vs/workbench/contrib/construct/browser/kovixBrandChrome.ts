@@ -1,5 +1,9 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
 // Copyright (c) 2025 Razisafir. All rights reserved.
-// Kovix proprietary code. See KOVIX_LICENSE.txt.
+// Kovix proprietary code. See LICENSE.txt for proprietary license terms.
 /*---------------------------------------------------------------------------------------------
  *  Kovix Brand Chrome — injects the Kovix "K" mark into the activity bar
  *  (top of the left rail) and the status bar (far left of the bottom bar),

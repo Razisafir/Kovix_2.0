@@ -27,7 +27,7 @@ echo "=== 8. Checking signing vars ==="
 grep -rn "KOVIX_SIGN" build/ 2>/dev/null | head -3 && echo "Signing uses KOVIX_ vars ✅"
 
 echo "=== 9. Checking legal docs ==="
-ls KOVIX_LICENSE.txt PRIVACY.md LICENSE.txt ThirdPartyNotices.txt NOTICE.md 2>/dev/null && echo "Legal docs ✅" || echo "Some legal docs MISSING"
+ls PRIVACY.md LICENSE.txt ThirdPartyNotices.txt NOTICE.md 2>/dev/null && echo "Legal docs ✅" || echo "Some legal docs MISSING"
 
 echo "=== 10. Checking VSCODE_ARCH removal ==="
 grep -rn "VSCODE_ARCH" build/darwin/sign.ts build/darwin/create-universal-app.ts build/linux/libcxx-fetcher.ts build/win32/explorer-appx-fetcher.ts 2>/dev/null && echo "VSCODE_ARCH still present — FAIL" || echo "VSCODE_ARCH removed ✅"

@@ -1,65 +1,166 @@
 # Building Kovix Locally
 
 ## Prerequisites
-- Node.js 20.x (use nvm: `nvm use`)
-- Git
-- Python 3.x (for native module compilation)
-- C++ build tools:
+
+- **Node.js 20.x** (use nvm: `nvm use 20`)
+- **npm 10+** (ships with Node 20)
+- **Git**
+- **Python 3.x** (for native module compilation via `node-gyp`)
+- **C++ build tools:**
   - **Windows**: Visual Studio Build Tools 2022 with "Desktop development with C++"
   - **macOS**: Xcode Command Line Tools (`xcode-select --install`)
-  - **Linux**: `sudo apt-get install build-essential`
+  - **Linux**: `sudo apt-get install build-essential libxkbfile-dev libsecret-1-dev`
 
 ## Steps
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Razisafir/KOVIX.git
-   cd KOVIX
-   ```
+### 1. Clone the repository
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+```bash
+git clone https://github.com/Razisafir/KOVIX.git
+cd KOVIX
+```
 
-3. Compile the source:
-   ```bash
-   npm run compile
-   ```
+### 2. Install dependencies
 
-   For systems with limited memory (8GB RAM), use:
-   ```bash
-   NODE_OPTIONS="--max-old-space-size=8192" npm run compile
-   ```
+```bash
+npm install
+```
 
-4. Run in development mode:
-   ```bash
-   # macOS/Linux:
-   ./scripts/code.sh
+The `postinstall` hook automatically:
 
-   # Windows:
-   .\scripts\code.bat
-   ```
+- Patches `node_modules/streamx/index.js` to fix the `this.pipeTo.end is not a function` TypeError that breaks `gulp.src` pipelines under gulp 5 (see [`build/patch-streamx.js`](./build/patch-streamx.js) and the v1.5.8 CHANGELOG entry).
+- Runs the standard VS Code postinstall (native module rebuilds, etc.).
+
+If `npm install` reports the streamx patcher failed, run it manually:
+
+```bash
+node build/patch-streamx.js
+```
+
+### 3. Compile the source
+
+```bash
+# 16 GB+ RAM (recommended)
+npm run compile
+
+# 8 GB RAM (use the larger heap to avoid OOM during angler + mangler pass)
+NODE_OPTIONS="--max-old-space-size=8192" npm run compile
+```
+
+Compilation has two phases:
+
+1. **angler** — collects every TypeScript class and exported symbol across the codebase (~8,300 classes, ~10,100 exports). Uses ~3 GB RAM.
+2. **tsc + esbuild** — type-checks every source file, then transpiles to `out/`. The mangler rewrites property names for size; this is the memory peak (~10 GB on a full build).
+
+On a 4 GHz / 16 GB machine, expect ~2 minutes for `npm run compile` and ~10 minutes for the full `gulp vscode-linux-x64` packaging pipeline.
+
+### 4. Run in development mode
+
+Kovix ships two launcher scripts. Either works:
+
+```bash
+# Kovix-branded launcher (preferred)
+./scripts/construct.sh       # macOS / Linux
+.\scripts\construct.bat      # Windows
+
+# Upstream VS Code launcher (kept for parity with the parent project)
+./scripts/code.sh            # macOS / Linux
+.\scripts\code.bat           # Windows
+```
+
+Both scripts:
+
+- Read `product.json` for the application name (`kovix`)
+- Run `node build/lib/preLaunch.js` (downloads Electron, compiles if `out/` is stale, packages built-in extensions) unless `VSCODE_SKIP_PRELAUNCH=1` is set
+- Launch `.build/electron/kovix` (or `.build/electron/Kovix IDE.app/Contents/MacOS/Electron` on macOS) pointed at the current directory
+
+For daily development, set `VSCODE_SKIP_PRELAUNCH=1` and use `npm run watch` in a second terminal so the preLaunch step doesn't recompile on every launch.
+
+### 5. Watch mode (development)
+
+```bash
+# Watch client + extensions in parallel
+npm run watch
+
+# Or watch them separately
+npm run watch-client
+npm run watch-extensions
+```
 
 ## Building Release Packages
 
-For users with 8 GB RAM machines, use **GitHub Actions** instead of building locally. Push to `main` or manually trigger the "Build Kovix IDE" workflow -- it produces Windows (.exe), Linux (.deb/.rpm/.tar.gz), and macOS (.zip) packages that you can download as artifacts from the Actions tab.
+For most users, the right answer is **let CI build it**. Push a `v*` tag and [`release.yml`](./.github/workflows/release.yml) produces Windows `.exe`, macOS `.zip`, and Linux `.deb`/`.rpm`/`.tar.gz` packages as downloadable artifacts.
 
-To build locally:
+For local packaging (requires 16 GB+ RAM), see [PACKAGING.md](./PACKAGING.md) for the full list of gulp tasks:
 
 ```bash
-# Windows installer:
-node ./node_modules/gulp/bin/gulp.js vscode-win32-x64-inno-updater
+# Windows installer (.exe)
+npm run gulp -- vscode-win32-x64-inno-updater
+npm run gulp -- vscode-win32-x64-system-setup
 
-# macOS .dmg:
-node ./node_modules/gulp/bin/gulp.js vscode-darwin-x64
+# macOS .app (Intel / Apple Silicon)
+npm run gulp -- vscode-darwin-x64
+npm run gulp -- vscode-darwin-arm64
 
-# Linux .tar.gz:
-node ./node_modules/gulp/bin/gulp.js vscode-linux-x64
+# Linux .tar.gz / .deb / .rpm
+npm run gulp -- vscode-linux-x64
+npm run gulp -- vscode-linux-x64-build-deb
+npm run gulp -- vscode-linux-x64-build-rpm
 ```
 
 ## System Requirements
 
-- **Compile-time**: 16+ GB RAM recommended (8 GB may cause OOM on full builds)
-- **Disk space**: ~10 GB for full build output
-- **Node.js**: Version 20.x required
+| Resource | Compile only (`npm run compile`) | Full packaging (`gulp vscode-*-x64`) |
+|---|---|---|
+| RAM | 8 GB minimum (16 GB recommended) | 16 GB minimum (32 GB recommended) |
+| Disk space | ~5 GB free | ~30 GB free |
+| Build time | ~2 min (16 GB) | ~10–15 min (16 GB) |
+| Node.js | 20.x required | 20.x required |
+
+## Troubleshooting
+
+### `TypeError: this.pipeTo.end is not a function` during packaging
+
+The `streamx` postinstall patcher didn't run. Re-run it:
+
+```bash
+node build/patch-streamx.js
+```
+
+If the patcher reports "already patched", the error is elsewhere — file an issue with the full stack trace.
+
+### `ENOENT: no such file or directory, scandir '<path>'` during packaging
+
+A `gulp.src()` glob is targeting a directory that doesn't exist. The fix pattern (since v1.5.4) is `fs.mkdirSync(dir, { recursive: true })` + `allowEmpty: true` before the offending `gulp.src()` call. If you see this in a stock build (no local changes), report it — it's a regression.
+
+### TypeScript compilation errors
+
+```bash
+node --version  # Should be v20.x.x
+rm -rf out node_modules/.cache
+NODE_OPTIONS="--max-old-space-size=8192" npm run compile
+```
+
+### `npm install` fails on native modules
+
+Make sure you have:
+
+- **Linux**: `build-essential`, `python3`, `libxkbfile-dev`, `libsecret-1-dev`
+- **macOS**: Xcode CLT (`xcode-select --install`)
+- **Windows**: VS Build Tools 2022 + Python 3 in PATH
+
+### OOM kill during `compile-src` on 8 GB RAM
+
+The full `gulp vscode-*-x64` packaging pipeline peaks at ~10–12 GB. Either:
+
+1. Run `npm run compile` alone (lighter, no installer produced).
+2. Add swap: `sudo fallocate -l 8G /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile`.
+3. Use GitHub Actions (recommended for release builds).
+
+## Migration Notes (from upstream VS Code / older Kovix)
+
+- **v1.5.2**: Upgraded gulp 4 → 5, Electron → 42, `@vscode/gulp-electron` → 1.38. The gulp 5 migration introduced stricter `fast-glob` behavior — missing directories throw `ENOENT` instead of emitting no files. Multiple defensive `fs.mkdirSync + allowEmpty` patches were applied across v1.5.3–v1.6.0.
+- **v1.5.8**: Added `build/patch-streamx.js` postinstall patcher for the `pipeTo.end` TypeError.
+- **v1.6.0**: Closed the last `gulp.src` ENOENT gaps in `.build/extensions/**`. No source-code behavior changes since v1.5.2.
+
+See [`CHANGELOG.md`](./CHANGELOG.md) for the full history.

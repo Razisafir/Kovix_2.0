@@ -1,7 +1,7 @@
 @echo off
 setlocal
 
-title CONSTRUCT IDE Dev
+title Kovix IDE Dev
 
 pushd %~dp0\..
 
