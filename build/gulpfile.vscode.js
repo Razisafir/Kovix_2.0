@@ -489,19 +489,23 @@ function patchWin32DependenciesTask(destinationFolderName) {
                                 return;
                         }
 
-                        await rcedit(fullPath, {
-                                'file-version': baseVersion,
-                                'version-string': {
-                                        'CompanyName': 'CONSTRUCT',
-                                        'FileDescription': product.nameLong,
-                                        'FileVersion': packageJson.version,
-                                        'InternalName': basename,
-                                        'LegalCopyright': 'Copyright (C) 2024 CONSTRUCT. All rights reserved',
-                                        'OriginalFilename': basename,
-                                        'ProductName': product.nameLong,
-                                        'ProductVersion': packageJson.version,
-                                }
-                        });
+                        try {
+                            await rcedit(fullPath, {
+                                    'file-version': baseVersion,
+                                    'version-string': {
+                                            'CompanyName': 'CONSTRUCT',
+                                            'FileDescription': product.nameLong,
+                                            'FileVersion': packageJson.version,
+                                            'InternalName': basename,
+                                            'LegalCopyright': 'Copyright (C) 2024 CONSTRUCT. All rights reserved',
+                                            'OriginalFilename': basename,
+                                            'ProductName': product.nameLong,
+                                            'ProductVersion': packageJson.version,
+                                    }
+                            });
+                        } catch (e) {
+                            console.warn(`[patchWin32] rcedit failed for ${dep} — skipping (non-critical): ${e.message}`);
+                        }
                 }));
         };
 }
