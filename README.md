@@ -4,7 +4,7 @@
 
 **AI-native development environment — Claude Code, in your IDE, with its own OS.**
 
-[![Version](https://img.shields.io/badge/version-v1.6.4-blue.svg)](https://github.com/Razisafir/KOVIX/releases)
+[![Version](https://img.shields.io/badge/version-v1.6.5-blue.svg)](https://github.com/Razisafir/KOVIX/releases)
 [![License](https://img.shields.io/badge/license-Proprietary-red.svg)](./LICENSE.txt)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/Razisafir/KOVIX/releases)
 [![Build](https://github.com/Razisafir/KOVIX/actions/workflows/ci.yml/badge.svg)](https://github.com/Razisafir/KOVIX/actions)
@@ -19,7 +19,7 @@ Grab the latest release for your platform from [GitHub Releases](https://github.
 
 | Platform | Download | Size |
 |---|---|---|
-| Windows (x64, system installer) | `KovixSetup-x64-v1.6.4.exe` | ~170 MB |
+| Windows (x64, system installer) | `KovixSetup-x64-v1.6.5.exe` | ~170 MB |
 | macOS (Intel) | `kovix-darwin-x64.zip` | ~95 MB |
 | macOS (Apple Silicon) | build from source — see [INSTALL.md](./INSTALL.md) | — |
 | Linux (Debian/Ubuntu) | `kovix_1.6.0_amd64.deb` | ~150 MB |
@@ -61,7 +61,7 @@ Kovix is an AI-native development environment built on a VS Code fork. The headl
 
 ## Supported LLM Providers
 
-Kovix v1.6.4 supports 13 first-class providers, all configured via the **Kovix: Manage API Keys** command (`Ctrl+Shift+P` → "Manage API Keys"):
+Kovix v1.6.5 supports 13 first-class providers, all configured via the **Kovix: Manage API Keys** command (`Ctrl+Shift+P` → "Manage API Keys"):
 
 | Provider | Endpoint | Auth | Notes |
 |---|---|---|---|
@@ -83,7 +83,7 @@ All API keys are stored in the OS keychain (macOS Keychain / Windows Credential 
 
 ## Agent Modes & Multi-Agent Swarms
 
-Kovix v1.6.4 ships **agent modes** (inspired by Roo Code's custom modes pattern). Each mode defines a role, a set of tools, and optionally a specific model. Switch modes from the Command Palette (`Ctrl+Shift+P` → "Switch Agent Mode") or create your own.
+Kovix v1.6.5 ships **agent modes** (inspired by Roo Code's custom modes pattern). Each mode defines a role, a set of tools, and optionally a specific model. Switch modes from the Command Palette (`Ctrl+Shift+P` → "Switch Agent Mode") or create your own.
 
 ### Built-in Modes
 
@@ -141,7 +141,7 @@ All Kovix commands are available from the Command Palette (`Ctrl+Shift+P` / `Cmd
 | `construct.switchAgentMode` | Switch active agent mode (general/architect/coder/reviewer/debugger/ask) |
 | `construct.openApiSettings` | Open Kovix API settings |
 
-### Agent Modes & Swarm (v1.6.4)
+### Agent Modes & Swarm (v1.6.5)
 | Command | Description |
 |---|---|
 | `construct.createAgentMode` | Create a custom agent mode with its own model + tools |
@@ -307,6 +307,6 @@ This project is licensed under a Proprietary license. See [LICENSE.txt](./LICENS
 
 <div align="center">
 
-**[Download Kovix v1.6.4](https://github.com/Razisafir/KOVIX/releases/latest)** · **[Report an Issue](https://github.com/Razisafir/KOVIX/issues)** · **[Read the Changelog](./CHANGELOG.md)** · **[Security Policy](./SECURITY.md)** · **[Privacy Policy](./PRIVACY.md)**
+**[Download Kovix v1.6.5](https://github.com/Razisafir/KOVIX/releases/latest)** · **[Report an Issue](https://github.com/Razisafir/KOVIX/issues)** · **[Read the Changelog](./CHANGELOG.md)** · **[Security Policy](./SECURITY.md)** · **[Privacy Policy](./PRIVACY.md)**
 
 </div>

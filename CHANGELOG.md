@@ -1,5 +1,38 @@
 # Changelog
 
+## v1.6.5 — Fix portable zip path + non-fatal verification steps
+
+**Release date:** 2026-06-22
+
+Build-only hotfix. The v1.6.4 Windows build failed at the "Create Windows portable .zip" step because the pwsh script used a relative path `VSCode-win32-x64` but the gulp `vscode-win32-x64` task outputs to `../VSCode-win32-x64` (parent of the repo directory, per `build/gulpfile.vscode.win32.js` — `buildPath()` returns `path.join(path.dirname(root), ...)`).
+
+Both the system installer AND user installer were built successfully before the failure — only the portable zip step and subsequent verification steps were blocked.
+
+### Root Cause
+
+```
+2026-06-21T21:42:00.1229415Z ERROR: Build output directory VSCode-win32-x64 not found
+```
+
+The `Test-Path "VSCode-win32-x64"` check looked in the repo dir (`D:\a\KOVIX\KOVIX\VSCode-win32-x64`) instead of the parent (`D:\a\KOVIX\VSCode-win32-x64`).
+
+### Fix
+
+`.github/workflows/release.yml`:
+- **Portable zip step**: use `../VSCode-win32-x64` path; add `continue-on-error: true` so a portable zip failure doesn't block the installers from publishing; print parent-dir listing for debugging if not found.
+- **Verify Kovix.exe step**: use `../VSCode-win32-x64` path; add `continue-on-error: true` so a verification failure doesn't block the release.
+- Both steps now degrade gracefully — if they fail, the installers (which are the primary deliverable) still publish.
+
+### Changed Files
+- `.github/workflows/release.yml` — fixed `VSCode-win32-x64` → `../VSCode-win32-x64` in portable zip and Kovix.exe verification steps; added `continue-on-error: true` to both
+- `package.json`, `package-lock.json`, `README.md` — version bumped 1.6.4 → 1.6.5
+
+### Migration Notes
+- No source-code behavior changes. The Kovix IDE itself is identical to v1.6.3/v1.6.4.
+- v1.6.4 release was never published (build failed before release). v1.6.5 supersedes it.
+
+---
+
 ## v1.6.4 — Windows multi-installer + portable zip + build verification
 
 **Release date:** 2026-06-22
