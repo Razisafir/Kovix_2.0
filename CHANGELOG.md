@@ -1,5 +1,45 @@
 # Changelog
 
+## v1.6.2 — Windows inno_updater rcedit fix
+
+**Release date:** 2026-06-21
+
+Build-only hotfix. The v1.6.0 and v1.6.1 Windows builds failed at the `vscode-win32-x64-inno-updater` gulp task because `rcedit.exe` cannot parse `tools/inno_updater.exe` (the updater is now built with Rust, which produces a PE binary that rcedit's parser rejects). The icon update is purely cosmetic — the installer and updater work fine without it — but the gulp task treated any rcedit failure as fatal.
+
+### Root Cause
+
+The v1.6.1 fix (`367add68`) wrapped the `rcedit(...)` call in a synchronous `try/catch`. That doesn't work: `rcedit` is **callback-style async** (it spawns `rcedit.exe` as a child process). It never throws synchronously — the error is delivered via the callback. The synchronous `try/catch` caught nothing, and the callback received the error and forwarded it to gulp, which failed the task.
+
+### Fix
+
+`build/gulpfile.vscode.win32.js` — `updateIcon()` now wraps the **callback** instead of the call. If rcedit returns an error, it is logged as `[updateIcon] rcedit failed for ... — skipping (non-critical)` and the gulp task continues. This mirrors the pattern already used by `patchWin32DependenciesTask` in `build/gulpfile.vscode.js` (which uses `promisify(rcedit)` + `await` + `try/catch`).
+
+### Changed
+
+- `build/gulpfile.vscode.win32.js` — `updateIcon()` rewritten to wrap rcedit's callback. Synchronous try/catch removed.
+- `package.json`, `package-lock.json`, `README.md` — version bumped 1.6.1 → 1.6.2.
+
+### Migration Notes
+
+- No source-code behavior changes. The Windows installer/updater icon may be missing on builds where rcedit can't parse the binary — this is cosmetic and was already the case for all .node files since v1.5.7.
+
+---
+
+## v1.6.1 — Windows rcedit try/catch (incorrect fix)
+
+**Release date:** 2026-06-21 (reverted by v1.6.2)
+
+Attempted fix for the v1.6.0 Windows build failure on `tools/inno_updater.exe`. Wrapped `rcedit(...)` in a synchronous `try/catch` in `updateIcon()`. This was incorrect — `rcedit` is callback-style async and never throws synchronously. v1.6.2 replaces this with the correct callback-wrapping pattern. Kept in the changelog for traceability.
+
+### Changed
+
+- `build/gulpfile.vscode.win32.js` — added synchronous try/catch around `rcedit(...)` in `updateIcon()` (incorrect — superseded by v1.6.2).
+- `build/gulpfile.vscode.js` — `patchWin32DependenciesTask` already used `promisify(rcedit)` + `await` + `try/catch` correctly (unchanged).
+
+---
+
+---
+
 ## v1.6.0 — Build Stability Release
 
 **Release date:** 2026-06-21

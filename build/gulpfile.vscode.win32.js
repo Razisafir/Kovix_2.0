@@ -151,14 +151,17 @@ function copyInnoUpdater(arch) {
 function updateIcon(executablePath) {
         return cb => {
                 const icon = path.join(repoPath, 'resources', 'win32', 'kovix.ico');
-                // Wrap in try/catch — if rcedit can't parse the .exe, log and continue.
-                // The icon is cosmetic; the installer works without it.
-                try {
-                        rcedit(executablePath, { icon }, cb);
-                } catch (e) {
-                        console.warn(`[updateIcon] rcedit failed for ${executablePath} — skipping (non-critical): ${e.message}`);
+                // rcedit is callback-style async — errors come through the callback, NOT via
+                // throw. A synchronous try/catch will never catch them. Wrap the callback so
+                // that if rcedit can't parse the .exe (e.g. inno_updater.exe built with rust,
+                // or .node binaries built without symbols), we log and continue. The icon is
+                // cosmetic; the installer/updater works without it.
+                rcedit(executablePath, { icon }, (err) => {
+                        if (err) {
+                                console.warn(`[updateIcon] rcedit failed for ${executablePath} — skipping (non-critical): ${err.message}`);
+                        }
                         cb();
-                }
+                });
         };
 }
 
