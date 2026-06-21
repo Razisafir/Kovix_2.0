@@ -289,6 +289,17 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
                                 this.emit('data', file);
                         }));
 
+                // gulp 5: fast-glob throws ENOENT on the 'licenses/**' glob if the
+                // directory doesn't exist. Pre-create it (and copy LICENSE.txt to
+                // product.licenseFileName if missing) so the build doesn't crash.
+                fs.mkdirSync('licenses', { recursive: true });
+                if (product.licenseFileName && !fs.existsSync(product.licenseFileName)) {
+                        // Fall back to LICENSE.txt (the actual file in the repo) if
+                        // product.json points to a non-existent name.
+                        if (fs.existsSync('LICENSE.txt')) {
+                                fs.copyFileSync('LICENSE.txt', product.licenseFileName);
+                        }
+                }
                 const license = gulp.src([product.licenseFileName, 'ThirdPartyNotices.txt', 'licenses/**'], { base: '.', allowEmpty: true });
 
                 // TODO the API should be copied to `out` during compile, not here
