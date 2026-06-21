@@ -27,7 +27,7 @@ permissions:
 jobs:
   build-windows:
     runs-on: windows-2022
-    timeout-minutes: 120
+    timeout-minutes: 180
     env:
       KOVIX_ARCH: x64
       KOVIX_QUALITY: stable
@@ -84,7 +84,7 @@ jobs:
 
       - name: Build Windows package
         run: npx gulp vscode-win32-x64
-        timeout-minutes: 120
+        timeout-minutes: 180
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max-old-space-size=4096"
@@ -121,7 +121,7 @@ jobs:
 
   build-macos:
     runs-on: macos-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     env:
       KOVIX_ARCH: x64
       KOVIX_QUALITY: stable
@@ -150,7 +150,7 @@ jobs:
 
       - name: Build macOS package
         run: npx gulp vscode-darwin-x64
-        timeout-minutes: 120
+        timeout-minutes: 180
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max-old-space-size=4096"
@@ -228,7 +228,7 @@ jobs:
 
   build-linux:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     env:
       KOVIX_ARCH: x64
       KOVIX_QUALITY: stable
@@ -262,7 +262,7 @@ jobs:
 
       - name: Build Linux package
         run: npx gulp vscode-linux-x64
-        timeout-minutes: 120
+        timeout-minutes: 180
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_OPTIONS: "--max-old-space-size=4096"
