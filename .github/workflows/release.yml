@@ -501,7 +501,7 @@ jobs:
             [ -e "$f" ] || continue
             # Skip already-renamed files
             case "$f" in
-              * KovixSetup* | *kovix_${GITHUB_REF_NAME#v}_amd64.deb) continue ;;
+              *KovixSetup*|*kovix_${GITHUB_REF_NAME#v}_amd64.deb) continue ;;
             esac
             mv "$f" "out/kovix_${GITHUB_REF_NAME#v}_amd64.deb"
             break
