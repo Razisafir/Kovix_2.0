@@ -243,7 +243,8 @@
 		"@parcel/watcher@2.1.0": {
 			"node-addon-api": "7.1.0"
 		},
-		"protobufjs": "7.6.4"
+		"protobufjs": "7.6.4",
+		"streamx": "^2.20.0"
 	},
 	"repository": {
 		"type": "git",
