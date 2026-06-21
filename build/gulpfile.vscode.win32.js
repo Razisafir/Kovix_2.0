@@ -151,7 +151,14 @@ function copyInnoUpdater(arch) {
 function updateIcon(executablePath) {
         return cb => {
                 const icon = path.join(repoPath, 'resources', 'win32', 'kovix.ico');
-                rcedit(executablePath, { icon }, cb);
+                // Wrap in try/catch — if rcedit can't parse the .exe, log and continue.
+                // The icon is cosmetic; the installer works without it.
+                try {
+                        rcedit(executablePath, { icon }, cb);
+                } catch (e) {
+                        console.warn(`[updateIcon] rcedit failed for ${executablePath} — skipping (non-critical): ${e.message}`);
+                        cb();
+                }
         };
 }
 
