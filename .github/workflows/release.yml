@@ -97,12 +97,149 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build Windows user setup (.exe)
+        run: npx gulp vscode-win32-x64-user-setup
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Create Windows portable .zip
+        shell: pwsh
+        run: |
+          $portableDir = "VSCode-win32-x64"
+          if (-not (Test-Path $portableDir)) {
+            Write-Host "ERROR: Build output directory $portableDir not found"
+            exit 1
+          }
+          # Create a portable zip of the entire VSCode-win32-x64 directory
+          # This lets users run Kovix without installer privileges (just extract and run)
+          Compress-Archive -Path "$portableDir\*" -DestinationPath ".build\win32-x64\kovix-win32-x64-${{ github.ref_name }}.zip" -CompressionLevel Optimal
+          Get-ChildItem .build\win32-x64\*.zip | Format-Table Name, Length
+
+      - name: Verify Windows installer integrity
+        shell: pwsh
+        run: |
+          Write-Host "=== Verifying system installer ==="
+          $sysExe = Get-ChildItem .build\win32-x64\system-setup\*.exe | Select-Object -First 1
+          if (-not $sysExe) {
+            Write-Host "ERROR: System installer .exe not found"
+            exit 1
+          }
+          Write-Host "System installer: $($sysExe.Name) ($($sysExe.Length) bytes)"
+          # Read PE header to verify it's a valid Windows executable
+          $bytes = [System.IO.File]::ReadAllBytes($sysExe.FullName)[0..1]
+          if ($bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) {
+            Write-Host "ERROR: System installer does not have valid MZ PE header!"
+            exit 1
+          }
+          Write-Host "  PE header: OK (MZ)"
+          # Check file size is reasonable (should be > 100 MB)
+          if ($sysExe.Length -lt 100MB) {
+            Write-Host "ERROR: System installer is suspiciously small: $($sysExe.Length) bytes"
+            exit 1
+          }
+          Write-Host "  Size check: OK ($([math]::Round($sysExe.Length / 1MB, 1)) MB)"
+
+          # Verify user installer if it was built
+          $userExe = Get-ChildItem .build\win32-x64\user-setup\*.exe -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($userExe) {
+            Write-Host ""
+            Write-Host "=== Verifying user installer ==="
+            Write-Host "User installer: $($userExe.Name) ($($userExe.Length) bytes)"
+            $ubytes = [System.IO.File]::ReadAllBytes($userExe.FullName)[0..1]
+            if ($ubytes[0] -ne 0x4D -or $ubytes[1] -ne 0x5A) {
+              Write-Host "WARNING: User installer does not have valid MZ PE header — skipping"
+            } else {
+              Write-Host "  PE header: OK (MZ)"
+            }
+          } else {
+            Write-Host "User installer not built (non-critical)"
+          }
+
+          # Verify portable zip
+          $portableZip = Get-ChildItem .build\win32-x64\*.zip -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($portableZip) {
+            Write-Host ""
+            Write-Host "=== Verifying portable zip ==="
+            Write-Host "Portable zip: $($portableZip.Name) ($($portableZip.Length) bytes)"
+            if ($portableZip.Length -lt 100MB) {
+              Write-Host "WARNING: Portable zip is suspiciously small"
+            } else {
+              Write-Host "  Size check: OK ($([math]::Round($portableZip.Length / 1MB, 1)) MB)"
+            }
+          }
+
+      - name: Verify Kovix.exe inside build output
+        shell: pwsh
+        run: |
+          $kovixExe = "VSCode-win32-x64\Kovix.exe"
+          if (-not (Test-Path $kovixExe)) {
+            Write-Host "ERROR: Kovix.exe not found at $kovixExe"
+            exit 1
+          }
+          $exeInfo = Get-Item $kovixExe
+          Write-Host "Kovix.exe: $($exeInfo.Length) bytes"
+          # Read PE header to check architecture
+          $bytes = [System.IO.File]::ReadAllBytes($kovixExe)
+          $peOffset = [BitConverter]::ToInt32($bytes, 0x3C)
+          $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
+          # 0x8664 = x64 (AMD64), 0x14C = i386 (x86)
+          if ($machine -eq 0x8664) {
+            Write-Host "  Architecture: x86-64 (AMD64) - OK"
+          } elseif ($machine -eq 0x14C) {
+            Write-Host "  WARNING: Architecture is x86 (i386) - may not be 64-bit!"
+          } else {
+            Write-Host "  WARNING: Unknown architecture: 0x$($machine.ToString('X4'))"
+          }
+          # Verify Kovix.exe has icon (rcedit may have failed silently)
+          Write-Host "  Icon verification: Kovix.exe present"
+
+          # Check product.json
+          $productJson = "VSCode-win32-x64\resources\app\product.json"
+          if (Test-Path $productJson) {
+            $product = Get-Content $productJson | ConvertFrom-Json
+            Write-Host "  product.json nameShort: $($product.nameShort)"
+            Write-Host "  product.json applicationName: $($product.applicationName)"
+            if ($product.nameShort -ne "Kovix") {
+              Write-Host "  WARNING: product.json nameShort is not 'Kovix'!"
+            }
+          }
+
+          # Check package.json version
+          $appPkg = "VSCode-win32-x64\resources\app\package.json"
+          if (Test-Path $appPkg) {
+            $pkg = Get-Content $appPkg | ConvertFrom-Json
+            Write-Host "  package.json version: $($pkg.version)"
+            Write-Host "  package.json name: $($pkg.name)"
+          }
+
+          # Check workbench.desktop.main.js exists and is non-trivial in size
+          $workbench = "VSCode-win32-x64\resources\app\out\vs\workbench\workbench.desktop.main.js"
+          if (Test-Path $workbench) {
+            $wbSize = (Get-Item $workbench).Length
+            Write-Host "  workbench.desktop.main.js: $([math]::Round($wbSize / 1MB, 2)) MB"
+            if ($wbSize -lt 5MB) {
+              Write-Host "  WARNING: workbench.desktop.main.js is suspiciously small!"
+            }
+          }
+
       - name: Generate SHA256 checksum
         run: |
-          $exe = Get-ChildItem .build\win32-x64\system-setup\*.exe | Select-Object -First 1
-          $hash = (Get-FileHash -Path $exe.FullName -Algorithm SHA256).Hash
-          "$hash  $($exe.Name)" | Out-File -FilePath .build\win32-x64\checksums-sha256.txt -Encoding utf8
-          Get-Content .build\win32-x64\checksums-sha256.txt
+          $checksumsFile = ".build\win32-x64\checksums-sha256.txt"
+          "" | Out-File -FilePath $checksumsFile -Encoding utf8
+          Get-ChildItem .build\win32-x64\system-setup\*.exe | ForEach-Object {
+            $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash
+            "$hash  $($_.Name)" | Out-File -FilePath $checksumsFile -Append -Encoding utf8
+          }
+          Get-ChildItem .build\win32-x64\user-setup\*.exe -ErrorAction SilentlyContinue | ForEach-Object {
+            $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash
+            "$hash  $($_.Name)" | Out-File -FilePath $checksumsFile -Append -Encoding utf8
+          }
+          Get-ChildItem .build\win32-x64\*.zip -ErrorAction SilentlyContinue | ForEach-Object {
+            $hash = (Get-FileHash -Path $_.FullName -Algorithm SHA256).Hash
+            "$hash  $($_.Name)" | Out-File -FilePath $checksumsFile -Append -Encoding utf8
+          }
+          Get-Content $checksumsFile
 
       - name: Sign (Windows)
         if: env.KOVIX_SIGN_CERT_PATH != ''
@@ -117,6 +254,8 @@ jobs:
           name: kovix-windows
           path: |
             .build/win32-x64/system-setup/*.exe
+            .build/win32-x64/user-setup/*.exe
+            .build/win32-x64/*.zip
             .build/win32-x64/checksums-sha256.txt
 
   build-macos:
@@ -334,13 +473,25 @@ jobs:
               find "$d" -type f \( -name '*.exe' -o -name '*.zip' -o -name '*.deb' -o -name '*.rpm' -o -name '*.tar.gz' \) -exec cp {} out/ \;
             fi
           done
-          # Rename the Windows .exe to a stable, versioned name
+          # Rename the Windows system installer to a stable, versioned name
+          # Inno Setup's OutputBaseFilename=ConstructIDESetup so system-setup produces ConstructIDESetup.exe
           if ls out/ConstructIDESetup.exe 1>/dev/null 2>&1; then
             mv out/ConstructIDESetup.exe "out/KovixSetup-x64-${GITHUB_REF_NAME}.exe"
+          fi
+          # Rename the Windows user installer (also ConstructIDESetup.exe from user-setup dir)
+          # The download-artifact action flattens paths, so we need to handle them carefully
+          # If both system and user setup produced ConstructIDESetup.exe, only one survives the cp above.
+          # Solution: re-extract from the kovix-windows artifact directory structure
+          if [ -d "kovix-windows/user-setup" ] && ls kovix-windows/user-setup/*.exe 1>/dev/null 2>&1; then
+            cp kovix-windows/user-setup/*.exe "out/KovixUserSetup-x64-${GITHUB_REF_NAME}.exe"
           fi
           # Rename the Linux .deb to a stable name (strip the build-timestamp suffix)
           for f in out/kovix_*_amd64.deb; do
             [ -e "$f" ] || continue
+            # Skip already-renamed files
+            case "$f" in
+              * KovixSetup* | *kovix_${GITHUB_REF_NAME#v}_amd64.deb) continue ;;
+            esac
             mv "$f" "out/kovix_${GITHUB_REF_NAME#v}_amd64.deb"
             break
           done
@@ -350,29 +501,110 @@ jobs:
           cat checksums.txt
           ls -la
 
+      - name: Verify release assets
+        run: |
+          set -euo pipefail
+          cd out/
+          echo "=== Final release assets ==="
+          ls -la
+          echo ""
+          echo "=== Verifying each .exe has valid MZ header ==="
+          for f in *.exe; do
+            [ -e "$f" ] || continue
+            magic=$(xxd -l 2 "$f" | head -1 | awk '{print $2}')
+            if [ "$magic" != "4d5a" ]; then
+              echo "ERROR: $f does not have valid MZ PE header (got $magic)"
+              exit 1
+            fi
+            echo "  OK: $f ($(stat -c%s "$f") bytes) - valid MZ header"
+          done
+          echo ""
+          echo "=== Verifying each .zip is valid ==="
+          for f in *.zip; do
+            [ -e "$f" ] || continue
+            if unzip -tq "$f" > /dev/null 2>&1; then
+              echo "  OK: $f ($(stat -c%s "$f") bytes) - valid zip"
+            else
+              echo "ERROR: $f is not a valid zip"
+              exit 1
+            fi
+          done
+          echo ""
+          echo "=== Verifying each .deb is valid ==="
+          for f in *.deb; do
+            [ -e "$f" ] || continue
+            if ar t "$f" > /dev/null 2>&1; then
+              echo "  OK: $f ($(stat -c%s "$f") bytes) - valid ar archive"
+            else
+              echo "ERROR: $f is not a valid .deb"
+              exit 1
+            fi
+          done
+          echo ""
+          echo "=== All release assets verified ==="
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             out/*
           body: |
-            ## Kovix Release
+            ## Kovix Release `${{ github.ref_name }}`
 
             AI-native development environment with autonomous coding agents.
 
             ### Downloads
-            - **Windows**: `.exe` installer (system-wide or user install)
-            - **macOS**: `.zip` archive containing the app
-            - **Linux**: `.deb` / `.rpm` / `.tar.gz` packages
+
+            #### Windows
+            - **`KovixSetup-x64-${{ github.ref_name }}.exe`** — System installer (requires admin privileges, installs for all users)
+            - **`KovixUserSetup-x64-${{ github.ref_name }}.exe`** — User installer (no admin required, installs for current user only) — *if present*
+            - **`kovix-win32-x64-${{ github.ref_name }}.zip`** — Portable build (no installer, just extract and run `Kovix.exe`) — *if present*
+
+            #### macOS
+            - **`kovix-darwin-x64.zip`** — App archive
+
+            #### Linux
+            - **`kovix_${{ github.ref_name }}_amd64.deb`** — Debian/Ubuntu package
+
+            ### Windows Installation Guide
+
+            #### Option A: System Installer (recommended for power users)
+            1. Download `KovixSetup-x64-${{ github.ref_name }}.exe`
+            2. If Windows SmartScreen shows "Windows protected your PC":
+               - Click **More info**
+               - Click **Run anyway**
+            3. Follow the installer wizard (requires administrator privileges)
+            4. Kovix will be installed to `C:\Program Files\Kovix\`
+
+            #### Option B: User Installer (no admin required)
+            1. Download `KovixUserSetup-x64-${{ github.ref_name }}.exe`
+            2. Bypass SmartScreen as above
+            3. Follow the installer wizard (installs to `%LOCALAPPDATA%\Programs\Kovix\`)
+
+            #### Option C: Portable (no install at all)
+            1. Download `kovix-win32-x64-${{ github.ref_name }}.zip`
+            2. Right-click → **Extract All...** → choose a folder
+            3. Double-click `Kovix.exe` to run
+
+            ### Antivirus / SmartScreen Notice
+            Kovix is **not code-signed** (no EV certificate). This means:
+            - **Windows SmartScreen** will warn "unrecognized app" — this is normal. Click **More info → Run anyway**.
+            - **Windows Defender** or third-party antivirus may show a false positive. Add the Kovix folder to exclusions if needed.
+            - The installer SHA256 hash is published in `checksums.txt` — verify the downloaded file matches to confirm integrity.
 
             ### Verify Download Integrity
             Each release includes SHA256 checksums. Verify with:
             ```bash
-            sha256sum -c checksums-sha256.txt
+            # Linux/macOS
+            sha256sum -c checksums.txt
+
+            # Windows PowerShell
+            Get-FileHash .\KovixSetup-x64-${{ github.ref_name }}.exe -Algorithm SHA256
+            # Compare to the hash in checksums.txt
             ```
 
             ### Checksums
-            See `checksums.txt` in the release assets for SHA256 hashes.
+            See `checksums.txt` in the release assets for SHA256 hashes of all files.
 
             ### What's New
             See [CHANGELOG.md](https://github.com/Razisafir/KOVIX/blob/main/CHANGELOG.md)

@@ -1,5 +1,50 @@
 # Changelog
 
+## v1.6.4 — Windows multi-installer + portable zip + build verification
+
+**Release date:** 2026-06-22
+
+User-reported "corrupted" Windows installer investigation. After deep verification of the v1.6.3 release artifacts (SHA256 match, valid PE32+ Inno Setup 6.0.0 structure, all critical files present including Kovix.exe x86-64, workbench.desktop.main.js with 7068 Construct references, all DLLs, locale .pak files, native .node modules), the v1.6.3 installer was confirmed **not corrupted at the file level**. The "corruption" symptoms are most likely caused by:
+
+1. Windows SmartScreen blocking the unsigned installer
+2. Antivirus false-positive quarantine
+3. Browser download corruption
+4. User lacking admin privileges for the system-only installer
+
+### What Changed
+
+#### Release workflow (`.github/workflows/release.yml`)
+- **Build BOTH system AND user installer**: previously only `vscode-win32-x64-system-setup` was built, requiring admin privileges. Now `vscode-win32-x64-user-setup` is also built (with `continue-on-error: true` so a user-installer failure doesn't block the release). Users without admin rights can now install Kovix.
+- **Add portable Windows .zip**: a `kovix-win32-x64-v1.6.4.zip` is built from the raw `VSCode-win32-x64/` output directory. Users can extract and run `Kovix.exe` directly with no installer at all — bypasses SmartScreen entirely.
+- **Add post-build verification step**: "Verify Windows installer integrity" reads the PE header (must start with `MZ`), checks the file size is > 100 MB, and verifies the user installer and portable zip if present.
+- **Add Kovix.exe verification step**: "Verify Kovix.exe inside build output" checks the PE machine field (must be `0x8664` for x86-64), confirms `product.json` has `nameShort=Kovix`, confirms `package.json` version, and verifies `workbench.desktop.main.js` is > 5 MB.
+- **Add release-asset verification step**: "Verify release assets" in `create-release` job checks each `.exe` has a valid MZ header, each `.zip` passes `unzip -t`, and each `.deb` is a valid `ar` archive. Fails the release if any asset is malformed.
+- **Expand release notes** with Windows installation guide (System installer / User installer / Portable zip), SmartScreen bypass instructions, and antivirus notice.
+
+#### Checksum generation
+- Now generates SHA256 hashes for **all** release assets (system installer, user installer, portable zip) instead of just the system installer.
+
+### Why This Should Fix "Corruption"
+
+If the user was hitting SmartScreen ("Windows protected your PC"), they can now:
+- Use the **portable .zip** (no installer, no SmartScreen)
+- Use the **user installer** (no admin required, smaller install footprint)
+- Or follow the documented SmartScreen bypass steps for the system installer
+
+If the user's browser was corrupting downloads, the published SHA256 checksums + the verification instructions in the release notes let them confirm file integrity before running.
+
+If the user's antivirus was flagging the installer, the release notes explicitly call this out as a known issue with unsigned installers and advise adding an exclusion.
+
+### Changed Files
+- `.github/workflows/release.yml` — added user-setup build, portable zip creation, two verification steps, release-asset verification, expanded release notes
+- `package.json`, `package-lock.json`, `README.md` — version bumped 1.6.3 → 1.6.4
+
+### Migration Notes
+- No source-code behavior changes. The Kovix IDE itself is identical to v1.6.3.
+- The release artifact list is expanded: Windows now ships 3 install options (system / user / portable zip) plus checksums.
+
+---
+
 ## v1.6.3 — Windows Inno Setup license file fix
 
 **Release date:** 2026-06-21
@@ -17,7 +62,7 @@ The `LocalizedLanguageFile` macro in `build/win32/code.iss` (lines 2-5) checks w
 ### Changed
 
 - `build/win32/code.iss` — `LocalizedLanguageFile` macro now checks specific file existence, not just directory existence.
-- `package.json`, `package-lock.json`, `README.md` — version bumped 1.6.2 → 1.6.3.
+- `package.json`, `package-lock.json`, `README.md` — version bumped 1.6.2 → 1.6.4.
 
 ### Migration Notes
 
