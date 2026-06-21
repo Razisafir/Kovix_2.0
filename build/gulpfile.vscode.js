@@ -474,8 +474,22 @@ function patchWin32DependenciesTask(destinationFolderName) {
 
                 await Promise.all(deps.map(async dep => {
                         const basename = path.basename(dep);
+                        const fullPath = path.join(cwd, dep);
 
-                        await rcedit(path.join(cwd, dep), {
+                        // Skip files that don't exist or are 0 bytes (broken native module compilation).
+                        // rcedit.exe crashes with "Unable to load file" if the .node binary wasn't
+                        // compiled during npm ci (e.g. node-pty on a runner missing build tools).
+                        if (!fs.existsSync(fullPath)) {
+                                console.log(`[patchWin32] Skipping ${dep} — file not found`);
+                                return;
+                        }
+                        const stat = fs.statSync(fullPath);
+                        if (stat.size === 0) {
+                                console.log(`[patchWin32] Skipping ${dep} — 0 bytes (compilation failed)`);
+                                return;
+                        }
+
+                        await rcedit(fullPath, {
                                 'file-version': baseVersion,
                                 'version-string': {
                                         'CompanyName': 'CONSTRUCT',
