@@ -1,5 +1,32 @@
 # Changelog
 
+## v1.6.3 — Windows Inno Setup license file fix
+
+**Release date:** 2026-06-21
+
+Build-only hotfix. The v1.6.2 Windows build failed at step 11 ("Build Windows system setup (.exe)") because Inno Setup could not find `licenses\LICENSE-deu.rtf` (or any other localized license file).
+
+### Root Cause
+
+The `LocalizedLanguageFile` macro in `build/win32/code.iss` (lines 2-5) checks whether the `licenses/` directory exists, and if so, emits a `LicenseFile:` directive pointing at `licenses\LICENSE-{language}.rtf`. On the GitHub Actions runner, the `licenses/` directory is created by another build step (extension packaging), but KOVIX does not ship localized RTF license files — only the root `LICENSE.txt`. Inno Setup then aborts with "Could not read ... licenses\LICENSE-deu.rtf".
+
+### Fix
+
+`build/win32/code.iss` — `LocalizedLanguageFile` macro now also checks `FileExists(RepoDir + '\licenses\LICENSE-' + Language + '.rtf')` for the specific language file. If the specific file is missing (even if the directory exists), it falls back to the root `LICENSE.txt`. This makes the macro robust to partial `licenses/` directories.
+
+### Changed
+
+- `build/win32/code.iss` — `LocalizedLanguageFile` macro now checks specific file existence, not just directory existence.
+- `package.json`, `package-lock.json`, `README.md` — version bumped 1.6.2 → 1.6.3.
+
+### Migration Notes
+
+- No source-code behavior changes. Windows installers will now use the root `LICENSE.txt` for all languages instead of crashing.
+
+---
+
+---
+
 ## v1.6.2 — Windows inno_updater rcedit fix
 
 **Release date:** 2026-06-21
