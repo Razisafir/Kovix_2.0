@@ -44,7 +44,7 @@ export enum ThemeSettings {
 }
 
 export enum ThemeSettingDefaults {
-	COLOR_THEME_DARK = 'Construct Dark',
+	COLOR_THEME_DARK = 'Kovix Dark',
 	COLOR_THEME_LIGHT = 'Default Light Modern',
 	COLOR_THEME_HC_DARK = 'Default High Contrast',
 	COLOR_THEME_HC_LIGHT = 'Default High Contrast Light',
