@@ -29,3 +29,6 @@ id_rsa*
 # Session artifacts
 tool-results/
 download/
+
+# Vendor skills (external skill collections cloned for reference; not part of Kovix)
+vendor-skills/

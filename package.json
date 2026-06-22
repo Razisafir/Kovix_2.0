@@ -2,7 +2,7 @@
 	"name": "kovix",
 	"version": "1.7.0",
 	"productName": "KOVIX",
-	"description": "AI-native integrated development environment \u2014 Kovix",
+	"description": "AI-native integrated development environment — Kovix",
 	"distro": "c883c91dadf5f063b26c86ffe01851acee3747c6",
 	"author": {
 		"name": "Razisafir"
@@ -50,7 +50,7 @@
 		"vscode-dts-compile-check": "tsc -p src/tsconfig.vscode-dts.json && tsc -p src/tsconfig.vscode-proposed-dts.json",
 		"valid-layers-check": "node build/lib/layersChecker.js",
 		"update-distro": "node build/npm/update-distro.mjs",
-		"web": "echo 'npm run web' is replaced by './scripts/construct-server' or './scripts/construct-web'",
+		"web": "echo 'npm run web' is replaced by './scripts/code-server' or './scripts/code-web'",
 		"compile-cli": "gulp compile-cli",
 		"compile-web": "node ./node_modules/gulp/bin/gulp.js compile-web",
 		"watch-web": "node ./node_modules/gulp/bin/gulp.js watch-web",
