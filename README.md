@@ -4,7 +4,7 @@
 
 **AI-native development environment — Claude Code, in your IDE, with its own OS.**
 
-[![Version](https://img.shields.io/badge/version-v1.7.0-blue.svg)](https://github.com/Razisafir/KOVIX/releases)
+[![Version](https://img.shields.io/badge/version-v1.7.1-blue.svg)](https://github.com/Razisafir/KOVIX/releases)
 [![License](https://img.shields.io/badge/license-Proprietary-red.svg)](./LICENSE.txt)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/Razisafir/KOVIX/releases)
 [![Build](https://github.com/Razisafir/KOVIX/actions/workflows/ci.yml/badge.svg)](https://github.com/Razisafir/KOVIX/actions)
@@ -19,12 +19,12 @@ Grab the latest release for your platform from [GitHub Releases](https://github.
 
 | Platform | Download | Size |
 |---|---|---|
-| Windows (x64, system installer) | `KovixSetup-x64-v1.7.0.exe` | ~170 MB |
+| Windows (x64, system installer) | `KovixSetup-x64-v1.7.1.exe` | ~170 MB |
 | macOS (Intel) | `kovix-darwin-x64.zip` | ~95 MB |
 | macOS (Apple Silicon) | build from source — see [INSTALL.md](./INSTALL.md) | — |
-| Linux (Debian/Ubuntu) | `kovix_1.7.0_amd64.deb` | ~150 MB |
-| Linux (Fedora/RHEL) | `kovix-1.7.0.x86_64.rpm` | ~150 MB |
-| Linux (universal) | `kovix-1.7.0.tar.gz` | ~140 MB |
+| Linux (Debian/Ubuntu) | `kovix_1.7.1_amd64.deb` | ~150 MB |
+| Linux (Fedora/RHEL) | `kovix-1.7.1.x86_64.rpm` | ~150 MB |
+| Linux (universal) | `kovix-1.7.1.tar.gz` | ~140 MB |
 
 Every release ships a `checksums.txt` alongside the assets — verify the download before installing:
 
@@ -38,7 +38,7 @@ sha256sum -c checksums.txt --ignore-missing
 
 Kovix is an AI-native development environment built on a VS Code fork. The headline feature is an autonomous coding agent that lives in a right-side panel — like Cursor's composer or Claude Code, but embedded in the IDE rather than the terminal. The agent has its own "OS": it can read and write files, execute terminal commands, search the codebase semantically, browse the web, call MCP servers, and spawn sub-agents — all with human approval before applying changes.
 
-**v1.7.0 ships the Teal Identity release** — the entire workbench (editor, activity bar, sidebar, status bar, command palette, dialogs) is re-themed around a single signature palette: teal `#14B8A6` accents on a blue-black `#0B1115` canvas. The theme is auto-applied on first launch — no manual theme selection needed. See [KOVIX_DESIGN_SYSTEM_FOUNDATION.md](./KOVIX_DESIGN_SYSTEM_FOUNDATION.md) for the full design system specification.
+**v1.7.1 ships the Teal Identity release** — the entire workbench (editor, activity bar, sidebar, status bar, command palette, dialogs) is re-themed around a single signature palette: teal `#14B8A6` accents on a blue-black `#0B1115` canvas. The theme is auto-applied on first launch — no manual theme selection needed. See [KOVIX_DESIGN_SYSTEM_FOUNDATION.md](./KOVIX_DESIGN_SYSTEM_FOUNDATION.md) for the full design system specification.
 
 ### Why Kovix instead of Cursor or Claude Code?
 

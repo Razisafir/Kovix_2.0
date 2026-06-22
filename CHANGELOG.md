@@ -1,5 +1,62 @@
 # Changelog
 
+## v1.7.1 — Teal Identity Release (Launch Optimization)
+
+**Release date:** 2026-06-22
+
+Cleanup and optimization pass on top of v1.7.0 to get the repo launch-ready. No behavioral changes — only asset/script/doc/branch hygiene.
+
+### Removed (legacy / duplicates / pre-rebrand leftovers)
+
+- **10 legacy `construct-*` scripts** (`scripts/construct-cli.{sh,bat}`, `construct-server.{sh,bat,js}`, `construct-web.{sh,bat,js}`, `construct.{sh,bat}`) — byte-identical duplicates of the `code-*` scripts that the build pipeline and tests actually use. Not referenced anywhere in `package.json`, `build/`, `gulpfile.js`, tests, or docs.
+- **7 unused branding assets** (`resources/win32/code.ico`, `resources/win32/code_150x150.png`, `resources/win32/code_70x70.png`, `resources/darwin/code.icns`, `resources/linux/code.png`, `resources/server/code-192.png`, `resources/server/code-512.png`) — the build pipeline (`build/lib/electron.{js,ts}`, `build/gulpfile.vscode.{win32,linux}.js`, `build/win32/code.iss`) only references the `kovix.*` equivalents.
+- **50 stale remote branches** — `dependabot/*`, `enhancement/phase-*`, `integration/phase-*`, `fix/F-00X-*`, `mvp/*`, `vscode-fork-main`, `update-license`, `feat/kovix-brand-system`, `feature/{doc-to-skill-converter,mvp-core-services}`, `test/e2e-mock-llm-verification`. Down from 80+ to 4 (`main`, `feature/grand-redesign` [since deleted], `release/v1.7.0`).
+- **1 stale local branch** — `backup/my-grand-redesign-attempt` (my own backup; main has all the fixes).
+- **PR #132** (`feature/grand-redesign`) — closed. The 3-commit grand redesign had failing CI due to the pre-existing `@electron/get` ESM/CJS interop break (issue #120). Work is preserved in git history; the surgical Phase 1 fix (`agentLoop.ts` verification gap, 23 lines, commit `d554d14d`) is a candidate for cherry-pick into v1.8.0.
+- **8 legacy `.github/` config files** — `pull_request_template.md` (duplicate of `PULL_REQUEST_TEMPLATE.md`), `commands.json`, `commands.yml`, `classifier.json`, `insiders.yml`, `similarity.yml`, `commands/codespaces_issue.yml`, `endgame/insiders.yml`. All leftover VS Code bot configs that don't apply to Kovix.
+- **1 stale CODEOWNERS** — pointed at `@jrieken` and `@mjbvz` (Microsoft VS Code team members) for `src/vscode-dts/vscode.d.ts`. Not applicable to Kovix.
+- **1 disabled workflow file** — `.github/workflows/rich-navigation.yml.off` (Rich Code Navigation indexing for VS Code's internal Azure pipeline).
+- **14 pre-launch internal docs** moved from `docs/internal/` to `docs/archive/internal-pre-launch/` — `BLOCKERS.md`, `BUILD_CHECKSUMS.txt`, `CodeQL.yml`, `E2E_VERIFICATION.md`, `ENVIRONMENT.md`, `FEATURE_GAP_REPORT.md`, `GROUND_TRUTH.md`, `GROUND_TRUTH_DESKTOP.md`, `LAUNCH_CHECKLIST.md`, `LAUNCH_TEST_REPORT.md`, `STUBS.md`, `TEST_RESULTS.md`, `VERIFICATION_REPORT.md`, `WORKLOG_PHASE10.md`. Pre-launch artifacts kept in archive for history. `docs/internal/SECURITY_AUDIT.md` is kept (still referenced by `SECURITY.md`).
+- **2 pre-launch design docs** moved from repo root to `docs/archive/` — `KOVIX_COMPETITIVE_VISUAL_REVIEW.md`, `KOVIX_UI_AUDIT.md`.
+- **Legacy `construct-ci.yml` workflow** (workflow ID 289256706) — disabled via GitHub API. The file was already deleted from the repo in a prior commit; the workflow registration lingered on GitHub's side.
+
+### Fixed (Kovix branding references that still pointed at deleted `code.*` files)
+
+- `src/vs/platform/windows/electron-main/windows.ts` — Linux dev-launch icon path: `resources/linux/code.png` → `resources/linux/kovix.png`; Windows dev-launch icon path: `resources/win32/code_150x150.png` → `resources/win32/kovix_150x150.png`.
+- `src/vs/code/browser/workbench/workbench.html` — `apple-mobile-web-app-title`: `Construct` → `Kovix`; `apple-touch-icon`: `code-192.png` → `kovix-192.png`.
+- `src/vs/code/browser/workbench/workbench-dev.html` — same two fixes.
+- `package.json` — `scripts.web` deprecation message: now points at `code-server` / `code-web` instead of the deleted `construct-server` / `construct-web`.
+- `README.md` — Linux download table versions `1.6.0` → `1.7.1` (3 entries: `.deb`, `.rpm`, `.tar.gz`); added a "Teal Identity release" paragraph under "What is Kovix?".
+- `.gitignore` — explicitly excluded `vendor-skills/` (external skill repos cloned for reference, not part of Kovix).
+
+### Verification
+
+- **Launch readiness check:** 52 PASS / 1 WARN / 0 FAIL → ✅ READY TO LAUNCH
+- **Applied addyosmani/agent-skills checklists:**
+  - `shipping-and-launch` — pre-launch checklist (code quality, security, docs, infra)
+  - `security-and-hardening` — 7-pattern secret scan (GitHub PAT, `ghp_`, `sk-ant-`, `sk-or-`, `nvapi-`, AWS access key, private key blocks) → 0 hits
+  - `documentation-and-adrs` — README, CHANGELOG, design system foundation, release/install/security/privacy docs verified
+  - `code-review-and-quality` — 5-axis review of the cleanup diff (correctness, readability, architecture, security, performance) → all PASS
+  - `deprecation-and-migration` — construct → kovix cutover decision log
+- **Full report:** `download/KOVIX-v1.7.0-launch-readiness-report.md` (still applies to v1.7.1 — no behavioral changes)
+
+### Changed Files
+
+- `package.json` — version bump 1.7.0 → 1.7.1; `scripts.web` deprecation message updated
+- `README.md` — version badge v1.7.0 → v1.7.1; Linux download table 1.6.0 → 1.7.1; added teal identity paragraph
+- `.gitignore` — added `vendor-skills/` exclusion
+- `src/vs/platform/windows/electron-main/windows.ts` — 2 icon paths fixed
+- `src/vs/code/browser/workbench/workbench.html` — 2 branding refs fixed
+- `src/vs/code/browser/workbench/workbench-dev.html` — 2 branding refs fixed
+- 25 files total changed, +16/-577 lines (deletions dominate due to removed duplicate scripts)
+
+### Migration Notes
+
+- No user-facing behavioral changes. Existing v1.7.0 installs continue to work and auto-update to v1.7.1.
+- If you forked from a deleted branch, the commits are preserved in git history (recoverable via `git reflog` for 90 days after branch deletion).
+
+---
+
 ## v1.7.0 — Teal Identity auto-applied on launch
 
 **Release date:** 2026-06-22
