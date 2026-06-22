@@ -1,5 +1,55 @@
 # Changelog
 
+## v1.7.0 — Teal Identity auto-applied on launch
+
+**Release date:** 2026-06-22
+
+The teal redesign you did on June 20 (`[design-system]` commits — Phase A through Prompt 5) was shipping in v1.6.5, but it was NOT visible on first launch because of two silent bugs. v1.7.0 fixes both — you now see teal the moment you open Kovix.
+
+### Root Cause
+
+**Bug 1 — Theme name mismatch (silent fallback to Dark+):**
+- `src/vs/workbench/services/themes/common/workbenchThemeService.ts` line 47 had `COLOR_THEME_DARK = 'Construct Dark'`
+- But the `theme-kovix` extension's `package.json` declares the theme label as `'Kovix Dark'` (renamed during the v1.5.0 rebrand)
+- Result: `findThemeBySettingsId('Construct Dark')` returned `undefined` → VS Code silently fell back to `Dark+` → no teal accent, no blue-black background, no Kovix identity
+
+**Bug 2 — Theme JSON still had the OLD violet palette:**
+- `extensions/theme-kovix/themes/construct-dark-color-theme.json` still had `#6E42FF44` (violet) for `editor.selectionBackground` and `#8A63FF` (violet) for `editorCursor.foreground` from before the Volt→teal migration
+- The teal tokens existed in `kovix-tokens.css` and `kovix-brand.css` (CSS-level overrides) but the THEME JSON that VS Code's theme service reads never got updated
+- Result: even if the theme name had matched, the syntax colors would have been violet, not teal
+
+### Fix
+
+1. `src/vs/workbench/services/themes/common/workbenchThemeService.ts`:
+   - `COLOR_THEME_DARK = 'Construct Dark'` → `COLOR_THEME_DARK = 'Kovix Dark'`
+
+2. `extensions/theme-kovix/themes/construct-dark-color-theme.json`:
+   - Merged the teal syntax theme values from `src/vs/workbench/browser/media/kovix-syntax.theme.json` into the existing theme JSON
+   - Kept all 323 VS Code UI color keys from the old theme (full UI coverage)
+   - Overrode the editor palette with teal values: `editor.background = #0B1115`, `editorCursor.foreground = #14B8A6`, `editor.selectionBackground = #14B8A633`, etc.
+   - Final: 338 colors, 21 tokenColors, all teal
+
+### What you see now on first launch (no manual theme selection needed)
+
+- Teal `#14B8A6` accent color throughout (cursor, selection, active tab, focus rings)
+- Blue-black `#0B1115` editor background (not VS Code's gray `#1E1E1E`)
+- Blue-black panel surfaces `#121A20` / `#1A242C`
+- The full Kovix design-system v2 visual identity
+
+### Changed Files
+- `src/vs/workbench/services/themes/common/workbenchThemeService.ts` — 1-line fix: theme name `'Construct Dark'` → `'Kovix Dark'`
+- `extensions/theme-kovix/themes/construct-dark-color-theme.json` — merged teal syntax theme (559 insertions, 362 deletions)
+- `package.json`, `package-lock.json`, `README.md` — version bumped 1.6.5 → 1.7.0
+
+### Migration Notes
+- If you had previously selected a theme manually, your selection persists — no change
+- If you were on the default (Dark+), you'll now get Kovix Dark automatically on first launch
+- To switch back: `Ctrl+K Ctrl+T` → pick any other theme
+
+---
+
+
+
 ## v1.6.5 — Fix portable zip path + non-fatal verification steps
 
 **Release date:** 2026-06-22
