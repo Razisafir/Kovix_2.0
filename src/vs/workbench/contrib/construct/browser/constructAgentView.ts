@@ -52,7 +52,7 @@ import './media/kovixAgent.css';
 // badges, error states, milestone pause redesign, onboarding step treatment.
 import './media/kovixAgentV2.css';
 
-type ExecutionState = 'idle' | 'planning' | 'refining' | 'awaiting_approval' | 'executing' | 'paused_at_milestone' | 'complete' | 'error' | 'stopped';
+type ExecutionState = 'idle' | 'planning' | 'refining' | 'awaiting_approval' | 'executing' | 'verifying' | 'verification_failed' | 'paused_at_milestone' | 'complete' | 'error' | 'stopped';
 
 type ContextScope = 'currentFile' | 'workspace' | 'selectedText';
 
@@ -231,21 +231,21 @@ export class ConstructAgentViewPane extends ViewPane {
                 const subMode = dom.$('span.kovix-agent__subline-seg');
                 subMode.textContent = 'General';
                 subMode.title = 'Switch agent mode';
-                subMode.onclick = () => { this.commandService.executeCommand('construct.switchAgentMode'); };
+                subMode.onclick = () => { this.commandService.executeCommand('kovix.switchAgentMode'); };
                 const subDot1 = dom.$('span');
                 subDot1.textContent = ' \u00b7 ';
                 subDot1.style.color = 'var(--kovix-text-tertiary)';
                 const subProvider = dom.$('span.kovix-agent__subline-seg');
                 subProvider.textContent = 'No Provider';
                 subProvider.title = 'Switch LLM provider';
-                subProvider.onclick = () => { this.commandService.executeCommand('construct.switchProvider'); };
+                subProvider.onclick = () => { this.commandService.executeCommand('kovix.switchProvider'); };
                 const subDot2 = dom.$('span');
                 subDot2.textContent = ' \u00b7 ';
                 subDot2.style.color = 'var(--kovix-text-tertiary)';
                 const subModel = dom.$('span.kovix-agent__subline-seg');
                 subModel.textContent = 'No Model';
                 subModel.title = 'Select model';
-                subModel.onclick = () => { this.commandService.executeCommand('construct.selectModel'); };
+                subModel.onclick = () => { this.commandService.executeCommand('kovix.selectModel'); };
                 this.agentSublineEl.appendChild(subMode);
                 this.agentSublineEl.appendChild(subDot1);
                 this.agentSublineEl.appendChild(subProvider);
@@ -278,11 +278,11 @@ export class ConstructAgentViewPane extends ViewPane {
                 settingsBtn.setAttribute('aria-label', 'API settings');
                 settingsBtn.onclick = () => {
                         // Kovix v1.3.1: route the gear button to the friendly QuickInput-based
-                        // key manager (construct.manageApiKeys) instead of the raw JSON settings
+                        // key manager (kovix.manageApiKeys) instead of the raw JSON settings
                         // page. The key manager walks the user through provider selection, key
                         // entry, validation, and activation — far more discoverable than a
                         // settings.json text filter.
-                        this.commandService.executeCommand('construct.manageApiKeys');
+                        this.commandService.executeCommand('kovix.manageApiKeys');
                 };
 
                 const controlCenterBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
@@ -290,7 +290,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 controlCenterBtn.title = 'Agent Control Center';
                 controlCenterBtn.setAttribute('aria-label', 'Agent Control Center');
                 controlCenterBtn.onclick = () => {
-                        this.commandService.executeCommand('construct.openControlCenter');
+                        this.commandService.executeCommand('kovix.openControlCenter');
                 };
 
                 actions.appendChild(newChatBtn);
@@ -313,37 +313,37 @@ export class ConstructAgentViewPane extends ViewPane {
                 modeBtn.textContent = '\u21C5';
                 modeBtn.title = 'Switch Agent Mode (Ctrl+Shift+M)';
                 modeBtn.setAttribute('aria-label', 'Switch agent mode');
-                modeBtn.onclick = () => { this.commandService.executeCommand('construct.switchAgentMode'); };
+                modeBtn.onclick = () => { this.commandService.executeCommand('kovix.switchAgentMode'); };
 
                 const swarmBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
                 swarmBtn.textContent = '\u2B21';
                 swarmBtn.title = 'Open Swarm Dashboard (Ctrl+Shift+S)';
                 swarmBtn.setAttribute('aria-label', 'Open swarm dashboard');
-                swarmBtn.onclick = () => { this.commandService.executeCommand('construct.openSwarm'); };
+                swarmBtn.onclick = () => { this.commandService.executeCommand('kovix.openSwarm'); };
 
                 const skillsBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
                 skillsBtn.textContent = '\u25AE';
                 skillsBtn.title = 'View installed skills';
                 skillsBtn.setAttribute('aria-label', 'View installed skills');
-                skillsBtn.onclick = () => { this.commandService.executeCommand('construct.viewSkill'); };
+                skillsBtn.onclick = () => { this.commandService.executeCommand('kovix.viewSkill'); };
 
                 const mcpBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
                 mcpBtn.textContent = '\u229E';
                 mcpBtn.title = 'Open MCP Marketplace';
                 mcpBtn.setAttribute('aria-label', 'Open MCP marketplace');
-                mcpBtn.onclick = () => { this.commandService.executeCommand('construct.mcp.openMarketplace'); };
+                mcpBtn.onclick = () => { this.commandService.executeCommand('kovix.mcp.openMarketplace'); };
 
                 const autonomousBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
                 autonomousBtn.textContent = '\uD83D\uDE80';
                 autonomousBtn.title = 'Start Autonomous Build (idea \u2192 app wizard)';
                 autonomousBtn.setAttribute('aria-label', 'Start autonomous build');
-                autonomousBtn.onclick = () => { this.commandService.executeCommand('construct.autonomousBuild'); };
+                autonomousBtn.onclick = () => { this.commandService.executeCommand('kovix.autonomousBuild'); };
 
                 const ponytailBtn = dom.$('button.kovix-icon-btn') as HTMLButtonElement;
                 ponytailBtn.textContent = '\uD83D\uDCE7';
                 ponytailBtn.title = 'Ponytail: set lazy-dev mode';
                 ponytailBtn.setAttribute('aria-label', 'Ponytail: set mode');
-                ponytailBtn.onclick = () => { this.commandService.executeCommand('construct.ponytailSetMode'); };
+                ponytailBtn.onclick = () => { this.commandService.executeCommand('kovix.ponytailSetMode'); };
 
                 secondaryActions.appendChild(modeBtn);
                 secondaryActions.appendChild(swarmBtn);
@@ -377,14 +377,14 @@ export class ConstructAgentViewPane extends ViewPane {
                 this.modeBadgeEl.textContent = 'GENERAL';
                 this.modeBadgeEl.title = 'Switch agent mode';
                 this.modeBadgeEl.onclick = () => {
-                        this.commandService.executeCommand('construct.switchAgentMode');
+                        this.commandService.executeCommand('kovix.switchAgentMode');
                 };
 
                 this.modelPickerBtn = dom.$('button.kovix-model-pill') as HTMLButtonElement;
                 this.modelPickerBtn.title = 'Select model';
                 this.modelPickerBtn.setAttribute('aria-label', 'Select model');
                 this.modelPickerBtn.onclick = () => {
-                        this.commandService.executeCommand('construct.selectModel');
+                        this.commandService.executeCommand('kovix.selectModel');
                 };
                 this.updateModelPickerLabel();
 
@@ -397,18 +397,18 @@ export class ConstructAgentViewPane extends ViewPane {
                         this.memoryPillEl.classList.add('is-connected');
                 }
                 this.memoryPillEl.onclick = () => {
-                        this.commandService.executeCommand('construct.openMemoryGraph');
+                        this.commandService.executeCommand('kovix.openMemoryGraph');
                 };
 
                 this.ponytailBadgeEl = dom.$('.kovix-ponytail-badge');
-                const ponytailMode = this.configurationService.getValue<string>('construct.ponytail.mode') ?? 'off';
+                const ponytailMode = this.configurationService.getValue<string>('kovix.ponytail.mode') ?? 'off';
                 this.ponytailBadgeEl.textContent = `PONYTAIL \u00b7 ${ponytailMode.toUpperCase()}`;
                 if (ponytailMode === 'off') {
                         this.ponytailBadgeEl.classList.add('is-off');
                 }
                 this.ponytailBadgeEl.title = 'Ponytail lazy-developer mode — click to change';
                 this.ponytailBadgeEl.onclick = () => {
-                        this.commandService.executeCommand('construct.ponytailSetMode');
+                        this.commandService.executeCommand('kovix.ponytailSetMode');
                 };
 
                 modelBar.appendChild(this.modeBadgeEl);
@@ -572,7 +572,7 @@ export class ConstructAgentViewPane extends ViewPane {
 
                         const hasAIProvider = !!this.aiService.activeProvider;
 
-                        const refinementEnabled = this.configurationService.getValue<boolean>('construct.ideaRefinement.enabled');
+                        const refinementEnabled = this.configurationService.getValue<boolean>('kovix.ideaRefinement.enabled');
                         if (refinementEnabled !== false && hasAIProvider) {
                                 await this.runRefinementFlow(text);
                                 return;
@@ -580,7 +580,7 @@ export class ConstructAgentViewPane extends ViewPane {
 
                         if (!hasAIProvider) {
                                 this.addAgentMessage(
-                                        '[SETUP] No AI provider configured yet. [Add an API key](command:construct.manageApiKeys) to use the Kovix agent — NVIDIA NIM, OpenAI, Anthropic, OpenRouter, Groq, Together, Mistral, Gemini, DeepSeek, or local Ollama / LM Studio.',
+                                        '[SETUP] No AI provider configured yet. [Add an API key](command:kovix.manageApiKeys) to use the Kovix agent — NVIDIA NIM, OpenAI, Anthropic, OpenRouter, Groq, Together, Mistral, Gemini, DeepSeek, or local Ollama / LM Studio.',
                                         'error'
                                 );
                                 this.notificationService.warn('No AI provider configured. Click the gear icon or run "Kovix: Manage API Keys" to add one.');
@@ -641,9 +641,9 @@ export class ConstructAgentViewPane extends ViewPane {
                 }));
                 this.refreshModelPickerInfo();
 
-                // --- Wire construct.newChat to clear ---
+                // --- Wire kovix.newChat to clear ---
                 this._register(this.commandService.onWillExecuteCommand(e => {
-                        if (e.commandId === 'construct.newChat') {
+                        if (e.commandId === 'kovix.newChat') {
                                 this.clearMessages();
                         }
                 }));
@@ -775,7 +775,7 @@ export class ConstructAgentViewPane extends ViewPane {
 
                 // --- /skill-create : open the create flow ---
                 if (cmd === 'skill-create') {
-                        this.commandService.executeCommand('construct.createSkillFromDocument');
+                        this.commandService.executeCommand('kovix.createSkillFromDocument');
                         return true;
                 }
 
@@ -789,30 +789,30 @@ export class ConstructAgentViewPane extends ViewPane {
                                 { placeHolder: 'Forget ALL stored memories? This cannot be undone.' },
                         );
                         if (confirm?.label.startsWith('Yes')) {
-                                this.commandService.executeCommand('construct.forgetAllMemories');
+                                this.commandService.executeCommand('kovix.forgetAllMemories');
                         }
                         return true;
                 }
 
                 // --- /memory : show privacy posture ---
                 if (cmd === 'memory') {
-                        this.commandService.executeCommand('construct.openMemorySettings');
+                        this.commandService.executeCommand('kovix.openMemorySettings');
                         return true;
                 }
 
                 // --- /swarm : open swarm spawner ---
                 if (cmd === 'swarm') {
-                        this.commandService.executeCommand('construct.openSwarm');
+                        this.commandService.executeCommand('kovix.openSwarm');
                         return true;
                 }
 
                 // --- /idea : autonomous idea→app wizard ---
                 if (cmd === 'idea' && args) {
-                        this.commandService.executeCommand('construct.autonomousBuild', args);
+                        this.commandService.executeCommand('kovix.autonomousBuild', args);
                         return true;
                 }
                 if (cmd === 'idea') {
-                        this.commandService.executeCommand('construct.autonomousBuild');
+                        this.commandService.executeCommand('kovix.autonomousBuild');
                         return true;
                 }
 
@@ -1152,6 +1152,36 @@ export class ConstructAgentViewPane extends ViewPane {
                                                 fullText += `\n\n\u2705 Milestone completed: ${event.milestone.name}`;
                                                 break;
 
+                                        // ──────────────────────────────────────────────────────────────────────
+                                        // Phase 3.1 — Verification status surface.
+                                        // The agent has declared "done"; the harness is now running a real
+                                        // check (test/build/typecheck) before the milestone is allowed to
+                                        // advance. The chip + status bar reflect this in real time.
+                                        // ──────────────────────────────────────────────────────────────────────
+                                        case 'verification_start':
+                                                this.setExecutionState('verifying');
+                                                fullText += `\n\n\uD83D\uDD0D Verifying: ${event.command}`;
+                                                break;
+
+                                        case 'verification_result': {
+                                                if (event.unverified) {
+                                                        // No test/build/typecheck available — mark unverified, not failed.
+                                                        // Ignite-orange chip in the UI (rendered by updateStatusIndicator),
+                                                        // warning-toned but not alarming.
+                                                        fullText += `\n\n\u26A0\uFE0F Unverified: ${event.output}`;
+                                                } else if (event.passed) {
+                                                        fullText += `\n\n\u2705 Verification passed`;
+                                                } else {
+                                                        // Verification failed — the agent loop's runVerification() already
+                                                        // fired an 'error' event with the failure detail. We just mark
+                                                        // the state here; the error event handler above adds the
+                                                        // user-visible failure text.
+                                                        this.setExecutionState('verification_failed');
+                                                        fullText += `\n\n\u274C Verification failed`;
+                                                }
+                                                break;
+                                        }
+
                                         case 'complete':
                                                 fullText += `\n\n[OK] Task complete`;
                                                 break;
@@ -1160,9 +1190,9 @@ export class ConstructAgentViewPane extends ViewPane {
                                                 if (event.text.includes('Rate limited')) {
                                                         fullText += `\n\n[WAIT] ${event.text}`;
                                                 } else if (event.text.includes('API key')) {
-                                                        fullText += `\n\n[KEY] ${event.text} [Open Settings](command:construct.openApiSettings)`;
+                                                        fullText += `\n\n[KEY] ${event.text} [Open Settings](command:kovix.openApiSettings)`;
                                                 } else if (event.text.includes('Connection')) {
-                                                        fullText += `\n\n[NET] ${event.text} [Retry](command:construct.focusPanel)`;
+                                                        fullText += `\n\n[NET] ${event.text} [Retry](command:kovix.focusPanel)`;
                                                 } else if (event.text.includes('[STOP]')) {
                                                         fullText += `\n\n[STOP] Stopped by user`;
                                                 } else {
@@ -1281,7 +1311,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 this.executionState = state;
                 this.updateStatusIndicator();
 
-                const isRunning = state === 'planning' || state === 'executing';
+                const isRunning = state === 'planning' || state === 'executing' || state === 'verifying';
                 this.sendBtn.style.display = isRunning ? 'none' : 'inline-block';
                 this.stopBtn.style.display = isRunning ? 'inline-block' : 'none';
                 this.inputBox.disabled = isRunning;
@@ -1290,10 +1320,14 @@ export class ConstructAgentViewPane extends ViewPane {
                 // actively running. This is the highest-frequency brand touchpoint a user
                 // sees — it should feel alive, not decorative. The CSS class is defined
                 // in kovix-tokens.css and toggled here for the duration of the run only.
-                const isAgentRunning = state === 'planning' || state === 'refining' || state === 'executing';
+                const isAgentRunning = state === 'planning' || state === 'refining' || state === 'executing' || state === 'verifying';
                 const statusbar = document.querySelector('.monaco-workbench .part.statusbar');
                 if (statusbar) {
                         statusbar.classList.toggle('kovix-status-running', isAgentRunning);
+                        // Phase 3.1 — Verifying state gets a distinct class so the status
+                        // bar can shift to a slightly different shade (Ignite-orange tint)
+                        // to signal "harness is checking the agent's work" vs "agent is running".
+                        statusbar.classList.toggle('kovix-status-verifying', state === 'verifying');
                 }
 
                 if (state === 'idle') {
@@ -1307,6 +1341,10 @@ export class ConstructAgentViewPane extends ViewPane {
                         this.inputBox.placeholder = 'Planning...';
                 } else if (state === 'executing') {
                         this.inputBox.placeholder = 'Executing...';
+                } else if (state === 'verifying') {
+                        // Phase 3.1 — distinct placeholder so the user knows the harness
+                        // (not the agent) is in control.
+                        this.inputBox.placeholder = 'Verifying — running real check...';
                 } else if (state === 'awaiting_approval') {
                         this.inputBox.placeholder = 'Awaiting approval...';
                 }
@@ -1319,6 +1357,14 @@ export class ConstructAgentViewPane extends ViewPane {
                         refining: { text: 'REFINING', cls: 'kovix-msg__status--thinking', barCls: 'is-refining' },
                         awaiting_approval: { text: 'AWAITING APPROVAL', cls: 'kovix-msg__status--awaiting', barCls: 'is-awaiting' },
                         executing: { text: 'EXECUTING', cls: 'kovix-msg__status--working', barCls: 'is-executing' },
+                        // Phase 3.1 — Verifying chip. Distinct from executing so the user can
+                        // see "the harness is checking the agent's work" vs "the agent is running".
+                        // Uses the same working animation but a different label.
+                        verifying: { text: 'VERIFYING', cls: 'kovix-msg__status--working', barCls: 'is-verifying' },
+                        // Phase 3.1 — VerificationFailed. Distinct from generic error so the
+                        // user can see "the agent said done but the test disagreed" — this is
+                        // a trust signal, not just a crash.
+                        verification_failed: { text: 'VERIFICATION FAILED', cls: 'kovix-msg__status--error', barCls: 'is-verification-failed' },
                         paused_at_milestone: { text: 'PAUSED AT MILESTONE', cls: 'kovix-msg__status--awaiting', barCls: 'is-paused' },
                         complete: { text: 'COMPLETE', cls: 'kovix-msg__status--done', barCls: 'is-complete' },
                         error: { text: 'ERROR', cls: 'kovix-msg__status--error', barCls: 'is-error' },
@@ -1331,7 +1377,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 // v2.0: Drive the persistent status bar with the same state.
                 if (this.statusBarEl) {
                         // Clear all is-* classes, then add the current one
-                        this.statusBarEl.classList.remove('is-idle', 'is-planning', 'is-executing', 'is-refining', 'is-paused', 'is-awaiting', 'is-complete', 'is-error');
+                        this.statusBarEl.classList.remove('is-idle', 'is-planning', 'is-executing', 'is-refining', 'is-paused', 'is-awaiting', 'is-complete', 'is-error', 'is-verifying', 'is-verification-failed');
                         this.statusBarEl.classList.add(config.barCls);
                         if (this.statusBarLabelEl) { this.statusBarLabelEl.textContent = config.text; }
                         if (this.statusBarTaskEl) {

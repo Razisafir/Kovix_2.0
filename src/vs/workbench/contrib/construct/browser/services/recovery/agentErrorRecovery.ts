@@ -39,6 +39,11 @@ const ERROR_CLASSIFICATION_PATTERNS: readonly [RegExp, StepErrorType][] = [
 	[/SyntaxError|syntax error|unexpected token/i, 'syntax_error'],
 	[/ECONNREFUSED|ETIMEDOUT|network/i, 'network_error'],
 	[/timed out/i, 'timeout'],
+	// Phase 1.3 — verification failures (test/build/typecheck returned non-zero)
+	// are normally classified explicitly by the harness, but if the agent
+	// itself surfaces a verification failure message in a tool result, we
+	// classify it the same way.
+	[/\[verification_failed\]|verification failed|tests? failed|build failed/i, 'verification_failed'],
 ];
 
 /**
@@ -320,6 +325,7 @@ export class AgentErrorRecoveryService extends Disposable implements IAgentError
 			case 'syntax_error': return 'Syntax Error';
 			case 'network_error': return 'Network Error';
 			case 'timeout': return 'Timeout';
+			case 'verification_failed': return 'Verification Failed';
 			case 'unknown': return 'Unknown Error';
 		}
 	}

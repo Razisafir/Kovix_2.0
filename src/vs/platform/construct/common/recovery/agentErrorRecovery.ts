@@ -8,7 +8,7 @@
 import { createDecorator } from '../../../instantiation/common/instantiation.js';
 import { Event } from '../../../../base/common/event.js';
 
-export const IAgentErrorRecovery = createDecorator<IAgentErrorRecovery>('construct.agentErrorRecovery');
+export const IAgentErrorRecovery = createDecorator<IAgentErrorRecovery>('kovix.agentErrorRecovery');
 
 /**
  * The type of error that occurred during a step execution.
@@ -20,6 +20,7 @@ export type StepErrorType =
 	| 'syntax_error'        // Generated code has syntax errors
 	| 'network_error'       // Network request failed (API, npm, etc.)
 	| 'timeout'             // Command or operation timed out
+	| 'verification_failed' // Agent claimed 'done' but harness's test/build check returned non-zero (Phase 1.3)
 	| 'unknown';            // Unclassified error
 
 /**
