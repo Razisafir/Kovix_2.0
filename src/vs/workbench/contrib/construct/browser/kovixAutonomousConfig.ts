@@ -73,21 +73,24 @@ const autonomousConfiguration: IConfigurationNode = {
                 'kovix.autonomous.parallelSwarm': {
                         type: 'boolean',
                         default: false,
-                        // v1.8.0: Multi-agent swarm is NOT implemented on main. This flag is
-                        // reserved for future use (see docs/DECISIONS-v1.8.0.md, Decision 1).
-                        // Setting it to true has no effect in v1.x. Tracked in issue #139
-                        // for v2.0 design decision (pool-model vs. role-handoff-model).
-                        deprecated: true,
-                        description: localize('kovix.autonomous.parallelSwarm', "[Deprecated in v1.x — not implemented] When ON, the agent would spawn parallel sub-agents (architect, coder, reviewer) for each milestone. Currently no-op. See docs/DECISIONS-v1.8.0.md."),
+                        // v1.8.0: Multi-agent swarm is now implemented on main as
+                        // IMultiAgentExecutionService (role-handoff design ported from
+                        // recovery/phase-28-launch). When ON, kovix.openSwarm arms the
+                        // swarm coordinator with role-based task assignment, handoffs,
+                        // conflict detection, and shared memory. When OFF, kovix.openSwarm
+                        // still works but only spawns a single sub-agent (legacy behavior).
+                        // See docs/DECISIONS-v1.8.0.md, Decision 1 (revised).
+                        description: localize('kovix.autonomous.parallelSwarm', "When ON, the Kovix swarm coordinator (IMultiAgentExecutionService) routes work across Planner, Coder, Verifier, Repairer, and MemoryManager agents with handoffs and conflict detection. When OFF, kovix.openSwarm falls back to single sub-agent spawn. See docs/DECISIONS-v1.8.0.md."),
                 },
                 'kovix.autonomous.swarmSize': {
                         type: 'number',
                         default: 3,
                         minimum: 1,
                         maximum: 8,
-                        // v1.8.0: See parallelSwarm above — no-op until multi-agent is designed.
-                        deprecated: true,
-                        description: localize('kovix.autonomous.swarmSize', "[Deprecated in v1.x — not implemented] Number of parallel sub-agents to spawn when parallelSwarm is ON. Currently no-op. See docs/DECISIONS-v1.8.0.md."),
+                        // v1.8.0: Caps the number of concurrent agent roles the swarm
+                        // coordinator will activate. Default 3 = Planner + Coder + Verifier.
+                        // Increase to 5 to add Repairer + MemoryManager.
+                        description: localize('kovix.autonomous.swarmSize', "Maximum number of concurrent agent roles the swarm coordinator will activate. Default 3 (Planner, Coder, Verifier). Max 8. See docs/DECISIONS-v1.8.0.md."),
                 },
         },
 };

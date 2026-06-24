@@ -118,6 +118,8 @@ import { CreditSystemService, CostGovernorEnhancedService } from './services/pri
 // Phase 4 port (from recovery/phase-28-launch): Execution Sanity Validation
 import { IExecutionSanityService } from '../../../../platform/construct/common/executionSanity.js';
 import { ExecutionSanityService } from './services/executionSanityService.js';
+import { IMultiAgentExecutionService, AgentRole } from '../../../../platform/construct/common/multiAgentExecution.js';
+import { MultiAgentExecutionService } from './services/multiAgentExecutionService.js';
 import { SkillRegistryService } from './services/skills/skillRegistryService.js';
 import { IEditorService } from '../../../services/editor/common/editorService.js';
 import { IFileService } from '../../../../platform/files/common/files.js';
@@ -1064,6 +1066,7 @@ registerSingleton(ICostGovernorService, CostGovernorService, InstantiationType.D
 registerSingleton(ICreditSystem, CreditSystemService, InstantiationType.Delayed);
 registerSingleton(ICostGovernor, CostGovernorEnhancedService, InstantiationType.Delayed);
 registerSingleton(IExecutionSanityService, ExecutionSanityService, InstantiationType.Delayed);
+registerSingleton(IMultiAgentExecutionService, MultiAgentExecutionService, InstantiationType.Delayed);
 
 // --- Feature Build: Project Commands -----------------------------------------
 registerAction2(class NewProjectAction extends Action2 {
@@ -1951,11 +1954,50 @@ registerAction2(class OpenSwarmAction extends Action2 {
                         },
                 });
         }
-        run(accessor: ServicesAccessor): void {
-                // Open the control center (which shows live sub-agents) and prompt
-                // the user to spawn a sub-agent.
-                accessor.get(IViewsService).openView('kovix.controlCenter', true);
-                accessor.get(ICommandService).executeCommand('kovix.spawnSubAgent');
+        async run(accessor: ServicesAccessor): Promise<void> {
+                const viewsService = accessor.get(IViewsService);
+                const commandService = accessor.get(ICommandService);
+                const notificationService = accessor.get(INotificationService);
+                const quickInput = accessor.get(IQuickInputService);
+                const swarm = accessor.get(IMultiAgentExecutionService);
+
+                // 1. Make sure the AI provider is configured — swarm agents need an LLM.
+                const aiService = accessor.get(IConstructAIService);
+                if (!aiService.activeProvider) {
+                        notificationService.warn('Kovix: No AI provider configured. Add an API key (NVIDIA NIM, OpenAI, Anthropic) before launching a swarm.');
+                        commandService.executeCommand('kovix.manageApiKeys');
+                        return;
+                }
+
+                // 2. Ask the user for the swarm's goal. Each role gets a slice of this goal.
+                const goal = await quickInput.input({
+                        prompt: 'Describe the goal for the agent swarm. Kovix will route slices of it to Planner, Coder, Verifier, Repairer, and MemoryManager agents.',
+                        placeHolder: 'e.g. Refactor src/vs/workbench/contrib/construct/browser/services/agent into smaller modules with tests',
+                });
+                if (!goal) { return; }
+
+                // 3. Open the control center so the user can watch progress.
+                viewsService.openView('kovix.controlCenter', true);
+
+                // 4. Route the goal into the swarm coordinator. The Planner owns the
+                // original goal; Coder/Verifier/Repairer/MemoryManager receive handoffs
+                // from the Planner as the work proceeds. This matches the role-handoff
+                // design ported from recovery/phase-28-launch (see docs/DECISIONS-v1.8.0.md).
+                const plannerTask = swarm.assignTask(
+                        AgentRole.Planner,
+                        'Decompose the user goal into agent-routed subtasks',
+                        goal,
+                );
+                notificationService.info(
+                        `Kovix swarm armed. Planner task ${plannerTask.id.slice(0, 8)} pending. ` +
+                        `Coordination status: ${JSON.stringify(swarm.getCoordinationStatus())}. ` +
+                        `Open the Control Center to see live handoffs.`,
+                );
+
+                // 5. Spawn the first sub-agent to act on the Planner task. The existing
+                // kovix.spawnSubAgent command opens the agent panel with a sub-agent
+                // scope; the swarm coordinator tracks the handoffs from there.
+                commandService.executeCommand('kovix.spawnSubAgent');
         }
 });
 

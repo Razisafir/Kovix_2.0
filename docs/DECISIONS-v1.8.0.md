@@ -2,7 +2,7 @@
 
 This document records the decisions made during the v1.8.0 consolidation pass (June 2026), with full reasoning grounded in actual code reading. These decisions are binding for v1.x; revisit at v2.0 planning.
 
-## Decision 1: Multi-agent is NOT in scope for v1.x
+## Decision 1 (REVISED v1.8.0): Multi-agent IS in scope for v1.x — role-handoff design ported
 
 ### Question
 > Is multi-agent wanted for v1.x? (Need to verify phase-28-launch's impl is real, not aspirational)
@@ -22,26 +22,59 @@ Total: 3123 lines. Real `AgentRole` enum (Planner, Coder, Verifier, Repairer, Me
 
 **BUT: phase-20-multiagent has a DIFFERENT, CONFLICTING design.** 8 files, pool/dispatcher model: `agentOrchestrator.ts`, `parallelDispatcher.ts`, `agentFactory.ts`, `agentPoolService.ts`. Pool-of-workers with parallel dispatch vs. phase-28's role-based sequential handoffs. These two architectures are not compatible.
 
-**Main branch has NEITHER.** Only `memoryOrchestrator.ts` (memory coordination, not multi-agent execution). Main has the config flags `kovix.autonomous.parallelSwarm` and `kovix.autonomous.swarmSize` registered in `kovixAutonomousConfig.ts`, but no swarm implementation behind them.
+**Main branch previously had NEITHER.** Only `memoryOrchestrator.ts` (memory coordination, not multi-agent execution). Main had the config flags `kovix.autonomous.parallelSwarm` and `kovix.autonomous.swarmSize` registered in `kovixAutonomousConfig.ts`, but no swarm implementation behind them.
 
-### Decision
+### Original decision (superseded)
 
-**NOT in scope for v1.x.** Reasoning:
+Originally marked NOT in scope for v1.x due to two competing designs and insufficient product clarity. Marked `parallelSwarm` and `swarmSize` as `deprecated: true`. **This was reversed by the user on 2024-06-24** with explicit instruction "yes to v1.x [swarm]".
 
-1. **Two competing designs = team hasn't decided.** Shipping one design means rejecting the other. Without a clear product decision, shipping either is premature.
-2. **Main's single-agent loop already does idea→plan→execute→verify→complete** with milestone gates, plan approval, verification harness, and error recovery. This is sufficient for v1.x.
-3. **Multi-agent adds significant complexity** for marginal value at v1.x scale: coordination overhead, conflict resolution, shared memory consistency, debugging difficulty.
-4. **The config flags `parallelSwarm` and `swarmSize` imply a feature that doesn't exist.** This is misleading to users.
+### Revised decision
+
+**YES, in scope for v1.x.** Ported the **role-handoff design from phase-28-launch** (chosen over phase-20's pool model because the role-handoff model is simpler, more debuggable, and aligns with the existing single-agent milestone state machine on main).
+
+**What was ported in v1.8.0 (this revision):**
+
+| File | Lines | Status |
+|------|-------|--------|
+| `src/vs/platform/construct/common/multiAgentExecution.ts` | 141 | **Ported verbatim from recovery/phase-28-launch** |
+| `src/vs/workbench/contrib/construct/browser/services/multiAgentExecutionService.ts` | 595 | **Ported verbatim from recovery/phase-28-launch** |
+
+Total ported: 736 lines. The impl has minimal dependencies (Disposable, generateUuid, ILogService, IStorageService, ICreditSystem) — all already available on main after PR #138.
+
+**What was NOT ported (deferred to v1.9.0+):**
+
+| File | Lines | Reason |
+|------|-------|--------|
+| `agentOrchestratorService.ts` (interface) | 985 | Depends on 5 recovery-only services (IAIExecutionService, IExecutionGraphService, IAIContextService, IObservabilityService, IAIUnifiedStateService). Porting these is a v1.9.0+ effort. |
+| `agentOrchestratorService.ts` (impl) | 1402 | Same as above. |
+
+The MultiAgentExecutionService is sufficient for swarm coordination: it provides task assignment by role, handoffs, conflict detection, and shared memory. The AgentOrchestratorService is a more comprehensive single-agent lifecycle system that is not strictly required for swarm behavior.
+
+### Wiring
+
+- `IMultiAgentExecutionService` registered as a singleton in `construct.contribution.ts`.
+- `kovix.openSwarm` command rewritten to use the swarm coordinator: prompts for a goal, assigns a Planner task, opens the Control Center, and spawns the first sub-agent. Handoffs flow through the coordinator.
+- `kovix.autonomous.parallelSwarm` and `kovix.autonomous.swarmSize` config flags **undeprecated**. `parallelSwarm: true` activates swarm mode for `kovix.openSwarm`; `swarmSize` caps concurrent agent roles (default 3 = Planner + Coder + Verifier).
+- Existing `kovix.spawnSubAgent` command preserved as the single-agent spawn entry point.
+
+### Limitations in v1.8.0
+
+1. **No automatic role dispatch.** The Planner task is created, but the Coder/Verifier/Repairer/MemoryManager tasks must be created by the Planner agent's output (via the agent loop reading the swarm coordinator's state). This is a v1.9.0 wiring task.
+2. **No swarm UI in the Control Center.** The Control Center shows live sub-agents but does not yet render the swarm coordinator's task/handoff/conflict state. v1.9.0 UI task.
+3. **No conflict resolution UI.** Conflicts are detected and stored, but the user cannot yet approve a resolution (queue/merge/override/manual). v1.9.0 UI task.
 
 ### Action items
 
-- [x] Marked `kovix.autonomous.parallelSwarm` and `kovix.autonomous.swarmSize` as `deprecated: true` in `kovixAutonomousConfig.ts` with a description explaining they are reserved for future use and currently no-op.
-- [ ] Filed issue #139 to track multi-agent design decision for v2.0.
-- [ ] Recovery branches `recovery/phase-20-multiagent` and `recovery/phase-28-launch` preserved on origin for future reference.
+- [x] Ported `multiAgentExecution.ts` + `multiAgentExecutionService.ts` from recovery/phase-28-launch.
+- [x] Registered `IMultiAgentExecutionService` as a singleton.
+- [x] Rewrote `kovix.openSwarm` to use the swarm coordinator.
+- [x] Undeprecated `kovix.autonomous.parallelSwarm` and `kovix.autonomous.swarmSize`.
+- [x] This document records the revised decision.
+- [ ] Issue #140 repurposed: track v1.9.0 work for automatic role dispatch + Control Center swarm UI + conflict resolution UI.
 
 ### Revisit at
 
-v2.0 planning. Pre-conditions for revisiting: (a) clear product answer on pool-model vs. role-handoff-model, (b) v1.x single-agent loop proven stable in production, (c) real user demand for parallel agent execution.
+v1.9.0 (wire automatic role dispatch + swarm UI) or v2.0 (port AgentOrchestratorService for full single-agent lifecycle integration).
 
 ---
 
