@@ -1,112 +1,117 @@
 {
-        "nameShort": "Kovix",
-        "nameLong": "Kovix IDE",
-        "nameMedium": "Kovix IDE",
-        "applicationName": "kovix",
-        "dataFolderName": ".kovix",
-        "win32MutexName": "kovixide",
-        "licenseName": "Proprietary",
-        "licenseUrl": "https://github.com/Razisafir/KOVIX/blob/main/LICENSE.txt",
-        "serverLicenseUrl": "https://github.com/Razisafir/KOVIX/blob/main/LICENSE.txt",
-        "serverGreeting": [],
-        "serverLicense": [],
-        "serverLicensePrompt": "",
-        "serverApplicationName": "kovix-server",
-        "serverDataFolderName": ".kovix-server",
-        "tunnelApplicationName": "kovix-tunnel",
-        "win32DirName": "Kovix",
-        "win32NameVersion": "Kovix",
-        "win32RegValueName": "KovixIDE",
-        "win32x64AppId": "{{7A9AD883-E9CA-4B01-92B3-06779FE2B75B}",
-        "win32arm64AppId": "{{839B474D-B895-47CE-A14A-0A2BE3472D8B}",
-        "win32x64UserAppId": "{{A3297DB4-5B1B-4185-90B0-EC7DF4C1D363}",
-        "win32arm64UserAppId": "{{60626750-830D-4978-9BBA-4CAF4528D554}",
-        "win32AppUserModelId": "Kovix.IDE",
-        "win32ShellNameShort": "&Kovix",
-        "win32TunnelServiceMutex": "kovix-tunnelservice",
-        "win32TunnelMutex": "kovix-tunnel",
-        "darwinBundleIdentifier": "ai.kovix.ide",
-        "linuxIconName": "kovix",
-        "licenseFileName": "LICENSE.txt",
-        "reportIssueUrl": "https://github.com/Razisafir/KOVIX/issues/new",
-        "privacyStatementUrl": "https://github.com/Razisafir/KOVIX/blob/main/PRIVACY.md",
-        "nodejsRepository": "https://nodejs.org",
-        "urlProtocol": "kovix",
-        "extensionKind": {
-                "ui": [
-                        "ai.kovix.ide"
-                ]
+  "nameShort": "Kovix",
+  "nameLong": "Kovix IDE",
+  "nameMedium": "Kovix IDE",
+  "applicationName": "kovix",
+  "dataFolderName": ".kovix",
+  "win32MutexName": "kovixide",
+  "licenseName": "Proprietary",
+  "licenseUrl": "https://github.com/Razisafir/KOVIX/blob/main/LICENSE.txt",
+  "serverLicenseUrl": "https://github.com/Razisafir/KOVIX/blob/main/LICENSE.txt",
+  "serverGreeting": [],
+  "serverLicense": [],
+  "serverLicensePrompt": "",
+  "serverApplicationName": "kovix-server",
+  "serverDataFolderName": ".kovix-server",
+  "tunnelApplicationName": "kovix-tunnel",
+  "win32DirName": "Kovix",
+  "win32NameVersion": "Kovix",
+  "win32RegValueName": "KovixIDE",
+  "win32x64AppId": "{{7A9AD883-E9CA-4B01-92B3-06779FE2B75B}",
+  "win32arm64AppId": "{{839B474D-B895-47CE-A14A-0A2BE3472D8B}",
+  "win32x64UserAppId": "{{A3297DB4-5B1B-4185-90B0-EC7DF4C1D363}",
+  "win32arm64UserAppId": "{{60626750-830D-4978-9BBA-4CAF4528D554}",
+  "win32AppUserModelId": "Kovix.IDE",
+  "win32ShellNameShort": "&Kovix",
+  "win32TunnelServiceMutex": "kovix-tunnelservice",
+  "win32TunnelMutex": "kovix-tunnel",
+  "darwinBundleIdentifier": "ai.kovix.ide",
+  "linuxIconName": "kovix",
+  "licenseFileName": "LICENSE.txt",
+  "reportIssueUrl": "https://github.com/Razisafir/KOVIX/issues/new",
+  "privacyStatementUrl": "https://github.com/Razisafir/KOVIX/blob/main/PRIVACY.md",
+  "nodejsRepository": "https://nodejs.org",
+  "urlProtocol": "kovix",
+  "extensionKind": {
+    "ui": [
+      "ai.kovix.ide"
+    ]
+  },
+  "extensionsGallery": {
+    "serviceUrl": "https://open-vsx.org/vscode/gallery",
+    "itemUrl": "https://open-vsx.org/vscode/item",
+    "resourceUrlTemplate": "https://open-vsx.org/vscode/unpkg/{publisher}/{name}/{version}/{path}"
+  },
+  "webviewContentExternalBaseUrlTemplate": "https://{{uuid}}.vscode-cdn.net/stable/{{commit}}/out/vs/workbench/contrib/webview/browser/pre/",
+  "updateUrl": "https://razisafir.github.io/KOVIX/update.json",
+  "quality": "stable",
+  "documentationUrl": "https://github.com/Razisafir/KOVIX#readme",
+  "downloadUrl": "https://github.com/Razisafir/KOVIX/releases",
+  "productConfiguration": {
+    "telemetryOptInMessage": "Help improve Kovix IDE by sending anonymous usage data. Read our privacy policy: https://github.com/Razisafir/KOVIX/blob/main/PRIVACY.md",
+    "telemetryConfiguration": "off",
+    "enabledTelemetryLevels": {
+      "usage": false,
+      "error": false,
+      "crash": false
+    }
+  },
+  "crashReporter": {
+    "companyName": "Razisafir",
+    "productName": "Kovix IDE",
+    "uploadToServer": false
+  },
+  "builtInExtensions": [
+    {
+      "name": "ms-vscode.js-debug-companion",
+      "version": "1.1.3",
+      "sha256": "7380a890787452f14b2db7835dfa94de538caf358ebc263f9d46dd68ac52de93",
+      "repo": "https://github.com/microsoft/vscode-js-debug-companion",
+      "metadata": {
+        "id": "99cb0b7f-7354-4278-b8da-6cc79972169d",
+        "publisherId": {
+          "publisherId": "5f5636e7-69ed-4afe-b5d6-8d231fb3d3ee",
+          "publisherName": "ms-vscode",
+          "displayName": "Microsoft",
+          "flags": "verified"
         },
-        "extensionsGallery": {
-                "serviceUrl": "https://open-vsx.org/vscode/gallery",
-                "itemUrl": "https://open-vsx.org/vscode/item",
-                "resourceUrlTemplate": "https://open-vsx.org/vscode/unpkg/{publisher}/{name}/{version}/{path}"
+        "publisherDisplayName": "Microsoft"
+      }
+    },
+    {
+      "name": "ms-vscode.js-debug",
+      "version": "1.96.0",
+      "sha256": "278cd8b129c133d834a8105d0e0699f2f940c5c159fa5c821c7b9a4f7ffd3581",
+      "repo": "https://github.com/microsoft/vscode-js-debug",
+      "metadata": {
+        "id": "25629058-ddac-4e17-abba-74678e126c5d",
+        "publisherId": {
+          "publisherId": "5f5636e7-69ed-4afe-b5d6-8d231fb3d3ee",
+          "publisherName": "ms-vscode",
+          "displayName": "Microsoft",
+          "flags": "verified"
         },
-        "webviewContentExternalBaseUrlTemplate": "https://{{uuid}}.vscode-cdn.net/stable/{{commit}}/out/vs/workbench/contrib/webview/browser/pre/",
-        "updateUrl": "https://razisafir.github.io/KOVIX/update.json",
-        "quality": "stable",
-        "documentationUrl": "https://github.com/Razisafir/KOVIX#readme",
-        "downloadUrl": "https://github.com/Razisafir/KOVIX/releases",
-        "productConfiguration": {
-                "telemetryOptInMessage": "Help improve Kovix IDE by sending anonymous usage data. Read our privacy policy: https://github.com/Razisafir/KOVIX/blob/main/PRIVACY.md",
-                "telemetryConfiguration": "off",
-                "enabledTelemetryLevels": {"usage": false, "error": false, "crash": false}
+        "publisherDisplayName": "Microsoft"
+      }
+    },
+    {
+      "name": "ms-vscode.vscode-js-profile-table",
+      "version": "1.0.10",
+      "sha256": "7361748ddf9fd09d8a2ed1f2a2d7376a2cf9aae708692820b799708385c38e08",
+      "repo": "https://github.com/microsoft/vscode-js-profile-visualizer",
+      "metadata": {
+        "id": "7e52b41b-71ad-457b-ab7e-0620f1fc4feb",
+        "publisherId": {
+          "publisherId": "5f5636e7-69ed-4afe-b5d6-8d231fb3d3ee",
+          "publisherName": "ms-vscode",
+          "displayName": "Microsoft",
+          "flags": "verified"
         },
-        "crashReporter": {
-                "companyName": "Razisafir",
-                "productName": "Kovix IDE",
-                "uploadToServer": false
-        },
-        "builtInExtensions": [
-                {
-                        "name": "ms-vscode.js-debug-companion",
-                        "version": "1.1.3",
-                        "sha256": "7380a890787452f14b2db7835dfa94de538caf358ebc263f9d46dd68ac52de93",
-                        "repo": "https://github.com/microsoft/vscode-js-debug-companion",
-                        "metadata": {
-                                "id": "99cb0b7f-7354-4278-b8da-6cc79972169d",
-                                "publisherId": {
-                                        "publisherId": "5f5636e7-69ed-4afe-b5d6-8d231fb3d3ee",
-                                        "publisherName": "ms-vscode",
-                                        "displayName": "Microsoft",
-                                        "flags": "verified"
-                                },
-                                "publisherDisplayName": "Microsoft"
-                        }
-                },
-                {
-                        "name": "ms-vscode.js-debug",
-                        "version": "1.96.0",
-                        "sha256": "278cd8b129c133d834a8105d0e0699f2f940c5c159fa5c821c7b9a4f7ffd3581",
-                        "repo": "https://github.com/microsoft/vscode-js-debug",
-                        "metadata": {
-                                "id": "25629058-ddac-4e17-abba-74678e126c5d",
-                                "publisherId": {
-                                        "publisherId": "5f5636e7-69ed-4afe-b5d6-8d231fb3d3ee",
-                                        "publisherName": "ms-vscode",
-                                        "displayName": "Microsoft",
-                                        "flags": "verified"
-                                },
-                                "publisherDisplayName": "Microsoft"
-                        }
-                },
-                {
-                        "name": "ms-vscode.vscode-js-profile-table",
-                        "version": "1.0.10",
-                        "sha256": "7361748ddf9fd09d8a2ed1f2a2d7376a2cf9aae708692820b799708385c38e08",
-                        "repo": "https://github.com/microsoft/vscode-js-profile-visualizer",
-                        "metadata": {
-                                "id": "7e52b41b-71ad-457b-ab7e-0620f1fc4feb",
-                                "publisherId": {
-                                        "publisherId": "5f5636e7-69ed-4afe-b5d6-8d231fb3d3ee",
-                                        "publisherName": "ms-vscode",
-                                        "displayName": "Microsoft",
-                                        "flags": "verified"
-                                },
-                                "publisherDisplayName": "Microsoft"
-                        }
-                }
-        ],
-        "win32AppId": "{{6FC5ED53-6D3A-4578-B6D4-3B8A0F08043E}",
-        "win32UserAppId": "{{051CC4D2-CBBD-4AC1-9961-A524AE0B0447}"
+        "publisherDisplayName": "Microsoft"
+      }
+    }
+  ],
+  "win32AppId": "{{6FC5ED53-6D3A-4578-B6D4-3B8A0F08043E}",
+  "win32UserAppId": "{{051CC4D2-CBBD-4AC1-9961-A524AE0B0447}",
+  "version": "1.8.0"
 }
