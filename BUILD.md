@@ -149,6 +149,60 @@ Make sure you have:
 - **macOS**: Xcode CLT (`xcode-select --install`)
 - **Windows**: VS Build Tools 2022 + Python 3 in PATH
 
+### `'C:\Program' is not recognized as an internal or external command` (Windows)
+
+This is a path-quoting bug in `node-gyp` / `node-gyp-build` that triggers when
+Node.js, Python, or npm's global prefix path contains a space — most commonly
+because Node was installed to the default `C:\Program Files\nodejs\`. The
+underlying tool shells out to `cmd.exe` with the unquoted path, and `cmd.exe`
+treats the first space as the end of the command name.
+
+**Workaround (pick one):**
+
+1. **Install Node.js to a space-free path.** Re-run the Node.js installer and
+   change the destination folder from `C:\Program Files\nodejs\` to e.g.
+   `C:\nodejs\`. Then update your PATH to point at the new location.
+2. **Change npm's global prefix to a space-free path** without reinstalling
+   Node:
+   ```powershell
+   npm config set prefix "C:\npm-global"
+   $env:PATH = "C:\npm-global;$env:PATH"
+   [Environment]::SetEnvironmentVariable("PATH", $env:PATH, "User")
+   ```
+   Then re-run `npm install`.
+3. **Use the Kovix release installer** instead of building from source. The
+   CI-built `.exe` / `.zip` doesn't trigger this bug because the GitHub Actions
+   runner's Node install path is already space-free.
+
+The preinstall hook (`build/npm/preinstall.js`) prints a clear warning if it
+detects a spaces-containing prefix on Windows. If you see the warning, apply
+one of the workarounds above before filing an issue — this is a third-party
+tool bug, not a Kovix bug.
+
+### `ERR_DLOPEN_FAILED` / "is not a valid Win32 application" at launch
+
+This means a native `.node` module was built against the wrong ABI or for the
+wrong platform. The v1.8.0 release shipped every Windows native module built
+against Electron 32's headers while the runtime was Electron 42 — every
+renderer crashed silently on launch.
+
+**This should not recur.** Since v1.8.1, CI enforces three guards before any
+packaging step runs:
+
+1. `build/lib/verify-npmrc-target.js` — fails the build if `.npmrc`'s
+   `target=` pin doesn't match the actually-resolved Electron version in
+   `node_modules/electron/package.json`.
+2. `build/lib/verify-native-modules.js` — fails the build if any known native
+   module is missing or has the wrong platform binary signature (catches
+   Linux-ELF-inside-Windows-package contamination).
+3. `build/lib/verify-native-modules-electron.js` — spawns the actual Electron
+   binary and `require()`s each known native module from inside it. This is
+   the test the v1.8.0 release needed and didn't have.
+
+If you see `ERR_DLOPEN_FAILED` after v1.8.1, file an issue with the full
+verbose log (`--enable-logging --verbose`) and the output of
+`node build/lib/verify-npmrc-target.js` from your environment.
+
 ### OOM kill during `compile-src` on 8 GB RAM
 
 The full `gulp vscode-*-x64` packaging pipeline peaks at ~10–12 GB. Either:

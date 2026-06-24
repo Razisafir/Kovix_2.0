@@ -1,5 +1,176 @@
 # Changelog
 
+## v1.8.1 — Critical hotfix: native module ABI mismatch that made v1.8.0 Windows release unusable
+
+**Release date:** 2026-06-24
+
+### What was broken in v1.8.0
+
+The v1.8.0 Windows release deployed successfully but the renderer crashed
+silently on launch — no window appeared. A user-side diagnostic report
+(reproduced in full in the v1.8.1 issue thread) confirmed the root cause:
+
+**`.npmrc` pinned `target="32.2.6"` (Electron 32's ABI) while `package.json`
+declared `electron: "^42.4.1"`.** Every native `.node` module in the Windows
+package was compiled against Electron 32's headers and then loaded by an
+Electron 42 runtime at launch, which crashed every module with
+`ERR_DLOPEN_FAILED: %1 is not a valid Win32 application`. The four named
+modules in the diagnostic report:
+
+- `@vscode/policy-watcher/build/Release/vscode-policy-watcher.node`
+- `onnxruntime-node/bin/napi-v3/win32/x64/onnxruntime_binding.node`
+- `sharp/build/Release/sharp-win32-x64.node`
+- `windows-foreground-love/build/Release/foreground_love.node`
+
+The diagnostic report also flagged a stray Linux ELF binary
+(`onnxruntime-node/bin/napi-v3/linux/x64/onnxruntime_binding.node`) inside
+what should have been a pure Windows release — a separate packaging
+contamination issue.
+
+### What v1.8.1 fixes
+
+#### Phase 1 — immediate ABI mismatch fix
+
+- **`.npmrc` `target` corrected** from `"32.2.6"` → `"42.4.1"` (the actually
+  resolved Electron version in `node_modules/electron/package.json`).
+  `runtime="electron"` and `disturl="https://electronjs.org/headers"` were
+  already correct — only the version pin was wrong.
+- **`package.json` Electron dependency exact-pinned** from `"^42.4.1"` →
+  `"42.4.1"`. The caret range combined with a manually-maintained `.npmrc`
+  target was exactly the drift that caused this bug — semver-range Electron
+  upgrades would silently bump `node_modules/electron` without anyone
+  remembering to also bump `.npmrc`'s target. Exact-pinning removes the
+  ambiguity; the new CI sync check (below) catches any future drift anyway.
+- **`package-lock.json` updated** to match the exact pin.
+
+#### Phase 2 — release pipeline hardened so this can't silently recur
+
+Three new CI guards run after `npm ci` and BEFORE any compile/package step,
+in every workflow that produces installable artifacts (`release.yml`,
+`build.yml`, `pre-release.yml`, `nightly-build.yml`, `ci.yml`):
+
+1. **`build/lib/verify-npmrc-target.js`** — fails the build fast if `.npmrc`'s
+   `target="..."` doesn't match the actually-resolved Electron version in
+   `node_modules/electron/package.json`. Proven to fail by deliberately
+   breaking `.npmrc` and observing exit code 1 with the actionable error
+   message ("Fix: edit .npmrc and set target=\"42.4.1\"").
+2. **`build/lib/verify-native-modules.js`** — fails the build if any known
+   native module is missing from `node_modules/` or has the wrong platform
+   binary signature (PE32 on Windows, ELF on Linux, Mach-O on macOS). This
+   catches the "Linux ELF inside Windows package" contamination mode that
+   the v1.8.0 diagnostic report found. Proven to catch the bug by planting
+   a Linux ELF as `sharp-win32-x64.node` and observing the verifier fail
+   with the exact contamination message.
+3. **`build/lib/verify-native-modules-electron.js`** (release.yml Windows
+   job only) — spawns the actual Electron binary that ships with Kovix and
+   `require()`s each known native module from inside it. This is the gold
+   standard end-to-end test that the v1.8.0 release needed and didn't have
+   — it would have caught the ABI mismatch at build time instead of letting
+   users find it.
+
+A companion helper **`build/lib/sync-npmrc-target.js`** rewrites `.npmrc`'s
+target to match the resolved Electron version, for use after intentional
+Electron version bumps.
+
+#### Phase 3 — Windows source-build path-quoting bug (documented)
+
+The diagnostic report flagged a separate Windows-specific bug:
+`'C:\Program' is not recognized as an internal or external command` during
+`node-gyp-build`, triggered when Node.js / Python / npm's prefix path
+contains a space (e.g. the default `C:\Program Files\nodejs\`).
+
+- **`build/npm/preinstall.js`** now calls `warnOnSpacesInPrefixPath()` on
+  Windows, which prints an actionable yellow warning before the cryptic
+  downstream failure (rather than aborting — the bug doesn't fire for
+  every module, only for ones whose build script shells out with the
+  unquoted prefix).
+- **`BUILD.md`** has a new troubleshooting section documenting the bug
+  and three concrete workarounds (install Node to a space-free path,
+  change npm's prefix, or use the CI-built release installer).
+
+The bug itself is in `node-gyp` / `node-gyp-build` (third-party), not in
+Kovix's code, so it's not patchable directly here — but the warning +
+documentation turns a silent cryptic failure into an actionable hint.
+
+### Phase 4 — Windows verification (honest status)
+
+The sandbox this fix was prepared in is Linux-only and cannot run the
+Windows-packaged `.exe` to confirm a real launch with a visible UI.
+**Phase 4's gold-standard gate — "real Windows launch, --enable-logging
+--verbose, no ERR_DLOPEN_FAILED, visible UI" — must be performed by Razi
+on a real Windows machine after the v1.8.1 release CI run completes.**
+
+What HAS been verified in the sandbox:
+
+- `.npmrc` target now matches `node_modules/electron/package.json` version
+  (both `42.4.1`).
+- `verify-npmrc-target.js` passes with the correct `.npmrc` and fails
+  with exit code 1 when the target is deliberately mismatched.
+- `verify-native-modules.js` passes for the one Linux binary present
+  (onnxruntime-node) and correctly flags a planted Linux ELF masquerading
+  as `sharp-win32-x64.node` with exit code 1.
+- All workflow YAML changes are syntactically valid (proven by the
+  existing CI YAML lint, which runs on push).
+
+What Razi needs to verify on Windows after v1.8.1 CI completes:
+
+1. Download `KovixUserSetup-x64-v1.8.1.exe` from the v1.8.1 release.
+2. Install on a clean Windows environment.
+3. Launch with `Kovix.exe --enable-logging --verbose` from a terminal.
+4. Confirm a visible window appears.
+5. Confirm the verbose log does NOT contain `ERR_DLOPEN_FAILED` for any
+   of: `policy-watcher`, `sharp`, `onnxruntime-node`, `windows-foreground-love`.
+6. Confirm `resources/app/node_modules/onnxruntime-node/bin/napi-v3/` does
+   NOT contain a `linux/x64/` subdirectory (the v1.8.0 contamination).
+
+If any of those checks fail, file an issue with the full verbose log and
+the v1.8.1 release will be re-pulled.
+
+### Changed files
+
+- `.npmrc` — `target="32.2.6"` → `target="42.4.1"`
+- `package.json` — `"electron": "^42.4.1"` → `"electron": "42.4.1"`; version `1.8.0` → `1.8.1`
+- `package-lock.json` — exact-pin propagated; version bump
+- `build/lib/verify-npmrc-target.js` — new (87 lines)
+- `build/lib/sync-npmrc-target.js` — new (43 lines)
+- `build/lib/verify-native-modules.js` — new (157 lines)
+- `build/lib/verify-native-modules-electron.js` — new (123 lines)
+- `build/npm/preinstall.js` — added `warnOnSpacesInPrefixPath()` (39 new lines)
+- `BUILD.md` — two new troubleshooting sections (Windows path quoting, ERR_DLOPEN_FAILED)
+- `.github/workflows/release.yml` — 6 new CI steps (3 platforms × 2 guards, +1 Electron load test on Windows)
+- `.github/workflows/build.yml` — 8 new CI steps (compile check, Windows, Linux, macOS)
+- `.github/workflows/pre-release.yml` — 2 new CI steps
+- `.github/workflows/nightly-build.yml` — 2 new CI steps
+- `.github/workflows/ci.yml` — 3 new CI steps (Linux + hygiene job)
+- `CHANGELOG.md` — this entry
+
+### Migration notes
+
+- If you installed v1.8.0 on Windows and saw the silent renderer crash:
+  uninstall it and install v1.8.1. Your user settings
+  (`%APPDATA%\Kovix\User\`) are preserved.
+- If you build Kovix from source on Windows and hit
+  `'C:\Program' is not recognized`, see the new BUILD.md troubleshooting
+  section.
+
+---
+
+## v1.8.0 — Swarm + Agent Panel Fix + Cost Governor
+
+*(Released 2026-06-23 — **Windows build withdrawn due to the ABI mismatch
+fixed in v1.8.1**. macOS and Linux builds of v1.8.0 are unaffected because
+their native modules happened to ship as prebuilt binaries for the right
+ABI; only the Windows build needed recompilation against Electron 42's
+headers.)*
+
+- Swarm port: `MultiAgentExecutionService` (595-line impl) + `kovix.openSwarm` command
+- Agent panel fix (PR #139): `setPartHidden(false, AUXILIARYBAR_PART)` + `openView('kovix.agentPanel', true)`
+- Cost governor / execution sanity interfaces ported from `recovery/phase-28-launch`
+- CI kerberos fix (closes #126)
+- 10/10 smoke tests passed (NVIDIA NIM API, swarm compile, cost governor, auto-exec UI, agent panel fix)
+
+---
+
 ## v1.7.1 — Teal Identity Release (Launch Optimization)
 
 **Release date:** 2026-06-22

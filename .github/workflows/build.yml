@@ -69,6 +69,14 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
+      - name: Verify .npmrc target matches resolved Electron version
+        shell: bash
+        run: node build/lib/verify-npmrc-target.js
+
+      - name: Verify native modules load against current ABI
+        shell: bash
+        run: node build/lib/verify-native-modules.js
+
       - name: Compile
         run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 
@@ -123,6 +131,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GYP_MSVS_VERSION: '2022'
           npm_config_msvs_version: '2022'
+
+      - name: Verify .npmrc target matches resolved Electron version
+        shell: bash
+        run: node build/lib/verify-npmrc-target.js
+
+      - name: Verify native modules load against current ABI
+        shell: bash
+        run: node build/lib/verify-native-modules.js
 
       - name: Build Windows package
         run: npx gulp vscode-win32-x64
@@ -196,6 +212,14 @@ jobs:
         timeout-minutes: 30
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify .npmrc target matches resolved Electron version
+        shell: bash
+        run: node build/lib/verify-npmrc-target.js
+
+      - name: Verify native modules load against current ABI
+        shell: bash
+        run: node build/lib/verify-native-modules.js
 
       - name: Build Linux package
         run: npx gulp vscode-linux-x64
@@ -274,6 +298,14 @@ jobs:
         timeout-minutes: 30
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify .npmrc target matches resolved Electron version
+        shell: bash
+        run: node build/lib/verify-npmrc-target.js
+
+      - name: Verify native modules load against current ABI
+        shell: bash
+        run: node build/lib/verify-native-modules.js
 
       - name: Build macOS package
         run: npx gulp vscode-darwin-x64
