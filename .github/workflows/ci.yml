@@ -372,6 +372,7 @@ jobs:
 
       # ── Compile ───────────────────────────────────────────
       - name: Compile (TypeScript)
+        shell: bash
         run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile
         timeout-minutes: 30
 
