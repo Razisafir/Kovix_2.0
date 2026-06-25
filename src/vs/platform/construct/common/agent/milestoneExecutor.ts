@@ -38,15 +38,82 @@
  * PausedAtMilestone. Those remain the caller's responsibility.
  *
  * Pause rules:
- *   - "pause_at_every" mode: pause at every milestone (after verification)
+ *   - "every_milestone" mode: pause at every milestone (after verification)
+ *   - "major_milestone" mode: pause only at milestones that involve major
+ *     operations (file creation/deletion, shell commands, config file edits),
+ *     or milestones already flagged as isMajor by the planner
  *   - "selective" mode: pause only at milestones in selectedMilestoneIds
- *   - "auto" / undefined: no user-selected pauses
+ *   - "full_auto" / undefined: no user-selected pauses
  *   - Verification failure ALWAYS triggers a pause (regardless of mode) so
  *     the user can fix the issue and then resume to continue.
  */
 
-import { IApprovedPlan, IMilestone } from './milestoneStateMachine.js';
+import { IApprovedPlan, IMilestone, ISelectablePlanStep } from './milestoneStateMachine.js';
 import { AgentLoopEvent } from './agentLoop.js';
+
+/**
+ * File-path patterns that indicate a configuration file.
+ * Editing or creating any file matching these patterns is considered a
+ * "major" operation in MajorMilestone mode.
+ */
+const CONFIG_FILE_PATTERNS: readonly RegExp[] = [
+	/(^|\/)package\.json$/,
+	/(^|\/)tsconfig\.json$/,
+	/(^|\/)tsconfig\..+\.json$/,
+	/(^|\/)\.env/,
+	/(^|\/)docker-compose/,
+	/(^|\/)Dockerfile/,
+	/(^|\/)\.gitignore$/,
+	/(^|\/)Cargo\.toml$/,
+	/(^|\/)go\.mod$/,
+	/(^|\/)go\.sum$/,
+	/(^|\/)pom\.xml$/,
+	/(^|\/)build\.gradle/,
+	/(^|\/)settings\.json$/,
+	/(^|\/)launch\.json$/,
+	/(^|\/)extensions\.json$/,
+	/(^|\/)Makefile$/,
+	/(^|\/)CMakeLists\.txt$/,
+	/(^|\/)\.eslintrc/,
+	/(^|\/)\.prettierrc/,
+	/(^|\/)webpack\.config/,
+	/(^|\/)vite\.config/,
+	/(^|\/)next\.config/,
+];
+
+/**
+ * Determine whether a single plan step is a "major" operation
+ * that warrants a pause in MajorMilestone mode.
+ *
+ * Major operations are:
+ *   - File creation (action === 'Create') - new files are structural changes
+ *   - File deletion - represented as 'Run' (e.g., rm) since there is no
+ *     'Delete' action type; all 'Run' steps are treated as major because
+ *     shell commands can mutate state
+ *   - Changes to configuration files (package.json, tsconfig.json, .env, etc.)
+ *   - Any 'Run' step - shell commands that aren't guaranteed read-only
+ *
+ * Read-only operations (action === 'Read', plain 'Edit' on non-config files)
+ * are NOT considered major.
+ */
+function isMajorStep(step: ISelectablePlanStep): boolean {
+	// File creation is always major - it introduces new files into the project
+	if (step.action === 'Create') {
+		return true;
+	}
+	// Shell commands are treated as major - they may modify state
+	// (file deletion, network calls, installs, etc.)
+	if (step.action === 'Run') {
+		return true;
+	}
+	// Edits to configuration files are major - they affect project structure
+	// and behavior in ways that are hard to auto-revert
+	if (step.action === 'Edit' && CONFIG_FILE_PATTERNS.some(p => p.test(step.target))) {
+		return true;
+	}
+	// Read-only operations and plain source edits are not major
+	return false;
+}
 
 /**
  * Caller-provided function that runs ONE milestone's worth of work.
@@ -121,12 +188,31 @@ export async function* executeMilestonesWithPauses(
 
 	// Determine which milestones to pause at.
 	const pauseMode = approvedPlan.executionMode ?? 'auto';
-	const pauseAtEvery = pauseMode === 'pause_at_every';
 	const selectedPauseIds = new Set(approvedPlan.selectedMilestoneIds ?? []);
 
 	const shouldPauseAt = (milestone: IMilestone): boolean => {
-		if (pauseAtEvery) { return true; }
-		if (pauseMode === 'selective' && selectedPauseIds.has(milestone.id)) { return true; }
+		// EveryMilestone: pause at every milestone (fine-grained control)
+		if (pauseMode === 'every_milestone') {
+			return true;
+		}
+		// MajorMilestone: pause only when the milestone involves "major" operations
+		if (pauseMode === 'major_milestone') {
+			// Fast path: if the planner already flagged this milestone as major, always pause
+			if (milestone.isMajor) {
+				return true;
+			}
+			// Otherwise, inspect the milestone's steps to see if any qualify as "major"
+			const milestoneStepIndices = new Set(milestone.stepIndices);
+			const steps = approvedPlan.steps.filter(
+				(s, idx) => s.selected && milestoneStepIndices.has(idx),
+			);
+			return steps.some(step => isMajorStep(step));
+		}
+		// Selective: pause only at user-selected milestone IDs
+		if (pauseMode === 'selective' && selectedPauseIds.has(milestone.id)) {
+			return true;
+		}
+		// FullAuto / unknown: no user-selected pauses
 		return false;
 	};
 
