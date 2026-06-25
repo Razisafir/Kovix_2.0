@@ -299,7 +299,7 @@ A literal checklist. All items must pass for the rebuild to be considered "launc
 - [x] **Build: TypeScript compiles** — `npm run compile` produces 0 errors (verified 2026-06-26)
 - [ ] **Build: No ERR_DLOPEN_FAILED** — Native modules load correctly on Windows (CANNOT verify from Linux; Linux build verified — all 5 modules are ELF 64-bit x86-64)
 - [x] **Build: No critical vulnerabilities** — protobufjs patched; remaining 18 vulns are in transitive dev deps with documented accept risk
-- [x] **Naming: All 58 product-level issues fixed** — Verified by re-running naming audit; constructApiSettings.ts "Construct"→"Kovix" fixed
+- [x] **Naming: All product-level issues fixed** — Original 58 issues from NAMING_AUDIT.md fixed; Phase 6 re-triage found 543 additional `--construct-*` CSS theme variables (product-level, not feature-scoped) — now renamed to `--kovix-*`. Remaining `construct` references are either feature-level (correct per §2.1-2.6) or URI schemes (deferred per §2.5). See NAMING_AUDIT.md §8 for full triage.
 - [x] **Naming: No broken self-referential links** — No URL points at CONSTRUCT-VSCODE; auth HTML files fixed to KOVIX
 - [x] **Brand: One design system** — All CSS uses canonical teal tokens, no purple fallbacks, no undefined variables
 - [x] **Brand: Dead legacy aliases removed** — No --kovix-volt-* or --kovix-ignite-* aliases
@@ -324,7 +324,7 @@ A literal checklist. All items must pass for the rebuild to be considered "launc
 | KI-4 | HIGH | EmbeddingService returns zero vectors | Accepted — keyword fallback works, cloud fallback is post-launch |
 | KI-5 | MEDIUM | MajorMilestone autonomy mode broken | ✅ FIXED — shouldPauseAt() has major_milestone branch; isMajorStep() defines Create/Run/config-Edit as major |
 | KI-6 | MEDIUM | Skip milestone = Resume | ✅ FIXED — skip and resume are distinct paths; milestone_skipped event; tests pass |
-| KI-7 | MEDIUM | 3 competing design systems | ✅ FIXED — consolidated to Kovix Teal; --kovix-volt-* / --kovix-ignite-* removed; --construct-* mapped |
+| KI-7 | MEDIUM | 3 competing design systems | ✅ FIXED — consolidated to Kovix Teal; --kovix-volt-* / --kovix-ignite-* removed; --construct-* CSS variables renamed to --kovix-* (Phase 6) |
 | KI-8 | MEDIUM | Memory key stored in plaintext | Post-launch security hardening |
 | KI-9 | MEDIUM | FileWatcher dual debounce 400ms latency | Post-launch optimization |
 | KI-10 | LOW | Agent loop tests mock everything | Post-launch — real integration tests |
