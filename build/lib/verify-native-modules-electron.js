@@ -116,10 +116,15 @@ function findElectron() {
 
 // The probe script runs INSIDE Electron's main process. It writes its result
 // to a temp file (because Electron's stdout can be noisy with GPU warnings).
+//
+// IMPORTANT: the probe MUST call process.exit() immediately after writing
+// the result file. Do NOT wait for app.whenReady() -- on Windows CI runners
+// without an interactive desktop, whenReady() may never fire, and Electron
+// will hang until the spawnSync timeout kills it (2 min). The result file
+// is already written by then, but the spawnSync timeout masks the success.
+// process.exit() forces immediate exit and bypasses Electron's GUI teardown.
 const PROBE_SCRIPT = `
-const { app } = require('electron');
 const fs = require('fs');
-const path = require('path');
 
 const resultFile = process.env.KOVIX_NATIVE_PROBE_RESULT;
 const mods = JSON.parse(process.env.KOVIX_NATIVE_PROBE_MODS);
@@ -140,8 +145,10 @@ for (const m of mods) {
 
 fs.writeFileSync(resultFile, JSON.stringify({ results, failures }, null, 2));
 
-// Exit Electron
-app.whenReady().then(() => app.exit(failures > 0 ? 1 : 0));
+// Exit immediately. Do NOT wait for app.whenReady() -- it may never fire
+// on Windows CI runners without an interactive desktop, causing spawnSync
+// to time out and mask the (successful) probe result.
+process.exit(failures > 0 ? 1 : 0);
 `;
 
 function main() {
@@ -201,9 +208,48 @@ function main() {
 		shell: needsShell,
 		windowsHide: true,
 	});
-	// If spawn itself failed (not Electron exiting non-zero), print
-	// diagnostic info so future failures aren't a black box.
+	// If spawn itself failed (not Electron exiting non-zero), check why.
+	// ETIMEDOUT is special: the probe may have completed successfully
+	// (written the result file) but Electron then hung waiting for
+	// app.whenReady() to fire. The probe script uses process.exit()
+	// to avoid this, but as a defensive measure, we still check the
+	// result file on timeout and treat it as success if 0 failures.
 	if (result.error) {
+		if (result.error.code === 'ETIMEDOUT') {
+			console.warn('WARN: spawnSync timed out after 120s.');
+			console.warn('  Checking if probe wrote a result file before the timeout...');
+			try {
+				const probeResult = JSON.parse(fs.readFileSync(resultFile, 'utf8'));
+				console.warn('  Result file exists. Probe completed:');
+				console.warn(`    passes=${probeResult.results.filter(r => r.status === 'ok').length} failures=${probeResult.failures}`);
+				if (probeResult.failures === 0) {
+					console.warn('  Probe succeeded before timeout. Treating as PASS.');
+					console.warn('  (Electron likely hung on app.whenReady() after the probe wrote the result.)');
+					try { fs.unlinkSync(probeScriptPath); } catch (_) {}
+					try { fs.unlinkSync(resultFile); } catch (_) {}
+					process.exit(0);
+				} else {
+					console.error('FAIL: probe completed but reported failures.');
+					for (const r of probeResult.results) {
+						if (r.status === 'fail') {
+							console.error(`  ${r.mod}: ${r.reason}`);
+						}
+					}
+					try { fs.unlinkSync(probeScriptPath); } catch (_) {}
+					try { fs.unlinkSync(resultFile); } catch (_) {}
+					process.exit(1);
+				}
+			} catch (e) {
+				console.error('FAIL: spawnSync timed out AND no result file was written.');
+				console.error('  Electron hung before the probe could complete.');
+				console.error('  This typically means app.whenReady() never fired');
+				console.error('  (no interactive desktop on the CI runner).');
+				console.error('  error:', result.error.message);
+				try { fs.unlinkSync(probeScriptPath); } catch (_) {}
+				process.exit(1);
+			}
+		}
+		// Non-timeout spawn error (e.g., ENOENT, EACCES, UNKNOWN).
 		console.error('FAIL: spawnSync could not launch Electron.');
 		console.error('  error:', result.error.message);
 		console.error('  code:', result.error.code);
