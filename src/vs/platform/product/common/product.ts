@@ -59,10 +59,10 @@ else {
         if (Object.keys(product).length === 0) {
                 Object.assign(product, {
                         version: '1.96.0-dev',
-                        nameShort: 'Construct Dev',
+                        nameShort: 'Kovix Dev',
                         nameLong: 'Kovix Dev',
-                        applicationName: 'construct',
-                        dataFolderName: '.construct',
+                        applicationName: 'kovix',
+                        dataFolderName: '.kovix',
                         urlProtocol: 'construct',
                         reportIssueUrl: 'https://github.com/Razisafir/KOVIX/issues/new',
                         licenseName: 'MIT',

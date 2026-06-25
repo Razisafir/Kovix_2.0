@@ -352,7 +352,7 @@ export class ConstructMemoryViewPane extends ViewPane {
                                 const backBtn = dom.$('button') as HTMLButtonElement;
                                 backBtn.textContent = '<- Back';
                                 backBtn.style.cssText = `
-                                                background: none; border: 1px solid var(--kovix-border); color: var(--kovix-volt-400);
+                                                background: none; border: 1px solid var(--kovix-border); color: var(--kovix-accent);
                                                 border-radius: 3px; padding: 3px 8px; cursor: pointer;
                                                 font-size: 11px; margin-bottom: 8px;
                                 `;
@@ -428,7 +428,7 @@ export class ConstructMemoryViewPane extends ViewPane {
                                                                 id: `dynamic-${items.length}`,
                                                                 label: activity,
                                                                 icon: '[ACTIVE]',
-                                                                iconColor: 'var(--kovix-volt-400)',
+                                                                iconColor: 'var(--kovix-accent)',
                                                                 backgroundColor: 'var(--kovix-bg-ink)',
                                                                 category: MemoryCategory.ProfileDynamic,
                                                                 fullContent: activity,
@@ -452,10 +452,10 @@ export class ConstructMemoryViewPane extends ViewPane {
                                                                 iconColor = 'var(--kovix-state-error)';
                                                 } else if (memoryType === 'task_summary') {
                                                                 icon = '[PLAN]';
-                                                                iconColor = 'var(--kovix-volt-400)';
+                                                                iconColor = 'var(--kovix-accent)';
                                                 } else if (memoryType === 'user_message') {
                                                                 icon = '[CHAT]';
-                                                                iconColor = 'var(--kovix-volt-400)';
+                                                                iconColor = 'var(--kovix-accent)';
                                                 }
 
                                                 const item: IMemoryTreeItem = {

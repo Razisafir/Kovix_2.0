@@ -12,7 +12,7 @@
         "id": "kovix-dark",
         "label": "Kovix Dark",
         "uiTheme": "vs-dark",
-        "path": "./themes/construct-dark-color-theme.json"
+        "path": "./themes/kovix-dark-color-theme.json"
       }
     ]
   }

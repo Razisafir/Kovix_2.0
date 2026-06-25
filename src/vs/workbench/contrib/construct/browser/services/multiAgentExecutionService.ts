@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------------------------
  *  AI Execution Kernel - Multi-Agent Task Coordination Implementation
- *  Construct IDE - AI-Native IDE
+ *  Kovix IDE - AI-Native IDE
  *
  *  MultiAgentExecutionService - Concrete implementation of IMultiAgentExecutionService.
  *  Manages task assignment, inter-agent handoffs, conflict detection/resolution,

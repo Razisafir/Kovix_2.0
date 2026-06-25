@@ -11,7 +11,7 @@
         display: flex;
         flex-direction: column;
         height: 100%;
-        background: var(--construct-editor-background);
+        background: var(--kovix-bg-base);
 }
 
 /* ===========================================================================
@@ -22,8 +22,8 @@
         display: flex;
         gap: 4px;
         padding: 4px 12px;
-        border-bottom: 1px solid var(--construct-panel-border);
-        background: var(--construct-tab-inactiveBackground);
+        border-bottom: 1px solid var(--kovix-border);
+        background: var(--kovix-bg-surface);
         overflow-x: auto;
 }
 
@@ -32,8 +32,8 @@
         border-radius: 4px 4px 0 0;
         font-size: 12px;
         cursor: pointer;
-        background: var(--construct-tab-inactiveBackground);
-        color: var(--construct-tab-inactiveForeground);
+        background: var(--kovix-bg-surface);
+        color: var(--kovix-text-secondary);
         border: 1px solid transparent;
         border-bottom: none;
         display: flex;
@@ -44,13 +44,13 @@
 }
 
 .construct-browser-session-tab:hover {
-        background: var(--construct-tab-activeBackground);
+        background: var(--kovix-bg-elevated);
 }
 
 .construct-browser-session-tab.active {
-        background: var(--construct-tab-activeBackground);
-        color: var(--construct-tab-activeForeground);
-        border-color: var(--construct-panel-border);
+        background: var(--kovix-bg-elevated);
+        color: var(--kovix-text-primary);
+        border-color: var(--kovix-border);
 }
 
 .construct-browser-session-tab .close {
@@ -66,7 +66,7 @@
 }
 
 .construct-browser-session-tab .close:hover {
-        color: var(--construct-errorForeground);
+        color: var(--kovix-error);
 }
 
 /* ===========================================================================
@@ -78,8 +78,8 @@
         align-items: center;
         gap: 8px;
         padding: 8px 12px;
-        border-bottom: 1px solid var(--construct-panel-border);
-        background: var(--construct-editor-background);
+        border-bottom: 1px solid var(--kovix-border);
+        background: var(--kovix-bg-base);
         min-height: 40px;
 }
 
@@ -99,20 +99,20 @@
         width: 100%;
         padding: 4px 12px;
         border-radius: 4px;
-        border: 1px solid var(--construct-panel-border);
-        background: var(--construct-input-background);
-        color: var(--construct-input-foreground);
+        border: 1px solid var(--kovix-border);
+        background: var(--kovix-bg-input);
+        color: var(--kovix-text-primary);
         font-size: 13px;
         outline: none;
         transition: border-color 0.15s ease;
 }
 
 .construct-browser-url-input:focus {
-        border-color: var(--construct-focusBorder);
+        border-color: var(--kovix-accent);
 }
 
 .construct-browser-url-input::placeholder {
-        color: var(--construct-input-placeholderForeground);
+        color: var(--kovix-text-muted);
 }
 
 .construct-browser-action-buttons {
@@ -124,9 +124,9 @@
 .construct-browser-btn {
         padding: 4px 10px;
         border-radius: 4px;
-        border: 1px solid var(--construct-button-secondaryBackground);
-        background: var(--construct-button-secondaryBackground);
-        color: var(--construct-button-secondaryForeground);
+        border: 1px solid var(--kovix-bg-elevated);
+        background: var(--kovix-bg-elevated);
+        color: var(--kovix-text-secondary);
         font-size: 13px;
         cursor: pointer;
         transition: all 0.15s ease;
@@ -136,8 +136,8 @@
 }
 
 .construct-browser-btn:hover {
-        background: var(--construct-button-hoverBackground);
-        border-color: var(--construct-focusBorder);
+        background: var(--kovix-accent-hover);
+        border-color: var(--kovix-accent);
 }
 
 .construct-browser-btn:active {
@@ -163,7 +163,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--construct-editor-background);
+        background: var(--kovix-bg-base);
         padding: 16px;
         overflow: auto;
 }
@@ -183,8 +183,8 @@
 .construct-browser-gallery {
         width: 120px;
         flex-shrink: 0;
-        border-left: 1px solid var(--construct-panel-border);
-        background: var(--construct-sideBar-background);
+        border-left: 1px solid var(--kovix-border);
+        background: var(--kovix-bg-surface);
         padding: 8px;
         overflow-y: auto;
         display: flex;
@@ -202,7 +202,7 @@
 }
 
 .construct-browser-thumb:hover {
-        border-color: var(--construct-focusBorder);
+        border-color: var(--kovix-accent);
 }
 
 .construct-browser-thumb img {
@@ -229,15 +229,15 @@
 
 .construct-browser-tree {
         flex: 0.4;
-        border-left: 1px solid var(--construct-panel-border);
-        background: var(--construct-editor-background);
+        border-left: 1px solid var(--kovix-border);
+        background: var(--kovix-bg-base);
         padding: 12px;
-        font-family: var(--construct-editor-font-family, 'monospace');
+        font-family: var(--kovix-font-mono);
         font-size: 12px;
         line-height: 1.5;
         white-space: pre-wrap;
         overflow: auto;
-        color: var(--construct-foreground);
+        color: var(--kovix-text-primary);
 }
 
 /* ===========================================================================
@@ -247,8 +247,8 @@
 .construct-browser-status {
         padding: 4px 12px;
         font-size: 11px;
-        color: var(--construct-descriptionForeground);
-        border-top: 1px solid var(--construct-panel-border);
+        color: var(--kovix-text-secondary);
+        border-top: 1px solid var(--kovix-border);
         display: flex;
         align-items: center;
         gap: 6px;
@@ -282,7 +282,7 @@
 }
 
 .construct-browser-status-closed::before {
-        background: var(--kovix-text-tertiary);
+        background: var(--kovix-text-muted);
 }
 
 /* ===========================================================================
@@ -296,7 +296,7 @@
         justify-content: center;
         height: 100%;
         gap: 16px;
-        color: var(--construct-descriptionForeground);
+        color: var(--kovix-text-secondary);
 }
 
 .construct-browser-empty-icon {
@@ -325,8 +325,8 @@
 .construct-browser-spinner {
         width: 32px;
         height: 32px;
-        border: 3px solid var(--construct-panel-border);
-        border-top-color: var(--construct-progressBar-background);
+        border: 3px solid var(--kovix-border);
+        border-top-color: var(--kovix-accent);
         border-radius: 50%;
         animation: construct-browser-spin 0.8s linear infinite;
 }

@@ -177,7 +177,7 @@
   --vscode-scrollbarSlider-background: rgba(255, 255, 255, 0.08);
   --vscode-scrollbarSlider-hoverBackground: rgba(255, 255, 255, 0.14);
   --vscode-scrollbarSlider-activeBackground: var(--kovix-accent);
-  --vscode-progressBar-background: var(--kovix-gradient-volt);
+  --vscode-progressBar-background: var(--kovix-accent);
 
   /* ── Badges, chips, banners ──────────────────────────────────────────── */
 

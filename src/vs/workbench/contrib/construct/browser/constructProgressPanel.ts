@@ -24,7 +24,7 @@ export class SpinnerIndicator extends Disposable {
                 this.element = dom.$('.construct-spinner-char');
                 this.element.style.cssText = `
                         display: inline-block; width: 1.2em; text-align: center;
-                        color: var(--kovix-volt-400); font-size: 13px;
+                        color: var(--kovix-accent); font-size: 13px;
                 `;
                 parent.appendChild(this.element);
         }
@@ -71,7 +71,7 @@ export class ProgressBar {
 
                 this.barElement = dom.$('.construct-progress-bar-fill');
                 this.barElement.style.cssText = `
-                        color: var(--kovix-volt-400); white-space: pre;
+                        color: var(--kovix-accent); white-space: pre;
                 `;
 
                 this.labelElement = dom.$('.construct-progress-bar-label');
