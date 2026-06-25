@@ -41,21 +41,33 @@ const repoRoot = path.join(__dirname, '..', '..');
 const electronBinDir = path.join(repoRoot, 'node_modules', '.bin');
 
 // Find the Electron binary.
+//
+// On Windows we MUST prefer the real electron.exe under
+// node_modules/electron/dist/ over the .cmd shim in node_modules/.bin/.
+// Spawning a .cmd file from Node.js spawnSync without shell:true fails
+// silently on Node 18+ (status=null, empty stdout/stderr, returns in
+// ~2ms). This was the root cause of the v1.8.1 and v1.8.2 release
+// build-windows failures (run #42 and run #43).
 function findElectron() {
-	const candidates = process.platform === 'win32'
-		? ['electron.cmd', 'electron.exe', 'electron']
-		: ['electron'];
-	for (const c of candidates) {
-		const p = path.join(electronBinDir, c);
-		if (fs.existsSync(p)) return p;
-	}
-	// Fall back to the dist path Electron publishes in its package.json
+	// Always try the dist/ path first (read from electron's own package.json).
+	// electron/package.json main field is "dist/electron.exe" on Windows,
+	// "dist/electron" on Linux/macOS. This is the canonical binary path.
 	try {
 		const pkg = JSON.parse(fs.readFileSync(path.join(repoRoot, 'node_modules/electron/package.json'), 'utf8'));
 		if (pkg.main && fs.existsSync(path.join(repoRoot, 'node_modules/electron', pkg.main))) {
 			return path.join(repoRoot, 'node_modules/electron', pkg.main);
 		}
 	} catch (_) { /* ignore */ }
+	// Fallback to .bin/ (used in dev environments). On Windows, .cmd
+	// shims only work with shell:true, so we add that in the spawn call
+	// below when the resolved path ends with .cmd.
+	const candidates = process.platform === 'win32'
+		? ['electron.exe', 'electron']
+		: ['electron'];
+	for (const c of candidates) {
+		const p = path.join(electronBinDir, c);
+		if (fs.existsSync(p)) return p;
+	}
 	return null;
 }
 
@@ -132,13 +144,32 @@ function main() {
 	console.log(`Spawning Electron to load ${modsToProbe.length} native modules...`);
 	console.log(`  electron: ${electronPath}`);
 
+	// On Windows: windowsHide:true prevents Electron from trying to
+	// create a console window in CI. shell:true is required only when
+	// we fell back to a .cmd shim (findElectron prefers dist/electron.exe
+	// so this is rare, but kept for safety).
+	const needsShell = process.platform === 'win32' && electronPath.toLowerCase().endsWith('.cmd');
 	const result = spawnSync(electronPath, args, {
 		env,
 		cwd: repoRoot,
 		encoding: 'utf8',
 		timeout: 120000, // 2 minutes
 		stdio: 'pipe',
+		shell: needsShell,
+		windowsHide: true,
 	});
+	// If spawn itself failed (not Electron exiting non-zero), print
+	// diagnostic info so future failures aren't a black box.
+	if (result.error) {
+		console.error('FAIL: spawnSync could not launch Electron.');
+		console.error('  error:', result.error.message);
+		console.error('  code:', result.error.code);
+		console.error('  electron path:', electronPath);
+		console.error('  args:', JSON.stringify(args));
+		console.error('  shell was used:', needsShell);
+		try { fs.unlinkSync(probeScriptPath); } catch (_) {}
+		process.exit(1);
+	}
 
 	// Clean up probe script
 	try { fs.unlinkSync(probeScriptPath); } catch (_) {}
@@ -149,9 +180,15 @@ function main() {
 		try { fs.unlinkSync(resultFile); } catch (_) {}
 	} catch (e) {
 		console.error('FAIL: Electron probe did not write a result file.');
-		console.error('Electron exit code:', result.status);
-		console.error('Electron stdout:', (result.stdout || '').slice(-2000));
-		console.error('Electron stderr:', (result.stderr || '').slice(-2000));
+		console.error('  Electron exit code:', result.status);
+		console.error('  Electron signal:', result.signal);
+		console.error('  Electron pid:', result.pid);
+		console.error('  Electron stdout (last 2000 chars):', (result.stdout || '').slice(-2000));
+		console.error('  Electron stderr (last 2000 chars):', (result.stderr || '').slice(-2000));
+		console.error('  If stdout/stderr are empty and exit code is null, the spawn');
+		console.error('  failed instantly. This typically means the .cmd shim was used');
+		console.error('  without shell:true, or Electron was killed by the OS before');
+		console.error('  it could write the result file.');
 		process.exit(1);
 	}
 
