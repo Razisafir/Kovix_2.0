@@ -233,7 +233,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-2022, macos-13, ubuntu-latest]
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -256,15 +256,25 @@ jobs:
       - name: Install macOS system dependencies
         if: runner.os == 'macOS'
         run: |
-          # Xcode CLI tools are pre-installed on macos-latest;
+          # Xcode CLI tools are pre-installed on macos-13;
           # confirm and install if somehow missing.
           xcode-select -p || xcode-select --install
+
+      - name: Set macOS C++ compiler flags for spdlog compat
+        if: runner.os == 'macOS'
+        run: |
+          # @vscode/spdlog bundles an older fmt library that uses deprecated
+          # literal operator syntax (operator""_a with preceding whitespace)
+          # which Xcode 15+ treats as an error. Suppress this specific
+          # warning so the build succeeds on newer macOS runners.
+          echo "CXXFLAGS=-Wno-deprecated-literal-operator" >> $GITHUB_ENV
+          echo "CFLAGS=-Wno-deprecated-literal-operator" >> $GITHUB_ENV
 
       - name: Install Windows system dependencies
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          # windows-latest includes Visual Studio Build Tools 2022
+          # windows-2022 includes Visual Studio Build Tools 2022
           # by default. Confirm the C++ toolchain is available.
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           if (Test-Path $vswhere) {
@@ -273,6 +283,9 @@ jobs:
           } else {
             Write-Host "WARNING: vswhere not found — VS Build Tools may not be installed"
           }
+          # Ensure GYP_MSVS_VERSION is set so node-gyp finds VS 2022
+          echo "GYP_MSVS_VERSION=2022" >> $env:GITHUB_ENV
+          echo "npm_config_msvs_version=2022" >> $env:GITHUB_ENV
 
       # ── Node.js setup ─────────────────────────────────────
       - name: Setup Node.js
@@ -331,8 +344,6 @@ jobs:
         env:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           ELECTRON_SKIP_BINARY_DOWNLOAD: 1
-          # Windows-specific: tell node-gyp which VS version
-          GYP_MSVS_VERSION: ${{ runner.os == 'Windows' && '2022' || '' }}
 
       # ── Post-install verification ─────────────────────────
       - name: Rebuild native modules against Electron ABI
