@@ -13,6 +13,17 @@ on:
       - main
       - main-dev
 
+# Global env vars for native module compilation against Electron ABI.
+# These MUST be set before npm install/ci so that node-gyp downloads
+# Electron headers (v42.4.1) instead of Node.js headers (v22.12.0).
+# Previously these came from .npmrc (target=, runtime=), but npm 11.13.0
+# deprecated those keys. Now they must be injected as env vars.
+env:
+  npm_config_target: '42.4.1'
+  npm_config_runtime: electron
+  npm_config_disturl: https://electronjs.org/headers
+  npm_config_build_from_source: 'true'
+
 jobs:
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # Linux — existing CI job (compile + test)
@@ -207,6 +218,13 @@ jobs:
   # Build Tools (Windows), and Xcode CLI tools (macOS), so this
   # is the first test of whether the native build truly works
   # cross-platform without container-specific workarounds.
+  #
+  # IMPORTANT: The global `env` block sets npm_config_target,
+  # npm_config_runtime, npm_config_disturl, and
+  # npm_config_build_from_source so that node-gyp compiles against
+  # Electron 42.4.1 headers during `npm install`. Without these,
+  # node-gyp tries to download Node.js v22.12.0 headers from the
+  # Electron disturl, gets a 404, and the build fails.
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   cross-platform-build:
     name: Build (${{ matrix.os }})
@@ -280,17 +298,37 @@ jobs:
           Write-Host "node-gyp path: $gypPath"
           "npm_config_node_gyp=$gypPath" | Out-File -FilePath $env:GITHUB_ENV -Append
 
+      # ── Verify Electron ABI config ────────────────────────
+      # The global env block sets npm_config_target=42.4.1,
+      # npm_config_runtime=electron, etc. This step confirms
+      # those values are correct before we spend 20+ minutes
+      # on npm install.
+      - name: Verify Electron ABI configuration
+        shell: bash
+        run: |
+          echo "npm_config_target   = $npm_config_target"
+          echo "npm_config_runtime  = $npm_config_runtime"
+          echo "npm_config_disturl  = $npm_config_disturl"
+          echo "Node.js version     = $(node -v)"
+          # Verify the target matches package.json config
+          PKG_TARGET=$(node -e "console.log(require('./package.json').config.electronVersion)")
+          if [ "$npm_config_target" != "$PKG_TARGET" ]; then
+            echo "ERROR: npm_config_target ($npm_config_target) != package.json config.electronVersion ($PKG_TARGET)"
+            exit 1
+          fi
+          echo "OK: Electron ABI target = $PKG_TARGET"
+
       # ── npm install (NO --ignore-scripts) ─────────────────
-      # This is THE critical test. Prior CI used `npm ci` which
-      # does install scripts. But the dev container couldn't run
-      # them due to missing libxkbfile-dev. If this step passes
-      # on GitHub runners, the native build issue is confirmed
-      # container-specific.
+      # This is THE critical test. The global npm_config_* env
+      # vars ensure node-gyp compiles against Electron 42.4.1
+      # headers during install. Prior CI runs without these vars
+      # failed with "404 downloading v22.12.0 headers from
+      # electronjs.org" because node-gyp used the system Node
+      # version with the Electron disturl.
       - name: npm install (full, no --ignore-scripts)
         run: npm install
         timeout-minutes: 45
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
           ELECTRON_SKIP_BINARY_DOWNLOAD: 1
           # Windows-specific: tell node-gyp which VS version

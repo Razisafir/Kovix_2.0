@@ -32,6 +32,14 @@ env:
   PYTHON_VERSION: '3.11'
   KOVIX_ARCH: x64
   KOVIX_QUALITY: stable
+  # Native module compilation against Electron ABI.
+  # Previously from .npmrc (target=, runtime=), but npm 11.13.0
+  # deprecated those keys. Without these env vars, node-gyp tries
+  # to download Node.js headers from the Electron disturl (404).
+  npm_config_target: '42.4.1'
+  npm_config_runtime: electron
+  npm_config_disturl: https://electronjs.org/headers
+  npm_config_build_from_source: 'true'
 
 jobs:
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
