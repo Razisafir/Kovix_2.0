@@ -1,5 +1,87 @@
 # Changelog
 
+## v1.8.5 — Fix probe to use process.exit() not app.whenReady() (v1.8.4 ETIMEDOUT)
+
+**Release date:** 2026-06-25
+
+### What was broken in v1.8.4
+
+Run #45 (v1.8.4) build-windows failed on the Electron probe step with
+ETIMEDOUT after 2 minutes:
+
+```
+Spawning Electron to load 10 native modules...
+  electron: D:\a\KOVIX\KOVIX\node_modules\electron\dist\electron.exe
+FAIL: spawnSync could not launch Electron.
+  error: spawnSync D:\a\KOVIX\KOVIX\node_modules\electron\dist\electron.exe ETIMEDOUT
+  code: ETIMEDOUT
+```
+
+The v1.8.4 findElectron() fix worked correctly -- it resolved to
+`dist/electron.exe`, the actual Electron binary. Electron spawned
+successfully. But it never exited within the 2-minute `spawnSync` timeout.
+
+### Root cause
+
+The probe script wrote the result file, then called:
+
+```js
+app.whenReady().then(() => app.exit(failures > 0 ? 1 : 0));
+```
+
+On Windows CI runners without an interactive desktop session,
+`app.whenReady()` **never fires**. Electron's GUI event loop can't
+initialize without a window station, so the promise hangs forever.
+`spawnSync` kills Electron at the 2-minute timeout. The result file IS
+on disk (written before `whenReady`), but the script exits 1 because
+`result.error` is set (ETIMEDOUT).
+
+### What v1.8.5 fixes
+
+**Fix 1 (probe script):** replace `app.whenReady().then(app.exit)` with
+`process.exit()` directly. `process.exit()` bypasses Electron's GUI
+teardown and forces immediate exit. The result file is already written,
+so we're done. This is the canonical pattern for "headless" Electron
+probes -- do your work, write the result, exit.
+
+The probe script no longer requires `'electron'` in its `require()` list
+(it doesn't need the API -- it just needs to be run BY Electron so that
+`require()` calls for native modules go through Electron's module loader
+and trigger `dlopen`).
+
+**Fix 2 (script-side, defensive):** on ETIMEDOUT, check if the result
+file exists. If it does and reports 0 failures, treat as PASS (warn that
+Electron hung on `whenReady` after the probe succeeded). If the result
+file is missing or reports failures, fail normally. This protects
+against any future regression where the probe doesn't call
+`process.exit()` correctly.
+
+### Why this wasn't caught before v1.8.5
+
+The probe script's `app.whenReady().then(app.exit)` pattern works fine
+on Linux and macOS CI runners (which have Xvfb or Aqua window managers).
+It only fails on Windows CI runners without an interactive desktop. The
+Linux sandbox where this script was written can't reproduce the Windows
+GUI initialization issue.
+
+### Expected outcome
+
+Run #46 (v1.8.5) build-windows should:
+1. findElectron() resolves to `dist/electron.exe` (v1.8.4 fix, unchanged)
+2. spawnSync spawns Electron with `windowsHide: true`
+3. Electron runs the probe script
+4. Probe script `require()`s each native module, writes result file
+5. Probe script calls `process.exit(0)` immediately (v1.8.5 fix)
+6. spawnSync returns with `status=0` (no timeout)
+7. Script reads result file, prints summary, exits 0
+8. Build proceeds to Compile → Package → Sign → Upload
+
+If `process.exit()` somehow doesn't fire (Electron blocks it), Fix 2
+catches the timeout and still succeeds if the result file was written
+with 0 failures.
+
+---
+
 ## v1.8.4 — Fix findElectron() to read electron/path.txt (v1.8.3 fix was wrong)
 
 **Release date:** 2026-06-25
