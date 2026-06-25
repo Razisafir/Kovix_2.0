@@ -163,11 +163,9 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Backward-compatibility aliases — old Volt-violet token names map to the
-   new teal equivalents so existing CSS that references --kovix-volt-* or
-   --kovix-bg-ink doesn't break during the transition.
-   Once all references are migrated (Prompt 5 token audit), these aliases
-   can be deleted.
+   Backward-compatibility aliases — old token names map to the new canonical
+   equivalents. Volt-violet and Ignite aliases have been removed (all usages
+   migrated to --kovix-accent* / --kovix-warning / --kovix-error).
    ───────────────────────────────────────────────────────────────────────── */
 .monaco-workbench {
   /* Old bg tokens → new bg tokens */
@@ -177,14 +175,6 @@
 
   /* Old text tokens → new text tokens */
   --kovix-text-tertiary: var(--kovix-text-muted);
-
-  /* Old Volt-violet tokens → teal accent (transitional aliases) */
-  --kovix-volt-400:    #2DD4BF;  /* lighter teal for old --kovix-volt-400 callers */
-  --kovix-volt-500:    var(--kovix-accent);
-  --kovix-volt-600:    var(--kovix-accent-active);
-  --kovix-volt-glow:   var(--kovix-accent-glow);
-  --kovix-volt-subtle: var(--kovix-accent-subtle);
-  --kovix-hairline-volt: var(--kovix-border-accent);
 
   /* Old state tokens (mostly compatible — slightly different hues) */
   --kovix-state-running:  #58A6FF;   /* was #21D3A8 — info-blue for "working" */
@@ -203,16 +193,8 @@
   --kovix-badge-info-bg:    var(--kovix-info-bg);
   --kovix-badge-info-fg:    var(--kovix-info);
 
-  /* OldIgnite tokens — keep amber for destructive/warning to preserve intent */
-  --kovix-ignite-400:  var(--kovix-warning);
-  --kovix-ignite-500:  var(--kovix-warning);
-  --kovix-ignite-600:  #B07F00;
-  --kovix-ignite-glow: rgba(210, 153, 34, 0.30);
-
   /* Old gradients — explicitly disabled. Anti-pattern: no gradients. */
   --kovix-gradient:       var(--kovix-accent);
-  --kovix-gradient-volt:  var(--kovix-accent);
-  --kovix-gradient-ignite: var(--kovix-warning);
   --kovix-gradient-ink:   var(--kovix-bg-base);
   --kovix-gradient-statusbar: var(--kovix-bg-surface);
 

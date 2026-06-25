@@ -13,7 +13,7 @@ else
         fi
 fi
 
-function construct() {
+function kovix() {
         cd "$ROOT"
 
         if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -47,7 +47,7 @@ function construct() {
                 DISABLE_TEST_EXTENSION=""
         fi
 
-        # Launch CONSTRUCT IDE
+        # Launch Kovix IDE
         exec "$CODE" . $DISABLE_TEST_EXTENSION "$@"
 }
 
@@ -71,7 +71,7 @@ function code-wsl()
                         $WSL_CODE "$ROOT" "$@"
                         exit $?
                 else
-                                                echo "Remote WSL not installed, trying to run CONSTRUCT IDE in WSL."
+                                                echo "Remote WSL not installed, trying to run Kovix IDE in WSL."
                 fi
         fi
 }
@@ -79,15 +79,15 @@ function code-wsl()
 if [ "$IN_WSL" == "true" ] && [ -z "$DISPLAY" ]; then
         code-wsl "$@"
 elif [ -f /mnt/wslg/versions.txt ]; then
-                construct --disable-gpu "$@"
+                kovix --disable-gpu "$@"
 elif [ -f /.dockerenv ]; then
         # Workaround for https://bugs.chromium.org/p/chromium/issues/detail?id=1263267
         # Chromium does not release shared memory when streaming scripts
         # which might exhaust the available resources in the container environment
         # leading to failed script loading.
-                construct --disable-dev-shm-usage "$@"
+                kovix --disable-dev-shm-usage "$@"
 else
-                construct "$@"
+                kovix "$@"
 fi
 
 exit $?

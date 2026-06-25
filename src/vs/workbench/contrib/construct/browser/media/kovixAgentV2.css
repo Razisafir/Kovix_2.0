@@ -62,7 +62,7 @@
    agent's work" vs "the agent is running". Slower pulse (1.8s vs 1.2s)
    signals "wait, real check in progress" without being alarming. */
 .kovix-agent-statusbar.is-verifying .kovix-agent-statusbar__dot {
-  background: var(--kovix-ignite-500, #FF6B35);
+  background: var(--kovix-warning);
   animation: kovix-status-pulse 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
@@ -71,7 +71,7 @@
    needs to see it and decide what to do. Slightly more saturated than
    plain error to signal "this is a trust signal, not just a crash". */
 .kovix-agent-statusbar.is-verification-failed .kovix-agent-statusbar__dot {
-  background: var(--kovix-ignite-600, #E55A2B);
+  background: var(--kovix-error);
 }
 
 /* Phase 3.1 — Workbench statusbar modifier for verifying state.
@@ -81,8 +81,8 @@
    modifier but with a warmer hue. */
 .monaco-workbench .part.statusbar.kovix-status-verifying {
   background: linear-gradient(90deg,
-    var(--kovix-ignite-500, #FF6B35) 0%,
-    var(--kovix-ignite-600, #E55A2B) 100%) !important;
+    var(--kovix-warning) 0%,
+    var(--kovix-error) 100%) !important;
   color: white !important;
 }
 
@@ -645,7 +645,7 @@
 
 /* ═════════════════════════════════════════════════════════════════════════
    12. ERROR BUBBLE (for addAgentMessage with type='error')
-   Replaces inline bubble.style.borderColor = 'var(--kovix-ignite-500)'.
+   Replaces inline bubble.style.borderColor = 'var(--kovix-error)'.
    ═════════════════════════════════════════════════════════════════════════ */
 
 .kovix-msg__bubble--error {

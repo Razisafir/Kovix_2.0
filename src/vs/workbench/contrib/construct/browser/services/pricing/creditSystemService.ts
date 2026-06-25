@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  Construct IDE - Credit System Service Implementation
+ *  Kovix IDE - Credit System Service Implementation
  *  Phase 27: Transparent credit-based pricing
  *
  *  Replaces opaque usage tracking with transparent credit system.
@@ -382,7 +382,7 @@ export class CreditSystemService extends Disposable implements ICreditSystem {
 
         upgradeFlow(): void {
                 // Open external payment page (placeholder URL)
-                const url = 'https://construct-ide.dev/pricing';
+                const url = 'https://kovix.dev/pricing';
                 this.openerService.open(URI.parse(url), { openExternal: true });
                 this.logService.info('[CreditSystem] Upgrade flow opened');
         }

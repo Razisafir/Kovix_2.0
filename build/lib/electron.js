@@ -86,13 +86,13 @@ exports.config = {
     version: electronVersion,
     tag: product.electronRepository ? `v${electronVersion}-${msBuildId}` : undefined,
     productAppName: product.nameLong,
-    companyName: 'CONSTRUCT',
-    copyright: 'Copyright (C) 2024 CONSTRUCT. All rights reserved',
+    companyName: 'Kovix',
+    copyright: 'Copyright (C) 2025 Kovix. All rights reserved',
     darwinIcon: 'resources/darwin/kovix.icns',
     darwinBundleIdentifier: product.darwinBundleIdentifier,
     darwinApplicationCategoryType: 'public.app-category.developer-tools',
-    darwinHelpBookFolder: 'CONSTRUCT IDE HelpBook',
-    darwinHelpBookName: 'CONSTRUCT IDE HelpBook',
+    darwinHelpBookFolder: 'Kovix IDE HelpBook',
+    darwinHelpBookName: 'Kovix IDE HelpBook',
     darwinBundleDocumentTypes: [
         ...darwinBundleDocumentTypes({ 'C header file': 'h', 'C source code': 'c' }, 'c'),
         ...darwinBundleDocumentTypes({ 'Git configuration file': ['gitattributes', 'gitconfig', 'gitignore'] }, 'config'),
@@ -133,7 +133,7 @@ exports.config = {
         // Default icon with specified names
         ...darwinBundleDocumentTypes({
             'Clojure source code': ['clj', 'cljs', 'cljx', 'clojure'],
-            'CONSTRUCT workspace file': 'code-workspace',
+            'Kovix workspace file': 'code-workspace',
             'CoffeeScript source code': 'coffee',
             'Comma Separated Values': 'csv',
             'CMake script': 'cmake',

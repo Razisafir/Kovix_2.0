@@ -49,20 +49,20 @@ pub const TUNNEL_SERVICE_USER_AGENT_ENV_VAR: &str = "TUNNEL_SERVICE_USER_AGENT";
 /// Application name as it appears on the CLI.
 pub const APPLICATION_NAME: &str = match option_env!("VSCODE_CLI_APPLICATION_NAME") {
         Some(n) => n,
-        None => "construct",
+        None => "kovix",
 };
 
 /// Full name of the product with its version.
 pub const PRODUCT_NAME_LONG: &str = match option_env!("VSCODE_CLI_NAME_LONG") {
         Some(n) => n,
-        None => "Construct IDE",
+        None => "Kovix IDE",
 };
 
 /// Name of the application without quality information.
 pub const QUALITYLESS_PRODUCT_NAME: &str = match option_env!("VSCODE_CLI_QUALITYLESS_PRODUCT_NAME")
 {
         Some(n) => n,
-        None => "Construct",
+        None => "Kovix",
 };
 
 /// Name of the application without quality information.
@@ -73,7 +73,7 @@ pub const QUALITY: &str = match VSCODE_CLI_QUALITY {
         _ => "oss",
 };
 
-/// Web URL the editor is hosted at. For CONSTRUCT IDE, this is construct.dev.
+/// Web URL the editor is hosted at. For Kovix IDE, this is kovix.dev.
 pub const EDITOR_WEB_URL: Option<&'static str> = option_env!("VSCODE_CLI_TUNNEL_EDITOR_WEB_URL");
 
 /// Name shown in places where we need to tell a user what a process is, e.g. in sleep inhibition.
@@ -87,12 +87,12 @@ const NONINTERACTIVE_VAR: &str = "VSCODE_CLI_NONINTERACTIVE";
 /// Default data CLI data directory.
 pub const DEFAULT_DATA_PARENT_DIR: &str = match option_env!("VSCODE_CLI_DATA_FOLDER_NAME") {
         Some(n) => n,
-        None => ".construct",
+        None => ".kovix",
 };
 
 pub fn get_default_user_agent() -> String {
         format!(
-                "construct-server-launcher/{}",
+                "kovix-server-launcher/{}",
                 VSCODE_CLI_VERSION.unwrap_or("dev")
         )
 }

@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  Construct IDE - Credit System Service Interface
+ *  Kovix IDE - Credit System Service Interface
  *  Phase 27: Transparent credit-based pricing
  *--------------------------------------------------------------------------------------------*/
 

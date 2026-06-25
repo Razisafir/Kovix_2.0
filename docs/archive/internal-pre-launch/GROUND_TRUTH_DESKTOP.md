@@ -21,7 +21,7 @@
 
 | Item | Value |
 |------|-------|
-| Repo | https://github.com/Razisafir/CONSTRUCT-VSCODE.git |
+| Repo | https://github.com/Razisafir/KOVIX.git |
 | Branch | main |
 | Latest commit | d007345b — security: final pre-launch hardening + Kovix product.json fix |
 | Construct contrib TS files | 38 |
