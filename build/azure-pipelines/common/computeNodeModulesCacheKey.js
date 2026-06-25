@@ -23,7 +23,8 @@ for (const dir of dirs) {
         devDependencies: packageJson.devDependencies,
         optionalDependencies: packageJson.optionalDependencies,
         resolutions: packageJson.resolutions,
-        distro: packageJson.distro
+        distro: packageJson.distro,
+        config: packageJson.config // includes electronVersion, remoteNodeVersion
     };
     shasum.update(JSON.stringify(relevantPackageJsonSections));
     const packageLockPath = path.join(ROOT, dir, 'package-lock.json');

@@ -10,9 +10,12 @@ const codesign = require("electron-osx-sign");
 const cross_spawn_promise_1 = require("@malept/cross-spawn-promise");
 const root = path.dirname(path.dirname(__dirname));
 function getElectronVersion() {
-    const npmrc = fs.readFileSync(path.join(root, '.npmrc'), 'utf8');
-    const target = /^target="(.*)"$/m.exec(npmrc)[1];
-    return target;
+    const pkgJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+    const version = pkgJson.config?.electronVersion;
+    if (!version) {
+        throw new Error('package.json config.electronVersion is missing');
+    }
+    return version;
 }
 async function main(buildDir) {
     const tempDir = process.env['RUNNER_TEMP'] || process.env['AGENT_TEMPDIRECTORY'];

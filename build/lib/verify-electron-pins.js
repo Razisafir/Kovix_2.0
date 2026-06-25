@@ -9,15 +9,16 @@
  * Verifies the FULL Electron version pin chain is internally consistent:
  *
  *   1. package.json: "electron" field -- the version we declare as a dep
- *   2. .npmrc: target="..." -- the ABI native modules compile against
+ *   2. package.json: config.electronVersion -- the ABI native modules compile against
  *   3. build/checksums/electron.txt -- SHASUMS256 file for the pinned version
  *   4. .nvmrc -- Node version used for dev/build (must be compatible with Electron major)
  *
  * Why this exists:
  *   v1.8.0 shipped with .npmrc target="32.2.6" but package.json electron "^42.4.1"
  *   (resolved to 42.4.1) -- every native module ended up built against the wrong
- *   ABI. v1.8.1 fixed .npmrc + added verify-npmrc-target.js, but that only catches
- *   one link of the chain. This script catches the rest:
+ *   ABI. v1.8.1 fixed .npmrc + added verify-npmrc-target.js. v1.8.6 migrated
+ *   the target from .npmrc to package.json config.electronVersion (npm deprecated
+ *   the .npmrc target key). This script catches any remaining inconsistency:
  *
  *     - If someone bumps package.json electron but forgets build/checksums/electron.txt
  *       -> checksum verification against the wrong SHASUMS256 file will pass on
@@ -26,7 +27,7 @@
  *       the dev Node version may be too old to build native modules for the
  *       new Electron's expected Node-API version.
  *     - If package.json electron uses "^42.4.1" (caret) and a future `npm install`
- *       drifts to 42.5.0, the .npmrc target will silently drift out of sync.
+ *       drifts to 42.5.0, config.electronVersion will silently drift out of sync.
  *
  * Exits 0 on success, 1 on any mismatch (with an actionable message).
  *
@@ -72,21 +73,16 @@ if (!pkgElectron) {
         ok(`package.json devDependencies.electron = "${pkgElectron}" (exact pin)`);
 }
 
-// --- 2. Read .npmrc target= pin ---
-const npmrcPath = path.join(repoRoot, '.npmrc');
-if (!fs.existsSync(npmrcPath)) {
-        console.error(`ABORT: .npmrc not found at ${npmrcPath}`);
-        process.exit(1);
-}
-const npmrc = fs.readFileSync(npmrcPath, 'utf8');
-const targetMatch = npmrc.match(/^\s*target\s*=\s*"([^"]+)"\s*$/m);
-if (!targetMatch) {
-        fail('.npmrc does not contain a `target="..."` line. Native modules need this pin to build against the right Electron ABI.');
+// --- 2. Read config.electronVersion from package.json ---
+// Previously this was .npmrc target=, but npm 11.13.0 deprecated that key.
+// The Electron ABI target now lives in package.json config.electronVersion.
+const configTarget = pkgJson.config && pkgJson.config.electronVersion;
+if (!configTarget) {
+        fail('package.json does not contain config.electronVersion. Native modules need this to build against the right Electron ABI.');
 } else {
-        const pinnedTarget = targetMatch[1];
-        ok(`.npmrc target = "${pinnedTarget}"`);
-        if (pkgElectron && pinnedTarget !== pkgElectron) {
-                fail(`.npmrc target ("${pinnedTarget}") does not match package.json electron ("${pkgElectron}"). Native modules will be built against the wrong ABI.`);
+        ok(`package.json config.electronVersion = "${configTarget}"`);
+        if (pkgElectron && configTarget !== pkgElectron) {
+                fail(`config.electronVersion ("${configTarget}") does not match package.json electron ("${pkgElectron}"). Native modules will be built against the wrong ABI.`);
         }
 }
 
@@ -102,8 +98,8 @@ if (!fs.existsSync(electronPkgPath)) {
         if (pkgElectron && resolvedVersion !== pkgElectron) {
                 fail(`package.json electron ("${pkgElectron}") does not match node_modules/electron ("${resolvedVersion}"). Run \`npm install\` to resync.`);
         }
-        if (targetMatch && targetMatch[1] !== resolvedVersion) {
-                fail(`.npmrc target ("${targetMatch[1]}") does not match resolved Electron ("${resolvedVersion}"). This is the v1.8.0 bug -- see verify-npmrc-target.js.`);
+        if (configTarget && configTarget !== resolvedVersion) {
+                fail(`config.electronVersion ("${configTarget}") does not match resolved Electron ("${resolvedVersion}"). This is the v1.8.0 bug -- see verify-npmrc-target.js.`);
         }
 }
 
