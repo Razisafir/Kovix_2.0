@@ -1,5 +1,86 @@
 # Changelog
 
+## v1.8.4 — Fix findElectron() to read electron/path.txt (v1.8.3 fix was wrong)
+
+**Release date:** 2026-06-25
+
+### What was broken in v1.8.3
+
+Run #44 (v1.8.3) build-windows failed again on the same step
+(`verify-native-modules-electron.js`), but with a different error:
+
+```
+Spawning Electron to load 10 native modules...
+  electron: D:\a\KOVIX\KOVIX\node_modules\electron\index.js
+FAIL: spawnSync could not launch Electron.
+  error: spawnSync D:\a\KOVIX\KOVIX\node_modules\electron\index.js UNKNOWN
+  code: UNKNOWN
+```
+
+The v1.8.3 fix told `findElectron()` to read `electron/package.json`
+`main` field. **That field points to `index.js`, not the Electron binary.**
+`index.js` is the Node.js API wrapper used when you `require('electron')`
+from a script. Spawning `index.js` directly fails with UNKNOWN because
+Node.js can't execute a JavaScript source file as a program.
+
+The diagnostic improvements added in v1.8.3 (`result.error` print path)
+paid off immediately -- in run #42/#43 we had only "exit code null, empty
+stdout/stderr". In run #44 we got the actual `UNKNOWN` error and the
+resolved path, which made the root cause obvious.
+
+### Root cause
+
+The Electron npm package ships with:
+- `node_modules/electron/package.json` -- `main: "index.js"` (Node API wrapper)
+- `node_modules/electron/index.js` -- the Node API wrapper script
+- `node_modules/electron/path.txt` -- written by postinstall, contains the
+  relative path to the actual Electron binary (`dist\electron.exe` on
+  Windows, `dist/electron` on Linux, `dist/Electron.app/Contents/MacOS/
+  Electron` on macOS)
+- `node_modules/electron/dist/electron(.exe)` -- the actual Electron binary
+
+`findElectron()` needs to read `path.txt`, not `package.json` main.
+
+### What v1.8.4 fixes
+
+`findElectron()` now tries 4 paths in order, all of which are well-established
+Electron binary lookup patterns:
+
+1. **Read `node_modules/electron/path.txt`** (canonical). This is what
+   the electron npm package itself writes during postinstall. Path 1
+   alone should always work for npm-installed Electron.
+2. **Run `node node_modules/electron/index.js`** as a subprocess. This
+   is what the `electron` CLI does -- it requires index.js as a Node
+   script, which prints the binary path to stdout. Used as a fallback
+   if `path.txt` is missing.
+3. **Probe well-known dist/ paths directly**: `dist/electron.exe` on
+   Windows, `dist/Electron.app/Contents/MacOS/Electron` on macOS,
+   `dist/electron` on Linux. Paranoid direct probe.
+4. **Fall back to `.bin/electron(.exe)`** for dev environments. On
+   Windows, `.cmd` shims require `shell: true` (Node 18+ security
+   restriction), which the caller adds when the resolved path ends
+   with `.cmd`.
+
+The `windowsHide: true` spawn option from v1.8.3 is preserved. The
+diagnostics from v1.8.3 (`result.error` print, `signal`/`pid` in the
+no-result-file path) are preserved.
+
+### Expected outcome
+
+Run #45 (v1.8.4) build-windows should:
+- Find Electron via `path.txt` -> `dist/electron.exe`
+- Spawn the actual binary with `windowsHide: true`
+- Probe script writes result file with 10 modules' status
+- Build proceeds to compile, package, sign, upload
+
+If `path.txt` is somehow missing on the CI runner, path 2 (run index.js
+as subprocess) will kick in. If that fails too, path 3 (direct dist
+probe) will find the binary. If all three fail, something is seriously
+wrong with the Electron install itself and the static check
+(`verify-native-modules.js`) should also have failed.
+
+---
+
 ## v1.8.3 — Fix Windows Electron probe spawn bug (v1.8.2 build-windows failed identically to v1.8.1)
 
 **Release date:** 2026-06-25
