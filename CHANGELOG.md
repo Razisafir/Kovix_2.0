@@ -1,5 +1,104 @@
 # Changelog
 
+## v1.8.3 — Fix Windows Electron probe spawn bug (v1.8.2 build-windows failed identically to v1.8.1)
+
+**Release date:** 2026-06-25
+
+### What was broken in v1.8.2
+
+The v1.8.2 tag (`1f3e45bf`) shipped on `main` HEAD which already had the Phase 1
+and Phase 2 fixes that v1.8.1 was missing (Electron checksums update, explicit
+`rebuild-native-modules.js` step in `release.yml`). Run #43 got further than
+run #42 -- the static native-module check passed all 9 modules with correct
+PE32+ signatures, proving the ABI mismatch fix was working. But the gold-standard
+Electron probe still failed instantly:
+
+```
+Spawning Electron to load 10 native modules...
+  electron: D:\a\KOVIX\KOVIX\node_modules\.bin\electron.cmd
+FAIL: Electron probe did not write a result file.
+Electron exit code: null
+Electron stdout:
+Electron stderr:
+```
+
+The 2ms between "Spawning Electron" and "FAIL" confirmed Electron never spawned.
+This was **not** an ABI issue -- it was a Windows spawn bug in the verify script
+itself.
+
+### Root cause
+
+`verify-native-modules-electron.js` `findElectron()` preferred `electron.cmd`
+from `node_modules/.bin/` on Windows. Spawning a `.cmd` file from Node.js
+`spawnSync` without `shell: true` fails silently on Node 18+: the process
+returns instantly with `status=null`, empty stdout/stderr, and no result file
+written. The Electron probe never actually ran.
+
+This bug was present in the v1.8.1 hotfix commit (`4c90d0a5`) which introduced
+`verify-native-modules-electron.js`, and was never caught because:
+
+1. The Linux sandbox can't reproduce the Windows .cmd shim issue.
+2. The script worked on Linux/macOS CI runs (which use the `electron` shim,
+   not `.cmd`).
+3. The first time it ran on Windows was the v1.8.1 release itself -- by
+   which point it was too late.
+
+### What v1.8.3 fixes
+
+`build/lib/verify-native-modules-electron.js` is updated:
+
+1. **`findElectron()` reads `node_modules/electron/package.json` `main` field
+   first.** On Windows this is `dist/electron.exe`; on Linux/macOS it's
+   `dist/electron`. This is the canonical binary path and bypasses the `.cmd`
+   shim entirely. The `.bin/electron.cmd` shim is only used as a last-resort
+   fallback for dev environments, and when it IS used, `shell: true` is now
+   added to the spawn options.
+2. **`windowsHide: true`** added to `spawnSync` options to prevent Electron
+   from trying to create a console window in CI.
+3. **`shell: true` conditional on path ending in `.cmd`** -- only used when
+   the dev fallback path is hit, never in normal CI.
+4. **`result.error` diagnostics** -- if `spawnSync` itself fails (not Electron
+   exiting non-zero), the script now prints `error.message`, `error.code`,
+   `electronPath`, `args`, and the `needsShell` flag, then exits 1. Future
+   spawn failures will have diagnostic info instead of an empty black box.
+5. **"did not write result file" message enhanced** -- now prints `signal`,
+   `pid`, and a hint about the `.cmd` shim cause when stdout/stderr are empty.
+
+The probe script itself (the `PROBE_SCRIPT` constant that runs inside
+Electron's main process) is unchanged. It writes the result file BEFORE
+calling `app.whenReady()`, so even if Electron's GUI event loop never fires
+on a headless runner, the result file should still be written. The 2ms
+"instant fail" pattern in run #42/#43 confirms Electron never spawned at
+all, which is exactly what the `.cmd` shim bug causes.
+
+### What's also in v1.8.3
+
+v1.8.3 is cut from `main` HEAD which now includes the verify-script fix on
+top of v1.8.2. No other source changes -- the ABI mismatch fix, the
+checksums update, and the explicit rebuild step were all already in place
+from v1.8.2. The only delta from v1.8.2 is the verify-script spawn fix.
+
+### Verification plan for v1.8.3
+
+CI run #44 will:
+
+1. Build Windows, macOS, Linux packages in parallel (~25-40 min each).
+2. On Windows: the previously-failing `verify-native-modules-electron.js`
+   step should now succeed because it will use `dist/electron.exe` instead
+   of `electron.cmd`.
+3. On Linux: same checksum-validated path as v1.8.2 (which we expect to
+   succeed -- v1.8.1's Linux failure was purely the missing v42.4.1
+   checksums, which #148 fixed on main already).
+4. If all 3 jobs succeed, `create-release` runs and uploads the v1.8.3
+   GitHub Release with Windows `.exe` + macOS `.zip` + Linux `.deb`/`.rpm`/
+   `.tar.gz` + unified `checksums.txt`.
+
+After v1.8.3 ships, both v1.8.0 and v1.8.1 and v1.8.2 will be marked as
+superseded (bodies updated to point at v1.8.3). Tags remain for historical
+record.
+
+---
+
 ## v1.8.2 — Re-cut release: v1.8.1's hotfix was incomplete, builds never produced artifacts
 
 **Release date:** 2026-06-25
