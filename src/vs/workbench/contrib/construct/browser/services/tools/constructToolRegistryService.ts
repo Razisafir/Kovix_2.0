@@ -22,9 +22,13 @@ import { IPendingChangesService } from '../../../../../../platform/construct/com
 // SEC-7 (H4 follow-up): Modal confirmation dialog for interpreter commands.
 import { IDialogService } from '../../../../../../platform/dialogs/common/dialogs.js';
 import Severity from '../../../../../../base/common/severity.js';
-import { nmapToolDefinition } from '../../tools/security/nmapTool.js';
-import { ghidraToolDefinition } from '../../tools/security/ghidraTool.js';
-import { nucleiToolDefinition } from '../../tools/security/nucleiTool.js';
+// Security tool definitions (nmap, ghidra, nuclei) are schema-only stubs
+// with no working execution handlers. They are intentionally NOT imported
+// here so the LLM cannot see or call them. When real implementations are
+// added, re-import and re-enable registerSecurityTools() below.
+// import { nmapToolDefinition } from '../../tools/security/nmapTool.js';
+// import { ghidraToolDefinition } from '../../tools/security/ghidraTool.js';
+// import { nucleiToolDefinition } from '../../tools/security/nucleiTool.js';
 // Browser-safe path utilities
 import * as pathModule from '../../../../../../base/common/path.js';
 // Phase 5: extracted external-target guard (pure functions, unit-tested).
@@ -1709,29 +1713,12 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
          * Idempotent: if the tools are already registered, this is a no-op.
          */
         public registerSecurityTools(): string[] {
-                const registered: string[] = [];
-                // nmap_scan — network port scanner
-                if (!this._tools.has(nmapToolDefinition.name)) {
-                        this.registerTool(nmapToolDefinition, async (input) => this.executeNmapScan(input));
-                        registered.push(nmapToolDefinition.name);
-                }
-
-                // ghidra_decompile — binary decompiler via Docker
-                if (!this._tools.has(ghidraToolDefinition.name)) {
-                        this.registerTool(ghidraToolDefinition, async (input) => this.executeGhidraDecompile(input));
-                        registered.push(ghidraToolDefinition.name);
-                }
-
-                // nuclei_scan — vulnerability scanner
-                if (!this._tools.has(nucleiToolDefinition.name)) {
-                        this.registerTool(nucleiToolDefinition, async (input) => this.executeNucleiScan(input));
-                        registered.push(nucleiToolDefinition.name);
-                }
-
-                if (registered.length > 0) {
-                        this.logService.info('[ToolRegistry] Security tools registered: ' + registered.join(', '));
-                }
-                return registered;
+                // STUB-DISABLED: Security tool definitions (nmap, ghidra, nuclei) are
+                // schema-only stubs with no working execution handlers. Registration is
+                // disabled to prevent the LLM from seeing and attempting to call them.
+                // Re-enable when real implementations are available.
+                this.logService.info('[ToolRegistry] registerSecurityTools() skipped — tool stubs disabled');
+                return [];
         }
 
         /**
@@ -1742,7 +1729,7 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
          */
         public unregisterSecurityTools(): string[] {
                 const unregistered: string[] = [];
-                for (const name of [nmapToolDefinition.name, ghidraToolDefinition.name, nucleiToolDefinition.name]) {
+                for (const name of ['nmap_scan', 'ghidra_decompile', 'nuclei_scan']) {
                         if (this._tools.has(name)) {
                                 this.unregisterTool(name);
                                 unregistered.push(name);
