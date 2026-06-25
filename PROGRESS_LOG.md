@@ -752,3 +752,30 @@ Per user's standing rule, Phase 6 (packaging/signing) requires the user to perso
 **BLOCKED in this environment.** Xvfb runs and simple X11 clients can connect, but Electron's ozone X11 platform fails with "Missing X server or $DISPLAY" despite DISPLAY=:99 being set. This is a container/sandboxing limitation. Headless service initialization confirmed (Construct services all start, DevTools opens on port 9222). The app does NOT crash on boot, but GUI rendering (Construct panel, approval gating, task execution) cannot be verified without a real display or a properly sandboxed Xvfb setup.
 
 **Implication**: GUI verification on Windows/macOS by an actual human is the #1 blocking task before this can be called launchable.
+
+---
+
+## 2026-06-26 — Phase 6, Step 1: Duplicate-commit resolution
+
+**Task ID:** phase6-step1
+**Agent:** main
+
+### Finding
+
+Commits 03797713 and 950ca221 share the **exact same tree hash** `61f6daf84c9ab20e32c2b816df21683c5fc0637e`. The merge commit 7ec05df0 also produces this same tree. This is not data loss or an error in the merge — it means both branches independently applied the same 85-file patch to the same parent (d5114f8c).
+
+### Root Cause
+
+The naming fix and brand consolidation were done as a single monolithic change in a previous session. That session then split the work into two branches with different commit messages but identical content, and merged them. The merge was a no-op because both parents were already identical. This likely happened because the session created one branch for "naming" and one for "brand," but applied the full change to both instead of partitioning the work.
+
+### Resolution
+
+**Scenario 1: Final state is correct despite redundant history.**
+
+Verified:
+- All three commits (03797713, 950ca221, 7ec05df0) have identical tree hash `61f6daf8`
+- The current HEAD correctly reflects all naming and brand changes
+- Specific checks pass: nameShort='Kovix Dev', auth HTML='Kovix IDE', dead tokens removed, canonical teal tokens present
+- No files were lost or reverted in the merge
+
+**Action taken:** No code changes needed. This entry documents the duplication for anyone reading `git log` later. The duplicate history is harmless but confusing — anyone bisecting this branch should know that 03797713 and 950ca221 contain the same changes.
