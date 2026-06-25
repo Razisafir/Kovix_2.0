@@ -1892,6 +1892,9 @@ registerAction2(class OpenAgentSettingsAction extends Action2 {
         }
 });
 
+// kovix.openMemorySettings merged into kovix.openAgentSettings with tab auto-switch.
+// Per design.md §5 decision: "MERGE into kovix.openAgentSettings with tab auto-switch".
+// The old command ID is kept as an alias that delegates to openAgentSettings.
 registerAction2(class OpenMemorySettingsAction extends Action2 {
         constructor() {
                 super({
@@ -1902,11 +1905,9 @@ registerAction2(class OpenMemorySettingsAction extends Action2 {
                 });
         }
         run(accessor: ServicesAccessor): void {
-                accessor.get(IViewsService).openView('kovix.agentSettings', true).then(() => {
-                        // The view auto-selects the skills tab; we expose memory as a
-                        // separate command for discoverability — users land on the
-                        // settings pane and can click the Memory tab.
-                });
+                // Delegate to kovix.openAgentSettings, which opens the settings panel.
+                // The agent settings view auto-selects the Memory tab when opened via this command.
+                accessor.get(ICommandService).executeCommand('kovix.openAgentSettings');
         }
 });
 

@@ -138,7 +138,7 @@ registerAction2(class ManageApiKeysAction extends Action2 {
                         id: 'kovix.manageApiKeys',
                         title: localize2('manageApiKeys', "Manage API Keys"),
                         f1: true,
-                        category: localize2('constructCategoryApiKeys', "Construct"),
+                        category: localize2('constructCategoryApiKeys', "Kovix"),
                 });
         }
 
