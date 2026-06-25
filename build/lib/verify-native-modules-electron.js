@@ -42,29 +42,72 @@ const electronBinDir = path.join(repoRoot, 'node_modules', '.bin');
 
 // Find the Electron binary.
 //
-// On Windows we MUST prefer the real electron.exe under
-// node_modules/electron/dist/ over the .cmd shim in node_modules/.bin/.
-// Spawning a .cmd file from Node.js spawnSync without shell:true fails
-// silently on Node 18+ (status=null, empty stdout/stderr, returns in
-// ~2ms). This was the root cause of the v1.8.1 and v1.8.2 release
-// build-windows failures (run #42 and run #43).
+// IMPORTANT: the actual Electron BINARY is NOT in package.json's main
+// field. electron/package.json main points to index.js, which is the
+// Node.js API wrapper (used when you `require('electron')` from a
+// script). Spawning index.js directly fails with UNKNOWN because it's
+// a JS source file, not an executable.
+//
+// The canonical way to find the binary is to read node_modules/electron/
+// path.txt, which the electron npm package writes during postinstall.
+// On Windows it contains "dist\electron.exe", on Linux "dist/electron",
+// on macOS "dist/Electron.app/Contents/MacOS/Electron".
+//
+// We also try running `node node_modules/electron/index.js` (which
+// prints the binary path) as a fallback. The .cmd shim in .bin/ is a
+// last resort and only works with shell:true (Node 18+ security
+// restriction).
 function findElectron() {
-	// Always try the dist/ path first (read from electron's own package.json).
-	// electron/package.json main field is "dist/electron.exe" on Windows,
-	// "dist/electron" on Linux/macOS. This is the canonical binary path.
+	const electronDir = path.join(repoRoot, 'node_modules', 'electron');
+
+	// Path 1 (canonical): read electron/path.txt
 	try {
-		const pkg = JSON.parse(fs.readFileSync(path.join(repoRoot, 'node_modules/electron/package.json'), 'utf8'));
-		if (pkg.main && fs.existsSync(path.join(repoRoot, 'node_modules/electron', pkg.main))) {
-			return path.join(repoRoot, 'node_modules/electron', pkg.main);
+		const pathTxt = fs.readFileSync(path.join(electronDir, 'path.txt'), 'utf8').trim();
+		const resolved = path.join(electronDir, pathTxt);
+		if (fs.existsSync(resolved)) {
+			return resolved;
+		}
+	} catch (_) { /* path.txt missing, try next */ }
+
+	// Path 2 (fallback): run electron's index.js as a Node script to print
+	// the binary path. This is what `electron` CLI does internally.
+	try {
+		const indexJs = path.join(electronDir, 'index.js');
+		if (fs.existsSync(indexJs)) {
+			const r = spawnSync(process.execPath, [indexJs], {
+				cwd: repoRoot,
+				encoding: 'utf8',
+				timeout: 10000,
+				stdio: 'pipe',
+				env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+			});
+			if (r.status === 0) {
+				const candidate = (r.stdout || '').trim();
+				if (candidate && fs.existsSync(candidate)) {
+					return candidate;
+				}
+			}
 		}
 	} catch (_) { /* ignore */ }
-	// Fallback to .bin/ (used in dev environments). On Windows, .cmd
-	// shims only work with shell:true, so we add that in the spawn call
-	// below when the resolved path ends with .cmd.
-	const candidates = process.platform === 'win32'
+
+	// Path 3 (last resort): probe well-known dist paths directly.
+	const distCandidates = process.platform === 'win32'
+		? ['dist/electron.exe', 'dist/electron']
+		: process.platform === 'darwin'
+			? ['dist/Electron.app/Contents/MacOS/Electron', 'dist/electron']
+			: ['dist/electron'];
+	for (const c of distCandidates) {
+		const p = path.join(electronDir, c);
+		if (fs.existsSync(p)) return p;
+	}
+
+	// Path 4 (dev environment): use the .bin shim. On Windows, .cmd
+	// shims require shell:true, which the caller adds when the resolved
+	// path ends with .cmd.
+	const binCandidates = process.platform === 'win32'
 		? ['electron.exe', 'electron']
 		: ['electron'];
-	for (const c of candidates) {
+	for (const c of binCandidates) {
 		const p = path.join(electronBinDir, c);
 		if (fs.existsSync(p)) return p;
 	}
