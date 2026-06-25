@@ -1,5 +1,102 @@
 # Changelog
 
+## v1.8.2 — Re-cut release: v1.8.1's hotfix was incomplete, builds never produced artifacts
+
+**Release date:** 2026-06-25
+
+### What was broken in v1.8.1
+
+The v1.8.1 tag (`4c90d0a5`) shipped the **ABI mismatch fix** (Electron 32 -> 42.4.1
+in `.npmrc`, `package.json`, `package-lock.json`) and the **three new CI guards**
+(`verify-npmrc-target.js`, `verify-native-modules.js`, `verify-native-modules-electron.js`),
+but it did **not** include the matching Electron checksums update or the explicit
+`rebuild-native-modules.js` step in `release.yml`. The release workflow run (#42)
+failed on all three platforms:
+
+- **Windows** (`build-windows`): the new `verify-native-modules-electron.js` gold-standard
+  probe spawned Electron but Electron did not write a result file (exit code null).
+  Root cause: native modules were never rebuilt against the Electron 42 ABI before
+  the probe ran -- `release.yml` was missing the `node build/lib/rebuild-native-modules.js`
+  step that `build.yml` already had.
+- **Linux** (`build-linux`): `gulp vscode-linux-x64` errored after 59 min with
+  `No checksum found in checksum file for "electron-v42.4.1-linux-x64.zip"`. Root cause:
+  `build/checksums/electron.txt` still listed the v32.2.6 checksums -- the v1.8.1
+  hotfix updated the version pins but not the checksum file.
+- **macOS** (`build-macos`): same checksum mismatch root cause as Linux.
+
+Result: the v1.8.1 GitHub release exists but has **0 assets**. The v1.8.0 release
+(8 assets) remains marked `prerelease=true` with the "WITHDRAWN" title.
+
+### What v1.8.2 fixes
+
+v1.8.2 is cut from current `main` HEAD (`339e5a84`) which includes the Phase 1
+and Phase 2 follow-up PRs that completed what v1.8.1 was supposed to do:
+
+- **#148** `fix(phase-1): pin Electron version chain (checksums v42.4.1 + .nvmrc 22.12.0 + guard)`
+  -- rewrites `build/checksums/electron.txt` with all 150 v42.4.1 checksums (was v32.2.6),
+  pins `.nvmrc` to Node 22.12.0 (was 20.x), adds `verify-electron-pins.js` to assert
+  the full pin chain is consistent across `package.json` + `.npmrc` + checksums + `.nvmrc`.
+- **#149** `fix(hygiene): replace 6 U+2192 arrows with -> in verify-electron-pins.js`
+  -- fixes upstream hygiene lint errors on the new guard.
+- **#150** `fix(phase-2): explicit native module rebuild step + spdlog verification`
+  -- adds `node build/lib/rebuild-native-modules.js` as an explicit step in **all 5
+  workflows** (`release.yml`, `build.yml`, `pre-release.yml`, `nightly-build.yml`, `ci.yml`)
+  after `npm ci` and before any verify/compile/package step. This is the step that was
+  missing from v1.8.1's release.yml and caused `verify-native-modules-electron.js` to
+  fail on Windows. Also adds `@vscode/spdlog` to the modules probed by the Electron
+  gold-standard test.
+
+### What's new beyond the v1.8.1 fix
+
+Because v1.8.2 is cut from `main` HEAD (not from the v1.8.1 hotfix branch), it also
+includes everything that landed on `main` between v1.8.1 and now:
+
+- **Phase 3** (#151): wire `ICostGovernor` + `IExecutionSanityService` into `agentLoop.ts`
+- **Phase 4** (#152): unit + integration tests for Phase 3 agent loop wiring
+- **Phase 5** (#153): convert security tooling (nmap/Ghidra/Nuclei) to opt-in extension
+- **Phase 5.5 Fix 1** (#154): make milestone pause/resume real (was a no-op stub)
+- **Phase 5.5 Fix 2** (#155): delete dead 4-layer memory infrastructure (cloud-only now)
+
+These do not affect the build/packaging path -- they are runtime-only changes to
+the Construct agent. They are included because cutting v1.8.2 from anything other
+than current `main` would have required a cherry-pick branch and re-introduced the
+exact drift problem that broke v1.8.1 in the first place.
+
+### Upgrade path
+
+- **From v1.8.0 (withdrawn):** upgrade to v1.8.2. v1.8.0's Windows package was
+  unusable (every native module crashed with `ERR_DLOPEN_FAILED` at launch).
+- **From v1.8.1 (no assets):** there is nothing to upgrade from -- v1.8.1 never
+  produced a downloadable build. The tag exists for historical record only.
+- **From v1.7.x:** v1.8.2 is a normal upgrade. The Construct agent (Kovix's
+  AI-assisted planning/execution feature) gained real milestone pause/resume,
+  a cost governor, and security-tool extensions became opt-in.
+
+### Verification plan
+
+CI will run all three new guards on real Windows/macOS/Linux runners as part of
+this release. Specifically:
+
+1. `verify-npmrc-target.js` -- fails if `.npmrc target` drifts from resolved Electron.
+2. `verify-electron-pins.js` -- fails if the full pin chain (package.json +
+   .npmrc + checksums + .nvmrc) is inconsistent.
+3. `verify-native-modules.js` -- fails if any known native `.node` is missing or
+   has the wrong platform binary signature.
+4. `verify-native-modules-electron.js` (Windows only) -- spawns the actual
+   Electron binary and require()s each known native module from inside it.
+   This is the gold-standard test that v1.8.0 needed and didn't have, and that
+   v1.8.1's release.yml couldn't pass because the rebuild step was missing.
+
+After CI completes, the v1.8.2 release will appear automatically at
+<https://github.com/Razisafir/KOVIX/releases> with Windows `.exe` (system +
+user setup), macOS `.zip`, and Linux `.deb` + `.rpm` + `.tar.gz` artifacts plus
+unified `checksums.txt`.
+
+The v1.8.1 release will be marked as superseded (body updated to point at v1.8.2)
+but the tag will not be deleted -- it remains as a record of the failed attempt.
+
+---
+
 ## v1.8.1 — Critical hotfix: native module ABI mismatch that made v1.8.0 Windows release unusable
 
 **Release date:** 2026-06-24
