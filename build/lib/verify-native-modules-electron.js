@@ -188,6 +188,18 @@ function main() {
 		KOVIX_NATIVE_PROBE_MODS: JSON.stringify(modsToProbe),
 		ELECTRON_DISABLE_SECURITY_WARNINGS: '1',
 		ELECTRON_ENABLE_LOGGING: '0',
+		// ELECTRON_RUN_AS_NODE=1 makes Electron skip its GUI initialization
+		// entirely and run as a pure Node.js process. This is REQUIRED on
+		// Windows CI runners without an interactive desktop -- without it,
+		// Electron hangs at startup waiting for a window station that doesn't
+		// exist, and the probe script never runs.
+		//
+		// The ABI test is still valid in this mode: native .node files are
+		// loaded via process.dlopen() by Electron's bundled Node, which is
+		// the same V8/Node that runs in Electron's main process. N-API
+		// modules (which all our native modules are) load identically in
+		// both modes.
+		ELECTRON_RUN_AS_NODE: '1',
 	};
 
 	const args = [probeScriptPath, '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'];
