@@ -5,17 +5,17 @@
 
 .monaco-editor .inlineSuggestionsHints.withBorder {
 	z-index: 39;
-	color: var(--construct-editorHoverWidget-foreground);
-	background-color: var(--construct-editorHoverWidget-background);
-	border: 1px solid var(--construct-editorHoverWidget-border);
+	color: var(--kovix-editorHoverWidget-foreground);
+	background-color: var(--kovix-editorHoverWidget-background);
+	border: 1px solid var(--kovix-editorHoverWidget-border);
 }
 
 .monaco-editor .inlineSuggestionsHints a {
-	color: var(--construct-foreground);
+	color: var(--kovix-foreground);
 }
 
 .monaco-editor .inlineSuggestionsHints a:hover {
-	color: var(--construct-foreground);
+	color: var(--kovix-foreground);
 }
 
 .monaco-editor .inlineSuggestionsHints .keybinding {

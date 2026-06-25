@@ -18,8 +18,8 @@
 	top: -15px;
 	height: 26px;
 	line-height: 26px;
-	background-color: var(--construct-interactive-result-editor-background-color, var(--construct-editor-background));
-	border: 1px solid var(--construct-chat-requestBorder);
+	background-color: var(--kovix-interactive-result-editor-background-color, var(--kovix-editor-background));
+	border: 1px solid var(--kovix-chat-requestBorder);
 	z-index: 100;
 	max-width: 70%;
 	text-overflow: ellipsis;
@@ -61,12 +61,12 @@
 }
 
 .interactive-result-code-block {
-	border: 1px solid var(--construct-input-border, transparent);
-	background-color: var(--construct-interactive-result-editor-background-color);
+	border: 1px solid var(--kovix-input-border, transparent);
+	background-color: var(--kovix-interactive-result-editor-background-color);
 }
 
 .interactive-result-code-block:has(.monaco-editor.focused) {
-	border-color: var(--construct-focusBorder, transparent);
+	border-color: var(--kovix-focusBorder, transparent);
 }
 
 .interactive-result-code-block,
@@ -116,7 +116,7 @@
 	padding: 0;
 	text-align: initial;
 	justify-content: initial;
-	color: var(--construct-foreground) !important; /* This is inside .rendered-markdown */
+	color: var(--kovix-foreground) !important; /* This is inside .rendered-markdown */
 	user-select: none;
 }
 
@@ -125,7 +125,7 @@
 }
 
 .interactive-result-code-block .interactive-result-vulns-header .monaco-text-button:focus-visible {
-	outline: 1px solid var(--construct-focusBorder);
+	outline: 1px solid var(--kovix-focusBorder);
 }
 
 /* compare code block */
@@ -141,12 +141,12 @@
 
 
 .interactive-result-code-block.compare .message A {
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 	cursor: pointer;
 }
 
 .interactive-result-code-block.compare .message A > CODE {
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 }
 
 .interactive-result-code-block.compare .interactive-result-header {
@@ -155,7 +155,7 @@
 	align-items: center;
 	padding: 0 3px;
 	box-sizing: border-box;
-	border-bottom: solid 1px var(--construct-chat-requestBorder);
+	border-bottom: solid 1px var(--kovix-chat-requestBorder);
 }
 
 .interactive-result-code-block.compare.no-diff .interactive-result-header,

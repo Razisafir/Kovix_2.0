@@ -51,8 +51,8 @@ div.chat-welcome-view {
 	}
 
 	& > .chat-welcome-view-indicator {
-		color: var(--construct-badge-foreground);
-		background: var(--construct-badge-background);
+		color: var(--kovix-badge-foreground);
+		background: var(--kovix-badge-background);
 		padding: 1px 8px;
 		border-radius: 14px;
 		margin-top: 10px;
@@ -66,7 +66,7 @@ div.chat-welcome-view {
 		margin-top: 15px;
 
 		a {
-			color: var(--construct-textLink-foreground);
+			color: var(--kovix-textLink-foreground);
 		}
 	}
 

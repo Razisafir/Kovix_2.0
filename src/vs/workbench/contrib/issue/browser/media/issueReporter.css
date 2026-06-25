@@ -454,5 +454,5 @@
 }
 
 .issue-reporter a {
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 }

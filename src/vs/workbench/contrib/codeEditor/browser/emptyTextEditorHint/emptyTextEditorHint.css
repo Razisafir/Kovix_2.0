@@ -4,9 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-editor .contentWidgets .empty-editor-hint {
-	color: var(--construct-input-placeholderForeground);
+	color: var(--kovix-input-placeholderForeground);
 }
 
 .monaco-editor .contentWidgets .empty-editor-hint a {
-	color: var(--construct-textLink-foreground)
+	color: var(--kovix-textLink-foreground)
 }

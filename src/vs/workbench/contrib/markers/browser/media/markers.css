@@ -27,11 +27,11 @@
 }
 
 .markers-panel  .markers-panel-container .codicon.codicon-light-bulb {
-	color:  var(--construct-editorLightBulb-foreground);
+	color:  var(--kovix-editorLightBulb-foreground);
 }
 
 .markers-panel  .markers-panel-container .codicon.codicon-lightbulb-autofix {
-	color:  var(--construct-editorLightBulbAutoFix-foreground);
+	color:  var(--kovix-editorLightBulbAutoFix-foreground);
 }
 
 .markers-panel .markers-panel-container .tree-container.hidden {

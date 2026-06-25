@@ -22,13 +22,13 @@
 }
 
 .icon-select-box .icon-select-icons-container > .icon-container.focused {
-	background-color: var(--construct-quickInputList-focusBackground);
-	color: var(--construct-quickInputList-focusForeground);
+	background-color: var(--kovix-quickInputList-focusBackground);
+	color: var(--kovix-quickInputList-focusForeground);
 }
 
 .icon-select-box .icon-select-icons-container > .icon-container:hover:not(.focused) {
-	background-color: var(--construct-toolbar-hoverBackground);
-	color: var(--construct-list-hoverForeground)
+	background-color: var(--kovix-toolbar-hoverBackground);
+	color: var(--kovix-list-hoverForeground)
 }
 
 .icon-select-box .icon-select-id-container .icon-select-id-label {
@@ -38,6 +38,6 @@
 }
 
 .icon-select-box .icon-select-id-container .icon-select-id-label .highlight {
-	color: var(--construct-list-highlightForeground);
+	color: var(--kovix-list-highlightForeground);
 	font-weight: bold;
 }

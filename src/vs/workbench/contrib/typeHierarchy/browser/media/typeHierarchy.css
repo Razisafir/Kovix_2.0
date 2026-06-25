@@ -26,13 +26,13 @@
 }
 
 .monaco-editor .type-hierarchy .tree {
-	background-color: var(--construct-peekViewResult-background);
-	color: var(--construct-peekViewResult-fileForeground);
+	background-color: var(--kovix-peekViewResult-background);
+	color: var(--kovix-peekViewResult-fileForeground);
 }
 
 .monaco-editor .type-hierarchy .tree .monaco-list:focus .monaco-list-rows > .monaco-list-row.selected:not(.highlighted) {
-	background-color: var(--construct-peekViewResult-selectionBackground);
-	color: var(--construct-peekViewResult-selectionForeground) !important;
+	background-color: var(--kovix-peekViewResult-selectionBackground);
+	color: var(--kovix-peekViewResult-selectionForeground) !important;
 }
 
 .monaco-workbench .type-hierarchy .tree .typehierarchy-element {
@@ -47,16 +47,16 @@
 }
 
 .monaco-editor .type-hierarchy .type-decoration {
-	background-color: var(--construct-peekViewEditor-matchHighlightBackground);
-	border: 2px solid var(--construct-peekViewEditor-matchHighlightBorder);
+	background-color: var(--kovix-peekViewEditor-matchHighlightBackground);
+	border: 2px solid var(--kovix-peekViewEditor-matchHighlightBorder);
 	box-sizing: border-box;
 }
 
 .monaco-editor .type-hierarchy .editor .monaco-editor .monaco-editor-background,
 .monaco-editor .type-hierarchy .editor .monaco-editor .inputarea.ime-input {
-	background-color: var(--construct-peekViewEditor-background);
+	background-color: var(--kovix-peekViewEditor-background);
 }
 
 .monaco-editor .type-hierarchy .editor .monaco-editor .margin {
-	background-color: var(--construct-peekViewEditorGutter-background);
+	background-color: var(--kovix-peekViewEditorGutter-background);
 }

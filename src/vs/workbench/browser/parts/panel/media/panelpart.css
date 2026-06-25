@@ -48,7 +48,7 @@
 .monaco-workbench .part.panel > .content .monaco-editor .margin,
 .monaco-workbench .part.panel > .content .monaco-editor .monaco-editor-background {
 	/* THIS DOESN'T WORK ANYMORE */
-	background-color: var(--construct-panel-background);
+	background-color: var(--kovix-panel-background);
 }
 
 .monaco-workbench .part.panel > .content .suggest-input-container .monaco-editor,
@@ -59,16 +59,16 @@
 
 .monaco-workbench .part.panel > .title > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.checked:not(:focus) .active-item-indicator:before,
 .monaco-workbench .part.panel > .title > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.checked.clicked:focus .active-item-indicator:before {
-	border-top-color: var(--construct-panelTitle-activeBorder) !important;
+	border-top-color: var(--kovix-panelTitle-activeBorder) !important;
 }
 
 .monaco-workbench .part.panel > .title > .composite-bar-container >.composite-bar > .monaco-action-bar .action-item:focus .action-label,
 .monaco-workbench .part.panel > .title > .composite-bar-container >.composite-bar > .monaco-action-bar .action-item:hover .action-label {
-	color: var(--construct-panelTitle-activeForeground) !important;
+	color: var(--kovix-panelTitle-activeForeground) !important;
 }
 
 .monaco-workbench .part.panel .monaco-inputbox {
-	border-color: var(--construct-panelInput-border, transparent) !important;
+	border-color: var(--kovix-panelInput-border, transparent) !important;
 }
 
 .monaco-workbench .part.panel > .title > .composite-bar-container >.composite-bar > .monaco-action-bar .action-item:focus {

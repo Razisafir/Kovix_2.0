@@ -10,5 +10,5 @@
 
 .monaco-editor .detected-link-active {
 	cursor: pointer;
-	color: var(--construct-editorLink-activeForeground) !important;
+	color: var(--kovix-editorLink-activeForeground) !important;
 }

@@ -32,58 +32,58 @@
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.built-in-status {
-	border-color: var(--construct-foreground);
+	border-color: var(--kovix-foreground);
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.label,
 .monaco-action-bar .action-item.action-dropdown-item > .action-dropdown-item-separator {
-	background-color: var(--construct-extensionButton-background) !important;
+	background-color: var(--kovix-extensionButton-background) !important;
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.label {
-	color: var(--construct-extensionButton-foreground) !important;
+	color: var(--kovix-extensionButton-foreground) !important;
 }
 
 .monaco-action-bar .action-item:not(.disabled) .action-label.extension-action.label:hover {
-	background-color: var(--construct-extensionButton-hoverBackground) !important;
+	background-color: var(--kovix-extensionButton-hoverBackground) !important;
 }
 
 .monaco-action-bar .action-item.action-dropdown-item > .action-dropdown-item-separator > div {
-	background-color: var(--construct-extensionButton-separator);
+	background-color: var(--kovix-extensionButton-separator);
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.label.prominent,
 .monaco-action-bar .action-item.action-dropdown-item > .action-dropdown-item-separator.prominent {
-	background-color: var(--construct-extensionButton-prominentBackground);
+	background-color: var(--kovix-extensionButton-prominentBackground);
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.label.prominent {
-	color: var(--construct-extensionButton-prominentForeground) !important;
+	color: var(--kovix-extensionButton-prominentForeground) !important;
 }
 
 .monaco-action-bar .action-item.action-item:not(.disabled) .action-label.extension-action.label.prominent:hover {
-	background-color: var(--construct-extensionButton-prominentHoverBackground);
+	background-color: var(--kovix-extensionButton-prominentHoverBackground);
 }
 
 .monaco-action-bar .action-item .action-label.extension-action:not(.disabled) {
-	border: 1px solid var(--construct-contrastBorder);
+	border: 1px solid var(--kovix-contrastBorder);
 }
 
 .monaco-action-bar .action-item.action-dropdown-item > .action-dropdown-item-separator {
-	border-top: 1px solid var(--construct-contrastBorder);
-	border-bottom: 1px solid var(--construct-contrastBorder);
+	border-top: 1px solid var(--kovix-contrastBorder);
+	border-bottom: 1px solid var(--kovix-contrastBorder);
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.extension-status-error::before {
-	color: var(--construct-editorError-foreground);
+	color: var(--kovix-editorError-foreground);
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.extension-status-warning::before {
-	color: var(--construct-editorWarning-foreground);
+	color: var(--kovix-editorWarning-foreground);
 }
 
 .monaco-action-bar .action-item .action-label.extension-action.extension-status-info::before {
-	color: var(--construct-editorInfo-foreground);
+	color: var(--kovix-editorInfo-foreground);
 }
 
 .monaco-action-bar .action-item:not(.disabled) .action-label.extension-action.text,

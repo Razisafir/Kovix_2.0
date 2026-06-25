@@ -27,12 +27,12 @@ export interface ColorContribution {
 
 /**
  * Returns the css variable name for the given color identifier. Dots (`.`) are replaced with hyphens (`-`) and
- * everything is prefixed with `--construct-`.
+ * everything is prefixed with `--kovix-`.
  *
- * @sample `editorSuggestWidget.background` is `--construct-editorSuggestWidget-background`.
+ * @sample `editorSuggestWidget.background` is `--kovix-editorSuggestWidget-background`.
  */
 export function asCssVariableName(colorIdent: ColorIdentifier): string {
-        return `--construct-${colorIdent.replace(/\./g, '-')}`;
+        return `--kovix-${colorIdent.replace(/\./g, '-')}`;
 }
 
 export function asCssVariable(color: ColorIdentifier): string {

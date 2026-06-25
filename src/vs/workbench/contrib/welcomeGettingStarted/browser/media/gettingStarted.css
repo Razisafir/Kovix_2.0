@@ -320,7 +320,7 @@
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlide .getting-started-category .featured {
-        border-top: 30px solid var(--construct-activityBarBadge-background);
+        border-top: 30px solid var(--kovix-activityBarBadge-background);
         width: 30px;
         box-sizing: border-box;
         height: 20px;
@@ -412,11 +412,11 @@
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlideDetails .getting-started-step.expanded {
         cursor: default !important;
-        border: 1px solid var(--construct-welcomePage-tileBorder);
+        border: 1px solid var(--kovix-welcomePage-tileBorder);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlideDetails .getting-started-step.expanded h3 {
-        color: var(--construct-walkthrough-stepTitle-foreground);
+        color: var(--kovix-walkthrough-stepTitle-foreground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlideDetails .getting-started-step.expanded > .codicon {
@@ -426,11 +426,11 @@
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlideDetails .getting-started-step:not(.expanded) {
         height: 48px;
         background: none;
-        color: var(--construct-descriptionForeground);
+        color: var(--kovix-descriptionForeground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlideDetails .getting-started-step:not(.expanded):hover {
-        background: var(--construct-welcomePage-tileHoverBackground);
+        background: var(--kovix-welcomePage-tileHoverBackground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlideDetails .getting-started-step:not(.expanded) .step-title {
@@ -470,7 +470,7 @@
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlideDetails .getting-started-step .shortcut-message {
         display: flex;
-        color: var(--construct-descriptionForeground);
+        color: var(--kovix-descriptionForeground);
         font-size: 12px;
         margin-top: 12px;
         white-space: pre;
@@ -662,7 +662,7 @@
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer button:focus-visible {
-        outline: 1px solid var(--construct-focusBorder);
+        outline: 1px solid var(--kovix-focusBorder);
         outline-offset: -1px;
 }
 
@@ -867,74 +867,74 @@
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .hide-category-button:hover {
-        background-color: var(--construct-toolbar-hoverBackground);
+        background-color: var(--kovix-toolbar-hoverBackground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer {
-        background: var(--construct-welcomePage-background);
-        color: var(--construct-foreground);
+        background: var(--kovix-welcomePage-background);
+        color: var(--kovix-foreground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .description {
-        color: var(--construct-descriptionForeground);
+        color: var(--kovix-descriptionForeground);
         line-height: 1.4em;
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .category-progress .message {
-        color: var(--construct-descriptionForeground);
+        color: var(--kovix-descriptionForeground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlideDetails .gettingStartedDetailsContent > .getting-started-footer {
-        color: var(--construct-descriptionForeground);
+        color: var(--kovix-descriptionForeground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .icon-widget {
-        color: var(--construct-textLink-foreground);
+        color: var(--kovix-textLink-foreground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlideDetails .getting-started-step .codicon-getting-started-step-checked {
-        color: var(--construct-textLink-foreground);
+        color: var(--kovix-textLink-foreground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlideDetails .getting-started-step.expanded .codicon-getting-started-step-unchecked {
-        color: var(--construct-textLink-foreground);
+        color: var(--kovix-textLink-foreground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer button {
-        background: var(--construct-welcomePage-tileBackground);
+        background: var(--kovix-welcomePage-tileBackground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer button:hover {
-        background: var(--construct-welcomePage-tileHoverBackground);
-        outline-color: var(--construct-contrastActiveBorder, var(--construct-focusBorder));
+        background: var(--kovix-welcomePage-tileHoverBackground);
+        outline-color: var(--kovix-contrastActiveBorder, var(--kovix-focusBorder));
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer button.expanded:hover  {
-        background: var(--construct-welcomePage-tileBackground);
+        background: var(--kovix-welcomePage-tileBackground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer button.emphasis {
-        color: var(--construct-button-foreground);
+        color: var(--kovix-button-foreground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer button.emphasis {
-        background: var(--construct-button-background);
+        background: var(--kovix-button-background);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlideDetails .getting-started-step .codicon-getting-started-step-unchecked {
-        color: var(--construct-descriptionForeground);
+        color: var(--kovix-descriptionForeground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer button.emphasis:hover {
-        background: var(--construct-button-hoverBackground);
+        background: var(--kovix-button-hoverBackground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer a:not(.hide-category-button) {
-        color: var(--construct-textLink-foreground);
+        color: var(--kovix-textLink-foreground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .button-link {
-        color: var(--construct-textLink-foreground);
+        color: var(--kovix-textLink-foreground);
         text-decoration: var(--text-link-decoration);
 }
 
@@ -944,27 +944,27 @@
 
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer a:not(.hide-category-button):hover {
-        color: var(--construct-textLink-activeForeground);
+        color: var(--kovix-textLink-activeForeground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer a:not(.hide-category-button):active  {
-        color: var(--construct-textLink-activeForeground);
+        color: var(--kovix-textLink-activeForeground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer button.button-link:hover {
-        color: var(--construct-textLink-activeForeground);
+        color: var(--kovix-textLink-activeForeground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer button.button-link:hover .codicon {
-        color: var(--construct-textLink-activeForeground);
+        color: var(--kovix-textLink-activeForeground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer a:not(.codicon-close):focus {
-        outline-color: var(--construct-focusBorder);
+        outline-color: var(--kovix-focusBorder);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer button {
-        border: 1px solid var(--construct-contrastBorder);
+        border: 1px solid var(--kovix-contrastBorder);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer button.button-link  {
@@ -972,33 +972,33 @@
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlideCategories .progress-bar-outer {
-        background-color: var(--construct-welcomePage-progress-background);
+        background-color: var(--kovix-welcomePage-progress-background);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlideCategories .progress-bar-inner {
-        background-color: var(--construct-welcomePage-progress-foreground);
+        background-color: var(--kovix-welcomePage-progress-foreground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlide .getting-started-category .new-badge {
-        color: var(--construct-activityBarBadge-foreground);
+        color: var(--kovix-activityBarBadge-foreground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlide .getting-started-category .featured .featured-icon {
-        color: var(--construct-activityBarBadge-foreground);
+        color: var(--kovix-activityBarBadge-foreground);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlide .getting-started-category .new-badge {
-        background-color: var(--construct-activityBarBadge-background);
+        background-color: var(--kovix-activityBarBadge-background);
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlide .getting-started-checkbox {
-        background-color: var(--construct-checkbox-background) !important;
+        background-color: var(--kovix-checkbox-background) !important;
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlide .getting-started-checkbox {
-        color: var(--construct-checkbox-foreground) !important;
+        color: var(--kovix-checkbox-foreground) !important;
 }
 
 .monaco-workbench .part.editor > .content .gettingStartedContainer .gettingStartedSlide .getting-started-checkbox {
-        border-color: var(--construct-checkbox-border) !important;
+        border-color: var(--kovix-checkbox-border) !important;
 }

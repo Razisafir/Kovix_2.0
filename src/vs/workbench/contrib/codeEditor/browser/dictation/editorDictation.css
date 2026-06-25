@@ -4,33 +4,33 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-editor .editor-dictation-widget {
-	background-color: var(--construct-editor-background);
+	background-color: var(--kovix-editor-background);
 	padding: 2px;
 	border-radius: 8px;
 	display: flex;
 	align-items: center;
-	box-shadow: 0 4px 8px var(--construct-widget-shadow);
+	box-shadow: 0 4px 8px var(--kovix-widget-shadow);
 	z-index: 1000;
-	min-height: var(--construct-editor-dictation-widget-height);
-	line-height: var(--construct-editor-dictation-widget-height);
-	max-width: var(--construct-editor-dictation-widget-width);
+	min-height: var(--kovix-editor-dictation-widget-height);
+	line-height: var(--kovix-editor-dictation-widget-height);
+	max-width: var(--kovix-editor-dictation-widget-width);
 }
 
 .monaco-editor .editor-dictation-widget.recording .codicon.codicon-mic-filled {
-	color: var(--construct-activityBarBadge-background);
+	color: var(--kovix-activityBarBadge-background);
 	animation: editor-dictation-animation 1s infinite;
 }
 
 @keyframes editor-dictation-animation {
 	0% {
-		color: var(--construct-editorCursor-background);
+		color: var(--kovix-editorCursor-background);
 	}
 
 	50% {
-		color: var(--construct-activityBarBadge-background);
+		color: var(--kovix-activityBarBadge-background);
 	}
 
 	100% {
-		color: var(--construct-editorCursor-background);
+		color: var(--kovix-editorCursor-background);
 	}
 }

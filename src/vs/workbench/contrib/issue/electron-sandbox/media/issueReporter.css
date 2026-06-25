@@ -321,7 +321,7 @@ body.issue-reporter-body {
 
 .issue-reporter-body .showInfo,
 .issue-reporter-body .input-group a {
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 }
 
 .issue-reporter-body .section .input-group .validation-error {

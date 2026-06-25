@@ -136,12 +136,12 @@
 
 .monaco-workbench .part.titlebar > .titlebar-container > .titlebar-center > .window-title > .command-center > .monaco-toolbar > .monaco-action-bar > .actions-container > .action-item > .action-label,
 .monaco-workbench .part.titlebar > .titlebar-container > .titlebar-center > .window-title > .command-center > .monaco-toolbar > .monaco-action-bar > .actions-container > .action-item.monaco-dropdown-with-primary .action-label {
-        color: var(--construct-titleBar-activeForeground);
+        color: var(--kovix-titleBar-activeForeground);
 }
 
 .monaco-workbench .part.titlebar.inactive > .titlebar-container > .titlebar-center > .window-title > .command-center > .monaco-toolbar > .monaco-action-bar > .actions-container > .action-item > .action-label,
 .monaco-workbench .part.titlebar.inactive > .titlebar-container > .titlebar-center > .window-title > .command-center > .monaco-toolbar > .monaco-action-bar > .actions-container > .action-item.monaco-dropdown-with-primary .action-label {
-        color: var(--construct-titleBar-inactiveForeground);
+        color: var(--kovix-titleBar-inactiveForeground);
 }
 
 .monaco-workbench .part.titlebar > .titlebar-container > .titlebar-center > .window-title > .command-center > .monaco-toolbar > .monaco-action-bar > .actions-container > .action-item > .action-label {
@@ -151,9 +151,9 @@
 .monaco-workbench .part.titlebar > .titlebar-container > .titlebar-center > .window-title > .command-center .action-item.command-center-center {
         display: flex;
         align-items: stretch;
-        color: var(--construct-commandCenter-foreground);
-        background-color: var(--construct-commandCenter-background);
-        border: 1px solid var(--construct-commandCenter-border);
+        color: var(--kovix-commandCenter-foreground);
+        background-color: var(--kovix-commandCenter-background);
+        border: 1px solid var(--kovix-commandCenter-border);
         overflow: hidden;
         margin: 0 6px;
         border-top-left-radius: 6px;
@@ -177,11 +177,11 @@
         font-size: 14px;
         opacity: .8;
         margin: auto 3px;
-        color: var(--construct-commandCenter-foreground);
+        color: var(--kovix-commandCenter-foreground);
 }
 
 .monaco-workbench .part.titlebar.inactive > .titlebar-container > .titlebar-center > .window-title > .command-center .action-item.command-center-center .action-item.command-center-quick-pick .search-icon {
-        color: var(--construct-titleBar-inactiveForeground);
+        color: var(--kovix-titleBar-inactiveForeground);
 }
 
 .monaco-workbench .part.titlebar > .titlebar-container > .titlebar-center > .window-title > .command-center .action-item.command-center-center .action-item.command-center-quick-pick .search-label {
@@ -203,14 +203,14 @@
 }
 
 .monaco-workbench .part.titlebar.inactive > .titlebar-container > .titlebar-center > .window-title > .command-center .action-item.command-center-center {
-        color: var(--construct-titleBar-inactiveForeground);
-        border-color: var(--construct-commandCenter-inactiveBorder) !important;
+        color: var(--kovix-titleBar-inactiveForeground);
+        border-color: var(--kovix-commandCenter-inactiveBorder) !important;
 }
 
 .monaco-workbench .part.titlebar > .titlebar-container > .titlebar-center > .window-title > .command-center .action-item.command-center-center:HOVER {
-        color: var(--construct-commandCenter-activeForeground);
-        background-color: var(--construct-commandCenter-activeBackground);
-        border-color: var(--construct-commandCenter-activeBorder);
+        color: var(--kovix-commandCenter-activeForeground);
+        background-color: var(--kovix-commandCenter-activeBackground);
+        border-color: var(--kovix-commandCenter-activeBorder);
 }
 
 /* Menubar */
@@ -357,11 +357,11 @@
         height: 100%;
         width: 46px;
         font-size: 16px;
-        color: var(--construct-titleBar-activeForeground);
+        color: var(--kovix-titleBar-activeForeground);
 }
 
 .monaco-workbench .part.titlebar.inactive .window-controls-container > .window-icon {
-        color: var(--construct-titleBar-inactiveForeground);
+        color: var(--kovix-titleBar-inactiveForeground);
 }
 
 .monaco-workbench .part.titlebar .window-controls-container > .window-icon::before {

@@ -5,10 +5,10 @@
 
 .accessible-view {
 	position: absolute;
-	background-color: var(--construct-editorWidget-background);
-	color: var(--construct-editorWidget-foreground);
-	box-shadow: 0 2px 8px var(--construct-widget-shadow);
-	border: 2px solid var(--construct-focusBorder);
+	background-color: var(--kovix-editorWidget-background);
+	color: var(--kovix-editorWidget-foreground);
+	box-shadow: 0 2px 8px var(--kovix-widget-shadow);
+	border: 2px solid var(--kovix-focusBorder);
 	border-radius: 6px;
 	margin-top: -1px;
 	z-index: 2550;

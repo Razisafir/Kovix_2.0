@@ -40,8 +40,8 @@
 		opacity: 0.7;
 	}
 	&:not(.syntax-highlighted) {
-		color: var(--construct-editorGhostText-foreground);
+		color: var(--kovix-editorGhostText-foreground);
 	}
-	background-color: var(--construct-editorGhostText-background);
-	border: 1px solid var(--construct-editorGhostText-border);
+	background-color: var(--kovix-editorGhostText-background);
+	border: 1px solid var(--kovix-editorGhostText-border);
 }

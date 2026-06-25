@@ -5,10 +5,10 @@
 
 div.share-dialog-input-text,
 div.share-dialog-input-link {
-	border: 1px solid var(--construct-input-border, transparent);
+	border: 1px solid var(--kovix-input-border, transparent);
 	border-radius: 2px;
-	color: var(--construct-input-foreground);
-	background-color: var(--construct-input-background);
+	color: var(--kovix-input-foreground);
+	background-color: var(--kovix-input-background);
 	padding: 2px;
 	user-select: all;
 	line-height: 24px;

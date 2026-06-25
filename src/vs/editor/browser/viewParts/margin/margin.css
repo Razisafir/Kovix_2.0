@@ -4,5 +4,5 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-editor .margin {
-	background-color: var(--construct-editorGutter-background);
+	background-color: var(--kovix-editorGutter-background);
 }

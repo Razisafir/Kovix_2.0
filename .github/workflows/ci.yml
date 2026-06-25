@@ -188,5 +188,5 @@ jobs:
         shell: bash
         run: node build/lib/verify-electron-pins.js
 
-      - name: Compile construct code
+      - name: Compile Kovix code
         run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile

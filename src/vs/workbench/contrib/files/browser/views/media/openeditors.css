@@ -38,14 +38,14 @@
 
 .open-editors .monaco-list .monaco-list-row.dirty:not(:hover) > .monaco-action-bar .codicon-pinned::before {
 	/* use `pinned-dirty` icon unicode for sticky-dirty indication */
-	content: var(--construct-icon-pinned-dirty-content);
-	font-family: var(--construct-icon-pinned-dirty-font-family);
+	content: var(--kovix-icon-pinned-dirty-content);
+	font-family: var(--kovix-icon-pinned-dirty-font-family);
 }
 
 .open-editors .monaco-list .monaco-list-row.dirty:not(:hover) > .monaco-action-bar .codicon-close::before {
 	/* use `circle-filled` icon unicode for dirty indication */
-	content: var(--construct-icon-circle-filled-content);
-	font-family: var(--construct-icon-circle-filled-font-family);
+	content: var(--kovix-icon-circle-filled-content);
+	font-family: var(--kovix-icon-circle-filled-font-family);
 }
 
 .open-editors .monaco-list .monaco-list-row > .monaco-action-bar .action-close-all-files,

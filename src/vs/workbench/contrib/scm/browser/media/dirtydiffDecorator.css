@@ -26,35 +26,35 @@
 }
 
 .monaco-editor .dirty-diff-added {
-	border-left-color: var(--construct-editorGutter-addedBackground);
+	border-left-color: var(--kovix-editorGutter-addedBackground);
 	border-left-style: solid;
 }
 
 .monaco-editor .dirty-diff-added:before {
-	background: var(--construct-editorGutter-addedBackground);
+	background: var(--kovix-editorGutter-addedBackground);
 }
 
 .monaco-editor .dirty-diff-added-pattern {
-	background-image: linear-gradient(-45deg, var(--construct-editorGutter-addedBackground) 25%, var(--construct-editorGutter-background) 25%, var(--construct-editorGutter-background) 50%, var(--construct-editorGutter-addedBackground) 50%, var(--construct-editorGutter-addedBackground) 75%, var(--construct-editorGutter-background) 75%, var(--construct-editorGutter-background));
+	background-image: linear-gradient(-45deg, var(--kovix-editorGutter-addedBackground) 25%, var(--kovix-editorGutter-background) 25%, var(--kovix-editorGutter-background) 50%, var(--kovix-editorGutter-addedBackground) 50%, var(--kovix-editorGutter-addedBackground) 75%, var(--kovix-editorGutter-background) 75%, var(--kovix-editorGutter-background));
 	background-repeat: repeat-y;
 }
 
 .monaco-editor .dirty-diff-added-pattern:before {
-	background-image: linear-gradient(-45deg, var(--construct-editorGutter-addedBackground) 25%, var(--construct-editorGutter-background) 25%, var(--construct-editorGutter-background) 50%, var(--construct-editorGutter-addedBackground) 50%, var(--construct-editorGutter-addedBackground) 75%, var(--construct-editorGutter-background) 75%, var(--construct-editorGutter-background));
+	background-image: linear-gradient(-45deg, var(--kovix-editorGutter-addedBackground) 25%, var(--kovix-editorGutter-background) 25%, var(--kovix-editorGutter-background) 50%, var(--kovix-editorGutter-addedBackground) 50%, var(--kovix-editorGutter-addedBackground) 75%, var(--kovix-editorGutter-background) 75%, var(--kovix-editorGutter-background));
 	transform: translateX(3px);
 }
 
 .monaco-editor .dirty-diff-modified {
-	border-left-color: var(--construct-editorGutter-modifiedBackground);
+	border-left-color: var(--kovix-editorGutter-modifiedBackground);
 	border-left-style: solid;
 }
 
 .monaco-editor .dirty-diff-modified:before {
-	background: var(--construct-editorGutter-modifiedBackground);
+	background: var(--kovix-editorGutter-modifiedBackground);
 }
 
 .monaco-editor .dirty-diff-modified-pattern {
-	background-image: linear-gradient(-45deg, var(--construct-editorGutter-modifiedBackground) 25%, var(--construct-editorGutter-background) 25%, var(--construct-editorGutter-background) 50%, var(--construct-editorGutter-modifiedBackground) 50%, var(--construct-editorGutter-modifiedBackground) 75%, var(--construct-editorGutter-background) 75%, var(--construct-editorGutter-background));
+	background-image: linear-gradient(-45deg, var(--kovix-editorGutter-modifiedBackground) 25%, var(--kovix-editorGutter-background) 25%, var(--kovix-editorGutter-background) 50%, var(--kovix-editorGutter-modifiedBackground) 50%, var(--kovix-editorGutter-modifiedBackground) 75%, var(--kovix-editorGutter-background) 75%, var(--kovix-editorGutter-background));
 	background-repeat: repeat-y;
 }
 
@@ -66,7 +66,7 @@
 }
 
 .monaco-editor .dirty-diff-modified-pattern:before {
-	background-image: linear-gradient(-45deg, var(--construct-editorGutter-modifiedBackground) 25%, var(--construct-editorGutter-background) 25%, var(--construct-editorGutter-background) 50%, var(--construct-editorGutter-modifiedBackground) 50%, var(--construct-editorGutter-modifiedBackground) 75%, var(--construct-editorGutter-background) 75%, var(--construct-editorGutter-background));
+	background-image: linear-gradient(-45deg, var(--kovix-editorGutter-modifiedBackground) 25%, var(--kovix-editorGutter-background) 25%, var(--kovix-editorGutter-background) 50%, var(--kovix-editorGutter-modifiedBackground) 50%, var(--kovix-editorGutter-modifiedBackground) 75%, var(--kovix-editorGutter-background) 75%, var(--kovix-editorGutter-background));
 	transform: translateX(3px);
 }
 
@@ -87,7 +87,7 @@
 	z-index: 9;
 	border-top: 4px solid transparent;
 	border-bottom: 4px solid transparent;
-	border-left: 4px solid var(--construct-editorGutter-deletedBackground);
+	border-left: 4px solid var(--kovix-editorGutter-deletedBackground);
 	pointer-events: none;
 }
 
@@ -96,7 +96,7 @@
 }
 
 .monaco-editor .dirty-diff-deleted:before {
-	background: var(--construct-editorGutter-deletedBackground);
+	background: var(--kovix-editorGutter-deletedBackground);
 	margin-left: 3px;
 	height: 0;
 	bottom: 0;

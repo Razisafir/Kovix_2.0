@@ -85,13 +85,13 @@ export class GettingStartedDetailsRenderer {
 						box-sizing: border-box;
 					}
 					checkbox.checked > img {
-						outline: 2px solid var(--construct-focusBorder);
+						outline: 2px solid var(--kovix-focusBorder);
 						outline-offset: 4px;
 						border-radius: 4px;
 					}
 					.theme-picker-link {
 						margin-top: 16px;
-						color: var(--construct-textLink-foreground);
+						color: var(--kovix-textLink-foreground);
 					}
 					blockquote > p:first-child {
 						margin-top: 0;

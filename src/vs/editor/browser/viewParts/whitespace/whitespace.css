@@ -5,5 +5,5 @@
 
 .monaco-editor .mwh {
 	position: absolute;
-	color: var(--construct-editorWhitespace-foreground) !important;
+	color: var(--kovix-editorWhitespace-foreground) !important;
 }

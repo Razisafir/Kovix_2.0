@@ -70,13 +70,13 @@
 .extensions-viewlet .notification-container .message-text-action {
 	cursor: pointer;
 	margin-left: 5px;
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 	text-decoration: underline;
 }
 
 .extensions-viewlet .notification-container .message-text-action:hover,
 .extensions-viewlet .notification-container .message-text-action:active {
-	color: var(--construct-textLink-activeForeground);
+	color: var(--kovix-textLink-activeForeground);
 }
 
 .extensions-viewlet .notification-container .message-action {
@@ -87,8 +87,8 @@
 }
 
 .extensions-viewlet .notification-container .message-action:hover {
-	background-color: var(--construct-toolbar-hoverBackground);
-	outline: 1px dashed var(--construct-toolbar-hoverOutline);
+	background-color: var(--kovix-toolbar-hoverBackground);
+	outline: 1px dashed var(--kovix-toolbar-hoverOutline);
 }
 
 .extensions-viewlet > .extensions {
@@ -189,13 +189,13 @@
 }
 
 .extensions-viewlet .codicon-error::before {
-	color: var(--construct-editorError-foreground);
+	color: var(--kovix-editorError-foreground);
 }
 
 .extensions-viewlet .codicon-warning::before {
-	color: var(--construct-editorWarning-foreground);
+	color: var(--kovix-editorWarning-foreground);
 }
 
 .extensions-viewlet .codicon-info::before {
-	color: var(--construct-editorInfo-foreground);
+	color: var(--kovix-editorInfo-foreground);
 }

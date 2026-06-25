@@ -33,6 +33,6 @@
 }*/
 .monaco-editor .inputarea.ime-input {
 	z-index: 10;
-	caret-color: var(--construct-editorCursor-foreground);
-	color: var(--construct-editor-foreground);
+	caret-color: var(--kovix-editorCursor-foreground);
+	color: var(--kovix-editor-foreground);
 }

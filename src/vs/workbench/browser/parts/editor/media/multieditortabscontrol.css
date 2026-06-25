@@ -108,35 +108,35 @@
 
 /* Tab Background Color in/active group/tab */
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab {
-	background-color: var(--construct-tab-unfocusedInactiveBackground);
+	background-color: var(--kovix-tab-unfocusedInactiveBackground);
 }
 .monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab {
-	background-color: var(--construct-tab-inactiveBackground);
+	background-color: var(--kovix-tab-inactiveBackground);
 }
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.active {
-	background-color: var(--construct-tab-unfocusedActiveBackground);
+	background-color: var(--kovix-tab-unfocusedActiveBackground);
 }
 .monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab.active {
-	background-color: var(--construct-tab-activeBackground);
+	background-color: var(--kovix-tab-activeBackground);
 }
 
 /* Tab Foreground Color in/active group/tab */
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab {
-	color: var(--construct-tab-unfocusedInactiveForeground);
+	color: var(--kovix-tab-unfocusedInactiveForeground);
 }
 .monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab {
-	color: var(--construct-tab-inactiveForeground);
+	color: var(--kovix-tab-inactiveForeground);
 }
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.active {
-	color: var(--construct-tab-unfocusedActiveForeground);
+	color: var(--kovix-tab-unfocusedActiveForeground);
 }
 .monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab.active {
-	color: var(--construct-tab-activeForeground);
+	color: var(--kovix-tab-activeForeground);
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab.selected:not(.active) {
-	background-color: var(--construct-tab-selectedBackground);
-	color: var(--construct-tab-selectedForeground);
+	background-color: var(--kovix-tab-selectedBackground);
+	color: var(--kovix-tab-selectedForeground);
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab:not(.active) {
@@ -428,15 +428,15 @@
 .monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab.sticky.dirty > .tab-actions .action-label:not(:hover)::before,
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.sticky.dirty > .tab-actions .action-label:not(:hover)::before {
 	/* use `pinned-dirty` icon unicode for sticky-dirty indication */
-	content: var(--construct-icon-pinned-dirty-content);
-	font-family: var(--construct-icon-pinned-dirty-font-family);
+	content: var(--kovix-icon-pinned-dirty-content);
+	font-family: var(--kovix-icon-pinned-dirty-font-family);
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container.active > .title .tabs-container > .tab.dirty > .tab-actions .action-label:not(:hover)::before,
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.dirty > .tab-actions .action-label:not(:hover)::before {
 	/* use `circle-filled` icon unicode for dirty indication */
-	content: var(--construct-icon-circle-filled-content);
-	font-family: var(--construct-icon-circle-filled-font-family);
+	content: var(--kovix-icon-circle-filled-content);
+	font-family: var(--kovix-icon-circle-filled-font-family);
 }
 
 .monaco-workbench .part.editor > .content .editor-group-container > .title .tabs-container > .tab.active > .tab-actions .action-label,
@@ -514,7 +514,7 @@
 	top: 0;
 	height: 100%;
 	width: 1px;
-	background-color: var(--construct-tab-dragAndDropBorder);
+	background-color: var(--kovix-tab-dragAndDropBorder);
 	pointer-events: none;
 	z-index: 11;
 }

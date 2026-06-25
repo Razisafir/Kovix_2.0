@@ -17,7 +17,7 @@
 .monaco-component.diff-review .diff-review-line-number {
 	text-align: right;
 	display: inline-block;
-	color: var(--construct-editorLineNumber-foreground);
+	color: var(--kovix-editorLineNumber-foreground);
 }
 
 .monaco-component.diff-review .diff-review-summary {
@@ -26,7 +26,7 @@
 
 .monaco-component.diff-review .diff-review-shadow {
 	position: absolute;
-	box-shadow: var(--construct-scrollbar-shadow) 0 -6px 6px -6px inset;
+	box-shadow: var(--kovix-scrollbar-shadow) 0 -6px 6px -6px inset;
 }
 
 .monaco-component.diff-review .diff-review-row {

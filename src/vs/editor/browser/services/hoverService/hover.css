@@ -11,11 +11,11 @@
 	z-index: 40;
 	overflow: hidden;
 	max-width: 700px;
-	background: var(--construct-editorHoverWidget-background);
-	border: 1px solid var(--construct-editorHoverWidget-border);
+	background: var(--kovix-editorHoverWidget-background);
+	border: 1px solid var(--kovix-editorHoverWidget-border);
 	border-radius: 3px;
-	color: var(--construct-editorHoverWidget-foreground);
-	box-shadow: 0 2px 8px var(--construct-widget-shadow);
+	color: var(--kovix-editorHoverWidget-foreground);
+	box-shadow: 0 2px 8px var(--kovix-widget-shadow);
 }
 
 .monaco-workbench .workbench-hover hr {
@@ -31,14 +31,14 @@
 }
 
 .monaco-workbench .workbench-hover-container.locked .workbench-hover {
-	outline: 1px solid var(--construct-editorHoverWidget-border);
+	outline: 1px solid var(--kovix-editorHoverWidget-border);
 }
 .monaco-workbench .workbench-hover-container.locked .workbench-hover:focus,
 .monaco-workbench .workbench-hover-lock:focus {
-	outline: 1px solid var(--construct-focusBorder);
+	outline: 1px solid var(--kovix-focusBorder);
 }
 .monaco-workbench .workbench-hover-container.locked .workbench-hover-lock:hover {
-	background: var(--construct-toolbar-hoverBackground);
+	background: var(--kovix-toolbar-hoverBackground);
 }
 
 .monaco-workbench .workbench-hover-pointer {
@@ -53,9 +53,9 @@
 	position: absolute;
 	width: 5px;
 	height: 5px;
-	background-color: var(--construct-editorHoverWidget-background);
-	border-right: 1px solid var(--construct-editorHoverWidget-border);
-	border-bottom: 1px solid var(--construct-editorHoverWidget-border);
+	background-color: var(--kovix-editorHoverWidget-background);
+	border-right: 1px solid var(--kovix-editorHoverWidget-border);
+	border-bottom: 1px solid var(--kovix-editorHoverWidget-border);
 }
 .monaco-workbench .locked .workbench-hover-pointer:after {
 	width: 4px;
@@ -86,27 +86,27 @@
 }
 
 .monaco-workbench .workbench-hover a {
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 }
 
 .monaco-workbench .workbench-hover a:focus {
 	outline: 1px solid;
 	outline-offset: -1px;
 	text-decoration: underline;
-	outline-color: var(--construct-focusBorder);
+	outline-color: var(--kovix-focusBorder);
 }
 
 .monaco-workbench .workbench-hover a:hover,
 .monaco-workbench .workbench-hover a:active {
-	color: var(--construct-textLink-activeForeground);
+	color: var(--kovix-textLink-activeForeground);
 }
 
 .monaco-workbench .workbench-hover code {
-	background: var(--construct-textCodeBlock-background);
+	background: var(--kovix-textCodeBlock-background);
 }
 
 .monaco-workbench .workbench-hover .hover-row .actions {
-	background: var(--construct-editorHoverWidget-statusBarBackground);
+	background: var(--kovix-editorHoverWidget-statusBarBackground);
 }
 
 .monaco-workbench .workbench-hover.right-aligned {

@@ -17,7 +17,7 @@
 	border-radius: unset;
 	border: unset;
 	box-shadow: unset;
-	background: var(--construct-inlineChat-background);
+	background: var(--kovix-inlineChat-background);
 	position: relative;
 	outline: none;
 
@@ -43,7 +43,7 @@
 
 .monaco-workbench .terminal-inline-chat .inline-chat-input .monaco-editor-background {
 	/* Override the global panel rule for monaco backgrounds */
-	background-color: var(--construct-inlineChatInput-background) !important;
+	background-color: var(--kovix-inlineChatInput-background) !important;
 }
 
 @property --inline-chat-frame-progress {
@@ -68,6 +68,6 @@
 
 .monaco-workbench .terminal-inline-chat.busy .inline-chat {
 	--inline-chat-frame-progress: 0%;
-	border-image: linear-gradient(90deg, var(--construct-editorGutter-addedBackground) var(--inline-chat-frame-progress), var(--construct-button-background)) 1;
+	border-image: linear-gradient(90deg, var(--kovix-editorGutter-addedBackground) var(--inline-chat-frame-progress), var(--kovix-button-background)) 1;
 	animation: 3s shift linear infinite;
 }

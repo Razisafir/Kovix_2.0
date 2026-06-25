@@ -39,7 +39,7 @@
 }
 
 .monaco-editor .rename-box .rename-suggestions-button:hover {
-	background-color: var(--construct-toolbar-hoverBackground)
+	background-color: var(--kovix-toolbar-hoverBackground)
 }
 
 .monaco-editor .rename-box .rename-candidate-list-container .monaco-list-row {

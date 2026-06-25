@@ -20,7 +20,7 @@
 	visibility: hidden;
 }
 .monaco-workbench .part.panel .pane-body.integrated-terminal .terminal-outer-container {
-	background-color: var(--construct-terminal-background, var(--construct-panel-background));
+	background-color: var(--kovix-terminal-background, var(--kovix-panel-background));
 }
 .monaco-workbench .pane-body.integrated-terminal .terminal-outer-container,
 .monaco-workbench .pane-body.integrated-terminal .terminal-groups-container,
@@ -32,20 +32,20 @@
 }
 .monaco-workbench .part.sidebar .pane-body.integrated-terminal .terminal-outer-container,
 .monaco-workbench .part.auxiliarybar .pane-body.integrated-terminal .terminal-outer-container {
-	background-color: var(--construct-terminal-background, var(--construct-sideBar-background));
+	background-color: var(--kovix-terminal-background, var(--kovix-sideBar-background));
 }
 
 .monaco-workbench .pane-body.integrated-terminal .split-view-view:not(:first-child),
 .monaco-workbench .pane-body.integrated-terminal .tabs-container {
-	border-color: var(--construct-terminal-border);
+	border-color: var(--kovix-terminal-border);
 }
 
 .monaco-workbench .pane-body.integrated-terminal .terminal-drop-overlay {
-	background-color: var(--construct-terminal-dropBackground, var(--construct-editorGroup-dropBackground));
+	background-color: var(--kovix-terminal-dropBackground, var(--kovix-editorGroup-dropBackground));
 }
 
 .monaco-workbench .pane-body.integrated-terminal .terminal-tabs-entry.is-active::before {
-	background-color: var(--construct-terminal-tab-activeBorder);
+	background-color: var(--kovix-terminal-tab-activeBorder);
 }
 /* Override monaco's styles for terminal editors */
 .monaco-workbench .terminal-editor .xterm textarea:focus {
@@ -63,7 +63,7 @@
 }
 
 .monaco-workbench .terminal-editor .terminal-wrapper {
-	background-color: var(--construct-terminal-background, var(--construct-editorPane-background));
+	background-color: var(--kovix-terminal-background, var(--kovix-editorPane-background));
 }
 .monaco-workbench .terminal-editor .terminal-wrapper,
 .monaco-workbench .pane-body.integrated-terminal .terminal-wrapper {
@@ -443,17 +443,17 @@
 }
 .monaco-workbench .terminal .terminal-command-decoration:not(.default):hover::before {
 	border-radius: 5px;
-	background-color: var(--construct-toolbar-hoverBackground);
+	background-color: var(--kovix-toolbar-hoverBackground);
 }
 .monaco-workbench .terminal .terminal-command-decoration {
-	color: var(--construct-terminalCommandDecoration-successBackground);
+	color: var(--kovix-terminalCommandDecoration-successBackground);
 }
 .monaco-workbench .terminal .terminal-command-decoration.error {
-	color: var(--construct-terminalCommandDecoration-errorBackground);
+	color: var(--kovix-terminalCommandDecoration-errorBackground);
 }
 .monaco-workbench .terminal .terminal-command-decoration.default {
 	pointer-events: none;
-	color: var(--construct-terminalCommandDecoration-defaultBackground);
+	color: var(--kovix-terminalCommandDecoration-defaultBackground);
 }
 
 .terminal-scroll-highlight {
@@ -465,7 +465,7 @@
 }
 
 .terminal-range-highlight {
-	outline: 1px solid var(--construct-focusBorder);
+	outline: 1px solid var(--kovix-focusBorder);
 	pointer-events: none;
 }
 
@@ -473,7 +473,7 @@
 	left: 0;
 	border: 1.5px solid #ffffff;
 	width: 0px !important;
-	border-color: var(--construct-terminalCommandGuide-foreground);
+	border-color: var(--kovix-terminalCommandGuide-foreground);
 	box-sizing: border-box;
 	transform: translateX(3px);
 	pointer-events: none;
@@ -501,7 +501,7 @@
 
 .terminal-scroll-highlight,
 .terminal-scroll-highlight.terminal-scroll-highlight-outline {
-	border-color: var(--construct-focusBorder);
+	border-color: var(--kovix-focusBorder);
 }
 
 .monaco-workbench.hc-black .editor-instance .xterm.focus::before,
@@ -512,11 +512,11 @@
 .monaco-workbench.hc-light .pane-body.integrated-terminal .xterm.focus::before,
 .monaco-workbench.hc-light .editor-instance .xterm:focus::before,
 .monaco-workbench.hc-light .pane-body.integrated-terminal .xterm:focus::before {
-	border-color: var(--construct-contrastActiveBorder);
+	border-color: var(--kovix-contrastActiveBorder);
 }
 
 .monaco-workbench .integrated-terminal .hoverHighlight {
-	background-color: var(--construct-terminal-hoverHighlightBackground);
+	background-color: var(--kovix-terminal-hoverHighlightBackground);
 }
 
 .monaco-workbench .xterm.terminal.hide {

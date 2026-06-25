@@ -18,7 +18,7 @@
 .monaco-editor .diff-hidden-lines:not(.dragging) .bottom:hover,
 .monaco-editor .diff-hidden-lines .top.dragging,
 .monaco-editor .diff-hidden-lines .bottom.dragging {
-	background-color: var(--construct-focusBorder);
+	background-color: var(--kovix-focusBorder);
 }
 
 .monaco-editor .diff-hidden-lines .top,
@@ -59,12 +59,12 @@
 }
 
 .monaco-editor .diff-unchanged-lines {
-	background: var(--construct-diffEditor-unchangedCodeBackground);
+	background: var(--kovix-diffEditor-unchangedCodeBackground);
 }
 
 .monaco-editor .noModificationsOverlay {
 	z-index: 1;
-	background: var(--construct-editor-background);
+	background: var(--kovix-editor-background);
 
 	display: flex;
 	justify-content: center;
@@ -73,15 +73,15 @@
 
 
 .monaco-editor .diff-hidden-lines .center {
-	background: var(--construct-diffEditor-unchangedRegionBackground);
-	color: var(--construct-diffEditor-unchangedRegionForeground);
+	background: var(--kovix-diffEditor-unchangedRegionBackground);
+	color: var(--kovix-diffEditor-unchangedRegionForeground);
 	overflow: hidden;
 	display: block;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 
 	height: 24px;
-	box-shadow: inset 0 -5px 5px -7px var(--construct-diffEditor-unchangedRegionShadow), inset 0 5px 5px -7px var(--construct-diffEditor-unchangedRegionShadow);
+	box-shadow: inset 0 -5px 5px -7px var(--kovix-diffEditor-unchangedRegionShadow), inset 0 5px 5px -7px var(--kovix-diffEditor-unchangedRegionShadow);
 }
 
 .monaco-editor .diff-hidden-lines .center span.codicon {
@@ -90,7 +90,7 @@
 
 .monaco-editor .diff-hidden-lines .center a:hover .codicon {
 	cursor: pointer;
-	color: var(--construct-editorLink-activeForeground) !important;
+	color: var(--kovix-editorLink-activeForeground) !important;
 }
 
 .monaco-editor .diff-hidden-lines div.breadcrumb-item {
@@ -98,23 +98,23 @@
 }
 
 .monaco-editor .diff-hidden-lines div.breadcrumb-item:hover {
-	color: var(--construct-editorLink-activeForeground);
+	color: var(--kovix-editorLink-activeForeground);
 }
 
 .monaco-editor .movedOriginal {
-	border: 2px solid var(--construct-diffEditor-move-border);
+	border: 2px solid var(--kovix-diffEditor-move-border);
 }
 
 .monaco-editor .movedModified {
-	border: 2px solid var(--construct-diffEditor-move-border);
+	border: 2px solid var(--kovix-diffEditor-move-border);
 }
 
 .monaco-editor .movedOriginal.currentMove, .monaco-editor .movedModified.currentMove {
-	border: 2px solid var(--construct-diffEditor-moveActive-border);
+	border: 2px solid var(--kovix-diffEditor-moveActive-border);
 }
 
 .monaco-diff-editor .moved-blocks-lines path.currentMove {
-	stroke: var(--construct-diffEditor-moveActive-border);
+	stroke: var(--kovix-diffEditor-moveActive-border);
 }
 
 .monaco-diff-editor .moved-blocks-lines path {
@@ -122,15 +122,15 @@
 }
 
 .monaco-diff-editor .moved-blocks-lines .arrow {
-	fill: var(--construct-diffEditor-move-border);
+	fill: var(--kovix-diffEditor-move-border);
 }
 
 .monaco-diff-editor .moved-blocks-lines .arrow.currentMove {
-	fill: var(--construct-diffEditor-moveActive-border);
+	fill: var(--kovix-diffEditor-moveActive-border);
 }
 
 .monaco-diff-editor .moved-blocks-lines .arrow-rectangle {
-	fill: var(--construct-editor-background);
+	fill: var(--kovix-editor-background);
 }
 
 .monaco-diff-editor .moved-blocks-lines {
@@ -140,17 +140,17 @@
 
 .monaco-diff-editor .moved-blocks-lines path {
 	fill: none;
-	stroke: var(--construct-diffEditor-move-border);
+	stroke: var(--kovix-diffEditor-move-border);
 	stroke-width: 2;
 }
 
 .monaco-editor .char-delete.diff-range-empty {
 	margin-left: -1px;
-	border-left: solid var(--construct-diffEditor-removedTextBackground) 3px;
+	border-left: solid var(--kovix-diffEditor-removedTextBackground) 3px;
 }
 
 .monaco-editor .char-insert.diff-range-empty {
-	border-left: solid var(--construct-diffEditor-insertedTextBackground) 3px;
+	border-left: solid var(--kovix-diffEditor-insertedTextBackground) 3px;
 }
 
 .monaco-editor .fold-unchanged {
@@ -244,17 +244,17 @@
 }
 
 .monaco-editor .char-insert, .monaco-diff-editor .char-insert {
-	background-color: var(--construct-diffEditor-insertedTextBackground);
+	background-color: var(--kovix-diffEditor-insertedTextBackground);
 }
 
 .monaco-editor .line-insert, .monaco-diff-editor .line-insert {
-	background-color: var(--construct-diffEditor-insertedLineBackground, var(--construct-diffEditor-insertedTextBackground));
+	background-color: var(--kovix-diffEditor-insertedLineBackground, var(--kovix-diffEditor-insertedTextBackground));
 }
 
 .monaco-editor .line-insert,
 .monaco-editor .char-insert {
 	box-sizing: border-box;
-	border: 1px solid var(--construct-diffEditor-insertedTextBorder);
+	border: 1px solid var(--kovix-diffEditor-insertedTextBorder);
 }
 .monaco-editor.hc-black .line-insert, .monaco-editor.hc-light .line-insert,
 .monaco-editor.hc-black .char-insert, .monaco-editor.hc-light .char-insert {
@@ -264,7 +264,7 @@
 .monaco-editor .line-delete,
 .monaco-editor .char-delete {
 	box-sizing: border-box;
-	border: 1px solid var(--construct-diffEditor-removedTextBorder);
+	border: 1px solid var(--kovix-diffEditor-removedTextBorder);
 }
 .monaco-editor.hc-black .line-delete, .monaco-editor.hc-light .line-delete,
 .monaco-editor.hc-black .char-delete, .monaco-editor.hc-light .char-delete {
@@ -273,11 +273,11 @@
 
 .monaco-editor .inline-added-margin-view-zone,
 .monaco-editor .gutter-insert, .monaco-diff-editor .gutter-insert {
-	background-color: var(--construct-diffEditorGutter-insertedLineBackground, var(--construct-diffEditor-insertedLineBackground), var(--construct-diffEditor-insertedTextBackground));
+	background-color: var(--kovix-diffEditorGutter-insertedLineBackground, var(--kovix-diffEditor-insertedLineBackground), var(--kovix-diffEditor-insertedTextBackground));
 }
 
 .monaco-editor .char-delete, .monaco-diff-editor .char-delete, .monaco-editor .inline-deleted-text {
-	background-color: var(--construct-diffEditor-removedTextBackground);
+	background-color: var(--kovix-diffEditor-removedTextBackground);
 }
 
 .monaco-editor .inline-deleted-text {
@@ -285,42 +285,42 @@
 }
 
 .monaco-editor .line-delete, .monaco-diff-editor .line-delete {
-	background-color: var(--construct-diffEditor-removedLineBackground, var(--construct-diffEditor-removedTextBackground));
+	background-color: var(--kovix-diffEditor-removedLineBackground, var(--kovix-diffEditor-removedTextBackground));
 }
 
 .monaco-editor .inline-deleted-margin-view-zone,
 .monaco-editor .gutter-delete, .monaco-diff-editor .gutter-delete {
-	background-color: var(--construct-diffEditorGutter-removedLineBackground, var(--construct-diffEditor-removedLineBackground), var(--construct-diffEditor-removedTextBackground));
+	background-color: var(--kovix-diffEditorGutter-removedLineBackground, var(--kovix-diffEditor-removedLineBackground), var(--kovix-diffEditor-removedTextBackground));
 }
 
 .monaco-diff-editor.side-by-side .editor.modified {
-	box-shadow: -6px 0 5px -5px var(--construct-scrollbar-shadow);
-	border-left: 1px solid var(--construct-diffEditor-border);
+	box-shadow: -6px 0 5px -5px var(--kovix-scrollbar-shadow);
+	border-left: 1px solid var(--kovix-diffEditor-border);
 }
 
 .monaco-diff-editor.side-by-side .editor.original {
-	box-shadow: 6px 0 5px -5px var(--construct-scrollbar-shadow);
-	border-right: 1px solid var(--construct-diffEditor-border);
+	box-shadow: 6px 0 5px -5px var(--kovix-scrollbar-shadow);
+	border-right: 1px solid var(--kovix-diffEditor-border);
 }
 
 .monaco-diff-editor .diffViewport {
-	background: var(--construct-scrollbarSlider-background);
+	background: var(--kovix-scrollbarSlider-background);
 }
 
 .monaco-diff-editor .diffViewport:hover {
-	background: var(--construct-scrollbarSlider-hoverBackground);
+	background: var(--kovix-scrollbarSlider-hoverBackground);
 }
 
 .monaco-diff-editor .diffViewport:active {
-	background: var(--construct-scrollbarSlider-activeBackground);
+	background: var(--kovix-scrollbarSlider-activeBackground);
 }
 
 .monaco-editor .diagonal-fill {
 	background-image: linear-gradient(
 		-45deg,
-		var(--construct-diffEditor-diagonalFill) 12.5%,
+		var(--kovix-diffEditor-diagonalFill) 12.5%,
 		#0000 12.5%, #0000 50%,
-		var(--construct-diffEditor-diagonalFill) 50%, var(--construct-diffEditor-diagonalFill) 62.5%,
+		var(--kovix-diffEditor-diagonalFill) 50%, var(--kovix-diffEditor-diagonalFill) 62.5%,
 		#0000 62.5%, #0000 100%
 	);
 	background-size: 8px 8px;
@@ -362,7 +362,7 @@
 			left: 50%;
 			width: 1px;
 
-			border-left: 2px var(--construct-menu-border) solid;
+			border-left: 2px var(--kovix-menu-border) solid;
 		}
 
 		.buttons {
@@ -382,11 +382,11 @@
 					.actions-container {
 						width: fit-content;
 						border-radius: 4px;
-						background: var(--construct-editorGutter-commentRangeForeground);
+						background: var(--kovix-editorGutter-commentRangeForeground);
 
 						.action-item {
 							&:hover {
-								background: var(--construct-toolbar-hoverBackground);
+								background: var(--kovix-toolbar-hoverBackground);
 							}
 
 							.action-label {
@@ -407,7 +407,7 @@
 	.line-left, .line-right {
 		height: 1px;
 		border-top: 1px solid;
-		border-color: var(--construct-editorCodeLens-foreground);
+		border-color: var(--kovix-editorCodeLens-foreground);
 		opacity: 0.5;
 		margin: auto;
 		width: 100%;
@@ -418,7 +418,7 @@
 	}
 
 	.text {
-		color: var(--construct-editorCodeLens-foreground);
+		color: var(--kovix-editorCodeLens-foreground);
 		text-wrap: nowrap;
 		font-size: 11px;
 		line-height: 11px;

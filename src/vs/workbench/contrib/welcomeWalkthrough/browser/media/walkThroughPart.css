@@ -103,8 +103,8 @@
         margin: 0 7px 0 5px;
         padding: 0 16px 0 10px;
         border-left: 5px solid;
-        background: var(--construct-textBlockQuote-background);
-        border-color: var(--construct-textBlockQuote-border);
+        background: var(--kovix-textBlockQuote-background);
+        border-color: var(--kovix-textBlockQuote-border);
 }
 
 .monaco-workbench .part.editor > .content .walkThroughContent .monaco-tokenized-source {
@@ -138,30 +138,30 @@
 }
 
 .monaco-workbench .part.editor > .content .walkThroughContent a[href] {
-        color: var(--construct-textLink-foreground);
+        color: var(--kovix-textLink-foreground);
 }
 
 .monaco-workbench .part.editor > .content .walkThroughContent a:hover,
 .monaco-workbench .part.editor > .content .walkThroughContent a[href]:active {
-        color: var(--construct-textLink-activeForeground);
+        color: var(--kovix-textLink-activeForeground);
 }
 
 .monaco-workbench .part.editor > .content .walkThroughContent a[href]:focus {
-        outline-color: var(--construct-focusBorder);
+        outline-color: var(--kovix-focusBorder);
 }
 
 .monaco-workbench .part.editor > .content .walkThroughContent code,
 .monaco-workbench .part.editor > .content .walkThroughContent .shortcut {
-        color: var(--construct-textPreformat-foreground);
-        background-color: var(--construct-textPreformat-background);
+        color: var(--kovix-textPreformat-foreground);
+        background-color: var(--kovix-textPreformat-background);
         border-radius: 3px;
 }
 
 .monaco-workbench .part.editor > .content .walkThroughContent .monaco-editor {
-        border-color: var(--construct-contrastBorder);
+        border-color: var(--kovix-contrastBorder);
 }
 
 .monaco-workbench .part.editor > .content .walkThroughContent .monaco-editor-background,
 .monaco-workbench .part.editor > .content .walkThroughContent .margin-view-overlays {
-        background: var(--construct-walkThrough-embeddedEditorBackground);
+        background: var(--kovix-walkThrough-embeddedEditorBackground);
 }

@@ -37,7 +37,7 @@
 	}
 
 	50% {
-		background-color: var(--construct-statusBarItem-prominentBackground);
+		background-color: var(--kovix-statusBarItem-prominentBackground);
 	}
 
 	100% {
@@ -58,7 +58,7 @@
 }
 
 .monaco-workbench .hover-language-status:not(:last-child) {
-	border-bottom: 1px solid var(--construct-notifications-border);
+	border-bottom: 1px solid var(--kovix-notifications-border);
 }
 
 .monaco-workbench .hover-language-status > .severity {
@@ -69,11 +69,11 @@
 }
 
 .monaco-workbench .hover-language-status > .severity.sev3 {
-	color: var(--construct-notificationsErrorIcon-foreground)
+	color: var(--kovix-notificationsErrorIcon-foreground)
 }
 
 .monaco-workbench .hover-language-status > .severity.sev2 {
-	color: var(--construct-notificationsInfoIcon-foreground)
+	color: var(--kovix-notificationsInfoIcon-foreground)
 }
 
 .monaco-workbench .hover-language-status > .severity.show {

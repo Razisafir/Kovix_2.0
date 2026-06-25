@@ -8,12 +8,12 @@
 	display: inline-block;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	color: var(--construct-editorCodeLens-foreground);
-	line-height: var(--construct-editorCodeLens-lineHeight);
-	font-size: var(--construct-editorCodeLens-fontSize);
-	padding-right: calc(var(--construct-editorCodeLens-fontSize)*0.5);
-	font-feature-settings: var(--construct-editorCodeLens-fontFeatureSettings);
-	font-family: var(--construct-editorCodeLens-fontFamily), var(--construct-editorCodeLens-fontFamilyDefault);
+	color: var(--kovix-editorCodeLens-foreground);
+	line-height: var(--kovix-editorCodeLens-lineHeight);
+	font-size: var(--kovix-editorCodeLens-fontSize);
+	padding-right: calc(var(--kovix-editorCodeLens-fontSize)*0.5);
+	font-feature-settings: var(--kovix-editorCodeLens-fontFeatureSettings);
+	font-family: var(--kovix-editorCodeLens-fontFamily), var(--kovix-editorCodeLens-fontFamilyDefault);
 }
 
 .monaco-editor .codelens-decoration > span,
@@ -30,19 +30,19 @@
 
 .monaco-editor .codelens-decoration > a:hover {
 	cursor: pointer;
-	color: var(--construct-editorLink-activeForeground) !important;
+	color: var(--kovix-editorLink-activeForeground) !important;
 }
 
 .monaco-editor .codelens-decoration > a:hover .codicon {
-	color: var(--construct-editorLink-activeForeground) !important;
+	color: var(--kovix-editorLink-activeForeground) !important;
 }
 
 .monaco-editor .codelens-decoration .codicon {
 	vertical-align: middle;
 	color: currentColor !important;
-	color: var(--construct-editorCodeLens-foreground);
-	line-height: var(--construct-editorCodeLens-lineHeight);
-	font-size: var(--construct-editorCodeLens-fontSize);
+	color: var(--kovix-editorCodeLens-foreground);
+	line-height: var(--kovix-editorCodeLens-lineHeight);
+	font-size: var(--kovix-editorCodeLens-fontSize);
 }
 
 .monaco-editor .codelens-decoration > a:hover .codicon::before {

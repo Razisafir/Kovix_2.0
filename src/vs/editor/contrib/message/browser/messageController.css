@@ -32,9 +32,9 @@
 
 .monaco-editor .monaco-editor-overlaymessage .message {
 	padding: 2px 4px;
-	color: var(--construct-editorHoverWidget-foreground);
-	background-color: var(--construct-editorHoverWidget-background);
-	border: 1px solid var(--construct-inputValidation-infoBorder);
+	color: var(--kovix-editorHoverWidget-foreground);
+	background-color: var(--kovix-editorHoverWidget-background);
+	border: 1px solid var(--kovix-inputValidation-infoBorder);
 	border-radius: 3px;
 }
 
@@ -43,11 +43,11 @@
 }
 
 .monaco-editor .monaco-editor-overlaymessage .message a {
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 }
 
 .monaco-editor .monaco-editor-overlaymessage .message a:hover {
-	color: var(--construct-textLink-activeForeground);
+	color: var(--kovix-textLink-activeForeground);
 }
 
 .monaco-editor.hc-black .monaco-editor-overlaymessage .message,
@@ -67,11 +67,11 @@
 }
 
 .monaco-editor .monaco-editor-overlaymessage .anchor.top {
-	border-bottom-color: var(--construct-inputValidation-infoBorder);
+	border-bottom-color: var(--kovix-inputValidation-infoBorder);
 }
 
 .monaco-editor .monaco-editor-overlaymessage .anchor.below {
-	border-top-color: var(--construct-inputValidation-infoBorder);
+	border-top-color: var(--kovix-inputValidation-infoBorder);
 }
 
 .monaco-editor .monaco-editor-overlaymessage:not(.below) .anchor.top,

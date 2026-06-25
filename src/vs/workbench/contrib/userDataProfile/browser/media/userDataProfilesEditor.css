@@ -137,7 +137,7 @@
 }
 
 .profiles-editor .contents-container .profile-body .profile-row-container .profile-description-element {
-	color: var(--construct-foreground);
+	color: var(--kovix-foreground);
 	opacity: 0.9;
 }
 
@@ -176,8 +176,8 @@
 }
 
 .profiles-editor .contents-container .profile-body .profile-row-container .profile-icon-container:not(.disabled) .codicon:hover {
-	background-color: var(--construct-toolbar-hoverBackground);
-	outline: 1px dashed var(--construct-toolbar-hoverOutline);
+	background-color: var(--kovix-toolbar-hoverBackground);
+	outline: 1px dashed var(--kovix-toolbar-hoverOutline);
 }
 
 .profiles-editor .contents-container .profile-body .profile-row-container .profile-icon-container .profile-description-element {
@@ -237,7 +237,7 @@
 
 .profiles-editor .profile-associations-table .monaco-table-th,
 .profiles-editor .contents-container .profile-content-tree-header {
-	background-color: var(--construct-keybindingTable-headerBackground);
+	background-color: var(--kovix-keybindingTable-headerBackground);
 }
 
 .profiles-editor .contents-container .profile-content-tree-header > .options-header {
@@ -371,7 +371,7 @@
 /* Profile Editor Tree Theming */
 
 .profiles-editor .contents-container .profile-body .profile-tree .monaco-list-row.focused {
-	background-color: var(--construct-settings-focusedRowBackground) !important;
+	background-color: var(--kovix-settings-focusedRowBackground) !important;
 }
 
 .profiles-editor .contents-container .profile-body .profile-tree .monaco-list-row .profile-associations-table .monaco-list-row[data-parity=odd] .monaco-table-tr {
@@ -379,11 +379,11 @@
 }
 
 .profiles-editor .contents-container .profile-body .profile-tree .monaco-list-row:not(.focused):hover {
-	background-color: var(--construct-settings-rowHoverBackground) !important;
+	background-color: var(--kovix-settings-rowHoverBackground) !important;
 }
 
 .profiles-editor .contents-container .profile-body .profile-tree .monaco-list:focus .monaco-list-row.focused {
-	outline: 1px solid var(--construct-settings-focusedRowBorder) !important;
+	outline: 1px solid var(--kovix-settings-focusedRowBorder) !important;
 }
 
 .profiles-editor .contents-container .profile-body .profile-tree .monaco-list-row {
@@ -407,19 +407,19 @@
 
 .monaco-workbench:not(.hc-black):not(.hc-light) .profiles-editor .contents-container .profile-body .profile-tree .monaco-list-row .profile-associations-table .monaco-list-row:hover:not(.selected),
 .monaco-workbench:not(.hc-black):not(.hc-light) .profiles-editor .contents-container .profile-body .profile-tree .monaco-list-row .profile-content-tree .monaco-list-row:hover:not(.selected) {
-	background-color: var(--construct-list-hoverBackground) !important;
+	background-color: var(--kovix-list-hoverBackground) !important;
 }
 
 .profiles-editor .contents-container .profile-body .profile-tree .monaco-list-row .profile-associations-table .monaco-list-row.selected:focus,
 .profiles-editor .contents-container .profile-body .profile-tree .monaco-list-row .profile-content-tree .monaco-list-row.selected:focus {
-	background-color: var(--construct-list-activeSelectionBackground) !important;
-	color: var(--construct-list-activeSelectionForeground) !important;
+	background-color: var(--kovix-list-activeSelectionBackground) !important;
+	color: var(--kovix-list-activeSelectionForeground) !important;
 }
 
 .profiles-editor .contents-container .profile-body .profile-tree .monaco-list-row .profile-associations-table .monaco-list-row.selected:not(:focus),
 .profiles-editor .contents-container .profile-body .profile-tree .monaco-list-row .profile-content-tree .monaco-list-row.selected:not(:focus) {
-	background-color: var(--construct-list-inactiveSelectionBackground) !important;
-	color: var(--construct-list-inactiveSelectionForeground) !important;
+	background-color: var(--kovix-list-inactiveSelectionBackground) !important;
+	color: var(--kovix-list-inactiveSelectionForeground) !important;
 }
 
 .profiles-editor .contents-container .profile-body .profile-tree .monaco-list-row .profile-content-tree .monaco-list-row .monaco-tl-twistie.collapsible {
@@ -433,5 +433,5 @@
 
 .monaco-workbench:not(.reduce-motion) .profiles-editor .contents-container .profile-body .profile-tree .monaco-list-row:hover .profile-content-tree-header,
 .monaco-workbench:not(.reduce-motion) .profiles-editor .contents-container .profile-body .profile-tree .monaco-list-row:hover .profile-associations-table .monaco-table > .monaco-split-view2 {
-	border-color: var(--construct-tree-tableColumnsBorder) !important;
+	border-color: var(--kovix-tree-tableColumnsBorder) !important;
 }

@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a bug in CONSTRUCT IDE
+about: Report a bug in Kovix IDE
 labels: bug
 ---
 
@@ -20,7 +20,7 @@ What actually happened.
 
 **Environment**
 - OS: 
-- CONSTRUCT version: 
+- Kovix version: 
 - Ollama version: 
 - Model: 
 

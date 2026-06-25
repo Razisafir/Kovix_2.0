@@ -39,11 +39,11 @@
 }
 
 .monaco-workbench .search-view .search-widget .toggle-replace-button:hover {
-	background-color: var(--construct-toolbar-hoverBackground)
+	background-color: var(--kovix-toolbar-hoverBackground)
 }
 
 .monaco-workbench .search-view .search-widget .toggle-replace-button:active {
-	background-color: var(--construct-toolbar-activeBackground)
+	background-color: var(--kovix-toolbar-activeBackground)
 }
 
 .search-view .search-widget .search-container,
@@ -161,7 +161,7 @@
 .search-view .messages {
 	margin-top: -5px;
 	cursor: default;
-	color: var(--construct-search-resultsInfoForeground);
+	color: var(--kovix-search-resultsInfoForeground);
 }
 
 .search-view .message {
@@ -178,12 +178,12 @@
 }
 
 .search-view .message a {
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 }
 
 .search-view .message a:hover,
 .search-view .message a:active {
-	color: var(--construct-textLink-activeForeground);
+	color: var(--kovix-textLink-activeForeground);
 }
 
 .search-view .foldermatch,
@@ -316,14 +316,14 @@
 
 .search-view .replace.findInFileMatch {
 	text-decoration: line-through;
-	background-color: var(--construct-diffEditor-removedTextBackground);
-	border: 1px solid var(--construct-diffEditor-removedTextBackground);
+	background-color: var(--kovix-diffEditor-removedTextBackground);
+	border: 1px solid var(--kovix-diffEditor-removedTextBackground);
 }
 
 /* High Contrast Theming */
 .monaco-workbench.hc-light .search-view .replace.findInFileMatch,
 .monaco-workbench.hc-dark .search-view .replace.findInFileMatch {
-	border: 1px dashed var(--construct-diffEditor-removedTextBackground);
+	border: 1px dashed var(--kovix-diffEditor-removedTextBackground);
 }
 
 .search-view .findInFileMatch,
@@ -332,18 +332,18 @@
 }
 
 .search-view .findInFileMatch {
-	background-color: var(--construct-editor-findMatchHighlightBackground);
-	border: 1px solid var(--construct-editor-findMatchHighlightBorder);
+	background-color: var(--kovix-editor-findMatchHighlightBackground);
+	border: 1px solid var(--kovix-editor-findMatchHighlightBorder);
 }
 
 /* High Contrast Theming */
 .monaco-workbench.hc-light .search-view .findInFileMatch,
 .monaco-workbench.hc-dark .search-view .findInFileMatch {
-	border: 1px dashed var(--construct-editor-findMatchHighlightBorder);
+	border: 1px dashed var(--kovix-editor-findMatchHighlightBorder);
 }
 
 .search-view .replaceMatch {
-	background-color: var(--construct-diffEditor-insertedTextBackground);
+	background-color: var(--kovix-diffEditor-insertedTextBackground);
 }
 
 /* High Contrast Theming */
@@ -356,13 +356,13 @@
 }
 
 .search-view .replaceMatch:not(:empty) {
-	border: 1px solid var(--construct-diffEditor-insertedLineBackground);
+	border: 1px solid var(--kovix-diffEditor-insertedLineBackground);
 }
 
 /* High Contrast Theming */
 .monaco-workbench.hc-light .search-view .replaceMatch:not(:empty),
 .monaco-workbench.hc-dark .search-view .replaceMatch:not(:empty) {
-	border: 1px dashed var(--construct-diffEditor-insertedLineBackground);
+	border: 1px dashed var(--kovix-diffEditor-insertedLineBackground);
 }
 
 /* High Contrast Theming */
@@ -391,7 +391,7 @@
 }
 
 .monaco-workbench .search-view .monaco-list.element-focused .monaco-list-row.focused.selected:not(.highlighted) .action-label:focus {
-	outline-color: var(--construct-list-activeSelectionForeground)
+	outline-color: var(--kovix-list-activeSelectionForeground)
 }
 
 .monaco-workbench .search-container .monaco-custom-toggle.disabled {

@@ -14,9 +14,9 @@
 		z-index: 34; /* Below the find widget */
 		height: 20px;
 
-		color: var(--construct-inlineEdit-indicator-foreground);
-		background-color: var(--construct-inlineEdit-indicator-background);
-		border: 1px solid var(--construct-inlineEdit-indicator-border);
+		color: var(--kovix-inlineEdit-indicator-foreground);
+		background-color: var(--kovix-inlineEdit-indicator-background);
+		border: 1px solid var(--kovix-inlineEdit-indicator-border);
 		border-radius: 3px;
 
 		align-items: center;
@@ -63,7 +63,7 @@
 			transform: none;
 			transition: transform 0.2s ease-in-out;
 			.codicon {
-				color: var(--construct-inlineEdit-indicator-foreground);
+				color: var(--kovix-inlineEdit-indicator-foreground);
 			}
 		}
 
@@ -84,19 +84,19 @@
 		}
 
 		.editorContainer {
-			color: var(--construct-editorHoverWidget-foreground);
+			color: var(--kovix-editorHoverWidget-foreground);
 
 			.toolbar {
 				display: none;
 				border-top: 1px solid rgba(69, 69, 69, 0.5);
-				background-color: var(--construct-editorHoverWidget-statusBarBackground);
+				background-color: var(--kovix-editorHoverWidget-statusBarBackground);
 
 				a {
-					color: var(--construct-foreground);
+					color: var(--kovix-foreground);
 				}
 
 				a:hover {
-					color: var(--construct-foreground);
+					color: var(--kovix-foreground);
 				}
 
 				.keybinding {
@@ -132,7 +132,7 @@
 						border: none;
 					}
 
-					--construct-editor-background: transparent;
+					--kovix-editor-background: transparent;
 				}
 			}
 		}
@@ -143,27 +143,27 @@
 	}
 
 	.inlineCompletions-line-insert {
-		background: var(--construct-inlineEdit-modifiedChangedLineBackground);
+		background: var(--kovix-inlineEdit-modifiedChangedLineBackground);
 	}
 
 	.inlineCompletions-line-delete {
-		background: var(--construct-inlineEdit-originalChangedLineBackground);
+		background: var(--kovix-inlineEdit-originalChangedLineBackground);
 	}
 
 	.inlineCompletions-char-insert {
-		background: var(--construct-inlineEdit-modifiedChangedTextBackground);
+		background: var(--kovix-inlineEdit-modifiedChangedTextBackground);
 	}
 
 	.inlineCompletions-char-delete {
-		background: var(--construct-inlineEdit-originalChangedTextBackground);
+		background: var(--kovix-inlineEdit-originalChangedTextBackground);
 	}
 
 	.inlineCompletions-char-delete.diff-range-empty {
 		margin-left: -1px;
-		border-left: solid var(--construct-inlineEdit-originalChangedTextBackground) 3px;
+		border-left: solid var(--kovix-inlineEdit-originalChangedTextBackground) 3px;
 	}
 
 	.inlineCompletions-char-insert.diff-range-empty {
-		border-left: solid var(--construct-inlineEdit-modifiedChangedTextBackground) 3px;
+		border-left: solid var(--kovix-inlineEdit-modifiedChangedTextBackground) 3px;
 	}
 }

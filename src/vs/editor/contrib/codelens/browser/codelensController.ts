@@ -98,13 +98,13 @@ export class CodeLensContribution implements IEditorContribution {
 
 		const { style } = this._editor.getContainerDomNode();
 
-		style.setProperty('--construct-editorCodeLens-lineHeight', `${codeLensHeight}px`);
-		style.setProperty('--construct-editorCodeLens-fontSize', `${fontSize}px`);
-		style.setProperty('--construct-editorCodeLens-fontFeatureSettings', editorFontInfo.fontFeatureSettings);
+		style.setProperty('--kovix-editorCodeLens-lineHeight', `${codeLensHeight}px`);
+		style.setProperty('--kovix-editorCodeLens-fontSize', `${fontSize}px`);
+		style.setProperty('--kovix-editorCodeLens-fontFeatureSettings', editorFontInfo.fontFeatureSettings);
 
 		if (fontFamily) {
-			style.setProperty('--construct-editorCodeLens-fontFamily', fontFamily);
-			style.setProperty('--construct-editorCodeLens-fontFamilyDefault', EDITOR_FONT_DEFAULTS.fontFamily);
+			style.setProperty('--kovix-editorCodeLens-fontFamily', fontFamily);
+			style.setProperty('--kovix-editorCodeLens-fontFamilyDefault', EDITOR_FONT_DEFAULTS.fontFamily);
 		}
 
 		//

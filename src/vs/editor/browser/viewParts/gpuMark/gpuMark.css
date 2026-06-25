@@ -10,11 +10,11 @@
 	left: 0;
 	width: 100%;
 	display: inline-block;
-	border-left: solid 2px var(--construct-editorWarning-foreground);
+	border-left: solid 2px var(--kovix-editorWarning-foreground);
 	opacity: 0.2;
 	transition: background-color 0.1s linear;
 }
 
 .monaco-editor .margin-view-overlays .gpu-mark:hover {
-	background-color: var(--construct-editorWarning-foreground)
+	background-color: var(--kovix-editorWarning-foreground)
 }

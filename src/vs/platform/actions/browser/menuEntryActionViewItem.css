@@ -12,7 +12,7 @@
 }
 
 .monaco-action-bar .action-item.menu-entry.text-only .action-label {
-	color: var(--construct-descriptionForeground);
+	color: var(--kovix-descriptionForeground);
 	overflow: hidden;
 	border-radius: 2px;
 }
@@ -22,7 +22,7 @@
 }
 
 .monaco-action-bar .action-item.menu-entry.text-only + .action-item:not(.text-only) > .monaco-dropdown .action-label {
-	color: var(--construct-descriptionForeground);
+	color: var(--kovix-descriptionForeground);
 }
 
 .monaco-dropdown-with-default {
@@ -44,7 +44,7 @@
 }
 
 .monaco-dropdown-with-default:hover {
-	background-color: var(--construct-toolbar-hoverBackground);
+	background-color: var(--kovix-toolbar-hoverBackground);
 }
 
 .monaco-dropdown-with-default > .dropdown-action-container > .monaco-dropdown > .dropdown-label .codicon[class*='codicon-'] {
