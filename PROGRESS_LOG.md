@@ -721,3 +721,34 @@ MERGE PR #153. All short jobs clean of self-caused failures (Monaco Editor check
 ### STOP — Phase 6 requires user to acquire code-signing cert + Apple Developer account
 
 Per user's standing rule, Phase 6 (packaging/signing) requires the user to personally acquire a Windows code-signing certificate and an Apple Developer Program membership before any signed installer can be produced. The requirements have been provided in chat for parallel acquisition while Phase 5 finished. Await user's explicit confirmation of acquisition before starting Phase 6 build work.
+
+---
+
+## 2026-06-26 — Phase 5: Self-audit verification (Step 1 findings)
+
+**Task ID:** phase5-step1
+**Agent:** main
+
+### Discrepancies Found
+
+1. **DUPLICATE COMMITS**: Commits `03797713` (fix(naming): resolve 58 product-level issues) and `950ca221` (fix(brand): consolidate to single Kovix Teal design system) are sibling commits from the same parent (`d5114f8c`) that produce **identical tree states** (`git diff 03797713 950ca221` = 0 lines). Both contain the exact same 85-file change. The merge commit `7ec05df0` is a no-op merge. The naming fix and brand consolidation were NOT cleanly separated as the commit messages suggest — they're the same monolithic patch applied twice.
+
+2. **PRODUCT-LEVEL NAMING COUNT NOT ZERO**: The prior session claimed all 58 product-level naming issues were resolved. This is partially true for user-visible strings (Construct Dev → Kovix Dev, CONSTRUCT-VSCODE → KOVIX, dead tokens removed). However, three categories of product-level naming remain:
+   - `construct-app` (11 occurrences) — URI authority, should be `kovix-app`
+   - `construct-remote` (49 occurrences) — URI scheme, should be `kovix-remote`
+   - `--construct-*` CSS variables (1,509 occurrences) — Product theme tokens, should be `--kovix-*`
+   
+   These are HIGH RISK to change (affecting Electron protocol handlers, remote connections, and the entire theme system) and were not addressed in Phase 4.
+
+### Verified (This Session)
+
+- **MajorMilestone fix** (d5114f8c): REAL. Standalone test with 7 cases confirms shouldPauseAt() correctly pauses on Create, Run, config Edit, and isMajor=true; correctly skips Read and non-config Edit.
+- **Skip milestone fix** (8ca6a7f5): REAL. Standalone test confirms Skip emits milestone_skipped (NOT milestone_resumed or milestone_completed), while Resume emits milestone_resumed + milestone_completed.
+- **Naming fixes** (03797713/950ca221): Specific greps confirmed: no "Construct Dev", no "CONSTRUCT-VSCODE", no "kovix-volt/kovix-ignite" dead tokens.
+- **Dead token removal**: Confirmed — kovix-volt-* and kovix-ignite-* aliases are gone from CSS files.
+
+### GUI Verification Status
+
+**BLOCKED in this environment.** Xvfb runs and simple X11 clients can connect, but Electron's ozone X11 platform fails with "Missing X server or $DISPLAY" despite DISPLAY=:99 being set. This is a container/sandboxing limitation. Headless service initialization confirmed (Construct services all start, DevTools opens on port 9222). The app does NOT crash on boot, but GUI rendering (Construct panel, approval gating, task execution) cannot be verified without a real display or a properly sandboxed Xvfb setup.
+
+**Implication**: GUI verification on Windows/macOS by an actual human is the #1 blocking task before this can be called launchable.
