@@ -17,6 +17,10 @@
 	},
 	"include": [
 		"unit/construct/**/*.ts",
-		"../../src/vs/platform/construct/common/agent/promptSanitizer.ts"
+		"../../src/vs/platform/construct/common/agent/promptSanitizer.ts",
+		"../../src/vs/platform/construct/common/agent/agentLoopHelpers.ts",
+		"../../src/vs/platform/construct/common/executionSanity.ts",
+		"../../src/vs/platform/construct/common/pricing/creditSystem.ts",
+		"../../src/vs/platform/construct/common/pricing/pricingTypes.ts"
 	]
 }
