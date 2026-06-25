@@ -1741,6 +1741,7 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                 return unregistered;
         }
 
+        // @ts-ignore — retained for future security tool implementation (currently unregistered from tool list)
         private async executeNmapScan(input: Record<string, unknown>): Promise<IToolResult> {
                 const target = input.target as string;
                 if (!target) { return { success: false, output: 'Error: target is required', truncated: false }; }
@@ -1773,6 +1774,7 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                 }
         }
 
+        // @ts-ignore — retained for future security tool implementation (currently unregistered from tool list)
         private async executeGhidraDecompile(input: Record<string, unknown>): Promise<IToolResult> {
                 const binaryPath = input.binary_path as string;
                 if (!binaryPath) { return { success: false, output: 'Error: binary_path is required', truncated: false }; }
@@ -1822,6 +1824,7 @@ export class ConstructToolRegistryService extends Disposable implements IConstru
                 }
         }
 
+        // @ts-ignore — retained for future security tool implementation (currently unregistered from tool list)
         private async executeNucleiScan(input: Record<string, unknown>): Promise<IToolResult> {
                 const target = input.target as string;
                 if (!target) { return { success: false, output: 'Error: target is required', truncated: false }; }
