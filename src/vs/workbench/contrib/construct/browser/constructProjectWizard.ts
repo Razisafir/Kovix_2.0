@@ -135,7 +135,7 @@ const WIZARD_STYLES = `
                 transition: background 0.3s ease;
         }
         .kovix-wizard-progress-step.active {
-                background: var(--kovix-volt-400);
+                background: var(--kovix-accent);
                 box-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
         }
         .kovix-wizard-progress-step.completed {
@@ -183,7 +183,7 @@ const WIZARD_STYLES = `
         }
         .kovix-wizard-btn:active { transform: scale(0.97); }
         .kovix-wizard-btn-primary {
-                background: var(--kovix-volt-400);
+                background: var(--kovix-accent);
                 color: var(--kovix-bg-ink);
         }
         .kovix-wizard-btn-primary:hover { background: var(--kovix-state-info); }
@@ -196,7 +196,7 @@ const WIZARD_STYLES = `
                 color: var(--kovix-text-primary);
                 border: 1px solid var(--kovix-border);
         }
-        .kovix-wizard-btn-secondary:hover { border-color: var(--kovix-volt-400); color: var(--kovix-volt-400); }
+        .kovix-wizard-btn-secondary:hover { border-color: var(--kovix-accent); color: var(--kovix-accent); }
         .kovix-wizard-btn-create {
                 background: var(--kovix-state-running);
                 color: white;
@@ -229,7 +229,7 @@ const WIZARD_STYLES = `
                 font-family: inherit;
                 resize: vertical;
         }
-        .kovix-wizard-input:focus { border-color: var(--kovix-volt-400); }
+        .kovix-wizard-input:focus { border-color: var(--kovix-accent); }
         .kovix-wizard-input::placeholder { color: var(--kovix-text-tertiary); }
         .kovix-wizard-field { margin-bottom: 20px; }
         /* Step 2: Template Grid */
@@ -254,7 +254,7 @@ const WIZARD_STYLES = `
                 background: var(--kovix-bg-raised);
         }
         .kovix-wizard-template-card.selected {
-                border-color: var(--kovix-volt-400);
+                border-color: var(--kovix-accent);
                 background: var(--kovix-bg-raised);
                 box-shadow: 0 0 12px rgba(0, 229, 255, 0.15);
         }
@@ -309,9 +309,9 @@ const WIZARD_STYLES = `
                 color: var(--kovix-text-primary);
         }
         .kovix-wizard-tech-chip.selected {
-                border-color: var(--kovix-volt-400);
+                border-color: var(--kovix-accent);
                 background: var(--kovix-bg-raised);
-                color: var(--kovix-volt-400);
+                color: var(--kovix-accent);
         }
         .kovix-wizard-section-title {
                 font-size: 13px;
@@ -356,7 +356,7 @@ const WIZARD_STYLES = `
                 border-radius: 4px;
                 padding: 2px 8px;
                 font-size: 11px;
-                color: var(--kovix-volt-400);
+                color: var(--kovix-accent);
         }
         .kovix-wizard-divider {
                 border: none;

@@ -25,9 +25,9 @@
 }
 
 .monaco-editor .line-numbers {
-	color: var(--construct-editorLineNumber-foreground);
+	color: var(--kovix-editorLineNumber-foreground);
 }
 
 .monaco-editor .line-numbers.active-line-number {
-	color: var(--construct-editorLineNumber-activeForeground);
+	color: var(--kovix-editorLineNumber-activeForeground);
 }

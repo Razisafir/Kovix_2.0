@@ -9,7 +9,7 @@
 .extensions-viewlet > .extensions .codicon.codicon-error,
 .extension-editor .codicon.codicon-error,
 .preferences-editor .codicon.codicon-error {
-	color: var(--construct-problemsErrorIcon-foreground);
+	color: var(--kovix-problemsErrorIcon-foreground);
 }
 
 .monaco-editor .zone-widget .codicon.codicon-warning,
@@ -18,7 +18,7 @@
 .extensions-viewlet > .extensions .codicon.codicon-warning,
 .extension-editor .codicon.codicon-warning,
 .preferences-editor .codicon.codicon-warning {
-	color: var(--construct-problemsWarningIcon-foreground);
+	color: var(--kovix-problemsWarningIcon-foreground);
 }
 
 .monaco-editor .zone-widget .codicon.codicon-info,
@@ -27,5 +27,5 @@
 .extensions-viewlet > .extensions .codicon.codicon-info,
 .extension-editor .codicon.codicon-info,
 .preferences-editor .codicon.codicon-info {
-	color: var(--construct-problemsInfoIcon-foreground);
+	color: var(--kovix-problemsInfoIcon-foreground);
 }

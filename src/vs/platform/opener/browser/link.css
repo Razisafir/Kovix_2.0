@@ -4,10 +4,10 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-link {
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 }
 
 .monaco-link:hover {
-	color: var(--construct-textLink-activeForeground);
+	color: var(--kovix-textLink-activeForeground);
 }
 

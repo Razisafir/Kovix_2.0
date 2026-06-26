@@ -25,6 +25,6 @@
 }
 
 .inline-progress-widget:hover .icon::before {
-	content: var(--construct-icon-x-content);
-	font-family: var(--construct-icon-x-font-family);
+	content: var(--kovix-icon-x-content);
+	font-family: var(--kovix-icon-x-font-family);
 }

@@ -1146,6 +1146,10 @@ export class ConstructAgentViewPane extends ViewPane {
                                                 fullText += `\n\n\u25B6 Resumed from milestone: ${event.milestone.name}`;
                                                 break;
 
+                                        case 'milestone_skipped':
+                                                fullText += `\n\n\u23ED Milestone skipped: ${event.milestone.name}`;
+                                                break;
+
                                         case 'milestone_completed':
                                                 fullText += `\n\n\u2705 Milestone completed: ${event.milestone.name}`;
                                                 break;
@@ -1809,7 +1813,7 @@ export class ConstructAgentViewPane extends ViewPane {
 
                         const categoryBadge = dom.$('.construct-refinement-category');
                         categoryBadge.style.cssText = `
-                                font-size: 10px; background: var(--kovix-bg-raised); color: var(--kovix-volt-400);
+                                font-size: 10px; background: var(--kovix-bg-raised); color: var(--kovix-accent);
                                 border-radius: 3px; padding: 1px 6px; display: inline-block; margin-bottom: 4px;
                         `;
                         categoryBadge.textContent = q.category;
@@ -1862,7 +1866,7 @@ export class ConstructAgentViewPane extends ViewPane {
                 const submitBtn = dom.$('button') as HTMLButtonElement;
                 submitBtn.textContent = 'Submit Answers';
                 submitBtn.style.cssText = `
-                        background: var(--kovix-volt-400); color: var(--kovix-bg-ink); border: none;
+                        background: var(--kovix-accent); color: var(--kovix-bg-ink); border: none;
                         border-radius: 4px; padding: 6px 14px; cursor: pointer;
                         font-size: 12px; font-weight: 600;
                 `;
@@ -1930,13 +1934,13 @@ export class ConstructAgentViewPane extends ViewPane {
         private async proceedWithRefinedIdea(refinedIdea: IRefinedIdea, originalIdea: string): Promise<void> {
                 const summaryEl = dom.$('.construct-refined-summary');
                 summaryEl.style.cssText = `
-                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-volt-400);
+                        background: var(--kovix-bg-raised); border: 1px solid var(--kovix-accent);
                         border-radius: 6px; padding: 12px; margin: 8px 0;
                 `;
                 summaryEl.innerHTML = `
                         <div style="font-weight:600;color:var(--kovix-text-primary);margin-bottom:6px;font-size:13px">\u2705 Refined Idea</div>
                         <div style="font-size:12px;color:var(--kovix-text-secondary);margin-bottom:8px">${this.escapeHtml(refinedIdea.refinedDescription)}</div>
-                        <div style="font-size:11px;color:var(--kovix-volt-400)">Confidence: ${Math.round(refinedIdea.confidence * 100)}%</div>
+                        <div style="font-size:11px;color:var(--kovix-accent)">Confidence: ${Math.round(refinedIdea.confidence * 100)}%</div>
                 `;
                 this.messageContainer.appendChild(summaryEl);
                 this.scrollToBottom();

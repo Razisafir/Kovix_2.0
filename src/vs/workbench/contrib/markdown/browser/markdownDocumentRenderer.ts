@@ -102,11 +102,11 @@ pre {
 }
 
 pre code {
-	font-family: var(--construct-editor-font-family);
-	font-weight: var(--construct-editor-font-weight);
-	font-size: var(--construct-editor-font-size);
+	font-family: var(--kovix-editor-font-family);
+	font-weight: var(--kovix-editor-font-weight);
+	font-size: var(--kovix-editor-font-size);
 	line-height: 1.5;
-	color: var(--construct-editor-foreground);
+	color: var(--kovix-editor-foreground);
 	tab-size: 4;
 }
 
@@ -117,7 +117,7 @@ pre code {
 /** Theming */
 
 .pre {
-	background-color: var(--construct-textCodeBlock-background);
+	background-color: var(--kovix-textCodeBlock-background);
 }
 
 .vscode-high-contrast h1 {

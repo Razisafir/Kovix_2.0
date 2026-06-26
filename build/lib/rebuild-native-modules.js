@@ -9,7 +9,7 @@
  * Phase 2 of the Electron native module recovery roadmap.
  *
  * Forces all native modules in node_modules to recompile against the
- * Electron ABI declared in .npmrc (target + runtime=electron).
+ * Electron ABI declared in package.json `config.electronVersion`.
  *
  * Why this exists:
  *   v1.8.0 shipped Windows release where EVERY native module was built
@@ -21,11 +21,12 @@
  *   This script runs BEFORE verification to guarantee a clean rebuild.
  *
  * Why npm rebuild (not electron-rebuild package):
- *   All native modules in this codebase use node-gyp and respect the .npmrc
- *   env vars (target, runtime, disturl, build_from_source). `npm rebuild`
- *   re-runs each module's install script, which calls `node-gyp rebuild`,
- *   which reads those env vars. This is functionally equivalent to
- *   `electron-rebuild` for this codebase, without adding a new dependency.
+ *   All native modules in this codebase use node-gyp and respect the
+ *   npm_config_* env vars (target, runtime, disturl, build_from_source).
+ *   `npm rebuild` re-runs each module's install script, which calls
+ *   `node-gyp rebuild`, which reads those env vars. This is functionally
+ *   equivalent to `electron-rebuild` for this codebase, without adding a
+ *   new dependency.
  *
  *   If a future native module is added that does NOT use node-gyp (e.g.
  *   uses node-api-generator, or ships only prebuilt binaries via
@@ -43,7 +44,7 @@
  * In CI: run AFTER `npm ci` (which restores node_modules from cache or
  * installs fresh) and BEFORE verify-native-modules.js. Runs unconditionally
  * (not gated on cache miss) so that stale cached binaries are always
- * rebuilt against the current .npmrc target.
+ * rebuilt against the current Electron target.
  */
 
 const { spawnSync } = require('child_process');
@@ -51,59 +52,35 @@ const fs = require('fs');
 const path = require('path');
 
 const repoRoot = path.join(__dirname, '..', '..');
-const npmrcPath = path.join(repoRoot, '.npmrc');
 
-// Parse .npmrc to surface what we're rebuilding against.
-function parseNpmrc(p) {
-	if (!fs.existsSync(p)) {
-		console.error(`ERR: .npmrc not found at ${p}`);
-		process.exit(1);
-	}
-	const out = {};
-	for (const line of fs.readFileSync(p, 'utf8').split('\n')) {
-		const trimmed = line.trim();
-		if (!trimmed || trimmed.startsWith('#')) continue;
-		const eq = trimmed.indexOf('=');
-		if (eq < 0) continue;
-		const key = trimmed.slice(0, eq).trim();
-		let value = trimmed.slice(eq + 1).trim();
-		// Strip surrounding quotes
-		if ((value.startsWith('"') && value.endsWith('"')) ||
-			(value.startsWith("'") && value.endsWith("'"))) {
-			value = value.slice(1, -1);
-		}
-		out[key] = value;
-	}
-	return out;
-}
+// --- Read Electron compilation config from package.json ---
+// Previously these values lived in .npmrc (target, runtime, ms_build_id),
+// but npm 11.13.0 deprecated those keys. They are now in package.json config
+// and injected as npm_config_* env vars by this script and postinstall.js.
+const pkgJsonPath = path.join(repoRoot, 'package.json');
+const pkgJson = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
 
-const npmrc = parseNpmrc(npmrcPath);
-const target = npmrc.target;
-const runtime = npmrc.runtime;
-const disturl = npmrc.disturl;
-const buildFromSource = npmrc.build_from_source;
+const target = pkgJson.config && pkgJson.config.electronVersion;
+const runtime = 'electron';
+const disturl = 'https://electronjs.org/headers';
+const buildFromSource = 'true';
 
 if (!target) {
-	console.error('ERR: .npmrc is missing "target" (Electron version to build against).');
+	console.error('ERR: package.json is missing "config.electronVersion".');
 	console.error('     Without this, native modules will build against the Node.js ABI,');
 	console.error('     not the Electron ABI, and will fail to load inside Electron.');
-	process.exit(1);
-}
-if (runtime !== 'electron') {
-	console.error(`ERR: .npmrc runtime="${runtime}" (expected "electron").`);
-	console.error('     Native modules must be built against the Electron runtime.');
 	process.exit(1);
 }
 
 console.log('[rebuild-native-modules] Forcing npm rebuild against Electron ABI...');
 console.log(`[rebuild-native-modules]   target:           ${target}`);
 console.log(`[rebuild-native-modules]   runtime:          ${runtime}`);
-console.log(`[rebuild-native-modules]   disturl:          ${disturl || '(default)'}`);
-console.log(`[rebuild-native-modules]   build_from_source: ${buildFromSource || '(default)'}`);
+console.log(`[rebuild-native-modules]   disturl:          ${disturl}`);
+console.log(`[rebuild-native-modules]   build_from_source: ${buildFromSource}`);
 console.log('[rebuild-native-modules]   repo:             ' + repoRoot);
 console.log('');
 
-// Spawn `npm rebuild` with explicit env vars from .npmrc.
+// Spawn `npm rebuild` with explicit env vars.
 // We pass them explicitly (not just rely on .npmrc) because some CI
 // environments run this script with a clean env that may not have
 // loaded .npmrc into npm_config_* vars yet.
@@ -118,8 +95,8 @@ const env = {
 	SKIP_NATIVE_REBUILD: '1',
 	npm_config_target: target,
 	npm_config_runtime: runtime,
-	npm_config_disturl: disturl || '',
-	npm_config_build_from_source: buildFromSource || 'true',
+	npm_config_disturl: disturl,
+	npm_config_build_from_source: buildFromSource,
 };
 
 const startTime = Date.now();

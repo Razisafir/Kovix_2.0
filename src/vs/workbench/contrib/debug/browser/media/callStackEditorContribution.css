@@ -4,9 +4,9 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-editor .view-overlays .debug-top-stack-frame-line {
-	background-color: var(--construct-editor-stackFrameHighlightBackground);
+	background-color: var(--kovix-editor-stackFrameHighlightBackground);
 }
 
 .monaco-editor .view-overlays .debug-focused-stack-frame-line {
-	background-color: var(--construct-editor-focusedStackFrameHighlightBackground);
+	background-color: var(--kovix-editor-focusedStackFrameHighlightBackground);
 }

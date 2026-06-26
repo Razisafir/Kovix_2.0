@@ -835,9 +835,9 @@ export class ChatWidget extends Disposable implements IChatWidget {
 	}
 
 	private onDidStyleChange(): void {
-		this.container.style.setProperty('--construct-interactive-result-editor-background-color', this.editorOptions.configuration.resultEditor.backgroundColor?.toString() ?? '');
-		this.container.style.setProperty('--construct-interactive-session-foreground', this.editorOptions.configuration.foreground?.toString() ?? '');
-		this.container.style.setProperty('--construct-chat-list-background', this.themeService.getColorTheme().getColor(this.styles.listBackground)?.toString() ?? '');
+		this.container.style.setProperty('--kovix-interactive-result-editor-background-color', this.editorOptions.configuration.resultEditor.backgroundColor?.toString() ?? '');
+		this.container.style.setProperty('--kovix-interactive-session-foreground', this.editorOptions.configuration.foreground?.toString() ?? '');
+		this.container.style.setProperty('--kovix-chat-list-background', this.themeService.getColorTheme().getColor(this.styles.listBackground)?.toString() ?? '');
 	}
 
 	setModel(model: IChatModel, viewState: IChatViewState): void {

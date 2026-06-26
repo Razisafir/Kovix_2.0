@@ -13,7 +13,7 @@
 
 	height: 26px;
 
-	background: var(--construct-banner-background);
+	background: var(--kovix-banner-background);
 }
 
 
@@ -71,15 +71,15 @@
 }
 
 .editor-banner {
-	background-color: var(--construct-banner-background);
+	background-color: var(--kovix-banner-background);
 }
 
 .editor-banner,
 .editor-banner .action-container .codicon,
 .editor-banner .message-actions-container .monaco-link {
-	color: var(--construct-banner-foreground);
+	color: var(--kovix-banner-foreground);
 }
 
 .editor-banner .icon-container .codicon {
-	color: var(--construct-banner-iconForeground);
+	color: var(--kovix-banner-iconForeground);
 }

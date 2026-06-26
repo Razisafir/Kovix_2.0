@@ -34,8 +34,8 @@
 	width: 100%;
 	border-style: solid;
 	border-width: 1px;
-	border-color: var(--construct-editorSuggestWidget-border);
-	background-color: var(--construct-editorSuggestWidget-background);
+	border-color: var(--kovix-editorSuggestWidget-border);
+	background-color: var(--kovix-editorSuggestWidget-background);
 }
 
 .monaco-workbench.hc-black .workbench-suggest-widget,
@@ -56,7 +56,7 @@
 }
 
 .monaco-workbench .workbench-suggest-widget.with-status-bar .suggest-status-bar .action-label {
-	color: var(--construct-editorSuggestWidgetStatus-foreground);
+	color: var(--kovix-editorSuggestWidgetStatus-foreground);
 }
 
 .monaco-workbench .workbench-suggest-widget.with-status-bar .suggest-status-bar .action-item:not(:last-of-type) .action-label {
@@ -88,11 +88,11 @@
 }
 
 .workbench-suggest-widget .monaco-list .monaco-list-row.focused {
-	color: var(--construct-editorSuggestWidget-selectedForeground);
+	color: var(--kovix-editorSuggestWidget-selectedForeground);
 }
 
 .workbench-suggest-widget .monaco-list .monaco-list-row.focused .codicon {
-	color: var(--construct-editorSuggestWidget-selectedIconForeground);
+	color: var(--kovix-editorSuggestWidget-selectedIconForeground);
 }
 
 .workbench-suggest-widget .monaco-list .monaco-list-row > .contents {
@@ -116,7 +116,7 @@
 }
 
 .workbench-suggest-widget .monaco-list .monaco-list-row:not(.focused) > .contents > .main .monaco-icon-label {
-	color: var(--construct-editorSuggestWidget-foreground);
+	color: var(--kovix-editorSuggestWidget-foreground);
 }
 
 .workbench-suggest-widget:not(.frozen) .monaco-highlighted-label .highlight {
@@ -124,11 +124,11 @@
 }
 
 .workbench-suggest-widget .monaco-list .monaco-list-row > .contents > .main .monaco-highlighted-label .highlight {
-	color: var(--construct-editorSuggestWidget-highlightForeground);
+	color: var(--kovix-editorSuggestWidget-highlightForeground);
 }
 
 .workbench-suggest-widget .monaco-list .monaco-list-row.focused > .contents > .main .monaco-highlighted-label .highlight {
-	color: var(--construct-editorSuggestWidget-focusHighlightForeground);
+	color: var(--kovix-editorSuggestWidget-focusHighlightForeground);
 }
 
 /** Styles for each row in the list **/

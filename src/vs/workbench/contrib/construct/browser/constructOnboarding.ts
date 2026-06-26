@@ -406,7 +406,7 @@ export class ConstructOnboardingWizard extends Disposable {
                                 --kovix-text-tertiary: #5C6770;
                                 --kovix-accent-hover: #2DD4BF;
                                 --kovix-accent: #14B8A6;
-                                --kovix-volt-600: #4F2BCC;
+                                --kovix-accent-active: #0F766E;
                                 --kovix-warning: #D29922;
                                 --kovix-error: #F85149;
                                 --kovix-accent-solid: #14B8A6;
@@ -428,7 +428,7 @@ export class ConstructOnboardingWizard extends Disposable {
                                 --kovix-font-ui: "Inter", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                                 --kovix-font-mono: "JetBrains Mono", "Cascadia Code", "SF Mono", Consolas, monospace;
 
-                                --accent: var(--kovix-volt-500);
+                                --accent: var(--kovix-accent);
                                 --accent-dim: rgba(20, 184, 166, 0.40);
                                 --bg-primary: var(--kovix-bg-ink);
                                 --bg-secondary: var(--kovix-bg-surface);

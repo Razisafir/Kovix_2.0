@@ -1085,7 +1085,7 @@ ${formatRule(Codicon.menuSubmenu)}
 
 .monaco-menu .monaco-action-bar .action-item.disabled .action-label,
 .monaco-menu .monaco-action-bar .action-item.disabled .action-label:hover {
-	color: var(--construct-disabledForeground);
+	color: var(--kovix-disabledForeground);
 }
 
 /* Vertical actions */
@@ -1100,7 +1100,7 @@ ${formatRule(Codicon.menuSubmenu)}
 
 .monaco-menu .monaco-action-bar.vertical .action-label.separator {
 	display: block;
-	border-bottom: 1px solid var(--construct-menu-separatorBackground);
+	border-bottom: 1px solid var(--kovix-menu-separatorBackground);
 	padding-top: 1px;
 	padding: 30px;
 }

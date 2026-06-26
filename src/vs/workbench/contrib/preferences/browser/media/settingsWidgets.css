@@ -24,9 +24,9 @@
 }
 
 .settings-editor > .settings-body .settings-tree-container .setting-item-bool .setting-value-checkbox {
-	background-color: var(--construct-settings-checkboxBackground) !important;
-	color: var(--construct-settings-checkboxForeground) !important;
-	border-color: var(--construct-settings-checkboxBorder) !important;
+	background-color: var(--kovix-settings-checkboxBackground) !important;
+	color: var(--kovix-settings-checkboxForeground) !important;
+	border-color: var(--kovix-settings-checkboxBorder) !important;
 }
 .settings-editor > .settings-body .settings-tree-container .setting-item-bool .setting-list-object-input-key-checkbox {
 	margin-left: 4px;
@@ -98,23 +98,23 @@
 	display: flex;
 }
 .settings-editor > .settings-body .settings-tree-container .setting-item.setting-item-list .setting-list-row:hover {
-	background-color: var(--construct-list-hoverBackground);
-	color: var(--construct-list-hoverForeground);
+	background-color: var(--kovix-list-hoverBackground);
+	color: var(--kovix-list-hoverForeground);
 }
 .settings-editor > .settings-body .settings-tree-container .setting-item.setting-item-list .setting-list-row.selected:focus {
-	background-color: var(--construct-list-activeSelectionBackground);
-	color: var(--construct-list-activeSelectionForeground);
+	background-color: var(--kovix-list-activeSelectionBackground);
+	color: var(--kovix-list-activeSelectionForeground);
 }
 .settings-editor > .settings-body .settings-tree-container .setting-item.setting-item-list .setting-list-row.selected:not(:focus) {
-	background-color: var(--construct-list-inactiveSelectionBackground);
-	color: var(--construct-list-inactiveSelectionForeground);
+	background-color: var(--kovix-list-inactiveSelectionBackground);
+	color: var(--kovix-list-inactiveSelectionForeground);
 }
 .settings-editor > .settings-body .settings-tree-container .setting-item.setting-item-list .setting-list-row.draggable {
 	cursor: pointer;
 	user-select: none;
 }
 .settings-editor > .settings-body .settings-tree-container .setting-item.setting-item-list .setting-list-row.drag-hover {
-	background-color: var(--construct-list-dropBackground);
+	background-color: var(--kovix-list-dropBackground);
 }
 .settings-editor > .settings-body .settings-tree-container .setting-item.setting-item-list .setting-list-row.drag-hover * {
 	pointer-events: none;

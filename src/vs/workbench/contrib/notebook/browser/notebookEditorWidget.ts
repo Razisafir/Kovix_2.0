@@ -747,7 +747,7 @@ export class NotebookEditorWidget extends Disposable implements INotebookEditorD
 				border-radius: 4px;
 				width: 0px;
 				margin-left: ${focusIndicatorLeftMargin}px;
-				border-color: var(--construct-notebook-inactiveFocusedCellBorder) !important;
+				border-color: var(--kovix-notebook-inactiveFocusedCellBorder) !important;
 			}
 
 			.monaco-workbench .notebookOverlay .monaco-list .monaco-list-row.focused .cell-focus-indicator-left .codeOutput-focus-indicator-container,
@@ -766,7 +766,7 @@ export class NotebookEditorWidget extends Disposable implements INotebookEditorD
 			styleSheets.push(`
 			.monaco-workbench .notebookOverlay .monaco-list .monaco-list-row.focused .cell-inner-container.cell-output-focus .cell-focus-indicator-left .codeOutput-focus-indicator,
 			.monaco-workbench .notebookOverlay .monaco-list:focus-within .monaco-list-row.focused .cell-inner-container .cell-focus-indicator-left .codeOutput-focus-indicator {
-				border-color: var(--construct-notebook-focusedCellBorder) !important;
+				border-color: var(--kovix-notebook-focusedCellBorder) !important;
 			}
 
 			.monaco-workbench .notebookOverlay .monaco-list .monaco-list-row .cell-inner-container .cell-focus-indicator-left .output-focus-indicator {
@@ -863,12 +863,12 @@ export class NotebookEditorWidget extends Disposable implements INotebookEditorD
 		styleSheets.push(`
 			.notebookOverlay .monaco-list .monaco-list-row.code-cell-row.nb-multiCellHighlight:has(+ .monaco-list-row.nb-multiCellHighlight) .cell-focus-indicator-bottom {
 				height: ${bottomToolbarGap + cellBottomMargin}px;
-				background-color: var(--construct-notebook-symbolHighlightBackground) !important;
+				background-color: var(--kovix-notebook-symbolHighlightBackground) !important;
 			}
 
 			.notebookOverlay .monaco-list .monaco-list-row.markdown-cell-row.nb-multiCellHighlight:has(+ .monaco-list-row.nb-multiCellHighlight) .cell-focus-indicator-bottom {
 				height: ${bottomToolbarGap + cellBottomMargin - 6}px;
-				background-color: var(--construct-notebook-symbolHighlightBackground) !important;
+				background-color: var(--kovix-notebook-symbolHighlightBackground) !important;
 			}
 		`);
 

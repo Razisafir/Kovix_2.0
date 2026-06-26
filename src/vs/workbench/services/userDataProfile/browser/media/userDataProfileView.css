@@ -19,16 +19,16 @@
 }
 
 .monaco-workbench .pane > .pane-body > .profile-view-message-container a {
-	color: var(--construct-textLink-foreground)
+	color: var(--kovix-textLink-foreground)
 }
 
 .monaco-workbench .pane > .pane-body > .profile-view-message-container a:hover {
 	text-decoration: underline;
-	color: var(--construct-textLink-activeForeground)
+	color: var(--kovix-textLink-activeForeground)
 }
 
 .monaco-workbench .pane > .pane-body > .profile-view-message-container a:active {
-	color: var(--construct-textLink-activeForeground)
+	color: var(--kovix-textLink-activeForeground)
 }
 
 .monaco-workbench .pane > .pane-body > .profile-view-message-container.hide {
@@ -82,9 +82,9 @@
 }
 
 .profile-edit-widget > .profile-icon-container > .profile-icon:hover {
-	outline: 1px dashed var(--construct-toolbar-hoverOutline);
+	outline: 1px dashed var(--kovix-toolbar-hoverOutline);
 	outline-offset: -1px;
-	background-color: var(--construct-toolbar-hoverBackground);
+	background-color: var(--kovix-toolbar-hoverBackground);
 }
 
 .profile-edit-widget > .profile-type-container {

@@ -13,7 +13,7 @@
 	cursor: pointer;
 	justify-content: center;
 	align-items: center;
-	border: 1px solid var(--construct-button-border, transparent);
+	border: 1px solid var(--kovix-button-border, transparent);
 	line-height: 18px;
 }
 
@@ -98,7 +98,7 @@
 }
 
 .monaco-button-dropdown > .monaco-button.monaco-dropdown-button {
-	border: 1px solid var(--construct-button-border, transparent);
+	border: 1px solid var(--kovix-button-border, transparent);
 	border-left-width: 0 !important;
 	border-radius: 0 2px 2px 0;
 	display: flex;
@@ -139,36 +139,36 @@
 
 .monaco-button.default-colors,
 .monaco-button-dropdown.default-colors > .monaco-button{
-	color: var(--construct-button-foreground);
-	background-color: var(--construct-button-background);
+	color: var(--kovix-button-foreground);
+	background-color: var(--kovix-button-background);
 }
 
 .monaco-button.default-colors:hover,
 .monaco-button-dropdown.default-colors > .monaco-button:hover {
-	background-color: var(--construct-button-hoverBackground);
+	background-color: var(--kovix-button-hoverBackground);
 }
 
 .monaco-button.default-colors.secondary,
 .monaco-button-dropdown.default-colors > .monaco-button.secondary {
-	color: var(--construct-button-secondaryForeground);
-	background-color: var(--construct-button-secondaryBackground);
+	color: var(--kovix-button-secondaryForeground);
+	background-color: var(--kovix-button-secondaryBackground);
 }
 
 .monaco-button.default-colors.secondary:hover,
 .monaco-button-dropdown.default-colors > .monaco-button.secondary:hover {
-	background-color: var(--construct-button-secondaryHoverBackground);
+	background-color: var(--kovix-button-secondaryHoverBackground);
 }
 
 .monaco-button-dropdown.default-colors .monaco-button-dropdown-separator {
-	background-color: var(--construct-button-background);
-	border-top: 1px solid var(--construct-button-border);
-	border-bottom: 1px solid var(--construct-button-border);
+	background-color: var(--kovix-button-background);
+	border-top: 1px solid var(--kovix-button-border);
+	border-bottom: 1px solid var(--kovix-button-border);
 }
 
 .monaco-button-dropdown.default-colors .monaco-button.secondary + .monaco-button-dropdown-separator {
-	background-color: var(--construct-button-secondaryBackground);
+	background-color: var(--kovix-button-secondaryBackground);
 }
 
 .monaco-button-dropdown.default-colors .monaco-button-dropdown-separator > div {
-	background-color: var(--construct-button-separator);
+	background-color: var(--kovix-button-separator);
 }

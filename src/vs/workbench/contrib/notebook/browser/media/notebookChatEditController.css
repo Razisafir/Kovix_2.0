@@ -9,7 +9,7 @@
 
 /** Cell delete higlight */
 .monaco-workbench .notebookOverlay > .cell-list-container > .monaco-list > .monaco-scrollable-element > .monaco-list-rows > .view-zones .cell-inner-container {
-	background-color: var(--construct-diffEditor-removedLineBackground);
+	background-color: var(--kovix-diffEditor-removedLineBackground);
 	padding: 8px 0;
 	margin-bottom: 16px;
 }
@@ -17,7 +17,7 @@
 /** Cell insert higlight */
 .monaco-workbench .notebookOverlay .monaco-list .monaco-list-row.code-cell-row.nb-insertHighlight .cell-focus-indicator,
 .monaco-workbench .notebookOverlay .monaco-list .monaco-list-row.markdown-cell-row.nb-insertHighlight {
-	background-color: var(--construct-diffEditor-insertedLineBackground, var(--construct-diffEditor-insertedTextBackground)) !important;
+	background-color: var(--kovix-diffEditor-insertedLineBackground, var(--kovix-diffEditor-insertedTextBackground)) !important;
 }
 
 .notebookOverlay .cell .cell-statusbar-container .monaco-workbench .notebookOverlay .monaco-list .monaco-list-row.code-cell-row.nb-insertHighlight .cell-focus-indicator .cell-inner-container,
@@ -27,14 +27,14 @@
 .monaco-workbench .notebookOverlay .monaco-list .monaco-list-row.code-cell-row.nb-insertHighlight .margin-view-overlays,
 .monaco-workbench .notebookOverlay .monaco-list .monaco-list-row.markdown-cell-row.nb-insertHighlight .margin-view-overlays,
 .monaco-workbench .notebookOverlay .monaco-list .monaco-list-row.code-cell-row.nb-insertHighlight .cell-statusbar-container {
-	background-color: var(--construct-diffEditor-insertedLineBackground, var(--construct-diffEditor-insertedTextBackground)) !important;
+	background-color: var(--kovix-diffEditor-insertedLineBackground, var(--kovix-diffEditor-insertedTextBackground)) !important;
 }
 .monaco-workbench .notebookOverlay .monaco-list .monaco-list-row.markdown-cell-row.nb-insertHighlight .cell-statusbar-container {
 	background-color: inherit !important;
 }
 
 .monaco-workbench .notebookOverlay .view-zones .cell-editor-part {
-	outline: solid 1px var(--construct-notebook-cellBorderColor);
+	outline: solid 1px var(--kovix-notebook-cellBorderColor);
 }
 
 
@@ -51,5 +51,5 @@
 }
 
 .monaco-workbench .notebookOverlay .view-zones .cell-editor-part {
-	outline: solid 1px var(--construct-notebook-cellBorderColor);
+	outline: solid 1px var(--kovix-notebook-cellBorderColor);
 }

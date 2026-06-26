@@ -60,8 +60,8 @@
 
 .comments-panel .comments-panel-container .tree-container .comment-thread-container .comment-metadata-container .relevance {
 	border-radius: 2px;
-	background-color: var(--construct-badge-background);
-	color: var(--construct-badge-foreground);
+	background-color: var(--kovix-badge-background);
+	color: var(--kovix-badge-foreground);
 	padding: 0px 4px 1px 4px;
 	font-size: 0.9em;
 	margin-right: 4px;
@@ -140,20 +140,20 @@
 }
 
 .comments-panel .comments-panel-container .text a {
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 }
 
 .comments-panel .comments-panel-container .text a:hover,
 .comments-panel .comments-panel-container a:active {
-	color: var(--construct-textLink-activeForeground);
+	color: var(--kovix-textLink-activeForeground);
 }
 
 .comments-panel .comments-panel-container .text a:focus {
-	outline-color: var(--construct-focusBorder);
+	outline-color: var(--kovix-focusBorder);
 }
 
 .comments-panel .comments-panel-container .text code {
-	color: var(--construct-textPreformat-foreground);
+	color: var(--kovix-textPreformat-foreground);
 }
 
 .comments-panel .comments-panel-container .actions {

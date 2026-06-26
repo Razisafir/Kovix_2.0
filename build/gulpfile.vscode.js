@@ -158,7 +158,7 @@ const bundleVSCodeTask = task.define('bundle-vscode', task.series(
 ));
 gulp.task(bundleVSCodeTask);
 
-const sourceMappingURLBase = `https://cdn.construct-ide.com/sourcemaps/${commit}`;
+const sourceMappingURLBase = `https://cdn.kovix.dev/sourcemaps/${commit}`;
 const minifyVSCodeTask = task.define('minify-vscode', task.series(
         bundleVSCodeTask,
         util.rimraf('out-vscode-min'),
@@ -500,11 +500,11 @@ function patchWin32DependenciesTask(destinationFolderName) {
                             await rcedit(fullPath, {
                                     'file-version': baseVersion,
                                     'version-string': {
-                                            'CompanyName': 'CONSTRUCT',
+                                            'CompanyName': 'Kovix',
                                             'FileDescription': product.nameLong,
                                             'FileVersion': packageJson.version,
                                             'InternalName': basename,
-                                            'LegalCopyright': 'Copyright (C) 2024 CONSTRUCT. All rights reserved',
+                                            'LegalCopyright': 'Copyright (C) 2025 Kovix. All rights reserved',
                                             'OriginalFilename': basename,
                                             'ProductName': product.nameLong,
                                             'ProductVersion': packageJson.version,

@@ -38,7 +38,7 @@
 
 .extension-verified-publisher > .extension-verified-publisher-domain {
 	padding-left: 2px;
-	color: var(--construct-extensionIcon-verifiedForeground);
+	color: var(--kovix-extensionIcon-verifiedForeground);
 	text-decoration: var(--text-link-decoration);
 }
 
@@ -57,7 +57,7 @@
 }
 
 .extension-bookmark > .pre-release {
-	border-top-color: var(--construct-extensionIcon-preReleaseForeground);
+	border-top-color: var(--kovix-extensionIcon-preReleaseForeground);
 	color: #ffffff;
 }
 
@@ -71,6 +71,6 @@
 }
 
 .extension-bookmark .recommendation {
-	border-top-color: var(--construct-extensionButton-prominentBackground);
-	color: var(--construct-extensionButton-prominentForeground);
+	border-top-color: var(--kovix-extensionButton-prominentBackground);
+	color: var(--kovix-extensionButton-prominentForeground);
 }

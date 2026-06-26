@@ -45,7 +45,7 @@
 }
 
 .ports-view .monaco-list .monaco-list-row .ports-view-actionbar-cell .ports-view-actionbar-cell-localaddress {
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 	text-decoration: var(--text-link-decoration);
 }
 
@@ -108,5 +108,5 @@
 }
 
 .monaco-workbench .codicon.codicon-ports-forwarded-with-process-icon {
-	color: var(--construct-ports-iconRunningProcessForeground);
+	color: var(--kovix-ports-iconRunningProcessForeground);
 }

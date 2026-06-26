@@ -76,11 +76,11 @@
 }
 
 .explorer-folders-view .explorer-item .monaco-icon-name-container.multiple > .label-name.drop-target > .monaco-highlighted-label {
-	background-color: var(--construct-list-dropBackground);
+	background-color: var(--kovix-list-dropBackground);
 }
 
 .explorer-folders-view .explorer-item.align-nest-icon-with-parent-icon {
-	margin-left: var(--construct-explorer-align-offset-margin-left);
+	margin-left: var(--kovix-explorer-align-offset-margin-left);
 }
 
 .monaco-workbench.linux .explorer-folders-view .explorer-item .monaco-inputbox,
@@ -103,7 +103,7 @@
 	outline-width: 1px;
 	outline-style: solid;
 	outline-offset: -1px;
-	outline-color: var(--construct-focusBorder);
+	outline-color: var(--kovix-focusBorder);
 	opacity: 1;
 }
 

@@ -16,14 +16,14 @@
 .chat-diff-change-content-widget .monaco-action-bar {
 	padding: 0;
 	border-radius: 2px;
-	background-color: var(--construct-button-background);
-	color: var(--construct-button-foreground);
+	background-color: var(--kovix-button-background);
+	color: var(--kovix-button-foreground);
 }
 
 .chat-diff-change-content-widget .monaco-action-bar .action-item .action-label {
 	height: 14px;
 	border-radius: 2px;
-	color: var(--construct-button-foreground);
+	color: var(--kovix-button-foreground);
 }
 
 .chat-diff-change-content-widget .monaco-action-bar .action-item .action-label.codicon {
@@ -31,7 +31,7 @@
 	padding: 2px;
 	font-size: 12px;
 	line-height: 14px;
-	color: var(--construct-button-foreground);
+	color: var(--kovix-button-foreground);
 }
 
 .chat-diff-change-content-widget .monaco-action-bar .action-item .action-label.codicon[class*='codicon-'] {

@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-editor .hoverHighlight {
-	background-color: var(--construct-editor-hoverHighlightBackground);
+	background-color: var(--kovix-editor-hoverHighlightBackground);
 }
 
 .monaco-editor .monaco-hover-content {
@@ -14,18 +14,18 @@
 }
 
 .monaco-editor .monaco-hover {
-	color: var(--construct-editorHoverWidget-foreground);
-	background-color: var(--construct-editorHoverWidget-background);
-	border: 1px solid var(--construct-editorHoverWidget-border);
+	color: var(--kovix-editorHoverWidget-foreground);
+	background-color: var(--kovix-editorHoverWidget-background);
+	border: 1px solid var(--kovix-editorHoverWidget-border);
 	border-radius: 3px;
 }
 
 .monaco-editor .monaco-hover a {
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 }
 
 .monaco-editor .monaco-hover a:hover {
-	color: var(--construct-textLink-activeForeground);
+	color: var(--kovix-textLink-activeForeground);
 }
 
 .monaco-editor .monaco-hover .hover-row {
@@ -44,7 +44,7 @@
 	padding-left: 5px;
 	padding-right: 5px;
 	justify-content: flex-end;
-	border-right: 1px solid var(--construct-editorHoverWidget-border);
+	border-right: 1px solid var(--kovix-editorHoverWidget-border);
 }
 
 .monaco-editor .monaco-hover .hover-row .verbosity-actions .codicon {
@@ -53,7 +53,7 @@
 }
 
 .monaco-editor .monaco-hover .hover-row .verbosity-actions .codicon.enabled {
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 }
 
 .monaco-editor .monaco-hover .hover-row .verbosity-actions .codicon.disabled {
@@ -61,11 +61,11 @@
 }
 
 .monaco-editor .monaco-hover .hover-row .actions {
-	background-color: var(--construct-editorHoverWidget-statusBarBackground);
+	background-color: var(--kovix-editorHoverWidget-statusBarBackground);
 }
 
 .monaco-editor .monaco-hover code {
-	background-color: var(--construct-textCodeBlock-background);
+	background-color: var(--kovix-textCodeBlock-background);
 }
 
 

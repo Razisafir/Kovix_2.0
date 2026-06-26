@@ -4,8 +4,8 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-editor .findOptionsWidget {
-	background-color: var(--construct-editorWidget-background);
-	color: var(--construct-editorWidget-foreground);
-	box-shadow: 0 0 8px 2px var(--construct-widget-shadow);
-	border: 2px solid var(--construct-contrastBorder);
+	background-color: var(--kovix-editorWidget-background);
+	color: var(--kovix-editorWidget-foreground);
+	box-shadow: 0 0 8px 2px var(--kovix-widget-shadow);
+	border: 2px solid var(--kovix-contrastBorder);
 }

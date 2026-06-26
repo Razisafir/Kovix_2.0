@@ -112,7 +112,7 @@ class ActionItemRenderer<T> implements IListRenderer<IActionListItem<T>, IAction
 			}
 		} else {
 			data.icon.className = ThemeIcon.asClassName(Codicon.lightBulb);
-			data.icon.style.color = 'var(--construct-editorLightBulb-foreground)';
+			data.icon.style.color = 'var(--kovix-editorLightBulb-foreground)';
 		}
 
 		if (!element.item || !element.label) {

@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-editor {
-	--construct-editor-placeholder-foreground: var(--construct-editorGhostText-foreground);
+	--kovix-editor-placeholder-foreground: var(--kovix-editorGhostText-foreground);
 
 	.editorPlaceholder {
 		top: 0px;
@@ -14,6 +14,6 @@
 		text-wrap: nowrap;
 		pointer-events: none;
 
-		color: var(--construct-editor-placeholder-foreground);
+		color: var(--kovix-editor-placeholder-foreground);
 	}
 }

@@ -38,15 +38,82 @@
  * PausedAtMilestone. Those remain the caller's responsibility.
  *
  * Pause rules:
- *   - "pause_at_every" mode: pause at every milestone (after verification)
+ *   - "every_milestone" mode: pause at every milestone (after verification)
+ *   - "major_milestone" mode: pause only at milestones that involve major
+ *     operations (file creation/deletion, shell commands, config file edits),
+ *     or milestones already flagged as isMajor by the planner
  *   - "selective" mode: pause only at milestones in selectedMilestoneIds
- *   - "auto" / undefined: no user-selected pauses
+ *   - "full_auto" / undefined: no user-selected pauses
  *   - Verification failure ALWAYS triggers a pause (regardless of mode) so
  *     the user can fix the issue and then resume to continue.
  */
 
-import { IApprovedPlan, IMilestone } from './milestoneStateMachine.js';
+import { IApprovedPlan, IMilestone, ISelectablePlanStep } from './milestoneStateMachine.js';
 import { AgentLoopEvent } from './agentLoop.js';
+
+/**
+ * File-path patterns that indicate a configuration file.
+ * Editing or creating any file matching these patterns is considered a
+ * "major" operation in MajorMilestone mode.
+ */
+const CONFIG_FILE_PATTERNS: readonly RegExp[] = [
+	/(^|\/)package\.json$/,
+	/(^|\/)tsconfig\.json$/,
+	/(^|\/)tsconfig\..+\.json$/,
+	/(^|\/)\.env/,
+	/(^|\/)docker-compose/,
+	/(^|\/)Dockerfile/,
+	/(^|\/)\.gitignore$/,
+	/(^|\/)Cargo\.toml$/,
+	/(^|\/)go\.mod$/,
+	/(^|\/)go\.sum$/,
+	/(^|\/)pom\.xml$/,
+	/(^|\/)build\.gradle/,
+	/(^|\/)settings\.json$/,
+	/(^|\/)launch\.json$/,
+	/(^|\/)extensions\.json$/,
+	/(^|\/)Makefile$/,
+	/(^|\/)CMakeLists\.txt$/,
+	/(^|\/)\.eslintrc/,
+	/(^|\/)\.prettierrc/,
+	/(^|\/)webpack\.config/,
+	/(^|\/)vite\.config/,
+	/(^|\/)next\.config/,
+];
+
+/**
+ * Determine whether a single plan step is a "major" operation
+ * that warrants a pause in MajorMilestone mode.
+ *
+ * Major operations are:
+ *   - File creation (action === 'Create') - new files are structural changes
+ *   - File deletion - represented as 'Run' (e.g., rm) since there is no
+ *     'Delete' action type; all 'Run' steps are treated as major because
+ *     shell commands can mutate state
+ *   - Changes to configuration files (package.json, tsconfig.json, .env, etc.)
+ *   - Any 'Run' step - shell commands that aren't guaranteed read-only
+ *
+ * Read-only operations (action === 'Read', plain 'Edit' on non-config files)
+ * are NOT considered major.
+ */
+function isMajorStep(step: ISelectablePlanStep): boolean {
+	// File creation is always major - it introduces new files into the project
+	if (step.action === 'Create') {
+		return true;
+	}
+	// Shell commands are treated as major - they may modify state
+	// (file deletion, network calls, installs, etc.)
+	if (step.action === 'Run') {
+		return true;
+	}
+	// Edits to configuration files are major - they affect project structure
+	// and behavior in ways that are hard to auto-revert
+	if (step.action === 'Edit' && CONFIG_FILE_PATTERNS.some(p => p.test(step.target))) {
+		return true;
+	}
+	// Read-only operations and plain source edits are not major
+	return false;
+}
 
 /**
  * Caller-provided function that runs ONE milestone's worth of work.
@@ -75,8 +142,14 @@ export type RunVerificationFn = (
  *
  * The function receives the milestone being paused at, in case the caller
  * needs it for logging or state tracking.
+ *
+ * Return value: 'resume' or 'skip'. The helper branches on this:
+ *   - 'resume' -> emits milestone_resumed + milestone_completed (normal)
+ *   - 'skip'   -> emits milestone_skipped, does NOT emit milestone_completed,
+ *                 and continues to the next milestone. The skipped milestone
+ *                 is NOT counted as completed.
  */
-export type AwaitResumeFn = (milestone: IMilestone) => Promise<void>;
+export type AwaitResumeFn = (milestone: IMilestone) => Promise<'resume' | 'skip'>;
 
 /**
  * Options for executeMilestonesWithPauses.
@@ -98,8 +171,16 @@ export interface IMilestoneExecutorOptions {
  * Phase 5.5 (Fix 1) -- iterate milestones with real pause/resume.
  *
  * Yields AgentLoopEvent including milestone_reached, milestone_paused,
- * milestone_resumed, milestone_completed, plus any events yielded by
- * executeSubTask and runVerification.
+ * milestone_resumed, milestone_skipped, milestone_completed, plus any
+ * events yielded by executeSubTask and runVerification.
+ *
+ * Skip semantics (Fix: skip vs resume are now distinct):
+ *   - resumeFromMilestone() -> awaitResume returns 'resume' ->
+ *     milestone_resumed + milestone_completed fire normally.
+ *   - skipCurrentMilestone() -> awaitResume returns 'skip' ->
+ *     milestone_skipped fires, milestone_completed does NOT fire, and
+ *     the skipped milestone is not counted as completed. The helper
+ *     proceeds to the next milestone.
  *
  * Returns (stops yielding) when:
  *   - All milestones are completed (caller should yield 'complete' after)
@@ -121,12 +202,31 @@ export async function* executeMilestonesWithPauses(
 
 	// Determine which milestones to pause at.
 	const pauseMode = approvedPlan.executionMode ?? 'auto';
-	const pauseAtEvery = pauseMode === 'pause_at_every';
 	const selectedPauseIds = new Set(approvedPlan.selectedMilestoneIds ?? []);
 
 	const shouldPauseAt = (milestone: IMilestone): boolean => {
-		if (pauseAtEvery) { return true; }
-		if (pauseMode === 'selective' && selectedPauseIds.has(milestone.id)) { return true; }
+		// EveryMilestone: pause at every milestone (fine-grained control)
+		if (pauseMode === 'every_milestone') {
+			return true;
+		}
+		// MajorMilestone: pause only when the milestone involves "major" operations
+		if (pauseMode === 'major_milestone') {
+			// Fast path: if the planner already flagged this milestone as major, always pause
+			if (milestone.isMajor) {
+				return true;
+			}
+			// Otherwise, inspect the milestone's steps to see if any qualify as "major"
+			const milestoneStepIndices = new Set(milestone.stepIndices);
+			const steps = approvedPlan.steps.filter(
+				(s, idx) => s.selected && milestoneStepIndices.has(idx),
+			);
+			return steps.some(step => isMajorStep(step));
+		}
+		// Selective: pause only at user-selected milestone IDs
+		if (pauseMode === 'selective' && selectedPauseIds.has(milestone.id)) {
+			return true;
+		}
+		// FullAuto / unknown: no user-selected pauses
 		return false;
 	};
 
@@ -193,8 +293,11 @@ export async function* executeMilestonesWithPauses(
 				log?.(`[MilestoneExecutor] Paused at milestone: ${milestone.name} (verificationFailed=${verificationFailed})`);
 				yield { type: 'milestone_paused', milestone };
 
-				// Await the user's resume/skip action
-				await awaitResume(milestone);
+				// Await the user's resume/skip action. The return value
+				// distinguishes the two paths: 'resume' marks the milestone as
+				// completed-and-verified; 'skip' marks it as skipped (NOT
+				// completed) and proceeds to the next milestone.
+				const resumeAction = await awaitResume(milestone);
 
 				// Re-check abort after resume
 				if (signal?.aborted) {
@@ -202,11 +305,24 @@ export async function* executeMilestonesWithPauses(
 					return;
 				}
 
+				if (resumeAction === 'skip') {
+					// User chose to skip this milestone. Mark it as skipped
+					// (NOT completed), log it clearly so downstream memory /
+					// verification correctly reflects it wasn't actually done,
+					// and proceed to the next milestone WITHOUT firing
+					// milestone_completed.
+					log?.(`[MilestoneExecutor] Milestone ${milestone.name} SKIPPED by user (not completed)`);
+					aggregatedSummary += `\n[Milestone ${milestone.name}: SKIPPED by user -- not completed]\n`;
+					yield { type: 'milestone_skipped', milestone };
+					continue;
+				}
+
 				yield { type: 'milestone_resumed', milestone };
 			}
 		}
 
-		// 6. Fire milestone_completed
+		// 6. Fire milestone_completed (only for the resume path; skip
+		//    path continues past this via the `continue` above).
 		yield { type: 'milestone_completed', milestone };
 		log?.(`[MilestoneExecutor] Milestone ${milestone.name} completed`);
 	}

@@ -7,9 +7,12 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 const root = path.dirname(path.dirname(__dirname));
-const npmrcPath = path.join(root, 'remote', '.npmrc');
-const npmrc = fs.readFileSync(npmrcPath, 'utf8');
-const version = /^target="(.*)"$/m.exec(npmrc)![1];
+const pkgJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+const version = pkgJson.config?.remoteNodeVersion;
+if (!version) {
+        console.error('ERR: package.json config.remoteNodeVersion is missing');
+        process.exit(1);
+}
 
 const platform = process.platform;
 const arch = process.arch;

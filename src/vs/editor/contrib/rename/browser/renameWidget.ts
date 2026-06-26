@@ -960,7 +960,7 @@ class InputWithButton implements IDisposable {
 				this.domNode.style.outlineWidth = '1px';
 				this.domNode.style.outlineStyle = 'solid';
 				this.domNode.style.outlineOffset = '-1px';
-				this.domNode.style.outlineColor = 'var(--construct-focusBorder)';
+				this.domNode.style.outlineColor = 'var(--kovix-focusBorder)';
 			}));
 			this._disposables.add(dom.addDisposableListener(this.input, dom.EventType.BLUR, () => {
 				this.domNode.style.outline = 'none';

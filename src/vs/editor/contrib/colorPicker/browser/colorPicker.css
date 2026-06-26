@@ -74,9 +74,9 @@
 }
 
 .standalone-colorpicker {
-	color: var(--construct-editorHoverWidget-foreground);
-	background-color: var(--construct-editorHoverWidget-background);
-	border: 1px solid var(--construct-editorHoverWidget-border);
+	color: var(--kovix-editorHoverWidget-foreground);
+	background-color: var(--kovix-editorHoverWidget-background);
+	border: 1px solid var(--kovix-editorHoverWidget-border);
 }
 
 .colorpicker-header.standalone-colorpicker {
@@ -85,8 +85,8 @@
 
 .colorpicker-header .close-button {
 	cursor: pointer;
-	background-color: var(--construct-editorHoverWidget-background);
-	border-left: 1px solid var(--construct-editorHoverWidget-border);
+	background-color: var(--kovix-editorHoverWidget-background);
+	border-left: 1px solid var(--kovix-editorHoverWidget-border);
 }
 
 .colorpicker-header .close-button-inner-div {
@@ -96,7 +96,7 @@
 }
 
 .colorpicker-header .close-button-inner-div:hover {
-	background-color: var(--construct-toolbar-hoverBackground);
+	background-color: var(--kovix-toolbar-hoverBackground);
 }
 
 .colorpicker-header .close-icon {
@@ -188,7 +188,7 @@
 .standalone-colorpicker-body {
 	display: block;
 	border: 1px solid transparent;
-	border-bottom: 1px solid var(--construct-editorHoverWidget-border);
+	border-bottom: 1px solid var(--kovix-editorHoverWidget-border);
 	overflow: hidden;
 }
 
@@ -199,13 +199,13 @@
 	padding: 0px;
 	right: 8px;
 	bottom: 8px;
-	background: var(--construct-button-background);
-	color: var(--construct-button-foreground);
+	background: var(--kovix-button-background);
+	color: var(--kovix-button-foreground);
 	border-radius: 2px;
 	border: none;
 	cursor: pointer;
 }
 
 .colorpicker-body .insert-button:hover{
-	background: var(--construct-button-hoverBackground);
+	background: var(--kovix-button-hoverBackground);
 }

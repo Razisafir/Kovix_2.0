@@ -374,8 +374,11 @@ registerWorkbenchContribution2(
 
 // --- Construct Commands --------------------------------------------------------
 // NOTE: The `kovix.focusPanel` command is auto-registered by the container's
-// `openCommandActionDescriptor` (see above). We keep `kovix.newChat` and
-// `kovix.showInlineAgent` as additional entry points that also focus the panel.
+// `openCommandActionDescriptor` (see above). We keep `kovix.newChat` as an
+// additional entry point that also focuses the panel.
+// The `kovix.showInlineAgent` command is registered by
+// KovixInlineAgentController (inlineAgent.ts) and must NOT be re-registered
+// here, otherwise it collides with the editor's Ctrl+K inline agent action.
 
 registerAction2(class NewConstructChatAction extends Action2 {
                 constructor() {
@@ -389,24 +392,6 @@ registerAction2(class NewConstructChatAction extends Action2 {
                                                                 primary: KeyMod.CtrlCmd | KeyMod.Alt | KeyCode.KeyN,
                                                                 weight: KeybindingWeight.WorkbenchContrib,
                                                 },
-                                });
-                }
-                run(accessor: ServicesAccessor): void {
-                                accessor.get(IViewsService).openView('kovix.agentPanel', true);
-                }
-});
-
-registerAction2(class ShowInlineAgentAction extends Action2 {
-                constructor() {
-                                super({
-                                                id: 'kovix.showInlineAgent',
-                                                title: localize2('showInlineAgent', "Kovix: Focus Agent Panel"),
-                                                keybinding: {
-                                                                primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyI,
-                                                                weight: KeybindingWeight.WorkbenchContrib,
-                                                },
-                                                f1: true,
-                                                category: localize2('constructCategory3', "Kovix"),
                                 });
                 }
                 run(accessor: ServicesAccessor): void {
@@ -1907,6 +1892,9 @@ registerAction2(class OpenAgentSettingsAction extends Action2 {
         }
 });
 
+// kovix.openMemorySettings merged into kovix.openAgentSettings with tab auto-switch.
+// Per design.md §5 decision: "MERGE into kovix.openAgentSettings with tab auto-switch".
+// The old command ID is kept as an alias that delegates to openAgentSettings.
 registerAction2(class OpenMemorySettingsAction extends Action2 {
         constructor() {
                 super({
@@ -1917,11 +1905,9 @@ registerAction2(class OpenMemorySettingsAction extends Action2 {
                 });
         }
         run(accessor: ServicesAccessor): void {
-                accessor.get(IViewsService).openView('kovix.agentSettings', true).then(() => {
-                        // The view auto-selects the skills tab; we expose memory as a
-                        // separate command for discoverability — users land on the
-                        // settings pane and can click the Memory tab.
-                });
+                // Delegate to kovix.openAgentSettings, which opens the settings panel.
+                // The agent settings view auto-selects the Memory tab when opened via this command.
+                accessor.get(ICommandService).executeCommand('kovix.openAgentSettings');
         }
 });
 
@@ -2359,49 +2345,44 @@ Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench).regi
         LifecyclePhase.Restored
 );
 
-// --- Phase 5: Security Tools Extension Bridge ---
+// --- Phase 5: Security Tools Extension Bridge (STUBS DISABLED) ---
 //
-// Internal commands used by the Kovix Security Tools extension
-// (extensions/kovix-security-tools) to register/unregister the three
-// security tools (nmap_scan, ghidra_decompile, nuclei_scan) with the
-// core IConstructToolRegistry.
+// The three security tool stubs (nmap_scan, ghidra_decompile, nuclei_scan)
+// have been unregistered from the active tool list. Their schema definitions
+// remain in tools/security/*.ts for future implementation. The register/
+// unregister command bridge is disabled below to prevent the LLM from
+// seeing these tools. Re-enable when real execution handlers are available.
+
+// registerAction2(class RegisterSecurityToolsAction extends Action2 {
+//         constructor() {
+//                 super({
+//                         id: '_kovix.toolRegistry.registerSecurityTools',
+//                         title: localize2('registerSecurityToolsInternal', "[Internal] Register Kovix Security Tools"),
+//                         f1: false,
+//                 });
+//         }
+//         run(accessor: ServicesAccessor): string[] {
+//                 const registry = accessor.get(IConstructToolRegistry);
+//                 if (registry instanceof ConstructToolRegistryService) {
+//                         return registry.registerSecurityTools();
+//                 }
+//                 return [];
+//         }
+// });
 //
-// The extension calls these commands from its activate() function,
-// gated by the kovix.enableSecurityTools setting. Without the extension
-// installed+activated, these commands are never invoked, so the security
-// tools are never registered, and the agent loop never offers them to
-// the LLM.
-
-registerAction2(class RegisterSecurityToolsAction extends Action2 {
-	constructor() {
-		super({
-			id: '_kovix.toolRegistry.registerSecurityTools',
-			title: localize2('registerSecurityToolsInternal', "[Internal] Register Kovix Security Tools"),
-			f1: false,
-		});
-	}
-	run(accessor: ServicesAccessor): string[] {
-		const registry = accessor.get(IConstructToolRegistry);
-		if (registry instanceof ConstructToolRegistryService) {
-			return registry.registerSecurityTools();
-		}
-		return [];
-	}
-});
-
-registerAction2(class UnregisterSecurityToolsAction extends Action2 {
-	constructor() {
-		super({
-			id: '_kovix.toolRegistry.unregisterSecurityTools',
-			title: localize2('unregisterSecurityToolsInternal', "[Internal] Unregister Kovix Security Tools"),
-			f1: false,
-		});
-	}
-	run(accessor: ServicesAccessor): string[] {
-		const registry = accessor.get(IConstructToolRegistry);
-		if (registry instanceof ConstructToolRegistryService) {
-			return registry.unregisterSecurityTools();
-		}
-		return [];
-	}
-});
+// registerAction2(class UnregisterSecurityToolsAction extends Action2 {
+//         constructor() {
+//                 super({
+//                         id: '_kovix.toolRegistry.unregisterSecurityTools',
+//                         title: localize2('unregisterSecurityToolsInternal', "[Internal] Unregister Kovix Security Tools"),
+//                         f1: false,
+//                 });
+//         }
+//         run(accessor: ServicesAccessor): string[] {
+//                 const registry = accessor.get(IConstructToolRegistry);
+//                 if (registry instanceof ConstructToolRegistryService) {
+//                         return registry.unregisterSecurityTools();
+//                 }
+//                 return [];
+//         }
+// });

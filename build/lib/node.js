@@ -7,9 +7,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = require("path");
 const fs = require("fs");
 const root = path.dirname(path.dirname(__dirname));
-const npmrcPath = path.join(root, 'remote', '.npmrc');
-const npmrc = fs.readFileSync(npmrcPath, 'utf8');
-const version = /^target="(.*)"$/m.exec(npmrc)[1];
+const pkgJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+const version = pkgJson.config?.remoteNodeVersion;
+if (!version) {
+    console.error('ERR: package.json config.remoteNodeVersion is missing');
+    process.exit(1);
+}
 const platform = process.platform;
 const arch = process.arch;
 const node = platform === 'win32' ? 'node.exe' : 'node';

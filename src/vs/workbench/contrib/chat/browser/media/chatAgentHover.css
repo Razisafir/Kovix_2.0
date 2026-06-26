@@ -19,7 +19,7 @@
 	width: 32px;
 	height: 32px;
 	border-radius: 50%;
-	outline: 1px solid var(--construct-chat-requestBorder);
+	outline: 1px solid var(--kovix-chat-requestBorder);
 }
 
 .chat-agent-hover .chat-agent-hover-icon .codicon {
@@ -35,7 +35,7 @@
 }
 
 .chat-agent-hover .chat-agent-hover-publisher .codicon.codicon-extensions-verified-publisher {
-	color: var(--construct-extensionIcon-verifiedForeground);
+	color: var(--kovix-extensionIcon-verifiedForeground);
 }
 
 .chat-agent-hover .extension-verified-publisher {
@@ -49,7 +49,7 @@
 }
 
 .chat-agent-hover .chat-agent-hover-warning .codicon {
-	color: var(--construct-notificationsWarningIcon-foreground) !important;
+	color: var(--kovix-notificationsWarningIcon-foreground) !important;
 	margin-right: 3px;
 }
 
@@ -69,7 +69,7 @@
 .chat-agent-hover-extension {
 	display: flex;
 	gap: 6px;
-	color: var(--construct-descriptionForeground);
+	color: var(--kovix-descriptionForeground);
 }
 
 .chat-agent-hover.noExtensionName .chat-agent-hover-separator,

@@ -8,14 +8,14 @@
 AppId={#AppId}
 AppName={#NameLong}
 AppVerName={#NameVersion}
-AppPublisher=CONSTRUCT
-AppPublisherURL=https://construct-ide.com/
-AppSupportURL=https://construct-ide.com/
-AppUpdatesURL=https://construct-ide.com/
+AppPublisher=Kovix
+AppPublisherURL=https://kovix.dev/
+AppSupportURL=https://kovix.dev/
+AppUpdatesURL=https://kovix.dev/
 DefaultGroupName={#NameLong}
 AllowNoIcons=yes
 OutputDir={#OutputDir}
-OutputBaseFilename=ConstructIDESetup
+OutputBaseFilename=KovixSetup
 Compression=lzma
 SolidCompression=yes
 AppMutex={code:GetAppMutex}
@@ -36,8 +36,8 @@ ArchitecturesInstallIn64BitMode={#ArchitecturesInstallIn64BitMode}
 WizardStyle=modern
 
 // We've seen an uptick on broken installations from updates which were unable
-// to shutdown CONSTRUCT IDE. We rely on the fact that the update signals
-// that CONSTRUCT IDE is ready to be shutdown, so we're good to use `force` here.
+// to shutdown Kovix IDE. We rely on the fact that the update signals
+// that Kovix IDE is ready to be shutdown, so we're good to use `force` here.
 CloseApplications=force
 
 #ifdef Sign
@@ -280,7 +280,7 @@ Root: {#SoftwareClassesRootKey}; Subkey: "Software\Classes\{#RegValueName}.cls\s
 
 Root: {#SoftwareClassesRootKey}; Subkey: "Software\Classes\.construct-workspace\OpenWithProgids"; ValueType: none; ValueName: "{#RegValueName}"; Flags: deletevalue uninsdeletevalue; Tasks: associatewithfiles
 Root: {#SoftwareClassesRootKey}; Subkey: "Software\Classes\.construct-workspace\OpenWithProgids"; ValueType: string; ValueName: "{#RegValueName}.construct-workspace"; ValueData: ""; Flags: uninsdeletevalue; Tasks: associatewithfiles
-Root: {#SoftwareClassesRootKey}; Subkey: "Software\Classes\{#RegValueName}.construct-workspace"; ValueType: string; ValueName: ""; ValueData: "{cm:SourceFile,Construct Workspace}"; Flags: uninsdeletekey; Tasks: associatewithfiles
+Root: {#SoftwareClassesRootKey}; Subkey: "Software\Classes\{#RegValueName}.construct-workspace"; ValueType: string; ValueName: ""; ValueData: "{cm:SourceFile,Kovix Workspace}"; Flags: uninsdeletekey; Tasks: associatewithfiles
 Root: {#SoftwareClassesRootKey}; Subkey: "Software\Classes\{#RegValueName}.construct-workspace"; ValueType: string; ValueName: "AppUserModelID"; ValueData: "{#AppUserId}"; Flags: uninsdeletekey; Tasks: associatewithfiles
 Root: {#SoftwareClassesRootKey}; Subkey: "Software\Classes\{#RegValueName}.construct-workspace\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\resources\app\resources\win32\default.ico"; Tasks: associatewithfiles
 Root: {#SoftwareClassesRootKey}; Subkey: "Software\Classes\{#RegValueName}.construct-workspace\shell\open"; ValueType: string; ValueName: "Icon"; ValueData: """{app}\{#ExeBasename}.exe"""; Tasks: associatewithfiles
@@ -1325,7 +1325,7 @@ begin
 
   #if "user" == InstallTarget
     if not WizardSilent() and IsAdmin() then begin
-      if MsgBox('This User Installer is not meant to be run as an Administrator. If you would like to install CONSTRUCT IDE for all users in this system, download the System Installer instead from https://construct-ide.com. Are you sure you want to continue?', mbError, MB_OKCANCEL) = IDCANCEL then begin
+      if MsgBox('This User Installer is not meant to be run as an Administrator. If you would like to install Kovix IDE for all users in this system, download the System Installer instead from https://kovix.dev. Are you sure you want to continue?', mbError, MB_OKCANCEL) = IDCANCEL then begin
         Result := False;
       end;
     end;
@@ -1426,9 +1426,9 @@ begin
         Result := '';
 end;
 
-// CONSTRUCT IDE will create a flag file before the update starts (/update=C:\foo\bar)
-// - if the file exists at this point, the user quit CONSTRUCT IDE before the update finished, so don't start CONSTRUCT IDE after update
-// - otherwise, the user has accepted to apply the update and CONSTRUCT IDE should start
+// Kovix IDE will create a flag file before the update starts (/update=C:\foo\bar)
+// - if the file exists at this point, the user quit Kovix IDE before the update finished, so don't start Kovix IDE after update
+// - otherwise, the user has accepted to apply the update and Kovix IDE should start
 function LockFileExists(): Boolean;
 begin
   Result := FileExists(ExpandConstant('{param:update}'))
@@ -1558,7 +1558,7 @@ begin
   until Length(Text)=0;
 end;
 
-function NeedsAddToPath(Construct: string): boolean;
+function NeedsAddToPath(KovixPath: string): boolean;
 var
   OrigPath: string;
 begin
@@ -1567,25 +1567,25 @@ begin
     Result := True;
     exit;
   end;
-  Result := Pos(';' + Construct + ';', ';' + OrigPath + ';') = 0;
+  Result := Pos(';' + KovixPath + ';', ';' + OrigPath + ';') = 0;
 end;
 
-function AddToPath(Construct: string): string;
+function AddToPath(KovixPath: string): string;
 var
   OrigPath: string;
 begin
   RegQueryStringValue({#EnvironmentRootKey}, '{#EnvironmentKey}', 'Path', OrigPath)
 
   if (Length(OrigPath) > 0) and (OrigPath[Length(OrigPath)] = ';') then
-    Result := OrigPath + Construct
+    Result := OrigPath + KovixPath
   else
-    Result := OrigPath + ';' + Construct
+    Result := OrigPath + ';' + KovixPath
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   Path: string;
-  ConstructPath: string;
+  KovixPath: string;
   Parts: TArrayOfString;
   NewPath: string;
   i: Integer;
@@ -1598,10 +1598,10 @@ begin
     exit;
   end;
   NewPath := '';
-  ConstructPath := ExpandConstant('{app}\bin')
+  KovixPath := ExpandConstant('{app}\bin')
   Explode(Parts, Path, ';');
   for i:=0 to GetArrayLength(Parts)-1 do begin
-    if CompareText(Parts[i], ConstructPath) <> 0 then begin
+    if CompareText(Parts[i], KovixPath) <> 0 then begin
       NewPath := NewPath + Parts[i];
 
       if i < GetArrayLength(Parts) - 1 then begin
@@ -1613,7 +1613,7 @@ begin
 end;
 
 #ifdef Debug
-  #expr SaveToFile(AddBackslash(SourcePath) + "construct-processed.iss")
+  #expr SaveToFile(AddBackslash(SourcePath) + "kovix-processed.iss")
 #endif
 
 // https://docs.microsoft.com/en-us/windows-server/administration/windows-commands/icacls

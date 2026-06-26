@@ -326,11 +326,11 @@ export class BackLayerWebView<T extends ICommonCellInfo> extends Themable {
 				">` : ''}
 				<style nonce="${this.nonce}">
 					::highlight(find-highlight) {
-						background-color: var(--construct-editor-findMatchBackground, ${findMatchHighlight});
+						background-color: var(--kovix-editor-findMatchBackground, ${findMatchHighlight});
 					}
 
 					::highlight(current-find-highlight) {
-						background-color: var(--construct-editor-findMatchHighlightBackground, ${currentHighlight});
+						background-color: var(--kovix-editor-findMatchHighlightBackground, ${currentHighlight});
 					}
 
 					#container .cell_container {
@@ -410,7 +410,7 @@ export class BackLayerWebView<T extends ICommonCellInfo> extends Themable {
 					}
 
 					#container .nb-chatGenerationHighlight .output_container .output {
-						background-color: var(--construct-notebook-selectedCellBackground);
+						background-color: var(--kovix-notebook-selectedCellBackground);
 					}
 
 					#container > div.nb-cellDeleted .output_container {
@@ -426,7 +426,7 @@ export class BackLayerWebView<T extends ICommonCellInfo> extends Themable {
 					}
 
 					#container .no-renderer-error {
-						color: var(--construct-editorError-foreground);
+						color: var(--kovix-editorError-foreground);
 					}
 
 					body {
@@ -465,16 +465,16 @@ export class BackLayerWebView<T extends ICommonCellInfo> extends Themable {
 					}
 
 					.find-match {
-						background-color: var(--construct-editor-findMatchHighlightBackground);
+						background-color: var(--kovix-editor-findMatchHighlightBackground);
 					}
 
 					.current-find-match {
-						background-color: var(--construct-editor-findMatchBackground);
+						background-color: var(--kovix-editor-findMatchBackground);
 					}
 
 					#_defaultColorPalatte {
-						color: var(--construct-editor-findMatchHighlightBackground);
-						background-color: var(--construct-editor-findMatchBackground);
+						color: var(--kovix-editor-findMatchHighlightBackground);
+						background-color: var(--kovix-editor-findMatchBackground);
 					}
 				</style>
 			</head>

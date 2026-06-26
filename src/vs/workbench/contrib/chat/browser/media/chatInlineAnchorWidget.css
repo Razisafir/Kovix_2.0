@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 .chat-inline-anchor-widget {
-	border: 1px solid var(--construct-chat-requestBorder, var(--construct-input-background, transparent));
+	border: 1px solid var(--kovix-chat-requestBorder, var(--kovix-input-background, transparent));
 	border-radius: 4px;
 	margin: 0 1px;
 	padding: 1px 3px;
@@ -23,7 +23,7 @@
 }
 
 .chat-inline-anchor-widget:hover {
-	background-color: var(--construct-list-hoverBackground);
+	background-color: var(--kovix-list-hoverBackground);
 }
 
 .chat-inline-anchor-widget .icon {

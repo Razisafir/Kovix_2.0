@@ -104,7 +104,7 @@ function installHeaders() {
  * node-gyp-build on Windows where `cmd.exe` sees `'C:\Program' is not
  * recognized as an internal or external command`.
  *
- * We don't abort because the bug doesn't fire for every native module — only
+ * We don't abort because the bug doesn't fire for every native module -- only
  * for ones whose build script shells out with the unquoted prefix. But the
  * warning gives the user an actionable hint before they hit the cryptic
  * downstream failure.
@@ -139,23 +139,47 @@ function warnOnSpacesInPrefixPath() {
 }
 
 /**
+ * Reads header download info (disturl + target) for a given .npmrc.
+ *
+ * The `disturl` is still read from .npmrc (it is NOT deprecated).
+ * The `target` used to come from .npmrc too, but npm 11.13.0 deprecated
+ * that key. It now comes from package.json config:
+ *   - root .npmrc  → pkg.config.electronVersion (Electron ABI)
+ *   - remote .npmrc → pkg.config.remoteNodeVersion (Node.js ABI)
+ *
  * @param {string} rcFile
  * @returns {{ disturl: string; target: string } | undefined}
  */
 function getHeaderInfo(rcFile) {
         const lines = fs.readFileSync(rcFile, 'utf8').split(/\r\n?/g);
-        let disturl, target;
+        let disturl;
         for (const line of lines) {
-                let match = line.match(/\s*disturl=*\"(.*)\"\s*$/);
+                const match = line.match(/\s*disturl=*\"(.*)\"\s*$/);
                 if (match !== null && match.length >= 1) {
                         disturl = match[1];
                 }
-                match = line.match(/\s*target=*\"(.*)\"\s*$/);
-                if (match !== null && match.length >= 1) {
-                        target = match[1];
-                }
         }
-        return disturl !== undefined && target !== undefined
-                ? { disturl, target }
-                : undefined;
+
+        if (disturl === undefined) {
+                return undefined;
+        }
+
+        // Determine target from package.json config (not .npmrc).
+        const rootPkgPath = path.join(__dirname, '..', '..', 'package.json');
+        const rootPkg = JSON.parse(fs.readFileSync(rootPkgPath, 'utf8'));
+        const config = rootPkg.config || {};
+
+        // If the .npmrc disturl points to electron headers, use electronVersion;
+        // if it points to nodejs headers, use remoteNodeVersion.
+        const isElectron = disturl.includes('electron');
+        const target = isElectron
+                ? config.electronVersion
+                : config.remoteNodeVersion;
+
+        if (!target) {
+                console.error(`WARN: getHeaderInfo: no target found in package.json config for disturl=${disturl}`);
+                return undefined;
+        }
+
+        return { disturl, target };
 }

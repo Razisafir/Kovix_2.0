@@ -45,123 +45,123 @@ const arch = process.arch;         // 'x64' | 'arm64' | etc.
  *                Mach-O 64 (macOS) = "cffaedfe" (little-endian) or "feedfacf" (big-endian).
  */
 function candidateModules() {
-	const candidates = [];
+        const candidates = [];
 
-	const platformMagic =
-		platform === 'win32' ? '4d5a' :
-		platform === 'linux' ? '7f454c46' :
-		platform === 'darwin' ? 'cffaedfe' : null;
+        const platformMagic =
+                platform === 'win32' ? '4d5a' :
+                platform === 'linux' ? '7f454c46' :
+                platform === 'darwin' ? 'cffaedfe' : null;
 
-	const add = (relPath) => candidates.push({ relPath, expectedMagic: platformMagic });
+        const add = (relPath) => candidates.push({ relPath, expectedMagic: platformMagic });
 
-	// Modules that ship per-platform binaries under per-platform paths.
-	add('@vscode/policy-watcher/build/Release/vscode-policy-watcher.node');
+        // Modules that ship per-platform binaries under per-platform paths.
+        add('@vscode/policy-watcher/build/Release/vscode-policy-watcher.node');
 
-	if (platform === 'win32') {
-		add('@vscode/windows-registry/build/Release/vscode-windows-registry.node');
-		add('windows-foreground-love/build/Release/foreground_love.node');
-	}
+        if (platform === 'win32') {
+                add('@vscode/windows-registry/build/Release/vscode-windows-registry.node');
+                add('windows-foreground-love/build/Release/foreground_love.node');
+        }
 
-	add('@vscode/kerberos/build/Release/kerberos.node');
-	add('@vscode/sqlite3/build/Release/better_sqlite3.node');
-	add('@vscode/spdlog/build/Release/spdlog.node');
-	add('native-keymap/build/Release/keymapping.node');
-	add('native-watchdog/build/Release/watchdog.node');
+        add('@vscode/kerberos/build/Release/kerberos.node');
+        add('@vscode/sqlite3/build/Release/better_sqlite3.node');
+        add('@vscode/spdlog/build/Release/spdlog.node');
+        add('native-keymap/build/Release/keymapping.node');
+        add('native-watchdog/build/Release/watchdog.node');
 
-	if (platform === 'win32') {
-		add('node-pty/build/Release/conpty.node');
-		// winpty-agent is a standalone .exe, not a .node; still PE32.
-		add('node-pty/build/Release/winpty-agent.exe');
-	} else {
-		add('node-pty/build/Release/pty.node');
-	}
+        if (platform === 'win32') {
+                add('node-pty/build/Release/conpty.node');
+                // winpty-agent is a standalone .exe, not a .node; still PE32.
+                add('node-pty/build/Release/winpty-agent.exe');
+        } else {
+                add('node-pty/build/Release/pty.node');
+        }
 
-	add('@vscode/signature-blake3/build/Release/blake3.node');
+        add('@vscode/signature-blake3/build/Release/blake3.node');
 
-	// sharp -- per-platform filename
-	if (platform === 'win32' && arch === 'x64') add('sharp/build/Release/sharp-win32-x64.node');
-	else if (platform === 'linux' && arch === 'x64') add('sharp/build/Release/sharp-linux-x64.node');
-	else if (platform === 'darwin' && arch === 'x64') add('sharp/build/Release/sharp-darwin-x64.node');
-	else if (platform === 'darwin' && arch === 'arm64') add('sharp/build/Release/sharp-darwin-arm64.node');
+        // sharp -- per-platform filename
+        if (platform === 'win32' && arch === 'x64') add('sharp/build/Release/sharp-win32-x64.node');
+        else if (platform === 'linux' && arch === 'x64') add('sharp/build/Release/sharp-linux-x64.node');
+        else if (platform === 'darwin' && arch === 'x64') add('sharp/build/Release/sharp-darwin-x64.node');
+        else if (platform === 'darwin' && arch === 'arm64') add('sharp/build/Release/sharp-darwin-arm64.node');
 
-	// onnxruntime-node -- per-platform precompiled
-	if (platform === 'win32' && arch === 'x64') add('onnxruntime-node/bin/napi-v3/win32/x64/onnxruntime_binding.node');
-	else if (platform === 'linux' && arch === 'x64') add('onnxruntime-node/bin/napi-v3/linux/x64/onnxruntime_binding.node');
-	else if (platform === 'darwin' && arch === 'x64') add('onnxruntime-node/bin/napi-v3/darwin/x64/onnxruntime_binding.node');
-	else if (platform === 'darwin' && arch === 'arm64') add('onnxruntime-node/bin/napi-v3/darwin/arm64/onnxruntime_binding.node');
+        // onnxruntime-node -- per-platform precompiled
+        if (platform === 'win32' && arch === 'x64') add('onnxruntime-node/bin/napi-v3/win32/x64/onnxruntime_binding.node');
+        else if (platform === 'linux' && arch === 'x64') add('onnxruntime-node/bin/napi-v3/linux/x64/onnxruntime_binding.node');
+        else if (platform === 'darwin' && arch === 'x64') add('onnxruntime-node/bin/napi-v3/darwin/x64/onnxruntime_binding.node');
+        else if (platform === 'darwin' && arch === 'arm64') add('onnxruntime-node/bin/napi-v3/darwin/arm64/onnxruntime_binding.node');
 
-	return candidates;
+        return candidates;
 }
 
 function readHexPrefix(filePath, byteCount) {
-	const fd = fs.openSync(filePath, 'r');
-	const buf = Buffer.alloc(byteCount);
-	fs.readSync(fd, buf, 0, byteCount, 0);
-	fs.closeSync(fd);
-	return buf.toString('hex');
+        const fd = fs.openSync(filePath, 'r');
+        const buf = Buffer.alloc(byteCount);
+        fs.readSync(fd, buf, 0, byteCount, 0);
+        fs.closeSync(fd);
+        return buf.toString('hex');
 }
 
 function main() {
-	const mods = candidateModules();
-	let failures = 0;
-	let passes = 0;
-	let skips = 0;
+        const mods = candidateModules();
+        let failures = 0;
+        let passes = 0;
+        let skips = 0;
 
-	console.log(`Verifying native modules for platform=${platform} arch=${arch}`);
-	console.log('='.repeat(60));
+        console.log(`Verifying native modules for platform=${platform} arch=${arch}`);
+        console.log('='.repeat(60));
 
-	for (const { relPath, expectedMagic } of mods) {
-		const abs = path.join(repoRoot, 'node_modules', relPath);
+        for (const { relPath, expectedMagic } of mods) {
+                const abs = path.join(repoRoot, 'node_modules', relPath);
 
-		if (!fs.existsSync(abs)) {
-			// Module not installed on this platform / not in this repo -- skip, not a failure.
-			console.log(`  SKIP  ${relPath}  (not installed)`);
-			skips++;
-			continue;
-		}
+                if (!fs.existsSync(abs)) {
+                        // Module not installed on this platform / not in this repo -- skip, not a failure.
+                        console.log(`  SKIP  ${relPath}  (not installed)`);
+                        skips++;
+                        continue;
+                }
 
-		const stat = fs.statSync(abs);
-		if (stat.size < 1024) {
-			console.error(`  FAIL  ${relPath}  (suspiciously small: ${stat.size} bytes)`);
-			failures++;
-			continue;
-		}
+                const stat = fs.statSync(abs);
+                if (stat.size < 1024) {
+                        console.error(`  FAIL  ${relPath}  (suspiciously small: ${stat.size} bytes)`);
+                        failures++;
+                        continue;
+                }
 
-		const actualMagic = readHexPrefix(abs, 4);
-		if (!actualMagic.startsWith(expectedMagic)) {
-			console.error(`  FAIL  ${relPath}`);
-			console.error(`        expected magic ${expectedMagic}, got ${actualMagic}`);
-			console.error(`        This file is NOT a valid ${platform} binary -- possible cross-platform contamination.`);
-			console.error(`        (This is exactly the v1.8.0 bug: a linux binary was bundled inside the Windows release.)`);
-			failures++;
-			continue;
-		}
+                const actualMagic = readHexPrefix(abs, 4);
+                if (!actualMagic.startsWith(expectedMagic)) {
+                        console.error(`  FAIL  ${relPath}`);
+                        console.error(`        expected magic ${expectedMagic}, got ${actualMagic}`);
+                        console.error(`        This file is NOT a valid ${platform} binary -- possible cross-platform contamination.`);
+                        console.error(`        (This is exactly the v1.8.0 bug: a linux binary was bundled inside the Windows release.)`);
+                        failures++;
+                        continue;
+                }
 
-		// Optional: run `file` for a human-readable description
-		let fileDesc = '';
-		try {
-			fileDesc = execFileSync('file', ['-b', abs], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
-			// Truncate to one line for compact output
-			fileDesc = fileDesc.split('\n')[0].slice(0, 80);
-		} catch (e) {
-			// `file` not available on all systems (especially Windows); ignore.
-		}
+                // Optional: run `file` for a human-readable description
+                let fileDesc = '';
+                try {
+                        fileDesc = execFileSync('file', ['-b', abs], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+                        // Truncate to one line for compact output
+                        fileDesc = fileDesc.split('\n')[0].slice(0, 80);
+                } catch (e) {
+                        // `file` not available on all systems (especially Windows); ignore.
+                }
 
-		console.log(`  OK    ${relPath}  (${(stat.size / 1024 / 1024).toFixed(1)} MB) ${fileDesc ? '-- ' + fileDesc : ''}`);
-		passes++;
-	}
+                console.log(`  OK    ${relPath}  (${(stat.size / 1024 / 1024).toFixed(1)} MB) ${fileDesc ? '-- ' + fileDesc : ''}`);
+                passes++;
+        }
 
-	console.log('='.repeat(60));
-	console.log(`passes=${passes} skips=${skips} failures=${failures}`);
+        console.log('='.repeat(60));
+        console.log(`passes=${passes} skips=${skips} failures=${failures}`);
 
-	if (failures > 0) {
-		console.error('');
-		console.error('Native module verification FAILED.');
-		console.error('See build/lib/verify-npmrc-target.js for the .npmrc ABI pin check,');
-		console.error('and the v1.8.1 release notes for context.');
-		process.exit(1);
-	}
-	console.log('All installed native modules are present with correct platform signature.');
+        if (failures > 0) {
+                console.error('');
+                console.error('Native module verification FAILED.');
+                console.error('See build/lib/verify-npmrc-target.js for the Electron ABI pin check,');
+                console.error('and the v1.8.1 release notes for context.');
+                process.exit(1);
+        }
+        console.log('All installed native modules are present with correct platform signature.');
 }
 
 main();

@@ -32,3 +32,8 @@ download/
 
 # Vendor skills (external skill collections cloned for reference; not part of Kovix)
 vendor-skills/
+
+# Local build workarounds (only needed without root/sudo)
+.local-include/
+.local-lib/
+.pkg-config/

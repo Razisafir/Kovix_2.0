@@ -8,18 +8,18 @@
 	user-select: text;
 	-webkit-user-select: text;
 	padding: 10px;
-	border: 1px solid var(--construct-editorHoverWidget-border);
+	border: 1px solid var(--kovix-editorHoverWidget-border);
 }
 .hc-black .tokens-inspect-widget, .hc-light .tokens-inspect-widget {
 	border-width: 2px;
 }
 
 .monaco-editor .token-inspect-widget {
-	background-color: var(--construct-editorHoverWidget-background);
+	background-color: var(--kovix-editorHoverWidget-background);
 }
 
 .monaco-editor .token-inspect-widget .tiw-metadata-separator {
-	background-color: var(--construct-editorHoverWidget-border)
+	background-color: var(--kovix-editorHoverWidget-border)
 }
 
 .tiw-token {

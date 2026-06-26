@@ -4,11 +4,11 @@
  *--------------------------------------------------------------------------------------------*/
 
 .post-edit-widget {
-	box-shadow: 0 0 8px 2px var(--construct-widget-shadow);
-	border: 1px solid var(--construct-widget-border, transparent);
+	box-shadow: 0 0 8px 2px var(--kovix-widget-shadow);
+	border: 1px solid var(--kovix-widget-border, transparent);
 	border-radius: 4px;
-	color: var(--construct-button-foreground);
-	background-color: var(--construct-button-background);
+	color: var(--kovix-button-foreground);
+	background-color: var(--kovix-button-background);
 	overflow: hidden;
 }
 
@@ -19,7 +19,7 @@
 }
 
 .post-edit-widget .monaco-button:hover {
-	background-color: var(--construct-button-hoverBackground) !important;
+	background-color: var(--kovix-button-hoverBackground) !important;
 }
 
 .post-edit-widget .monaco-button .codicon {

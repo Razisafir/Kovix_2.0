@@ -293,19 +293,19 @@ export class ReleaseNotesManager {
 					}
 
 					code:has(.codesetting) {
-						background-color: var(--construct-textPreformat-background);
-						color: var(--construct-textPreformat-foreground);
+						background-color: var(--kovix-textPreformat-background);
+						color: var(--kovix-textPreformat-foreground);
 						padding-left: 1px;
 						margin-right: 3px;
 						padding-right: 0px;
 					}
 
 					code:has(.codesetting):focus {
-						border: 1px solid var(--construct-button-border, transparent);
+						border: 1px solid var(--kovix-button-border, transparent);
 					}
 
 					.codesetting {
-						color: var(--construct-textPreformat-foreground);
+						color: var(--kovix-textPreformat-foreground);
 						padding: 0px 1px 1px 0px;
 						font-size: 0px;
 						overflow: hidden;
@@ -321,7 +321,7 @@ export class ReleaseNotesManager {
 						font-size: 12px;
 						text-align: center;
 						cursor: pointer;
-						border: 1px solid var(--construct-button-secondaryBorder, transparent);
+						border: 1px solid var(--kovix-button-secondaryBorder, transparent);
 						outline: 1px solid transparent;
 						line-height: 9px;
 						margin-bottom: -5px;
@@ -348,7 +348,7 @@ export class ReleaseNotesManager {
 						margin-top: -3px;
 					}
 					.codesetting:hover {
-						color: var(--construct-textPreformat-foreground) !important;
+						color: var(--kovix-textPreformat-foreground) !important;
 						text-decoration: none !important;
 					}
 					code:has(.codesetting):hover {
@@ -358,14 +358,14 @@ export class ReleaseNotesManager {
 					.codesetting:focus {
 						outline: 0 !important;
 						text-decoration: none !important;
-						color: var(--construct-button-hoverForeground) !important;
+						color: var(--kovix-button-hoverForeground) !important;
 					}
 					.codesetting .separator {
 						width: 1px;
 						height: 14px;
 						margin-bottom: -3px;
 						display: inline-block;
-						background-color: var(--construct-editor-background);
+						background-color: var(--kovix-editor-background);
 						font-size: 12px;
 						margin-right: 8px;
 					}

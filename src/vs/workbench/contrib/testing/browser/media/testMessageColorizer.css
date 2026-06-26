@@ -17,39 +17,39 @@
 		text-decoration: underline;
 	}
 
-	.tstm-ansidec-fg30 { color: var(--construct-terminal-ansiBlack); }
-	.tstm-ansidec-fg31 { color: var(--construct-terminal-ansiRed); }
-	.tstm-ansidec-fg32 { color: var(--construct-terminal-ansiGreen); }
-	.tstm-ansidec-fg33 { color: var(--construct-terminal-ansiYellow); }
-	.tstm-ansidec-fg34 { color: var(--construct-terminal-ansiBlue); }
-	.tstm-ansidec-fg35 { color: var(--construct-terminal-ansiMagenta); }
-	.tstm-ansidec-fg36 { color: var(--construct-terminal-ansiCyan); }
-	.tstm-ansidec-fg37 { color: var(--construct-terminal-ansiWhite); }
+	.tstm-ansidec-fg30 { color: var(--kovix-terminal-ansiBlack); }
+	.tstm-ansidec-fg31 { color: var(--kovix-terminal-ansiRed); }
+	.tstm-ansidec-fg32 { color: var(--kovix-terminal-ansiGreen); }
+	.tstm-ansidec-fg33 { color: var(--kovix-terminal-ansiYellow); }
+	.tstm-ansidec-fg34 { color: var(--kovix-terminal-ansiBlue); }
+	.tstm-ansidec-fg35 { color: var(--kovix-terminal-ansiMagenta); }
+	.tstm-ansidec-fg36 { color: var(--kovix-terminal-ansiCyan); }
+	.tstm-ansidec-fg37 { color: var(--kovix-terminal-ansiWhite); }
 
-	.tstm-ansidec-fg90 { color: var(--construct-terminal-ansiBrightBlack); }
-	.tstm-ansidec-fg91 { color: var(--construct-terminal-ansiBrightRed); }
-	.tstm-ansidec-fg92 { color: var(--construct-terminal-ansiBrightGreen); }
-	.tstm-ansidec-fg93 { color: var(--construct-terminal-ansiBrightYellow); }
-	.tstm-ansidec-fg94 { color: var(--construct-terminal-ansiBrightBlue); }
-	.tstm-ansidec-fg95 { color: var(--construct-terminal-ansiBrightMagenta); }
-	.tstm-ansidec-fg96 { color: var(--construct-terminal-ansiBrightCyan); }
-	.tstm-ansidec-fg97 { color: var(--construct-terminal-ansiBrightWhite); }
+	.tstm-ansidec-fg90 { color: var(--kovix-terminal-ansiBrightBlack); }
+	.tstm-ansidec-fg91 { color: var(--kovix-terminal-ansiBrightRed); }
+	.tstm-ansidec-fg92 { color: var(--kovix-terminal-ansiBrightGreen); }
+	.tstm-ansidec-fg93 { color: var(--kovix-terminal-ansiBrightYellow); }
+	.tstm-ansidec-fg94 { color: var(--kovix-terminal-ansiBrightBlue); }
+	.tstm-ansidec-fg95 { color: var(--kovix-terminal-ansiBrightMagenta); }
+	.tstm-ansidec-fg96 { color: var(--kovix-terminal-ansiBrightCyan); }
+	.tstm-ansidec-fg97 { color: var(--kovix-terminal-ansiBrightWhite); }
 
-	.tstm-ansidec-bg30 { background-color: var(--construct-terminal-ansiBlack); }
-	.tstm-ansidec-bg31 { background-color: var(--construct-terminal-ansiRed); }
-	.tstm-ansidec-bg32 { background-color: var(--construct-terminal-ansiGreen); }
-	.tstm-ansidec-bg33 { background-color: var(--construct-terminal-ansiYellow); }
-	.tstm-ansidec-bg34 { background-color: var(--construct-terminal-ansiBlue); }
-	.tstm-ansidec-bg35 { background-color: var(--construct-terminal-ansiMagenta); }
-	.tstm-ansidec-bg36 { background-color: var(--construct-terminal-ansiCyan); }
-	.tstm-ansidec-bg37 { background-color: var(--construct-terminal-ansiWhite); }
+	.tstm-ansidec-bg30 { background-color: var(--kovix-terminal-ansiBlack); }
+	.tstm-ansidec-bg31 { background-color: var(--kovix-terminal-ansiRed); }
+	.tstm-ansidec-bg32 { background-color: var(--kovix-terminal-ansiGreen); }
+	.tstm-ansidec-bg33 { background-color: var(--kovix-terminal-ansiYellow); }
+	.tstm-ansidec-bg34 { background-color: var(--kovix-terminal-ansiBlue); }
+	.tstm-ansidec-bg35 { background-color: var(--kovix-terminal-ansiMagenta); }
+	.tstm-ansidec-bg36 { background-color: var(--kovix-terminal-ansiCyan); }
+	.tstm-ansidec-bg37 { background-color: var(--kovix-terminal-ansiWhite); }
 
-	.tstm-ansidec-bg100 { background-color: var(--construct-terminal-ansiBrightBlack); }
-	.tstm-ansidec-bg101 { background-color: var(--construct-terminal-ansiBrightRed); }
-	.tstm-ansidec-bg102 { background-color: var(--construct-terminal-ansiBrightGreen); }
-	.tstm-ansidec-bg103 { background-color: var(--construct-terminal-ansiBrightYellow); }
-	.tstm-ansidec-bg104 { background-color: var(--construct-terminal-ansiBrightBlue); }
-	.tstm-ansidec-bg105 { background-color: var(--construct-terminal-ansiBrightMagenta); }
-	.tstm-ansidec-bg106 { background-color: var(--construct-terminal-ansiBrightCyan); }
-	.tstm-ansidec-bg107 { background-color: var(--construct-terminal-ansiBrightWhite); }
+	.tstm-ansidec-bg100 { background-color: var(--kovix-terminal-ansiBrightBlack); }
+	.tstm-ansidec-bg101 { background-color: var(--kovix-terminal-ansiBrightRed); }
+	.tstm-ansidec-bg102 { background-color: var(--kovix-terminal-ansiBrightGreen); }
+	.tstm-ansidec-bg103 { background-color: var(--kovix-terminal-ansiBrightYellow); }
+	.tstm-ansidec-bg104 { background-color: var(--kovix-terminal-ansiBrightBlue); }
+	.tstm-ansidec-bg105 { background-color: var(--kovix-terminal-ansiBrightMagenta); }
+	.tstm-ansidec-bg106 { background-color: var(--kovix-terminal-ansiBrightCyan); }
+	.tstm-ansidec-bg107 { background-color: var(--kovix-terminal-ansiBrightWhite); }
 }

@@ -7,27 +7,27 @@
 
 .monaco-workbench {
 	.codicon-testing-error-icon {
-		color: var(--construct-testing-iconErrored);
+		color: var(--kovix-testing-iconErrored);
 	}
 
 	.codicon-testing-failed-icon {
-		color: var(--construct-testing-iconFailed);
+		color: var(--kovix-testing-iconFailed);
 	}
 
 	.codicon-testing-passed-icon {
-		color: var(--construct-testing-iconPassed);
+		color: var(--kovix-testing-iconPassed);
 	}
 
 	.codicon-testing-queued-icon {
-		color: var(--construct-testing-iconQueued);
+		color: var(--kovix-testing-iconQueued);
 	}
 
 	.codicon-testing-skipped-icon {
-		color: var(--construct-testing-iconSkipped);
+		color: var(--kovix-testing-iconSkipped);
 	}
 
 	.codicon-testing-unset-icon {
-		color: var(--construct-testing-iconUnset);
+		color: var(--kovix-testing-iconUnset);
 	}
 }
 
@@ -74,8 +74,8 @@
 }
 
 .test-output-peek-tree {
-	color: var(--construct-editor-foreground);
-	border-left: 1px solid var(--construct-panelSection-border);
+	color: var(--kovix-editor-foreground);
+	border-left: 1px solid var(--kovix-panelSection-border);
 }
 
 .test-output-peek-tree .monaco-list-row .monaco-action-bar,
@@ -87,10 +87,10 @@
 }
 
 .test-explorer .monaco-list-row .monaco-action-bar .codicon-testing-continuous-is-on {
-	color: var(--construct-inputOption-activeForeground);
-	border-color: var(--construct-inputOption-activeBorder);
-	background: var(--construct-inputOption-activeBackground);
-	border: 1px solid var(--construct-inputOption-activeBorder);
+	color: var(--kovix-inputOption-activeForeground);
+	border-color: var(--kovix-inputOption-activeBorder);
+	background: var(--kovix-inputOption-activeBackground);
+	border: 1px solid var(--kovix-inputOption-activeBorder);
 	border-radius: 3px;
 }
 
@@ -121,8 +121,8 @@
 }
 
 .test-explorer .monaco-list-row .error {
-	outline: 1px solid var(--construct-inputValidation-errorBorder);
-	background: var(--construct-inputValidation-errorBackground);
+	outline: 1px solid var(--kovix-inputValidation-errorBorder);
+	background: var(--kovix-inputValidation-errorBackground);
 	padding: 2px 4px;
 	border-radius: 2px;
 	margin: 3px 12px 3px 3px;
@@ -140,11 +140,11 @@
 }
 
 .test-explorer .monaco-list-row .error a {
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 }
 
 .test-explorer .monaco-list-row .error a:hover {
-	color: var(--construct-textLink-activeForeground);
+	color: var(--kovix-textLink-activeForeground);
 }
 
 .test-explorer .computed-state,
@@ -220,19 +220,19 @@
 }
 
 .monaco-editor .zone-widget.test-output-peek .type-decoration {
-	background-color: var(--construct-peekViewEditor-matchHighlightBackground);
-	border: 2px solid var(--construct-peekViewEditor-matchHighlightBorder);
+	background-color: var(--kovix-peekViewEditor-matchHighlightBackground);
+	border: 2px solid var(--kovix-peekViewEditor-matchHighlightBorder);
 	box-sizing: border-box;
 }
 
 .monaco-editor .zone-widget.test-output-peek .monaco-editor .monaco-editor-background,
 .monaco-editor .zone-widget.test-output-peek .monaco-editor .inputarea.ime-input,
 .monaco-editor .zone-widget.test-output-peek .test-output-peek-message-container {
-	background-color: var(--construct-peekViewEditor-background);
+	background-color: var(--kovix-peekViewEditor-background);
 }
 
 .monaco-editor .zone-widget.test-output-peek .monaco-editor .margin {
-	background-color: var(--construct-peekViewEditorGutter-background);
+	background-color: var(--kovix-peekViewEditorGutter-background);
 }
 
 .test-output-peek-message-container {
@@ -291,11 +291,11 @@
 
 		&,
 		.codicon {
-			color: var(--construct-textLink-foreground);
+			color: var(--kovix-textLink-foreground);
 		}
 
 		&:hover {
-			color: var(--construct-textLink-activeForeground);
+			color: var(--kovix-textLink-activeForeground);
 		}
 
 		&[aria-disabled="true"] {
@@ -328,9 +328,9 @@
 }
 
 .testing-filter-action-item > .monaco-action-bar .testing-filter-button.checked {
-	border-color: var(--construct-inputOption-activeBorder);
-	color: var(--construct-inputOption-activeForeground);
-	background-color: var(--construct-inputOption-activeBackground);
+	border-color: var(--kovix-inputOption-activeBorder);
+	color: var(--kovix-inputOption-activeForeground);
+	background-color: var(--kovix-inputOption-activeBackground);
 }
 
 .testing-filter-action-bar .testing-filter-action-item {
@@ -388,7 +388,7 @@
 }
 
 .testing-diff-lens-widget {
-	color: var(--construct-editorCodeLens-foreground);
+	color: var(--kovix-editorCodeLens-foreground);
 }
 
 .test-message-inline-content {
@@ -404,7 +404,7 @@
 }
 
 .test-message-inline-content-s1 {
-	color: var(--construct-testing-message-info-decorationForeground) !important;
+	color: var(--kovix-testing-message-info-decorationForeground) !important;
 }
 
 .monaco-workbench .test-error-content-widget {
@@ -413,8 +413,8 @@
 
 .monaco-workbench .test-error-content-widget .inner {
 	margin-left: 20px;
-	color: var(--construct-testing-message-error-badgeForeground) !important;
-	background: var(--construct-testing-message-error-badgeBackground);
+	color: var(--kovix-testing-message-error-badgeForeground) !important;
+	background: var(--kovix-testing-message-error-badgeBackground);
 	border-top-right-radius: 2px;
 	border-bottom-right-radius: 2px;
 	padding-right: 3px;
@@ -426,7 +426,7 @@
 	cursor: pointer;
 	box-sizing: border-box;
 	position: relative;
-	border: 1px solid var(--construct-testing-message-error-badgeBorder);
+	border: 1px solid var(--kovix-testing-message-error-badgeBorder);
 	border-left: none;
 
 	&.is-current {
@@ -452,19 +452,19 @@
 		top: -1px;
 		width: 15px;
 		left: -10px;
-		fill: var(--construct-testing-message-error-badgeBackground);
+		fill: var(--kovix-testing-message-error-badgeBackground);
 		z-index: -1;
 		stroke-width: 0.71px; /* 1 / sqrt(2) */
-		stroke: var(--construct-testing-message-error-badgeBorder);
+		stroke: var(--kovix-testing-message-error-badgeBorder);
 	}
 }
 
 .monaco-editor .testing-inline-message-severity-0 {
-	background: var(--construct-testing-message-error-lineBackground) !important;
+	background: var(--kovix-testing-message-error-lineBackground) !important;
 }
 
 .monaco-editor .testing-inline-message-severity-1 {
-	background: var(--construct-testing-message-info-lineBackground) !important;
+	background: var(--kovix-testing-message-info-lineBackground) !important;
 }
 
 /** -- coverage  */
@@ -512,12 +512,12 @@
 }
 
 .coverage-summary-widget {
-	color: var(--construct-editor-foreground);
+	color: var(--kovix-editor-foreground);
 	z-index: 1;
-	background: var(--construct-editor-background);
+	background: var(--kovix-editor-background);
 	left: 0;
 	width: 100%;
-	box-shadow: var(--construct-editorStickyScroll-shadow) 0 3px 2px -2px;
+	box-shadow: var(--kovix-editorStickyScroll-shadow) 0 3px 2px -2px;
 
 	> div {
 		display: flex;
@@ -563,9 +563,9 @@
 
 .test-coverage-tree-per-test-switcher {
 	display: flex;
-	background-color: var(--construct-dropdown-background);
-	color: var(--construct-dropdown-foreground);
-	border: 1px solid var(--construct-dropdown-border);
+	background-color: var(--kovix-dropdown-background);
+	color: var(--kovix-dropdown-foreground);
+	border: 1px solid var(--kovix-dropdown-border);
 
 	margin: 3px 0;
 	cursor: pointer;
@@ -583,8 +583,8 @@
 
 	&::after {
 		content: '';
-		content: var(--construct-icon-chevron-right-content);
-		font-family: var(--construct-icon-chevron-right-font-family);
+		content: var(--kovix-icon-chevron-right-content);
+		font-family: var(--kovix-icon-chevron-right-font-family);
 		font-size: 18px;
 		padding-left: 22px;
 	}
@@ -619,13 +619,13 @@
 }
 
 .coverage-deco-gutter.coverage-deco-hit::before {
-	background: var(--construct-testing-coveredGutterBackground);
-	border-color: var(--construct-testing-coveredGutterBackground);
+	background: var(--kovix-testing-coveredGutterBackground);
+	border-color: var(--kovix-testing-coveredGutterBackground);
 }
 
 .coverage-deco-gutter.coverage-deco-miss::before {
-	background: var(--construct-testing-uncoveredGutterBackground);
-	border-color: var(--construct-testing-uncoveredGutterBackground);
+	background: var(--kovix-testing-uncoveredGutterBackground);
+	border-color: var(--kovix-testing-uncoveredGutterBackground);
 }
 
 .hc-light .coverage-deco-gutter::before,
@@ -637,13 +637,13 @@
 
 .coverage-deco-gutter.coverage-deco-miss.coverage-deco-hit::before {
 	background-image: linear-gradient(45deg,
-			var(--construct-testing-coveredGutterBackground) 25%,
-			var(--construct-testing-uncoveredGutterBackground) 25%,
-			var(--construct-testing-uncoveredGutterBackground) 50%,
-			var(--construct-testing-coveredGutterBackground) 50%,
+			var(--kovix-testing-coveredGutterBackground) 25%,
+			var(--kovix-testing-uncoveredGutterBackground) 25%,
+			var(--kovix-testing-uncoveredGutterBackground) 50%,
+			var(--kovix-testing-coveredGutterBackground) 50%,
 			75%,
-			var(--construct-testing-uncoveredGutterBackground) 75%,
-			var(--construct-testing-uncoveredGutterBackground) 100%);
+			var(--kovix-testing-uncoveredGutterBackground) 75%,
+			var(--kovix-testing-uncoveredGutterBackground) 100%);
 	background-size: 6px 6px;
 	background-color: transparent;
 }
@@ -654,13 +654,13 @@
 
 .monaco-editor {
 	.coverage-deco-inline.coverage-deco-hit {
-		background: var(--construct-testing-coveredBackground);
-		outline: 1px solid var(--construct-testing-coveredBorder);
+		background: var(--kovix-testing-coveredBackground);
+		outline: 1px solid var(--kovix-testing-coveredBorder);
 	}
 
 	.coverage-deco-inline.coverage-deco-miss {
-		background: var(--construct-testing-uncoveredBackground);
-		outline: 1px solid var(--construct-testing-uncoveredBorder);
+		background: var(--kovix-testing-uncoveredBackground);
+		outline: 1px solid var(--kovix-testing-uncoveredBorder);
 	}
 
 	.hc-light .coverage-deco-inline.coverage-deco-hit,
@@ -682,16 +682,16 @@
 		left: 50%;
 		text-align: center;
 		transform: translate(-50%, -50%);
-		padding: calc(var(--construct-testing-coverage-lineHeight) / 10);
+		padding: calc(var(--kovix-testing-coverage-lineHeight) / 10);
 		border-radius: 2px;
-		font: normal normal normal calc(var(--construct-testing-coverage-lineHeight) / 2)/1 codicon;
+		font: normal normal normal calc(var(--kovix-testing-coverage-lineHeight) / 2)/1 codicon;
 		border: 1px solid;
 	}
 
 	.coverage-deco-inline-count {
 		position: relative;
-		background: var(--construct-testing-coverCountBadgeBackground);
-		color: var(--construct-testing-coverCountBadgeForeground);
+		background: var(--kovix-testing-coverCountBadgeBackground);
+		color: var(--kovix-testing-coverCountBadgeForeground);
 		font-size: 0.7em;
 		margin: 0 0.7em 0 0.4em;
 		padding: 0.2em 0 0.2em 0.2em;
@@ -708,8 +708,8 @@
 			bottom: 0;
 			width: 0.5em;
 			background-image:
-				linear-gradient(to bottom left, transparent 50%, var(--construct-testing-coverCountBadgeBackground) 0),
-				linear-gradient(to bottom right, var(--construct-testing-coverCountBadgeBackground) 50%, transparent 0);
+				linear-gradient(to bottom left, transparent 50%, var(--kovix-testing-coverCountBadgeBackground) 0),
+				linear-gradient(to bottom right, var(--kovix-testing-coverCountBadgeBackground) 50%, transparent 0);
 			background-size: 100% 50%;
 			background-repeat: no-repeat;
 			background-position: top, bottom;

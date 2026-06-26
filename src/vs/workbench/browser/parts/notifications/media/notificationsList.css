@@ -6,9 +6,9 @@
 /** Notification: Container */
 
 .monaco-workbench .notifications-list-container {
-	color: var(--construct-notifications-foreground);
-	background: var(--construct-notifications-background);
-	outline-color: var(--construct-contrastBorder);
+	color: var(--kovix-notifications-foreground);
+	background: var(--kovix-notifications-background);
+	outline-color: var(--kovix-contrastBorder);
 }
 
 .monaco-workbench .notifications-list-container .notification-list-item {
@@ -60,13 +60,13 @@
 }
 
 .monaco-workbench .notifications-list-container .notification-list-item .notification-list-item-message a {
-	color: var(--construct-notificationLink-foreground);
+	color: var(--kovix-notificationLink-foreground);
 }
 
 .monaco-workbench .notifications-list-container .notification-list-item .notification-list-item-message a:focus {
 	outline-width: 1px;
 	outline-style: solid;
-	outline-color: var(--construct-focusBorder);
+	outline-color: var(--kovix-focusBorder);
 }
 
 .monaco-workbench .notifications-list-container .notification-list-item.expanded .notification-list-item-message {

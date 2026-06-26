@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 .markers-panel-action-filter > .markers-panel-filter-controls > .monaco-action-bar .action-label.markers-filters.checked {
-	border-color: var(--construct-inputOption-activeBorder);
-	color: var(--construct-inputOption-activeForeground);
-	background-color: var(--construct-inputOption-activeBackground);
+	border-color: var(--kovix-inputOption-activeBorder);
+	color: var(--kovix-inputOption-activeForeground);
+	background-color: var(--kovix-inputOption-activeBackground);
 }

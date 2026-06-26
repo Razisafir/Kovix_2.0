@@ -181,7 +181,7 @@ export class KovixAgentSettingsPane extends ViewPane {
                 } catch (err) {
                         this.logService.error('[KovixAgentSettings] renderBody failed:', err);
                         const errDiv = document.createElement('div');
-                        errDiv.style.cssText = 'padding: 16px; color: #ff6b6b; background: #2a1414; border-radius: 6px; margin: 12px; font-family: monospace; font-size: 12px; white-space: pre-wrap;';
+                        errDiv.style.cssText = 'padding: 16px; color: var(--kovix-error); background: var(--kovix-error-bg); border-radius: 6px; margin: 12px; font-family: monospace; font-size: 12px; white-space: pre-wrap;';
                         errDiv.textContent = `Agent Settings failed to render:\n${err instanceof Error ? err.stack || err.message : String(err)}`;
                         container.appendChild(errDiv);
                 }
@@ -474,7 +474,7 @@ export class KovixAgentSettingsPane extends ViewPane {
                                         const title = dom.$('.kovix-card__title');
                                         const approvalBadge = isApproved
                                                 ? '<span class="kovix-muted">· approved</span>'
-                                                : '<span class="kovix-warn" style="color:var(--kovix-warn-500,#f0a020)">· needs approval</span>';
+                                                : '<span class="kovix-warn" style="color:var(--kovix-warning)">· needs approval</span>';
                                         title.innerHTML = `<strong>${escapeHtml(s.name)}</strong> <span class="kovix-muted">· ${escapeHtml(status)}</span> ${approvalBadge}`;
                                         const sub = dom.$('.kovix-card__desc');
                                         sub.textContent = `${s.command} ${(s.args || []).join(' ')}`.slice(0, 120);

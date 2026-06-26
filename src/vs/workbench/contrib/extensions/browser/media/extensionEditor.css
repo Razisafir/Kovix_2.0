@@ -96,7 +96,7 @@
 	margin-left: 10px;
 	padding: 0px 4px;
 	border-radius: 4px;
-	background-color: var(--construct-extensionIcon-preReleaseForeground);
+	background-color: var(--kovix-extensionIcon-preReleaseForeground);
 	color: #ffffff;
 	display: flex;
 	align-items: center;
@@ -315,19 +315,19 @@
 .extension-editor > .body > .content > .details > .additional-details-container .more-info-container > .more-info > .more-info-entry > .link,
 .extension-editor > .header > .details > .pre-release-text a,
 .extension-editor > .header > .details > .actions-status-container > .status a {
-	color: var(--construct-textLink-foreground)
+	color: var(--kovix-textLink-foreground)
 }
 
 .extension-editor > .body > .content > .details > .additional-details-container .more-info-container > .more-info > .more-info-entry .link:hover,
 .extension-editor > .header > .details > .pre-release-text a:hover,
 .extension-editor > .header > .details > .actions-status-container > .status a:hover {
 	text-decoration: underline;
-	color: var(--construct-textLink-activeForeground)
+	color: var(--kovix-textLink-activeForeground)
 }
 
 .extension-editor > .header > .details > .pre-release-text a:active,
 .extension-editor > .header > .details > .actions-status-container > .status a:active {
-	color: var(--construct-textLink-activeForeground)
+	color: var(--kovix-textLink-activeForeground)
 }
 
 .extension-editor > .header > .details > .pre-release-text:not(:empty) {
@@ -362,7 +362,7 @@
 	font-size: 14px;
 	line-height: 36px;
 	padding-left: 20px;
-	border-bottom: 1px solid var(--construct-panelSection-border);
+	border-bottom: 1px solid var(--kovix-panelSection-border);
 }
 
 .extension-editor > .body > .navbar > .monaco-action-bar > .actions-container {
@@ -377,19 +377,19 @@
 	padding: 0 10px;
 	font-size: 11px;
 	font-weight: normal;
-	color: var(--construct-panelTitle-inactiveForeground);
+	color: var(--kovix-panelTitle-inactiveForeground);
 	text-transform: uppercase;
 	background: none !important;
 	border-radius: 0px !important;
 }
 
 .extension-editor > .body > .navbar > .monaco-action-bar > .actions-container > .action-item > .action-label.checked {
-	border-bottom: 1px solid var(--construct-panelTitle-activeBorder);
-	color: var(--construct-panelTitle-activeForeground);
+	border-bottom: 1px solid var(--kovix-panelTitle-activeBorder);
+	color: var(--kovix-panelTitle-activeForeground);
 }
 
 .extension-editor > .body > .navbar > .monaco-action-bar > .actions-container > .action-item > .action-label:hover {
-	color: var(--construct-panelTitle-activeForeground);
+	color: var(--kovix-panelTitle-activeForeground);
 }
 
 .extension-editor > .body > .content {
@@ -786,7 +786,7 @@
 }
 
 .monaco-workbench .extension-editor > .header > .details > .recommendation .codicon {
-	color: var(--construct-extensionButton-prominentBackground);
+	color: var(--kovix-extensionButton-prominentBackground);
 }
 
 /* Features Tab */

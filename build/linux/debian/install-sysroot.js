@@ -29,9 +29,12 @@ const ghDownloadHeaders = {
     Accept: 'application/octet-stream',
 };
 function getElectronVersion() {
-    const npmrc = fs.readFileSync(path.join(REPO_ROOT, '.npmrc'), 'utf8');
-    const electronVersion = /^target="(.*)"$/m.exec(npmrc)[1];
-    const msBuildId = /^ms_build_id="(.*)"$/m.exec(npmrc)[1];
+    const pkgJson = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8'));
+    const electronVersion = pkgJson.config?.electronVersion;
+    if (!electronVersion) {
+        throw new Error('package.json config.electronVersion is missing');
+    }
+    const msBuildId = pkgJson.config?.electronMsBuildId ?? '';
     return { electronVersion, msBuildId };
 }
 function getSha(filename) {

@@ -147,7 +147,7 @@
 
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item > a:hover:not(.disabled) {
 	text-decoration: none;
-	color: var(--construct-statusBarItem-hoverForeground);
+	color: var(--kovix-statusBarItem-hoverForeground);
 }
 
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item > a.disabled {
@@ -161,48 +161,48 @@
 }
 
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item a:active:not(.disabled) {
-	outline: 1px solid var(--construct-contrastActiveBorder) !important;
+	outline: 1px solid var(--kovix-contrastActiveBorder) !important;
 	outline-offset: -1px;
 }
 
 .monaco-workbench:not(.hc-light):not(.hc-black) .part.statusbar > .items-container > .statusbar-item a:active:not(.disabled) {
-	background-color: var(--construct-statusBarItem-activeBackground) !important;
+	background-color: var(--kovix-statusBarItem-activeBackground) !important;
 }
 
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item a:hover:not(.disabled) {
-	outline: 1px dashed var(--construct-contrastActiveBorder);
+	outline: 1px dashed var(--kovix-contrastActiveBorder);
 	outline-offset: -1px;
 }
 
 .monaco-workbench:not(.hc-light):not(.hc-black) .part.statusbar > .items-container > .statusbar-item a:hover:not(.disabled) {
-	background-color: var(--construct-statusBarItem-hoverBackground);
+	background-color: var(--kovix-statusBarItem-hoverBackground);
 }
 
 /** Status bar entry item kinds */
 
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item.warning-kind {
-	color: var(--construct-statusBarItem-warningForeground);
-	background-color: var(--construct-statusBarItem-warningBackground);
+	color: var(--kovix-statusBarItem-warningForeground);
+	background-color: var(--kovix-statusBarItem-warningBackground);
 }
 
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item.warning-kind a:hover:not(.disabled) {
-	color: var(--construct-statusBarItem-warningHoverForeground);
-	background-color: var(--construct-statusBarItem-warningHoverBackground) !important;
+	color: var(--kovix-statusBarItem-warningHoverForeground);
+	background-color: var(--kovix-statusBarItem-warningHoverBackground) !important;
 }
 
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item.error-kind {
-	color: var(--construct-statusBarItem-errorForeground);
-	background-color: var(--construct-statusBarItem-errorBackground);
+	color: var(--kovix-statusBarItem-errorForeground);
+	background-color: var(--kovix-statusBarItem-errorBackground);
 }
 
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item.error-kind a:hover:not(.disabled) {
-	color: var(--construct-statusBarItem-errorHoverForeground);
-	background-color: var(--construct-statusBarItem-errorHoverBackground) !important;
+	color: var(--kovix-statusBarItem-errorHoverForeground);
+	background-color: var(--kovix-statusBarItem-errorHoverBackground) !important;
 }
 
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item.prominent-kind {
-	color: var(--construct-statusBarItem-prominentForeground);
-	background-color: var(--construct-statusBarItem-prominentBackground);
+	color: var(--kovix-statusBarItem-prominentForeground);
+	background-color: var(--kovix-statusBarItem-prominentBackground);
 }
 
 /**
@@ -216,26 +216,26 @@
  * other kinds use compact feature.
  */
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item.prominent-kind:not(.compact-right):not(.compact-left) a:hover:not(.disabled) {
-	color: var(--construct-statusBarItem-prominentHoverForeground);
-	background-color: var(--construct-statusBarItem-prominentHoverBackground) !important;
+	color: var(--kovix-statusBarItem-prominentHoverForeground);
+	background-color: var(--kovix-statusBarItem-prominentHoverBackground) !important;
 }
 
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item.remote-kind {
-	color: var(--construct-statusBarItem-remoteForeground);
-	background-color: var(--construct-statusBarItem-remoteBackground);
+	color: var(--kovix-statusBarItem-remoteForeground);
+	background-color: var(--kovix-statusBarItem-remoteBackground);
 }
 
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item.remote-kind a:hover:not(.disabled) {
-	color: var(--construct-statusBarItem-remoteHoverForeground);
-	background-color: var(--construct-statusBarItem-remoteHoverBackground) !important;
+	color: var(--kovix-statusBarItem-remoteHoverForeground);
+	background-color: var(--kovix-statusBarItem-remoteHoverBackground) !important;
 }
 
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item.offline-kind {
-	color: var(--construct-statusBarItem-offlineForeground);
-	background-color: var(--construct-statusBarItem-offlineBackground);
+	color: var(--kovix-statusBarItem-offlineForeground);
+	background-color: var(--kovix-statusBarItem-offlineBackground);
 }
 
 .monaco-workbench .part.statusbar > .items-container > .statusbar-item.offline-kind a:hover:not(.disabled) {
-	color: var(--construct-statusBarItem-offlineHoverForeground);
-	background-color: var(--construct-statusBarItem-offlineHoverBackground) !important;
+	color: var(--kovix-statusBarItem-offlineHoverForeground);
+	background-color: var(--kovix-statusBarItem-offlineHoverBackground) !important;
 }

@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 .chat-confirmation-widget {
-	border: 1px solid var(--construct-chat-requestBorder);
+	border: 1px solid var(--kovix-chat-requestBorder);
 	border-radius: 4px;
 	padding: 8px 12px 12px;
 }

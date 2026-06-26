@@ -14,6 +14,14 @@ on:
 env:
   NODE_VERSION: '20'
   PYTHON_VERSION: '3.11'
+  # Native module compilation against Electron ABI.
+  # Previously from .npmrc (target=, runtime=), but npm 11.13.0
+  # deprecated those keys. Without these env vars, node-gyp tries
+  # to download Node.js headers from the Electron disturl (404).
+  npm_config_target: '42.4.1'
+  npm_config_runtime: electron
+  npm_config_disturl: https://electronjs.org/headers
+  npm_config_build_from_source: 'true'
 
 # The default GITHUB_TOKEN is read-only on repos with restricted default
 # permissions. Without this block, `softprops/action-gh-release@v2` fails
@@ -563,13 +571,13 @@ jobs:
             fi
           done
           # Rename the Windows system installer to a stable, versioned name
-          # Inno Setup's OutputBaseFilename=ConstructIDESetup so system-setup produces ConstructIDESetup.exe
-          if ls out/ConstructIDESetup.exe 1>/dev/null 2>&1; then
-            mv out/ConstructIDESetup.exe "out/KovixSetup-x64-${GITHUB_REF_NAME}.exe"
+          # Inno Setup's OutputBaseFilename=KovixSetup so system-setup produces KovixSetup.exe
+          if ls out/KovixSetup.exe 1>/dev/null 2>&1; then
+            mv out/KovixSetup.exe "out/KovixSetup-x64-${GITHUB_REF_NAME}.exe"
           fi
-          # Rename the Windows user installer (also ConstructIDESetup.exe from user-setup dir)
+          # Rename the Windows user installer (also KovixSetup.exe from user-setup dir)
           # The download-artifact action flattens paths, so we need to handle them carefully
-          # If both system and user setup produced ConstructIDESetup.exe, only one survives the cp above.
+          # If both system and user setup produced KovixSetup.exe, only one survives the cp above.
           # Solution: re-extract from the kovix-windows artifact directory structure
           if [ -d "kovix-windows/user-setup" ] && ls kovix-windows/user-setup/*.exe 1>/dev/null 2>&1; then
             cp kovix-windows/user-setup/*.exe "out/KovixUserSetup-x64-${GITHUB_REF_NAME}.exe"

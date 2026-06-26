@@ -13,8 +13,8 @@
 	.chat-features-container {
 		text-align: initial;
 		border-radius: 2px;
-		border: 1px solid var(--construct-chat-requestBorder);
-		background-color: var(--construct-chat-requestBackground);
+		border: 1px solid var(--kovix-chat-requestBorder);
+		background-color: var(--kovix-chat-requestBackground);
 	}
 
 	.chat-feature-container {

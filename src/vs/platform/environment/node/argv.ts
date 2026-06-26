@@ -49,7 +49,7 @@ export const NATIVE_CLI_COMMANDS = ['tunnel', 'serve-web'] as const;
 export const OPTIONS: OptionDescriptions<Required<NativeParsedArgs>> = {
         'tunnel': {
                 type: 'subcommand',
-                description: 'Make the current machine accessible from construct.dev or other machines through a secure tunnel',
+                description: 'Make the current machine accessible from kovix.dev or other machines through a secure tunnel',
                 options: {
                         'cli-data-dir': { type: 'string', args: 'dir', description: localize('cliDataDir', "Directory where CLI metadata should be stored.") },
                         'disable-telemetry': { type: 'boolean' },
@@ -87,7 +87,7 @@ export const OPTIONS: OptionDescriptions<Required<NativeParsedArgs>> = {
         'wait': { type: 'boolean', cat: 'o', alias: 'w', description: localize('wait', "Wait for the files to be closed before returning.") },
         'waitMarkerFilePath': { type: 'string' },
         'locale': { type: 'string', cat: 'o', args: 'locale', description: localize('locale', "The locale to use (e.g. en-US or zh-TW).") },
-        'user-data-dir': { type: 'string', cat: 'o', args: 'dir', description: localize('userDataDir', "Specifies the directory that user data is kept in. Can be used to open multiple distinct instances of Construct.") },
+        'user-data-dir': { type: 'string', cat: 'o', args: 'dir', description: localize('userDataDir', "Specifies the directory that user data is kept in. Can be used to open multiple distinct instances of Kovix.") },
         'profile': { type: 'string', 'cat': 'o', args: 'profileName', description: localize('profileName', "Opens the provided folder or workspace with the given profile and associates the profile with the workspace. If the profile does not exist, a new empty one is created.") },
         'help': { type: 'boolean', cat: 'o', alias: 'h', description: localize('help', "Print usage.") },
 

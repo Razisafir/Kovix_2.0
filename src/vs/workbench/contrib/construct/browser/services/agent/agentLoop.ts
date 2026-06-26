@@ -37,6 +37,8 @@ import { redactSecrets } from '../../../../../../platform/construct/common/secur
 // P0-5: In-memory staging for agent-proposed changes
 import { IPendingChangesService } from '../../../../../../platform/construct/common/diff/pendingChanges.js';
 import { IUniversalMemoryService } from '../../../../../../platform/construct/common/memory/universalMemoryService.js';
+// Phase 5.5 (Fix 3): IAutoExtractContext for richer auto-extract.
+import type { IAutoExtractContext } from '../../../../../../platform/construct/common/memory/universalMemoryService.js';
 import { ISkillRegistry } from '../../../../../../platform/construct/common/skills/skillRegistry.js';
 // Fix for F-002 (#72): inject the tool registry so security tools (nmap, nuclei, ghidra)
 // and MCP server tools are visible to the LLM, not just the 8 hardcoded AGENT_TOOLS.
@@ -207,6 +209,7 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                 this._conversationHistory = [];
                 this._activeSnapshotId = null;
                 this._completedMilestoneIds.clear();
+                this._skippedMilestoneIds.clear();
                 this.logService.info('[AgentLoop] Conversation history cleared');
         }
         private readonly _onDidStart = this._register(new Emitter<string>());
@@ -231,8 +234,24 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
         /** Milestone execution state. */
         private _executionState: ExecutionState = ExecutionState.Idle;
         private _currentMilestone: IMilestone | null = null;
-        private _milestoneResumeResolver: (() => void) | null = null;
+        private _milestoneResumeResolver: ((value: 'resume' | 'skip') => void) | null = null;
         private _completedMilestoneIds: Set<string> = new Set();
+        /**
+         * IDs of milestones the user explicitly skipped (not completed).
+         * Populated when milestone_skipped events are observed.
+         * Distinct from _completedMilestoneIds so downstream consumers
+         * can tell the difference.
+         */
+        private _skippedMilestoneIds: Set<string> = new Set();
+
+        /**
+         * Phase 5.5 (Fix 3) -- per-task tracking for richer auto-extract.
+         * Cleared at the start of each task (run() or runWithApprovedPlan()),
+         * populated during _executeRounds(), consumed by autoExtractFromTask()
+         * at task completion.
+         */
+        private _taskFailedToolResults: Array<{ toolName: string; input: unknown; result: string }> = [];
+        private _taskFileReadCounts: Map<string, number> = new Map();
 
         constructor(
                 @ILogService private readonly logService: ILogService,
@@ -517,6 +536,10 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                 this._onDidStart.fire(task);
                 this.logService.info(`[AgentLoop] Execution started: ${task}`);
 
+                // Phase 5.5 (Fix 3): clear per-task tracking for auto-extract.
+                this._taskFailedToolResults = [];
+                this._taskFileReadCounts.clear();
+
                 try {
                         // Ensure MCP process is connected
                         if (!this.mcpProcess.connected) {
@@ -665,6 +688,23 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                                         }
 
                                                         yield { type: 'tool_result', toolId: event.toolId, toolName: event.toolName, result: toolResult, success };
+
+                                                        // Phase 5.5 (Fix 3): track failed tool results + file reads
+                                                        // for richer auto-extract at task completion.
+                                                        if (!success) {
+                                                                this._taskFailedToolResults.push({
+                                                                        toolName: event.toolName,
+                                                                        input: event.toolInput,
+                                                                        result: toolResult,
+                                                                });
+                                                        }
+                                                        if (event.toolName === 'read_file') {
+                                                                const toolInput = event.toolInput as Record<string, string> | null;
+                                                                const readPath = toolInput?.path ?? '';
+                                                                if (readPath) {
+                                                                        this._taskFileReadCounts.set(readPath, (this._taskFileReadCounts.get(readPath) ?? 0) + 1);
+                                                                }
+                                                        }
 
                                                         // Track file writes for snapshot + file watcher
                                                         let filePath: string | undefined;
@@ -820,8 +860,11 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                         }
 
                         // Auto-extract universal memory from completed task
+                        // Phase 5.5 (Fix 3): pass enriched context (conversation history,
+                        // failed tool results, repeated file reads) for richer extraction.
                         if (this.universalMemory && finalSummary) {
-                                this.universalMemory.autoExtractFromTask(task, finalSummary.substring(0, 500)).catch(() => { /* non-critical */ });
+                                const enrichedContext = this.buildAutoExtractContext(task);
+                                this.universalMemory.autoExtractFromTask(task, finalSummary.substring(0, 500), enrichedContext).catch(() => { /* non-critical */ });
                         }
 
                         // Fix for F-003 (#73): remember this turn so the next turn has context.
@@ -861,13 +904,16 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
          *          resumeFromMilestone() or skipCurrentMilestone())
          *        - Fire `milestone_resumed` + set _executionState = Executing
          *   6. Fire `milestone_completed` + add milestone.id to _completedMilestoneIds
+           (ONLY on resume; on skip, fire `milestone_skipped` + add to
+           _skippedMilestoneIds instead -- the milestone is NOT completed)
          *
          * After the last milestone: fire `complete` with aggregated summary.
          *
          * Verification failure always triggers a pause (regardless of pauseMode)
          * so the user can fix the issue and then resume to continue to the next
          * milestone. Skip from a failed-verification pause proceeds to the next
-         * milestone without re-running the failed one.
+         * milestone without re-running the failed one. Skip marks the milestone
+         * as skipped (NOT completed) in _skippedMilestoneIds.
          */
         async *runWithApprovedPlan(approvedPlan: IApprovedPlan, signal?: AbortSignal): AsyncGenerator<AgentLoopEvent> {
                 if (this._isRunning) {
@@ -885,6 +931,10 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                 this._isRunning = true;
                 this._onDidStart.fire(approvedPlan.task);
                 this.logService.info(`[AgentLoop] runWithApprovedPlan started: ${approvedPlan.task} (${approvedPlan.milestones.length} milestones, mode=${pauseMode})`);
+
+                // Phase 5.5 (Fix 3): clear per-task tracking for auto-extract.
+                this._taskFailedToolResults = [];
+                this._taskFileReadCounts.clear();
 
                 try {
                         // Ensure MCP process is connected
@@ -939,11 +989,12 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                         return this._executeRounds(subTask, conversationMessages, systemPrompt, sig);
                                 },
                                 runVerification: (sig?: AbortSignal) => this.runVerification(sig),
-                                awaitResume: async (milestone: IMilestone) => {
+                                awaitResume: async (milestone: IMilestone): Promise<'resume' | 'skip'> => {
                                         // Assign the resume resolver and await it. The helper
                                         // blocks here until resumeFromMilestone() or
-                                        // skipCurrentMilestone() is called.
-                                        await new Promise<void>((resolve) => {
+                                        // skipCurrentMilestone() is called. The resolver is
+                                        // called with resume or skip to distinguish the two paths.
+                                        return new Promise<'resume' | 'skip'>((resolve) => {
                                                 this._milestoneResumeResolver = resolve;
                                         });
                                 },
@@ -959,6 +1010,12 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                                         this._onDidMilestonePause.fire(event.milestone);
                                 } else if (event.type === 'milestone_resumed') {
                                         this._executionState = ExecutionState.Executing;
+                                } else if (event.type === 'milestone_skipped') {
+                                        // User skipped this milestone. Track it as skipped (NOT
+                                        // completed) so downstream consumers can tell the
+                                        // difference. Do NOT add to _completedMilestoneIds.
+                                        this._skippedMilestoneIds.add(event.milestone.id);
+                                        this._currentMilestone = null;
                                 } else if (event.type === 'milestone_completed') {
                                         this._completedMilestoneIds.add(event.milestone.id);
                                         this._currentMilestone = null;
@@ -982,8 +1039,10 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
                         }
 
                         // Auto-extract universal memory from completed task
+                        // Phase 5.5 (Fix 3): pass enriched context for richer extraction.
                         if (this.universalMemory && aggregatedSummary) {
-                                this.universalMemory.autoExtractFromTask(approvedPlan.task, aggregatedSummary.substring(0, 500)).catch(() => { /* non-critical */ });
+                                const enrichedContext = this.buildAutoExtractContext(approvedPlan.task);
+                                this.universalMemory.autoExtractFromTask(approvedPlan.task, aggregatedSummary.substring(0, 500), enrichedContext).catch(() => { /* non-critical */ });
                         }
 
                         // Update conversation history
@@ -1211,28 +1270,39 @@ export class AgentLoopService extends Disposable implements IAgentLoop {
         resumeFromMilestone(): void {
                 if (this._milestoneResumeResolver) {
                         this._executionState = ExecutionState.Executing;
-                        const milestone = this._currentMilestone;
-                        this._milestoneResumeResolver();
+                        // Resolve with 'resume' so the helper fires milestone_resumed
+                        // + milestone_completed (the normal path). The
+                        // _completedMilestoneIds add happens in the event-observation
+                        // loop when milestone_completed is observed, NOT here -- this
+                        // avoids double-counting if the helper state tracking changes.
+                        this._milestoneResumeResolver('resume');
                         this._milestoneResumeResolver = null;
-                        if (milestone) {
-                                this._completedMilestoneIds.add(milestone.id);
-                        }
                         this._currentMilestone = null;
                 }
         }
 
         /**
-         * Skip the current milestone and move to the next.
+         * Skip the current milestone. Distinct from resumeFromMilestone():
+         * the skipped milestone is marked as skipped (NOT completed) and
+         * milestone_completed does NOT fire for it. The helper proceeds
+         * to the next milestone.
+         *
+         * Previously this method was identical to resumeFromMilestone() --
+         * both resolved the resolver and added the milestone to
+         * _completedMilestoneIds. That made the Skip button a lie. This
+         * fix makes Skip genuinely skip: the milestone is tracked in
+         * _skippedMilestoneIds (not _completedMilestoneIds), and the
+         * helper emits milestone_skipped (not milestone_completed).
          */
         skipCurrentMilestone(): void {
                 if (this._milestoneResumeResolver) {
                         this._executionState = ExecutionState.Executing;
-                        const milestone = this._currentMilestone;
-                        this._milestoneResumeResolver();
+                        // Resolve with 'skip' so the helper fires milestone_skipped
+                        // (NOT milestone_completed). The _skippedMilestoneIds add
+                        // happens in the event-observation loop when milestone_skipped
+                        // is observed. Do NOT add to _completedMilestoneIds here.
+                        this._milestoneResumeResolver('skip');
                         this._milestoneResumeResolver = null;
-                        if (milestone) {
-                                this._completedMilestoneIds.add(milestone.id);
-                        }
                         this._currentMilestone = null;
                 }
         }
@@ -1824,6 +1894,50 @@ Ponytail discipline (DEFAULT: full):
                                 // Non-critical -- file explorer will refresh eventually via watchers
                         }
                 }
+        }
+
+        /**
+         * Phase 5.5 (Fix 3) -- build the IAutoExtractContext for richer memory extraction.
+         *
+         * Called at task completion (from run() and runWithApprovedPlan()) to
+         * pass the agent's accumulated context to universalMemory.autoExtractFromTask().
+         *
+         * Returns undefined if there's nothing useful to extract from (no
+         * conversation history, no failed tool results, no repeated file reads).
+         * In that case, the caller falls back to the basic autoExtractFromTask()
+         * signature (task + summary only).
+         */
+        private buildAutoExtractContext(_task: string): IAutoExtractContext | undefined {
+                // Conversation history (last 20 messages, role + content only)
+                const conversationHistory = this._conversationHistory.slice(-20).map(m => ({
+                        role: m.role,
+                        content: m.content,
+                }));
+
+                // Failed tool results (already accumulated during _executeRounds)
+                const failedToolResults = this._taskFailedToolResults.length > 0
+                        ? this._taskFailedToolResults
+                        : undefined;
+
+                // Repeated file reads (files read more than once)
+                const repeatedFileReads: string[] = [];
+                for (const [path, count] of this._taskFileReadCounts) {
+                        if (count > 1) {
+                                repeatedFileReads.push(path);
+                        }
+                }
+
+                // Only return a context object if at least one field has data.
+                // Otherwise the caller falls back to the basic signature.
+                if (conversationHistory.length === 0 && !failedToolResults && repeatedFileReads.length === 0) {
+                        return undefined;
+                }
+
+                return {
+                        conversationHistory: conversationHistory.length > 0 ? conversationHistory : undefined,
+                        failedToolResults,
+                        repeatedFileReads: repeatedFileReads.length > 0 ? repeatedFileReads : undefined,
+                };
         }
 
         override dispose(): void {

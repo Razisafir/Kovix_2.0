@@ -4,19 +4,19 @@
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-editor .test-output-peek .test-output-peek-tree {
-	background-color: var(--construct-peekViewResult-background);
-	color: var(--construct-peekViewResult-lineForeground);
+	background-color: var(--kovix-peekViewResult-background);
+	color: var(--kovix-peekViewResult-lineForeground);
 }
 
 .monaco-editor .test-output-peek .test-output-peek-tree .monaco-list:focus .monaco-list-rows > .monaco-list-row.selected:not(.highlighted) {
-	background-color: var(--construct-peekViewResult-selectionBackground);
-	color: var(--construct-peekViewResult-selectionForeground) !important;
+	background-color: var(--kovix-peekViewResult-selectionBackground);
+	color: var(--kovix-peekViewResult-selectionForeground) !important;
 }
 
 .test-output-peek-message-container a {
-	color: var(--construct-textLink-foreground);
+	color: var(--kovix-textLink-foreground);
 }
 
 .test-output-peek-message-container a :hover {
-	color: var(--construct-textLink-activeForeground);
+	color: var(--kovix-textLink-activeForeground);
 }

@@ -12,25 +12,25 @@ const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const root = path.dirname(path.dirname(__dirname));
 
 function log(dir, message) {
-	if (process.stdout.isTTY) {
-		console.log(`\x1b[34m[${dir}]\x1b[0m`, message);
-	} else {
-		console.log(`[${dir}]`, message);
-	}
+        if (process.stdout.isTTY) {
+                console.log(`\x1b[34m[${dir}]\x1b[0m`, message);
+        } else {
+                console.log(`[${dir}]`, message);
+        }
 }
 
 function run(command, args, opts) {
-	log(opts.cwd || '.', '$ ' + command + ' ' + args.join(' '));
+        log(opts.cwd || '.', '$ ' + command + ' ' + args.join(' '));
 
-	const result = cp.spawnSync(command, args, opts);
+        const result = cp.spawnSync(command, args, opts);
 
-	if (result.error) {
-		console.error(`ERR Failed to spawn process: ${result.error}`);
-		process.exit(1);
-	} else if (result.status !== 0) {
-		console.error(`ERR Process exited with code: ${result.status}`);
-		process.exit(result.status);
-	}
+        if (result.error) {
+                console.error(`ERR Failed to spawn process: ${result.error}`);
+                process.exit(1);
+        } else if (result.status !== 0) {
+                console.error(`ERR Process exited with code: ${result.status}`);
+                process.exit(result.status);
+        }
 }
 
 /**
@@ -38,165 +38,187 @@ function run(command, args, opts) {
  * @param {*} [opts]
  */
 function npmInstall(dir, opts) {
-	opts = {
-		env: { ...process.env },
-		...(opts ?? {}),
-		cwd: dir,
-		stdio: 'inherit',
-		shell: true
-	};
+        opts = {
+                env: { ...process.env },
+                ...(opts ?? {}),
+                cwd: dir,
+                stdio: 'inherit',
+                shell: true
+        };
 
-	const command = process.env['npm_command'] || 'install';
+        const command = process.env['npm_command'] || 'install';
 
-	if (process.env['VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME'] && /^(.build\/distro\/npm\/)?remote$/.test(dir)) {
-		const userinfo = os.userInfo();
-		log(dir, `Installing dependencies inside container ${process.env['VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME']}...`);
+        if (process.env['VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME'] && /^(.build\/distro\/npm\/)?remote$/.test(dir)) {
+                const userinfo = os.userInfo();
+                log(dir, `Installing dependencies inside container ${process.env['VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME']}...`);
 
-		opts.cwd = root;
-		if (process.env['npm_config_arch'] === 'arm64') {
-			run('sudo', ['docker', 'run', '--rm', '--privileged', 'multiarch/qemu-user-static', '--reset', '-p', 'yes'], opts);
-		}
-		run('sudo', ['docker', 'run', '-e', 'GITHUB_TOKEN', '-v', `${process.env['VSCODE_HOST_MOUNT']}:/root/vscode`, '-v', `${process.env['VSCODE_HOST_MOUNT']}/.build/.netrc:/root/.netrc`, '-w', path.resolve('/root/vscode', dir), process.env['VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME'], 'sh', '-c', `\"chown -R root:root ${path.resolve('/root/vscode', dir)} && npm i -g node-gyp-build && npm ci\"`], opts);
-		run('sudo', ['chown', '-R', `${userinfo.uid}:${userinfo.gid}`, `${path.resolve(root, dir)}`], opts);
-	} else {
-		log(dir, 'Installing dependencies...');
-		run(npm, command.split(' '), opts);
-	}
+                opts.cwd = root;
+                if (process.env['npm_config_arch'] === 'arm64') {
+                        run('sudo', ['docker', 'run', '--rm', '--privileged', 'multiarch/qemu-user-static', '--reset', '-p', 'yes'], opts);
+                }
+                run('sudo', ['docker', 'run', '-e', 'GITHUB_TOKEN', '-v', `${process.env['VSCODE_HOST_MOUNT']}:/root/vscode`, '-v', `${process.env['VSCODE_HOST_MOUNT']}/.build/.netrc:/root/.netrc`, '-w', path.resolve('/root/vscode', dir), process.env['VSCODE_REMOTE_DEPENDENCIES_CONTAINER_NAME'], 'sh', '-c', `\"chown -R root:root ${path.resolve('/root/vscode', dir)} && npm i -g node-gyp-build && npm ci\"`], opts);
+                run('sudo', ['chown', '-R', `${userinfo.uid}:${userinfo.gid}`, `${path.resolve(root, dir)}`], opts);
+        } else {
+                log(dir, 'Installing dependencies...');
+                run(npm, command.split(' '), opts);
+        }
 }
 
 function setNpmrcConfig(dir, env) {
-	const npmrcPath = path.join(root, dir, '.npmrc');
-	const lines = fs.readFileSync(npmrcPath, 'utf8').split('\n');
+        const npmrcPath = path.join(root, dir, '.npmrc');
+        const lines = fs.readFileSync(npmrcPath, 'utf8').split('\n');
 
-	for (const line of lines) {
-		const trimmedLine = line.trim();
-		if (trimmedLine && !trimmedLine.startsWith('#')) {
-			const [key, value] = trimmedLine.split('=');
-			env[`npm_config_${key}`] = value.replace(/^"(.*)"$/, '$1');
-		}
-	}
+        for (const line of lines) {
+                const trimmedLine = line.trim();
+                if (trimmedLine && !trimmedLine.startsWith('#')) {
+                        const [key, value] = trimmedLine.split('=');
+                        env[`npm_config_${key}`] = value.replace(/^"(.*)"$/, '$1');
+                }
+        }
 
-	// Force node-gyp to use process.config on macOS
-	// which defines clang variable as expected. Otherwise we
-	// run into compilation errors due to incorrect compiler
-	// configuration.
-	// NOTE: This means the process.config should contain
-	// the correct clang variable. So keep the version check
-	// in preinstall sync with this logic.
-	// Change was first introduced in https://github.com/nodejs/node/commit/6e0a2bb54c5bbeff0e9e33e1a0c683ed980a8a0f
-	if (dir === 'remote' && process.platform === 'darwin') {
-		env['npm_config_force_process_config'] = 'true';
-	} else {
-		delete env['npm_config_force_process_config'];
-	}
+        // Inject npm_config_target and npm_config_runtime from package.json config.
+        // Previously these came from .npmrc (target=, runtime=), but npm 11.13.0
+        // deprecated those keys and npm 12 will stop reading them. Now they are
+        // declared in package.json `config` and injected as env vars here.
+        const pkgConfig = require(path.join(root, 'package.json')).config || {};
 
-	if (dir === 'build') {
-		env['npm_config_target'] = process.versions.node;
-		env['npm_config_arch'] = process.arch;
-	}
+        if (dir === 'remote') {
+                // Remote (VS Code Server) builds native modules against the Node ABI.
+                env['npm_config_target'] = pkgConfig.remoteNodeVersion || process.versions.node;
+                env['npm_config_runtime'] = 'node';
+        }
+
+        if (dir === 'build') {
+                // Build toolchain always runs on the system Node, not Electron.
+                env['npm_config_target'] = process.versions.node;
+                env['npm_config_runtime'] = 'node';
+                env['npm_config_arch'] = process.arch;
+        }
+
+        // Force node-gyp to use process.config on macOS
+        // which defines clang variable as expected. Otherwise we
+        // run into compilation errors due to incorrect compiler
+        // configuration.
+        // NOTE: This means the process.config should contain
+        // the correct clang variable. So keep the version check
+        // in preinstall sync with this logic.
+        // Change was first introduced in https://github.com/nodejs/node/commit/6e0a2bb54c5bbeff0e9e33e1a0c683ed980a8a0f
+        if (dir === 'remote' && process.platform === 'darwin') {
+                env['npm_config_force_process_config'] = 'true';
+        } else {
+                delete env['npm_config_force_process_config'];
+        }
 }
 
 for (let dir of dirs) {
 
-	if (dir === '') {
-		// already executed in root
-		continue;
-	}
+        if (dir === '') {
+                // already executed in root
+                continue;
+        }
 
-	let opts;
+        let opts;
 
-	if (dir === 'build') {
-		opts = {
-			env: {
-				...process.env
-			},
-		}
-		if (process.env['CC']) { opts.env['CC'] = 'gcc'; }
-		if (process.env['CXX']) { opts.env['CXX'] = 'g++'; }
-		if (process.env['CXXFLAGS']) { opts.env['CXXFLAGS'] = ''; }
-		if (process.env['LDFLAGS']) { opts.env['LDFLAGS'] = ''; }
+        if (dir === 'build') {
+                opts = {
+                        env: {
+                                ...process.env
+                        },
+                }
+                if (process.env['CC']) { opts.env['CC'] = 'gcc'; }
+                if (process.env['CXX']) { opts.env['CXX'] = 'g++'; }
+                if (process.env['CXXFLAGS']) { opts.env['CXXFLAGS'] = ''; }
+                if (process.env['LDFLAGS']) { opts.env['LDFLAGS'] = ''; }
 
-		setNpmrcConfig('build', opts.env);
-		npmInstall('build', opts);
-		continue;
-	}
+                setNpmrcConfig('build', opts.env);
+                npmInstall('build', opts);
+                continue;
+        }
 
-	if (/^(.build\/distro\/npm\/)?remote$/.test(dir)) {
-		// node modules used by vscode server
-		opts = {
-			env: {
-				...process.env
-			},
-		}
-		if (process.env['VSCODE_REMOTE_CC']) {
-			opts.env['CC'] = process.env['VSCODE_REMOTE_CC'];
-		} else {
-			delete opts.env['CC'];
-		}
-		if (process.env['VSCODE_REMOTE_CXX']) {
-			opts.env['CXX'] = process.env['VSCODE_REMOTE_CXX'];
-		} else {
-			delete opts.env['CXX'];
-		}
-		if (process.env['CXXFLAGS']) { delete opts.env['CXXFLAGS']; }
-		if (process.env['CFLAGS']) { delete opts.env['CFLAGS']; }
-		if (process.env['LDFLAGS']) { delete opts.env['LDFLAGS']; }
-		if (process.env['VSCODE_REMOTE_CXXFLAGS']) { opts.env['CXXFLAGS'] = process.env['VSCODE_REMOTE_CXXFLAGS']; }
-		if (process.env['VSCODE_REMOTE_LDFLAGS']) { opts.env['LDFLAGS'] = process.env['VSCODE_REMOTE_LDFLAGS']; }
-		if (process.env['VSCODE_REMOTE_NODE_GYP']) { opts.env['npm_config_node_gyp'] = process.env['VSCODE_REMOTE_NODE_GYP']; }
+        if (/^(.build\/distro\/npm\/)?remote$/.test(dir)) {
+                // node modules used by vscode server
+                opts = {
+                        env: {
+                                ...process.env
+                        },
+                }
+                if (process.env['VSCODE_REMOTE_CC']) {
+                        opts.env['CC'] = process.env['VSCODE_REMOTE_CC'];
+                } else {
+                        delete opts.env['CC'];
+                }
+                if (process.env['VSCODE_REMOTE_CXX']) {
+                        opts.env['CXX'] = process.env['VSCODE_REMOTE_CXX'];
+                } else {
+                        delete opts.env['CXX'];
+                }
+                if (process.env['CXXFLAGS']) { delete opts.env['CXXFLAGS']; }
+                if (process.env['CFLAGS']) { delete opts.env['CFLAGS']; }
+                if (process.env['LDFLAGS']) { delete opts.env['LDFLAGS']; }
+                if (process.env['VSCODE_REMOTE_CXXFLAGS']) { opts.env['CXXFLAGS'] = process.env['VSCODE_REMOTE_CXXFLAGS']; }
+                if (process.env['VSCODE_REMOTE_LDFLAGS']) { opts.env['LDFLAGS'] = process.env['VSCODE_REMOTE_LDFLAGS']; }
+                if (process.env['VSCODE_REMOTE_NODE_GYP']) { opts.env['npm_config_node_gyp'] = process.env['VSCODE_REMOTE_NODE_GYP']; }
 
-		const globalGypPath = path.join(os.homedir(), '.gyp');
-		const globalInclude = path.join(globalGypPath, 'include.gypi');
-		const tempGlobalInclude = path.join(globalGypPath, 'include.gypi.bak');
-		if (process.platform === 'linux' &&
-			(process.env['CI'] || process.env['BUILD_ARTIFACTSTAGINGDIRECTORY'])) {
-			// Following include file rename should be removed
-			// when `Override gnu target for arm64 and arm` step
-			// is removed from the product build pipeline.
-			if (fs.existsSync(globalInclude)) {
-				fs.renameSync(globalInclude, tempGlobalInclude);
-			}
-		}
-		setNpmrcConfig('remote', opts.env);
-		npmInstall(dir, opts);
-		if (process.platform === 'linux' &&
-			(process.env['CI'] || process.env['BUILD_ARTIFACTSTAGINGDIRECTORY'])) {
-			if (fs.existsSync(tempGlobalInclude)) {
-				fs.renameSync(tempGlobalInclude, globalInclude);
-			}
-		}
-		continue;
-	}
+                const globalGypPath = path.join(os.homedir(), '.gyp');
+                const globalInclude = path.join(globalGypPath, 'include.gypi');
+                const tempGlobalInclude = path.join(globalGypPath, 'include.gypi.bak');
+                if (process.platform === 'linux' &&
+                        (process.env['CI'] || process.env['BUILD_ARTIFACTSTAGINGDIRECTORY'])) {
+                        // Following include file rename should be removed
+                        // when `Override gnu target for arm64 and arm` step
+                        // is removed from the product build pipeline.
+                        if (fs.existsSync(globalInclude)) {
+                                fs.renameSync(globalInclude, tempGlobalInclude);
+                        }
+                }
+                setNpmrcConfig('remote', opts.env);
+                npmInstall(dir, opts);
+                if (process.platform === 'linux' &&
+                        (process.env['CI'] || process.env['BUILD_ARTIFACTSTAGINGDIRECTORY'])) {
+                        if (fs.existsSync(tempGlobalInclude)) {
+                                fs.renameSync(tempGlobalInclude, globalInclude);
+                        }
+                }
+                continue;
+        }
 
-	npmInstall(dir, opts);
+        npmInstall(dir, opts);
 }
 
 // Phase 2: Force native module rebuild against the Electron ABI declared
-// in .npmrc. This catches stale cached binaries from prior broken commits
-// (e.g. v1.8.0 shipped with .npmrc target=32.2.6 while package.json declared
-// Electron 42 -- cached node_modules from that era had wrong-ABI .node files).
+// in package.json config.electronVersion.
+//
+// This is now the PRIMARY mechanism for ensuring native modules are built
+// against the correct Electron ABI (not just a cache-recovery safety net).
+// npm 11.13.0 deprecated the .npmrc target/runtime keys that previously
+// made the initial `npm install` build against Electron's ABI. Now the
+// initial install builds against the system Node ABI, and this rebuild
+// step corrects it. This also catches stale cached binaries from prior
+// broken commits (e.g. v1.8.0 had .npmrc target=32.2.6 while package.json
+// declared Electron 42).
+//
 // In CI this also runs as an explicit workflow step for log visibility.
 // Skip if SKIP_NATIVE_REBUILD is set (used in sandbox / unit-test-only contexts).
 if (!process.env['SKIP_NATIVE_REBUILD']) {
-	const rebuildScript = path.join(root, 'build', 'lib', 'rebuild-native-modules.js');
-	if (fs.existsSync(rebuildScript)) {
-		console.log('[postinstall] Rebuilding native modules against Electron ABI...');
-		const rebuildResult = cp.spawnSync('node', [rebuildScript], {
-			stdio: 'inherit',
-			cwd: root,
-			env: { ...process.env },
-		});
-		if (rebuildResult.error) {
-			console.error('[postinstall] WARN: failed to spawn rebuild-native-modules:', rebuildResult.error);
-			// Don't fail the whole install -- verify-native-modules.js will catch the broken state.
-		} else if (rebuildResult.status !== 0) {
-			console.error(`[postinstall] WARN: rebuild-native-modules exited with code ${rebuildResult.status}`);
-			console.error('[postinstall]       Subsequent verify-native-modules.js checks will fail with details.');
-			// Don't fail the whole install -- let CI surface the specific failure in the verify step.
-		} else {
-			console.log('[postinstall] Native modules rebuilt successfully.');
-		}
-	}
+        const rebuildScript = path.join(root, 'build', 'lib', 'rebuild-native-modules.js');
+        if (fs.existsSync(rebuildScript)) {
+                console.log('[postinstall] Rebuilding native modules against Electron ABI...');
+                const rebuildResult = cp.spawnSync('node', [rebuildScript], {
+                        stdio: 'inherit',
+                        cwd: root,
+                        env: { ...process.env },
+                });
+                if (rebuildResult.error) {
+                        console.error('[postinstall] WARN: failed to spawn rebuild-native-modules:', rebuildResult.error);
+                        // Don't fail the whole install -- verify-native-modules.js will catch the broken state.
+                } else if (rebuildResult.status !== 0) {
+                        console.error(`[postinstall] WARN: rebuild-native-modules exited with code ${rebuildResult.status}`);
+                        console.error('[postinstall]       Subsequent verify-native-modules.js checks will fail with details.');
+                        // Don't fail the whole install -- let CI surface the specific failure in the verify step.
+                } else {
+                        console.log('[postinstall] Native modules rebuilt successfully.');
+                }
+        }
 }
 
 cp.execSync('git config pull.rebase merges');

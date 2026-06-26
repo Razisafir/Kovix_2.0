@@ -7,16 +7,16 @@
  * Replace "loading" with "microphone" icon.
  */
 .monaco-workbench .interactive-input-part .monaco-action-bar .action-label.codicon-loading.codicon-modifier-spin:not(.disabled)::before {
-	content: var(--construct-icon-mic-filled-content);
-	font-family: var(--construct-icon-mic-filled-font-family);
+	content: var(--kovix-icon-mic-filled-content);
+	font-family: var(--kovix-icon-mic-filled-font-family);
 }
 
 /*
  * Replace "sync" with "pulse" icon.
  */
 .monaco-workbench .interactive-input-part .monaco-action-bar .action-label.codicon-sync.codicon-modifier-spin:not(.disabled)::before {
-	content: var(--construct-icon-pulse-content);
-	font-family: var(--construct-icon-pulse-font-family);
+	content: var(--kovix-icon-pulse-content);
+	font-family: var(--kovix-icon-pulse-font-family);
 }
 
 /*
@@ -32,6 +32,6 @@
  */
 .monaco-workbench.reduce-motion .interactive-input-part .monaco-action-bar .action-label.codicon-sync.codicon-modifier-spin:not(.disabled)::before,
 .monaco-workbench.reduce-motion .interactive-input-part .monaco-action-bar .action-label.codicon-loading.codicon-modifier-spin:not(.disabled)::before {
-	content: var(--construct-icon-debug-stop-content);
-	font-family: var(--construct-icon-debug-stop-font-family);
+	content: var(--kovix-icon-debug-stop-content);
+	font-family: var(--kovix-icon-debug-stop-font-family);
 }

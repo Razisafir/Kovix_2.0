@@ -45,7 +45,7 @@
 }
 
 .monaco-workbench > .notifications-center .notifications-list-container .monaco-list-row:not(:last-child) > .notification-list-item {
-	border-bottom: 1px solid var(--construct-notifications-border);
+	border-bottom: 1px solid var(--kovix-notifications-border);
 }
 
 .monaco-workbench > .notifications-center .notifications-list-container .monaco-list-row:last-child {
@@ -55,13 +55,13 @@
 /* Icons */
 
 .monaco-workbench > .notifications-center .codicon.codicon-error {
-	color: var(--construct-notificationsErrorIcon-foreground) !important;
+	color: var(--kovix-notificationsErrorIcon-foreground) !important;
 }
 
 .monaco-workbench > .notifications-center .codicon.codicon-warning {
-	color: var(--construct-notificationsWarningIcon-foreground) !important;
+	color: var(--kovix-notificationsWarningIcon-foreground) !important;
 }
 
 .monaco-workbench > .notifications-center .codicon.codicon-info {
-	color: var(--construct-notificationsInfoIcon-foreground) !important;
+	color: var(--kovix-notificationsInfoIcon-foreground) !important;
 }

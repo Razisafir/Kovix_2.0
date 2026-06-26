@@ -382,3 +382,47 @@ The actual GitHub repo is `Razisafir/KOVIX`, but these files still link to `Razi
 12. **⚪ No-action — URI schemes:** Internal `construct-*` protocol identifiers (breaking change, defer)
 13. **⚪ No-action — File extensions:** `.construct-workspace` (breaking change for users, defer)
 14. **⚪ No-action — Feature command/setting IDs:** `construct.*` (must remain as feature namespace)
+
+---
+
+## 8. Phase 6 Re-Triage Addendum (2026-06-26)
+
+**Context:** Phase 5's self-audit found the original 58-count was based on manual sampling and missed the `--construct-*` CSS theme variable namespace. This addendum documents the re-triage of all ~4,463 remaining `construct` references into three buckets.
+
+### Bucket (A) — Already adjudicated FEATURE-LEVEL (no action needed)
+
+| Sub-category | Refs | NAMING_AUDIT section |
+|---|---|---|
+| `construct-*` URI schemes | 107 | §2.5 (deferred — breaking change) |
+| `construct.*` command/setting keys | 108 | §2.1-2.4 (feature namespace) |
+| Feature-scoped file paths | 798 | §2.6 (contrib/construct/, platform/construct/) |
+| `.construct-workspace` extension | 9 | §2.8 (deferred — breaking change) |
+| **Total (A)** | **~1,022** | |
+
+### Bucket (B) — Genuinely new PRODUCT-LEVEL misses (fixed in Phase 6)
+
+| Sub-category | Unique names | Total refs | Status |
+|---|---|---|---|
+| `--construct-*` CSS theme variables → `--kovix-*` | 543 | 2,763 CSS + 1,700 JSON + 405 TS | ✅ FIXED |
+| argv.ts: "instances of Construct" → "Kovix" | 1 | 1 | ✅ FIXED |
+| bug_report.md: "CONSTRUCT IDE" → "Kovix IDE" | 2 | 2 | ✅ FIXED |
+| release.yml: ConstructIDESetup.exe → KovixSetup.exe | 3 | 3 | ✅ FIXED |
+| ci.yml: "Compile construct code" → "Compile Kovix code" | 1 | 1 | ✅ FIXED |
+| **Total (B)** | **550** | **~4,875** | **ALL FIXED** |
+
+### Bucket (C) — Code comments / internal references (low priority)
+
+| Sub-category | Count | Status |
+|---|---|---|
+| English word "construct" (not naming) | ~20 | No action (English word, not product reference) |
+| Archival docs (E2E_VERIFICATION.md) | ~5 | No action (historical record) |
+| **Total (C)** | **~25** | |
+
+### Summary
+
+- The original 58-count audit correctly covered user-visible strings, auth HTML, product.ts, and dead design tokens.
+- It missed the `--construct-*` CSS theme variable namespace (543 unique variables, ~4,463 references) because §2.7 only covered CSS **class names** (`.construct-*`), not CSS **custom properties** (`--construct-*`).
+- All Bucket (B) items are now fixed. The remaining `construct` references in the codebase are either:
+  - Feature-level (correctly kept per §2.1-2.6)
+  - URI schemes (deferred per §2.5 as breaking changes)
+  - English words (not naming issues)
