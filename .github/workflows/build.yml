@@ -423,7 +423,7 @@ jobs:
           echo "Resolved tag: $TAG"
 
       - name: Download Linux artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: kovix-linux-x64
           path: ./linux-artifacts
