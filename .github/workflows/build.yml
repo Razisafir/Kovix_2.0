@@ -2,7 +2,7 @@ name: Build Kovix IDE
 
 on:
   push:
-    branches: [main, release/*]
+    branches: [main, release/*, kovix-rebuild]
     tags: ['v*']
   workflow_dispatch:
     inputs:
@@ -28,7 +28,7 @@ on:
           - 'false'
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   PYTHON_VERSION: '3.11'
   KOVIX_ARCH: x64
   KOVIX_QUALITY: stable
@@ -146,6 +146,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GYP_MSVS_VERSION: '2022'
           npm_config_msvs_version: '2022'
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+          ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
       - name: Rebuild native modules against Electron ABI
         shell: bash
