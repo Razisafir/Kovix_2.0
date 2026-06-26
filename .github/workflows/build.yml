@@ -96,6 +96,22 @@ jobs:
       - name: Compile
         run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile
 
+      - name: Inject commit hash and build date into product.json
+        shell: bash
+        run: |
+          COMMIT="${GITHUB_SHA:-$(git rev-parse HEAD)}"
+          DATE=$(date -u +'%Y-%m-%d')
+          echo "Injecting commit=$COMMIT date=$DATE into product.json"
+          node -e "
+            const fs = require('fs');
+            const p = JSON.parse(fs.readFileSync('product.json','utf8'));
+            p.commit = process.argv[1];
+            p.date = process.argv[2];
+            fs.writeFileSync('product.json', JSON.stringify(p, null, '\t') + '\n');
+          " "$COMMIT" "$DATE"
+          echo "Verification:"
+          node -e "const p=JSON.parse(require('fs').readFileSync('product.json','utf8'));console.log('  commit:',p.commit);console.log('  date:',p.date)"
+
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # WINDOWS BUILD — produces .exe installer
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

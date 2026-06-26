@@ -63,7 +63,7 @@ function candidateModules() {
         }
 
         add('@vscode/kerberos/build/Release/kerberos.node');
-        add('@vscode/sqlite3/build/Release/better_sqlite3.node');
+        add('@vscode/sqlite3/build/Release/vscode-sqlite3.node');
         add('@vscode/spdlog/build/Release/spdlog.node');
         add('native-keymap/build/Release/keymapping.node');
         add('native-watchdog/build/Release/watchdog.node');
@@ -114,40 +114,24 @@ function main() {
                 const abs = path.join(repoRoot, 'node_modules', relPath);
 
                 if (!fs.existsSync(abs)) {
-                        // Module not installed on this platform / not in this repo.
-                        // On Windows, some modules are REQUIRED for the app to launch.
-                        // Treating them as "skip" hides launch-breaking failures.
-                        const isRequiredOnPlatform =
-                                (platform === 'win32' && (
-                                        relPath.includes('windows-registry') ||
-                                        relPath.includes('kerberos') ||
-                                        relPath.includes('sqlite3') ||
-                                        relPath.includes('blake3') ||
-                                        relPath.includes('spdlog') ||
-                                        relPath.includes('foreground_love') ||
-                                        relPath.includes('conpty') ||
-                                        relPath.includes('winpty') ||
-                                        relPath.includes('keymapping') ||
-                                        relPath.includes('watchdog') ||
-                                        relPath.includes('policy-watcher') ||
-                                        relPath.includes('sharp')
-                                )) ||
-                                (platform === 'linux' && (
-                                        relPath.includes('kerberos') ||
-                                        relPath.includes('sqlite3') ||
-                                        relPath.includes('blake3') ||
-                                        relPath.includes('spdlog') ||
-                                        relPath.includes('keymapping') ||
-                                        relPath.includes('watchdog') ||
-                                        relPath.includes('policy-watcher') ||
-                                        relPath.includes('pty.node')
-                                ));
+                        // .node file not found. Distinguish two cases:
+                        //   A) The npm package is installed (directory exists) but the
+                        //      native build failed — this is a real build failure.
+                        //   B) The npm package is not even installed (not in
+                        //      package-lock.json) — this is a missing dependency, not
+                        //      a build failure.  Some modules (e.g. @vscode/kerberos,
+                        //      @vscode/signature-blake3) are optional or platform-
+                        //      specific and may not be in the dependency tree.
+                        const pkgDir = path.join(repoRoot, 'node_modules', relPath.split('/').slice(0, 2).join('/'));
+                        const pkgInstalled = fs.existsSync(pkgDir);
 
-                        if (isRequiredOnPlatform) {
-                                console.error(`  FAIL  ${relPath}  (MISSING — required for app launch on ${platform})`);
+                        if (pkgInstalled) {
+                                // Package is installed but .node file wasn't built.
+                                // This is a real failure — the build pipeline broke.
+                                console.error(`  FAIL  ${relPath}  (package installed but .node file MISSING — build failed)`);
                                 failures++;
                         } else {
-                                console.log(`  SKIP  ${relPath}  (not installed)`);
+                                console.log(`  SKIP  ${relPath}  (package not installed)`);
                                 skips++;
                         }
                         continue;

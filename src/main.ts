@@ -23,6 +23,36 @@ import { NativeParsedArgs } from './vs/platform/environment/common/argv.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Register early crash logging BEFORE anything else.
+// On Windows, double-clicking a GUI app has no console attached,
+// so console.error() is invisible and startup crashes die silently.
+// Writing to a log file ensures we always get a diagnostic.
+// This mirrors the crash logging in CodeMain.main() and covers
+// the gap between Electron startup and CodeMain initialization.
+const earlyCrashLog = (() => {
+        try {
+                const logDir = path.join(os.homedir(), '.kovix', 'logs');
+                fs.mkdirSync(logDir, { recursive: true });
+                const logFile = path.join(logDir, 'startup-crash.log');
+                return (msg: string) => {
+                        try { fs.appendFileSync(logFile, `[${new Date().toISOString()}] [main.ts] ${msg}\n`); } catch { /* nothing */ }
+                };
+        } catch {
+                return (_msg: string) => { /* nothing */ };
+        }
+})();
+
+process.on('uncaughtException', (error) => {
+        const msg = `EARLY UNCAUGHT EXCEPTION: ${error?.message ?? error}\n${error?.stack ?? ''}`;
+        console.error(msg);
+        earlyCrashLog(msg);
+});
+process.on('unhandledRejection', (reason) => {
+        const msg = `EARLY UNHANDLED REJECTION: ${reason ?? 'unknown'}`;
+        console.error(msg);
+        earlyCrashLog(msg);
+});
+
 perf.mark('code/didStartMain');
 
 perf.mark('code/willLoadMainBundle', {
@@ -171,7 +201,10 @@ async function onReady() {
 
                 await startup(codeCachePath, nlsConfig);
         } catch (error) {
-                console.error(error);
+                const msg = `STARTUP CRASH (main.ts onReady): ${error?.message ?? error}\n${error?.stack ?? ''}`;
+                console.error(msg);
+                earlyCrashLog(msg);
+                app.exit(1);
         }
 }
 

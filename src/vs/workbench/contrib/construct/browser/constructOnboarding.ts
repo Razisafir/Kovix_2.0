@@ -1360,7 +1360,7 @@ export class ConstructOnboardingWizard extends Disposable {
                         // 'vscode-webview://'-family origin; either is acceptable. Anything
                         // else (https://, file://, http://) is rejected.
                         const origin = event.origin;
-                        if (origin && origin !== 'null' && !origin.startsWith('vscode-webview:')) {
+                        if (origin && origin !== 'null' && !origin.startsWith('vscode-webview:') && !origin.startsWith('construct-webview:')) {
                                 return false;
                         }
                         return true;
