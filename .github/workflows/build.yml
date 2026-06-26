@@ -196,7 +196,7 @@ jobs:
           Get-Content .build\win32-x64\checksums-sha256.txt
 
       - name: Upload Windows installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kovix-windows-x64
           path: |
@@ -295,7 +295,7 @@ jobs:
           cat checksums-sha256.txt
 
       - name: Upload Linux packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kovix-linux-x64
           path: |
@@ -388,7 +388,7 @@ jobs:
           cat checksums-sha256.txt
 
       - name: Upload macOS packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kovix-macos-x64
           path: |
