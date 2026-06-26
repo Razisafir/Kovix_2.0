@@ -62,7 +62,10 @@ function candidateModules() {
                 add('windows-foreground-love/build/Release/foreground_love.node');
         }
 
-        add('@vscode/kerberos/build/Release/kerberos.node');
+        // kerberos: note the package is just 'kerberos' (no @vscode scope).
+        // It uses prebuild-install --runtime napi, which downloads ABI-stable
+        // Node-API prebuilds. These work inside Electron without rebuilding.
+        add('kerberos/build/Release/kerberos.node');
         add('@vscode/sqlite3/build/Release/vscode-sqlite3.node');
         add('@vscode/spdlog/build/Release/spdlog.node');
         add('native-keymap/build/Release/keymapping.node');
@@ -76,7 +79,8 @@ function candidateModules() {
                 add('node-pty/build/Release/pty.node');
         }
 
-        add('@vscode/signature-blake3/build/Release/blake3.node');
+        // @vscode/signature-blake3 was removed from the dependency tree.
+        // If it returns in a future Electron update, add it back here.
 
         // sharp -- per-platform filename
         if (platform === 'win32' && arch === 'x64') add('sharp/build/Release/sharp-win32-x64.node');
@@ -122,7 +126,11 @@ function main() {
                         //      a build failure.  Some modules (e.g. @vscode/kerberos,
                         //      @vscode/signature-blake3) are optional or platform-
                         //      specific and may not be in the dependency tree.
-                        const pkgDir = path.join(repoRoot, 'node_modules', relPath.split('/').slice(0, 2).join('/'));
+                        // For scoped packages like @vscode/sqlite3, the dir is
+                        // node_modules/@vscode/sqlite3 (3 segments), not 2.
+                        const parts = relPath.split('/');
+                        const pkgSegments = parts[0].startsWith('@') ? 3 : 2;
+                        const pkgDir = path.join(repoRoot, 'node_modules', parts.slice(0, pkgSegments).join('/'));
                         const pkgInstalled = fs.existsSync(pkgDir);
 
                         if (pkgInstalled) {
