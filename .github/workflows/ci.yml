@@ -427,7 +427,6 @@ jobs:
             find . -name "*.app" -maxdepth 3 2>/dev/null || true
             exit 1
           fi
-        timeout-minutes: 60
         env:
           NODE_OPTIONS: "--max-old-space-size=8192"
 
