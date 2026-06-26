@@ -114,9 +114,42 @@ function main() {
                 const abs = path.join(repoRoot, 'node_modules', relPath);
 
                 if (!fs.existsSync(abs)) {
-                        // Module not installed on this platform / not in this repo -- skip, not a failure.
-                        console.log(`  SKIP  ${relPath}  (not installed)`);
-                        skips++;
+                        // Module not installed on this platform / not in this repo.
+                        // On Windows, some modules are REQUIRED for the app to launch.
+                        // Treating them as "skip" hides launch-breaking failures.
+                        const isRequiredOnPlatform =
+                                (platform === 'win32' && (
+                                        relPath.includes('windows-registry') ||
+                                        relPath.includes('kerberos') ||
+                                        relPath.includes('sqlite3') ||
+                                        relPath.includes('blake3') ||
+                                        relPath.includes('spdlog') ||
+                                        relPath.includes('foreground_love') ||
+                                        relPath.includes('conpty') ||
+                                        relPath.includes('winpty') ||
+                                        relPath.includes('keymapping') ||
+                                        relPath.includes('watchdog') ||
+                                        relPath.includes('policy-watcher') ||
+                                        relPath.includes('sharp')
+                                )) ||
+                                (platform === 'linux' && (
+                                        relPath.includes('kerberos') ||
+                                        relPath.includes('sqlite3') ||
+                                        relPath.includes('blake3') ||
+                                        relPath.includes('spdlog') ||
+                                        relPath.includes('keymapping') ||
+                                        relPath.includes('watchdog') ||
+                                        relPath.includes('policy-watcher') ||
+                                        relPath.includes('pty.node')
+                                ));
+
+                        if (isRequiredOnPlatform) {
+                                console.error(`  FAIL  ${relPath}  (MISSING — required for app launch on ${platform})`);
+                                failures++;
+                        } else {
+                                console.log(`  SKIP  ${relPath}  (not installed)`);
+                                skips++;
+                        }
                         continue;
                 }
 

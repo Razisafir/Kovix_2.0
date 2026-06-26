@@ -75,7 +75,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-          ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+          # NOTE: ELECTRON_SKIP_BINARY_DOWNLOAD removed — prebuild-install
+          # modules need the Electron binary to download correct ABI prebuilds.
 
       - name: Rebuild native modules against Electron ABI
         shell: bash
@@ -147,7 +148,12 @@ jobs:
           GYP_MSVS_VERSION: '2022'
           npm_config_msvs_version: '2022'
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-          ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+          # NOTE: Do NOT set ELECTRON_SKIP_BINARY_DOWNLOAD=1 here.
+          # Several native modules (@vscode/sqlite3, @vscode/windows-registry,
+          # @vscode/kerberos, @vscode/signature-blake3) use prebuild-install
+          # which needs the Electron binary present to download correct ABI
+          # prebuilds. Skipping the download causes them to get Node ABI
+          # prebuilds instead, which crash at runtime with ERR_DLOPEN_FAILED.
 
       - name: Rebuild native modules against Electron ABI
         shell: bash
@@ -237,7 +243,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
-          ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+          # NOTE: ELECTRON_SKIP_BINARY_DOWNLOAD removed — prebuild-install
+          # modules need the Electron binary to download correct ABI prebuilds.
 
       - name: Rebuild native modules against Electron ABI
         shell: bash

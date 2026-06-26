@@ -6,7 +6,9 @@
 import '../../platform/update/common/update.config.contribution.js';
 
 import { app, dialog } from 'electron';
-import { unlinkSync, promises } from 'fs';
+import { unlinkSync, promises, appendFileSync, mkdirSync } from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { URI } from '../../base/common/uri.js';
 import { coalesce, distinct } from '../../base/common/arrays.js';
 import { Promises } from '../../base/common/async.js';
@@ -84,10 +86,42 @@ import { addUNCHostToAllowlist, getUNCHost } from '../../base/node/unc.js';
 class CodeMain {
 
         main(): void {
+                // Register crash logging BEFORE anything else.
+                // On Windows, double-clicking a GUI app has no console attached,
+                // so console.error() is invisible and startup crashes die silently.
+                // Writing to a log file ensures we always get a diagnostic.
+                const startupCrashLog = () => {
+                        try {
+                                const logDir = path.join(os.homedir(), '.kovix', 'logs');
+                                fs.mkdirSync(logDir, { recursive: true });
+                                const logFile = path.join(logDir, 'startup-crash.log');
+                                const ts = new Date().toISOString();
+                                return (msg: string) => {
+                                        try { fs.appendFileSync(logFile, `[${ts}] ${msg}\n`); } catch { /* nothing */ }
+                                };
+                        } catch {
+                                return (_msg: string) => { /* nothing */ };
+                        }
+                };
+                const crashLog = startupCrashLog();
+
+                process.on('uncaughtException', (error) => {
+                        const msg = `UNCAUGHT EXCEPTION: ${error?.message ?? error}\n${error?.stack ?? ''}`;
+                        console.error(msg);
+                        crashLog(msg);
+                });
+                process.on('unhandledRejection', (reason) => {
+                        const msg = `UNHANDLED REJECTION: ${reason ?? 'unknown'}`;
+                        console.error(msg);
+                        crashLog(msg);
+                });
+
                 try {
                         this.startup();
                 } catch (error) {
-                        console.error(error.message);
+                        const msg = `STARTUP CRASH: ${error?.message ?? error}\n${error?.stack ?? ''}`;
+                        console.error(msg);
+                        crashLog(msg);
                         app.exit(1);
                 }
         }
