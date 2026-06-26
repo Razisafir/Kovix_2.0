@@ -94,7 +94,7 @@ jobs:
         run: node build/lib/verify-native-modules.js
 
       - name: Compile
-        run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile
+        run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile-build
 
       - name: Inject commit hash and build date into product.json
         shell: bash
