@@ -15,7 +15,7 @@ jobs:
     env:
       KOVIX_QUALITY: stable
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Linux dependencies
         if: runner.os == 'Linux'
