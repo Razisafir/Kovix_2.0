@@ -48,7 +48,7 @@ jobs:
           fetch-tags: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -339,7 +339,7 @@ jobs:
           fetch-tags: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -466,7 +466,7 @@ jobs:
           sudo apt-get install -y fakeroot dpkg-dev rpm libkrb5-dev libx11-dev libxkbfile-dev libsecret-1-0 libsecret-1-dev libgtk-3-0 libgbm1
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
