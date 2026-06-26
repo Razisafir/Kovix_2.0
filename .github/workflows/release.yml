@@ -316,7 +316,7 @@ jobs:
         run: node build/azure-pipelines/common/sign-win32.js
 
       - name: Upload Windows artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kovix-windows
           path: |
@@ -440,7 +440,7 @@ jobs:
         run: node build/darwin/sign.js
 
       - name: Upload macOS artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kovix-macos
           path: |
@@ -537,7 +537,7 @@ jobs:
           cat checksums-sha256.txt
 
       - name: Upload Linux artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kovix-linux
           path: |
