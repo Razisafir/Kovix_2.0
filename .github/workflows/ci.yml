@@ -385,7 +385,7 @@ jobs:
           npx gulp vscode-linux-x64
           npx gulp vscode-linux-x64-prepare-deb
           npx gulp vscode-linux-x64-build-deb
-        timeout-minutes: 60
+        timeout-minutes: 120
         env:
           NODE_OPTIONS: "--max-old-space-size=8192"
 
@@ -396,12 +396,13 @@ jobs:
           npx gulp vscode-win32-x64
           npx gulp vscode-win32-x64-inno-updater
           npx gulp vscode-win32-x64-system-setup
-        timeout-minutes: 60
+        timeout-minutes: 120
         env:
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: "--max-old-space-size=8192"
 
       - name: Package macOS (.zip)
         if: runner.os == 'macOS'
+        timeout-minutes: 120
         run: |
           npx gulp vscode-darwin-x64
           # Zip the .app bundle
