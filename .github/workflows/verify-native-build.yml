@@ -1,0 +1,154 @@
+name: Verify Native Build
+
+# Lightweight workflow that verifies ONLY the native module build pipeline
+# (npm ci → rebuild → verify), skipping the full compile + package step.
+# This runs in ~10-15 minutes instead of 2+ hours for the full build.
+#
+# Use this for fast iteration when debugging native module ABI issues.
+# The full build.yml is still needed for producing actual installer artifacts.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref (branch/tag/sha) to verify'
+        required: false
+        default: 'main'
+      platform:
+        description: 'Platform to verify'
+        required: false
+        default: 'linux'
+        type: choice
+        options:
+          - linux
+          - windows
+          - both
+
+env:
+  NODE_VERSION: '22'
+  PYTHON_VERSION: '3.11'
+  npm_config_target: '42.4.1'
+  npm_config_runtime: electron
+  npm_config_disturl: https://electronjs.org/headers
+  npm_config_build_from_source: 'true'
+
+jobs:
+  verify-linux:
+    name: Verify Native Modules (Linux)
+    if: github.event.inputs.platform == 'linux' || github.event.inputs.platform == 'both'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libkrb5-dev libx11-dev libxkbfile-dev libsecret-1-dev libvips-dev
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Clean node-gyp cache
+        run: rm -rf ~/.cache/node-gyp || true
+
+      - name: Install dependencies
+        run: npm ci
+        timeout-minutes: 15
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Rebuild native modules against Electron ABI
+        run: node build/lib/rebuild-native-modules.js
+
+      - name: Verify .npmrc target matches resolved Electron version
+        run: node build/lib/verify-npmrc-target.js
+
+      - name: Verify Electron version pin chain
+        run: node build/lib/verify-electron-pins.js
+
+      - name: Verify native modules
+        run: node build/lib/verify-native-modules.js
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "=== Native Module Files ==="
+          find node_modules -name '*.node' -exec ls -la {} \; 2>/dev/null | head -30
+          echo ""
+          echo "=== Electron Version ==="
+          node -e "console.log(require('./node_modules/electron/package.json').version)"
+
+  verify-windows:
+    name: Verify Native Modules (Windows)
+    if: github.event.inputs.platform == 'windows' || github.event.inputs.platform == 'both'
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install setuptools (for node-gyp compatibility)
+        run: python -m pip install --upgrade setuptools wheel
+
+      - name: Upgrade node-gyp to support VS 18
+        shell: pwsh
+        run: |
+          npm install -g node-gyp@latest
+          $gypPath = "$(npm root -g)\node-gyp\bin\node-gyp.js"
+          Write-Host "node-gyp path: $gypPath"
+          "npm_config_node_gyp=$gypPath" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Install dependencies
+        run: npm ci
+        timeout-minutes: 20
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GYP_MSVS_VERSION: '2022'
+          npm_config_msvs_version: '2022'
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+
+      - name: Rebuild native modules against Electron ABI
+        shell: bash
+        run: node build/lib/rebuild-native-modules.js
+
+      - name: Verify .npmrc target matches resolved Electron version
+        shell: bash
+        run: node build/lib/verify-npmrc-target.js
+
+      - name: Verify Electron version pin chain
+        shell: bash
+        run: node build/lib/verify-electron-pins.js
+
+      - name: Verify native modules
+        shell: bash
+        run: node build/lib/verify-native-modules.js
+
+      - name: Summary
+        if: always()
+        shell: bash
+        run: |
+          echo "=== Native Module Files ==="
+          find node_modules -name '*.node' -exec ls -la {} \; 2>/dev/null | head -30
+          echo ""
+          echo "=== Electron Version ==="
+          node -e "console.log(require('./node_modules/electron/package.json').version)"
