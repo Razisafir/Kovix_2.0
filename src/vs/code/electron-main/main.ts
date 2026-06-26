@@ -93,11 +93,11 @@ class CodeMain {
                 const startupCrashLog = () => {
                         try {
                                 const logDir = path.join(os.homedir(), '.kovix', 'logs');
-                                fs.mkdirSync(logDir, { recursive: true });
+                                mkdirSync(logDir, { recursive: true });
                                 const logFile = path.join(logDir, 'startup-crash.log');
                                 const ts = new Date().toISOString();
                                 return (msg: string) => {
-                                        try { fs.appendFileSync(logFile, `[${ts}] ${msg}\n`); } catch { /* nothing */ }
+                                        try { appendFileSync(logFile, `[${ts}] ${msg}\n`); } catch { /* nothing */ }
                                 };
                         } catch {
                                 return (_msg: string) => { /* nothing */ };
