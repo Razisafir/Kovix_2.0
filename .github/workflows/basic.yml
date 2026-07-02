@@ -75,11 +75,11 @@ jobs:
 
       - name: Run Unit Tests
         id: electron-unit-tests
-        run: DISPLAY=:10 ./scripts/test.sh
+        run: DISPLAY=:10 ./scripts/test.sh --no-sandbox
 
       - name: Run Integration Tests (Electron)
         id: electron-integration-tests
-        run: DISPLAY=:10 ./scripts/test-integration.sh
+        run: DISPLAY=:10 ./scripts/test-integration.sh --no-sandbox
 
   hygiene:
     if: github.ref != 'refs/heads/main'
@@ -94,6 +94,11 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
+
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libkrb5-dev libxkbfile-dev libx11-dev libsecret-1-dev
 
       - name: Compute node modules cache key
         id: nodeModulesCacheKey
@@ -157,6 +162,11 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
+
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libkrb5-dev libxkbfile-dev libx11-dev libsecret-1-dev
 
       - name: Compute node modules cache key
         id: nodeModulesCacheKey
