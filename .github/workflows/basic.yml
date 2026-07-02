@@ -46,7 +46,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: "**/node_modules"
-          key: ${{ runner.os }}-cacheNodeModulesLinux-${{ steps.nodeModulesCacheKey.outputs.value }}
+          key: ${{ runner.os }}-cacheNodeModulesLinux2-${{ steps.nodeModulesCacheKey.outputs.value }}
       - name: Get npm cache directory path
         id: npmCacheDirPath
         if: ${{ steps.cacheNodeModules.outputs.cache-hit != 'true' }}
@@ -108,7 +108,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: "**/node_modules"
-          key: ${{ runner.os }}-cacheNodeModulesLinux-${{ steps.nodeModulesCacheKey.outputs.value }}
+          key: ${{ runner.os }}-cacheNodeModulesLinux2-${{ steps.nodeModulesCacheKey.outputs.value }}
       - name: Get npm cache directory path
         id: npmCacheDirPath
         if: ${{ steps.cacheNodeModules.outputs.cache-hit != 'true' }}
@@ -176,7 +176,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: "**/node_modules"
-          key: ${{ runner.os }}-cacheNodeModulesLinux-${{ steps.nodeModulesCacheKey.outputs.value }}
+          key: ${{ runner.os }}-cacheNodeModulesLinux2-${{ steps.nodeModulesCacheKey.outputs.value }}
       - name: Get npm cache directory path
         id: npmCacheDirPath
         if: ${{ steps.cacheNodeModules.outputs.cache-hit != 'true' }}
