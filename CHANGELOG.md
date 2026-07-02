@@ -1,5 +1,39 @@
 # Changelog
 
+## [Unreleased] — CI Repair & Dependabot Triage
+
+### Fixed
+- **CRITICAL:** Removed `kovix-rebuild` (non-existent branch) from `build.yml` push triggers. The branch reference caused the workflow to attempt matching against a ref that doesn't exist.
+- **CRITICAL:** Removed `main-dev` (non-existent branch) from `ci.yml` and `basic.yml` pull_request triggers. The branch was never created, so the trigger was a dead reference.
+- `no-package-lock-changes.yml` and `no-yarn-lock-changes.yml` now trigger on `pull_request` with path filters (were manual-only `workflow_dispatch`).
+- Removed stale TODO comment from `basic.yml` (line 31, about renaming azure-pipelines/linux/xvfb.init).
+- Fixed README badge URLs — changed from `Razisafir/KOVIX` to `Razisafir/Kovix_2.0` and added separate CI + Build badges.
+
+### Changed
+- `dependabot.yml`: reduced npm `open-pull-requests-limit` from 10 to 5 to reduce PR noise.
+- `dependabot.yml`: added ignore rules for major version bumps to `typescript`, `eslint`, `minimatch`, `cookie`, and `eslint-formatter-compact` (these break the VS Code fork build).
+- `deploy-update-server.yml`: updated `actions/configure-pages` to v6, `actions/deploy-pages` to v5, `actions/upload-pages-artifact` to v5.
+- `build.yml`, `pre-release.yml`, `release.yml`: updated `softprops/action-gh-release` to v3.
+
+### Merged Dependabot PRs
+- `actions/configure-pages` v4 → v6 (#43)
+- `actions/deploy-pages` v4 → v5 (#42)
+- `actions/upload-pages-artifact` v3 → v5 (#41, applied directly due to merge conflicts)
+- `softprops/action-gh-release` v2 → v3 (#40)
+- `@vscode/vscode-languagedetection` 1.0.21 → 1.0.23 (#44, patch bump)
+- `gulp-json-editor` 2.5.0 → 2.6.0 (#38, minor build tool bump)
+- `linkify-it` + `markdown-it` in extensions/extension-editing (#46, sub-package bump)
+- `merge-options` 1.0.1 → 3.0.4 (#39, evaluated safe — no array merge dependencies)
+- `debounce` 1.1.0 → 3.0.0 (#16, evaluated safe — only called as function, no cancel/flush needed)
+
+### Closed Dependabot PRs
+- `typescript` 5.8.0-dev → 6.0.3 (#13) — TS 6.0 breaking changes would fail compilation.
+- `eslint` 9.39.4 → 10.6.0 (#45) — ESLint 10 removed flat config helpers, changed plugin API.
+- `minimatch` 3.1.5 → 10.2.5 (#36) — minimatch 5+ changed constructor and match() API.
+- `cookie` 0.7.2 → 2.0.0 (#37) — cookie 2.0 renamed API methods.
+- `eslint-formatter-compact` 8.40.0 → 9.0.1 (#33) — depends on ESLint 10 which we're not upgrading to.
+- `@vscode/tree-sitter-wasm` 0.0.4 → 0.3.1 (#20) — deep API usage across 8 files, pre-1.0 breaking changes too risky.
+
 ## v1.8.6 — ELECTRON_RUN_AS_NODE=1 + continue-on-error (Windows probe can't init GUI on CI)
 
 **Release date:** 2026-06-25

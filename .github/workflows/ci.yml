@@ -1,17 +1,13 @@
 name: CI
 
 on:
-  workflow_dispatch:
   push:
     branches:
       - main
-      - main-dev
       - release/*
-      - kovix-rebuild
   pull_request:
     branches:
       - main
-      - main-dev
 
 # Global env vars for native module compilation against Electron ABI.
 # These MUST be set before npm install/ci so that node-gyp downloads

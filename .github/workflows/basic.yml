@@ -5,7 +5,6 @@ on:
   pull_request:
     branches:
       - main
-      - main-dev
 
 env:
   # Native module compilation against Electron ABI.
@@ -28,7 +27,6 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # TODO: rename azure-pipelines/linux/xvfb.init to github-actions
       - name: Setup Build Environment
         run: |
           sudo cp build/azure-pipelines/linux/xvfb.init /etc/init.d/xvfb

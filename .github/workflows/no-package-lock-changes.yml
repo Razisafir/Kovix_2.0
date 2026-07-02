@@ -1,5 +1,9 @@
 name: Prevent package-lock.json changes in PRs
-on: workflow_dispatch
+on:
+  pull_request:
+    paths:
+      - 'package-lock.json'
+  workflow_dispatch:
 
 jobs:
   main:

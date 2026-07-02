@@ -2,7 +2,7 @@ name: Build Kovix IDE
 
 on:
   push:
-    branches: [main, release/*, kovix-rebuild]
+    branches: [main, release/*]
     tags: ['v*']
   workflow_dispatch:
     inputs:

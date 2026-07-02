@@ -1,5 +1,9 @@
 name: Prevent yarn.lock changes in PRs
-on: workflow_dispatch
+on:
+  pull_request:
+    paths:
+      - 'yarn.lock'
+  workflow_dispatch:
 
 jobs:
   main:
