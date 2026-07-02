@@ -10,6 +10,16 @@ on:
       - main
       - release/*
 
+# Global env vars for native module compilation against Electron ABI.
+# These MUST be set before npm ci so that node-gyp downloads
+# Electron headers (v42.4.1) instead of Node.js headers (v22.12.0).
+# Without these, node-gyp gets 404 from electronjs.org/headers.
+env:
+  npm_config_target: '42.4.1'
+  npm_config_runtime: electron
+  npm_config_disturl: https://electronjs.org/headers
+  npm_config_build_from_source: 'true'
+
 jobs:
   main:
     name: Monaco Editor checks
