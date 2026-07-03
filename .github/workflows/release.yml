@@ -34,6 +34,7 @@ permissions:
 
 jobs:
   build-windows:
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: windows-2022
     timeout-minutes: 180
     env:
@@ -302,6 +303,7 @@ jobs:
             .build/win32-x64/checksums-sha256.txt
 
   build-macos:
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: macos-13
     timeout-minutes: 180
     env:
@@ -417,6 +419,7 @@ jobs:
             checksums-sha256.txt
 
   build-linux:
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:
