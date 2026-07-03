@@ -5,6 +5,16 @@ on:
     - cron: '0 5 * * *'  # Daily at 5 UTC
   workflow_dispatch:
 
+# Global env vars for native module compilation against Electron ABI.
+# These MUST be set before npm ci so that node-gyp downloads
+# Electron headers (v42.4.1) instead of Node.js headers.
+# Without these, node-gyp gets 404 from electronjs.org/headers.
+env:
+  npm_config_target: '42.4.1'
+  npm_config_runtime: electron
+  npm_config_disturl: https://electronjs.org/headers
+  npm_config_build_from_source: 'true'
+
 jobs:
   build:
     strategy:
