@@ -48,13 +48,15 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libgbm1
+          sudo apt-get install -y libkrb5-dev libx11-dev libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libgbm1
 
       - uses: actions/setup-node@v6
         with:
           node-version-file: '.nvmrc'
 
       - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
       - uses: ./.github/actions/verify-native-modules
 
@@ -65,7 +67,7 @@ jobs:
         run: node ./node_modules/gulp/bin/gulp.js ${{ matrix.gulp_task }}
 
       - name: Sign (macOS)
-        if: runner.os == 'macOS'
+        if: ${{ secrets.APPLE_SIGNING_IDENTITY != '' }}
         env:
           KOVIX_SIGN_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           KOVIX_SIGN_CERT_PATH: ${{ secrets.APPLE_CERT_PATH }}
@@ -73,7 +75,7 @@ jobs:
         run: node build/darwin/sign.js
 
       - name: Sign (Windows)
-        if: runner.os == 'Windows'
+        if: ${{ secrets.WINDOWS_CERT_PATH != '' }}
         env:
           KOVIX_SIGN_CERT_PATH: ${{ secrets.WINDOWS_CERT_PATH }}
           KOVIX_SIGN_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}

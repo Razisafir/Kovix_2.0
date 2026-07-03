@@ -169,8 +169,8 @@ export class ConstructAgentViewPane extends ViewPane {
                 @ISkillRegistry private readonly skillRegistry: ISkillRegistry,
         ) {
                 super(options, keybindingService, contextMenuService, configurationService, contextKeyService, viewDescriptorService, instantiationService, openerService, themeService, telemetryService, hoverService);
-                // DIAGNOSTIC: confirm the constructor ran (i.e. super() completed without throwing)
-                console.log('[Kovix Agent] ConstructAgentViewPane constructor completed — instance created');
+                // Constructor completed — super() succeeded
+                // (Removed diagnostic console.log; use ILogService.trace if needed)
         }
 
         protected override renderBody(container: HTMLElement): void {

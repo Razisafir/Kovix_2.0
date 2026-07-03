@@ -3,11 +3,11 @@
 	"version": "0.0.0",
 	"private": true,
 	"dependencies": {
-		"@microsoft/1ds-core-js": "^3.2.13",
+		"@microsoft/1ds-core-js": "^4.4.2",
 		"@microsoft/1ds-post-js": "^3.2.13",
 		"@vscode/iconv-lite-umd": "0.7.0",
 		"@vscode/tree-sitter-wasm": "^0.0.4",
-		"@vscode/vscode-languagedetection": "1.0.21",
+		"@vscode/vscode-languagedetection": "1.0.23",
 		"@xterm/addon-clipboard": "^0.2.0-beta.53",
 		"@xterm/addon-image": "^0.9.0-beta.70",
 		"@xterm/addon-ligatures": "^0.10.0-beta.70",

@@ -2,7 +2,7 @@ name: 'Telemetry'
 on:
   pull_request:
 jobs:
-  check-metdata:
+  check-metadata:
     name: 'Check metadata'
     runs-on: 'ubuntu-latest'
 
