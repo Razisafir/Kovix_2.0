@@ -33,18 +33,26 @@ permissions:
   packages: write
 
 jobs:
-  # Gate job: only proceed on tags or manual dispatch.
-  # Without this, GitHub creates a "failure" run when all jobs are skipped
-  # on non-tag pushes (which happens when the workflow file itself changes).
+  # Gate job: always runs so the workflow shows as success/skipped rather than
+  # "failure with 0 jobs". Outputs a flag for downstream jobs to condition on.
   release-gate:
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
     steps:
-      - run: echo "Release triggered for ${{ github.ref }}"
+      - id: check
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]] || [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "Release will proceed for ${{ github.ref }}"
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "Skipping release — not a tag push or manual dispatch (ref=${{ github.ref }})"
+          fi
 
   build-windows:
     needs: release-gate
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    if: needs.release-gate.outputs.should_run == 'true'
     runs-on: windows-2022
     timeout-minutes: 180
     env:
@@ -314,7 +322,7 @@ jobs:
 
   build-macos:
     needs: release-gate
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    if: needs.release-gate.outputs.should_run == 'true'
     runs-on: macos-13
     timeout-minutes: 180
     env:
@@ -431,7 +439,7 @@ jobs:
 
   build-linux:
     needs: release-gate
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    if: needs.release-gate.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 180
     env:

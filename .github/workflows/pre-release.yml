@@ -18,14 +18,23 @@ env:
 
 jobs:
   pre-release-gate:
-    if: startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
     steps:
-      - run: echo "Pre-release triggered for ${{ github.ref }}"
+      - id: check
+        run: |
+          if [[ "${{ github.ref }}" == refs/heads/release/* ]] || [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "Pre-release will proceed for ${{ github.ref }}"
+          else
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "Skipping pre-release — not a release/* branch or manual dispatch (ref=${{ github.ref }})"
+          fi
 
   build:
     needs: pre-release-gate
-    if: startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'workflow_dispatch'
+    if: needs.pre-release-gate.outputs.should_run == 'true'
     strategy:
       fail-fast: false
       matrix:
