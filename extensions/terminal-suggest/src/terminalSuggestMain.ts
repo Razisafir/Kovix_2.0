@@ -28,7 +28,7 @@ function getBuiltinCommands(shell: string): string[] | undefined {
 		switch (shellType) {
 			case 'bash': {
 				const bashOutput = execSync('compgen -b', options);
-				const bashResult = bashOutput.split('\n').filter(filter);
+				const bashResult = String(bashOutput).split('\n').filter(filter);
 				if (bashResult.length) {
 					cachedBuiltinCommands?.set(shellType, bashResult);
 					return bashResult;
@@ -37,7 +37,7 @@ function getBuiltinCommands(shell: string): string[] | undefined {
 			}
 			case 'zsh': {
 				const zshOutput = execSync('printf "%s\\n" ${(k)builtins}', options);
-				const zshResult = zshOutput.split('\n').filter(filter);
+				const zshResult = String(zshOutput).split('\n').filter(filter);
 				if (zshResult.length) {
 					cachedBuiltinCommands?.set(shellType, zshResult);
 					return zshResult;
@@ -47,7 +47,7 @@ function getBuiltinCommands(shell: string): string[] | undefined {
 				// TODO: ghost text in the command line prevents
 				// completions from working ATM for fish
 				const fishOutput = execSync('functions -n', options);
-				const fishResult = fishOutput.split(', ').filter(filter);
+				const fishResult = String(fishOutput).split(', ').filter(filter);
 				if (fishResult.length) {
 					cachedBuiltinCommands?.set(shellType, fishResult);
 					return fishResult;
