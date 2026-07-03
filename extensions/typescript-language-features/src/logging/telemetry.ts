@@ -15,8 +15,7 @@ export interface TelemetryReporter {
 
 export class VSCodeTelemetryReporter implements TelemetryReporter {
         constructor(
-                private readonly reporter: IExperimentationTelemetryReporter | undefined,
-                private readonly clientVersionDelegate: () => string
+                private readonly reporter: IExperimentationTelemetryReporter | undefined
         ) { }
 
         public logTelemetry(eventName: string, properties: { [prop: string]: string } = {}) {
