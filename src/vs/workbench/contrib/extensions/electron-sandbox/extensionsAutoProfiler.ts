@@ -12,7 +12,6 @@ import { Schemas } from '../../../../base/common/network.js';
 import { joinPath } from '../../../../base/common/resources.js';
 import { TernarySearchTree } from '../../../../base/common/ternarySearchTree.js';
 import { URI } from '../../../../base/common/uri.js';
-import { generateUuid } from '../../../../base/common/uuid.js';
 import { localize } from '../../../../nls.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { ExtensionIdentifier, ExtensionIdentifierSet, IExtensionDescription } from '../../../../platform/extensions/common/extensions.js';
@@ -173,7 +172,6 @@ export class ExtensionsAutoProfiler implements IWorkbenchContribution {
 		}
 
 
-		const sessionId = generateUuid();
 
 		// print message to log
 		const path = joinPath(this._environmentServie.tmpDir, `exthost-${Math.random().toString(16).slice(2, 8)}.cpuprofile`);
@@ -182,20 +180,17 @@ export class ExtensionsAutoProfiler implements IWorkbenchContribution {
 
 		type UnresponsiveData = {
 			duration: number;
-			sessionId: string;
 			data: string[];
 			id: string;
 		};
 		type UnresponsiveDataClassification = {
 			owner: 'jrieken';
 			comment: 'Profiling data that was collected while the extension host was unresponsive';
-			sessionId: { classification: 'SystemMetaData'; purpose: 'PerformanceAndHealth'; comment: 'Identifier of a profiling session' };
 			duration: { classification: 'SystemMetaData'; purpose: 'PerformanceAndHealth'; comment: 'Duration for which the extension host was unresponsive' };
 			data: { classification: 'SystemMetaData'; purpose: 'PerformanceAndHealth'; comment: 'Extensions ids and core parts that were active while the extension host was frozen' };
 			id: { classification: 'SystemMetaData'; purpose: 'PerformanceAndHealth'; comment: 'Top extensions id that took most of the duration' };
 		};
 		this._telemetryService.publicLog2<UnresponsiveData, UnresponsiveDataClassification>('exthostunresponsive', {
-			sessionId,
 			duration: overall,
 			data: data.map(tuple => tuple[0]).flat(),
 			id: ExtensionIdentifier.toKey(extension.identifier),
