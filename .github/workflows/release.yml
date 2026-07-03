@@ -24,7 +24,7 @@ env:
   npm_config_build_from_source: 'true'
 
 # The default GITHUB_TOKEN is read-only on repos with restricted default
-# permissions. Without this block, `softprops/action-gh-release@v2` fails
+# permissions. Without this block, `softprops/action-gh-release@v3` fails
 # with HTTP 403 "Resource not accessible by integration" when creating the
 # release. contents:write is required to create the release; packages:write
 # is included for future npm/GHCR publishing parity.
@@ -285,7 +285,7 @@ jobs:
           Get-Content $checksumsFile
 
       - name: Sign (Windows)
-        if: env.KOVIX_SIGN_CERT_PATH != ''
+        if: ${{ secrets.WINDOWS_CERT_PATH != '' }}
         env:
           KOVIX_SIGN_CERT_PATH: ${{ secrets.WINDOWS_CERT_PATH }}
           KOVIX_SIGN_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
@@ -302,7 +302,7 @@ jobs:
             .build/win32-x64/checksums-sha256.txt
 
   build-macos:
-    runs-on: macos-latest
+    runs-on: macos-13
     timeout-minutes: 180
     env:
       KOVIX_ARCH: x64
@@ -313,6 +313,12 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+
+      - name: Set macOS C++ compiler flags for spdlog compat
+        if: runner.os == 'macOS'
+        run: |
+          echo "CXXFLAGS=-Wno-deprecated-literal-operator" >> $GITHUB_ENV
+          echo "CFLAGS=-Wno-deprecated-literal-operator" >> $GITHUB_ENV
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -395,7 +401,7 @@ jobs:
           cat checksums-sha256.txt
 
       - name: Sign (macOS)
-        if: env.KOVIX_SIGN_IDENTITY != ''
+        if: ${{ secrets.APPLE_SIGNING_IDENTITY != '' }}
         env:
           KOVIX_SIGN_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
           KOVIX_SIGN_CERT_PATH: ${{ secrets.APPLE_CERT_PATH }}

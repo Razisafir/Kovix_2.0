@@ -82,17 +82,10 @@ function candidateModules() {
         // @vscode/signature-blake3 was removed from the dependency tree.
         // If it returns in a future Electron update, add it back here.
 
-        // sharp -- per-platform filename
-        if (platform === 'win32' && arch === 'x64') add('sharp/build/Release/sharp-win32-x64.node');
-        else if (platform === 'linux' && arch === 'x64') add('sharp/build/Release/sharp-linux-x64.node');
-        else if (platform === 'darwin' && arch === 'x64') add('sharp/build/Release/sharp-darwin-x64.node');
-        else if (platform === 'darwin' && arch === 'arm64') add('sharp/build/Release/sharp-darwin-arm64.node');
-
-        // onnxruntime-node -- per-platform precompiled
-        if (platform === 'win32' && arch === 'x64') add('onnxruntime-node/bin/napi-v3/win32/x64/onnxruntime_binding.node');
-        else if (platform === 'linux' && arch === 'x64') add('onnxruntime-node/bin/napi-v3/linux/x64/onnxruntime_binding.node');
-        else if (platform === 'darwin' && arch === 'x64') add('onnxruntime-node/bin/napi-v3/darwin/x64/onnxruntime_binding.node');
-        else if (platform === 'darwin' && arch === 'arm64') add('onnxruntime-node/bin/napi-v3/darwin/arm64/onnxruntime_binding.node');
+        // sharp and onnxruntime-node are NOT direct dependencies of this repo.
+        // They may appear as transitive deps of @xenova/transformers, but
+        // their .node binaries are not required for the core IDE to function.
+        // Removed from verification to avoid false SKIP noise.
 
         return candidates;
 }

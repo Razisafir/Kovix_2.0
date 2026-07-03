@@ -166,12 +166,10 @@ function main() {
         const modsToProbe = [
                 '@vscode/policy-watcher',
                 '@vscode/sqlite3',
-                '@vscode/kerberos',
+                'kerberos',
                 '@vscode/spdlog',
                 'native-keymap',
                 'native-watchdog',
-                'sharp',
-                'onnxruntime-node',
         ];
         if (process.platform === 'win32') {
                 modsToProbe.push('@vscode/windows-registry');

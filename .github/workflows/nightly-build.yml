@@ -31,7 +31,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libxkbfile-dev pkg-config libkrb5-dev libxss1 dbus xvfb libgtk-3-0 libgbm1 libsecret-1-dev
+          sudo apt-get install -y libxkbfile-dev pkg-config libkrb5-dev libx11-dev libxss1 dbus xvfb libgtk-3-0 libgbm1 libsecret-1-dev libvips-dev
           sudo cp build/azure-pipelines/linux/xvfb.init /etc/init.d/xvfb
           sudo chmod +x /etc/init.d/xvfb
           sudo update-rc.d xvfb defaults
@@ -72,6 +72,8 @@ jobs:
           node-version-file: '.nvmrc'
 
       - run: npm ci
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
       - uses: ./.github/actions/verify-native-modules
 
