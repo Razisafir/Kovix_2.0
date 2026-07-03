@@ -7,9 +7,10 @@ updates:
       day: "monday"
     open-pull-requests-limit: 5
     ignore:
-      # Dev/build tools — vulnerabilities in these don't affect production users
+      # Electron — the entire native module pipeline is pinned to 42.4.1;
+      # any version change (even patch) breaks the ABI. Block all updates.
       - dependency-name: "electron"
-        update-types: ["version-update:semver-patch"]
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
       - dependency-name: "gulp*"
         update-types: ["version-update:semver-patch"]
       - dependency-name: "mocha*"
