@@ -80,20 +80,7 @@ jobs:
           ELECTRON_SKIP_BINARY_DOWNLOAD: 1
         run: npm ci
 
-      - name: Rebuild native modules against Electron ABI
-        shell: bash
-        run: node build/lib/rebuild-native-modules.js
-      - name: Verify .npmrc target matches resolved Electron version
-        shell: bash
-        run: node build/lib/verify-npmrc-target.js
-
-      - name: Verify Electron version pin chain (full)
-        shell: bash
-        run: node build/lib/verify-electron-pins.js
-
-      - name: Verify native modules load against current ABI
-        shell: bash
-        run: node build/lib/verify-native-modules.js
+      - uses: ./.github/actions/verify-native-modules
 
       - name: Compile and Download
         run: npm exec -- npm-run-all -lp compile "electron x64" playwright-install download-builtin-extensions
@@ -188,16 +175,7 @@ jobs:
           ELECTRON_SKIP_BINARY_DOWNLOAD: 1
         run: npm ci
 
-      - name: Rebuild native modules against Electron ABI
-        shell: bash
-        run: node build/lib/rebuild-native-modules.js
-      - name: Verify .npmrc target matches resolved Electron version
-        shell: bash
-        run: node build/lib/verify-npmrc-target.js
-
-      - name: Verify Electron version pin chain (full)
-        shell: bash
-        run: node build/lib/verify-electron-pins.js
+      - uses: ./.github/actions/verify-native-modules
 
       - name: Compile Kovix code
         run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile
@@ -342,13 +320,7 @@ jobs:
           ELECTRON_SKIP_BINARY_DOWNLOAD: 1
 
       # ── Post-install verification ─────────────────────────
-      - name: Rebuild native modules against Electron ABI
-        shell: bash
-        run: node build/lib/rebuild-native-modules.js
-
-      - name: Verify native modules load
-        shell: bash
-        run: node build/lib/verify-native-modules.js
+      - uses: ./.github/actions/verify-native-modules
 
       # ── Extension dependencies ────────────────────────────
       # Ported from BUILD_STATUS.md §4c: root npm install does

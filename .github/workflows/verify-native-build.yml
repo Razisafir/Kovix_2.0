@@ -67,17 +67,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
-      - name: Rebuild native modules against Electron ABI
-        run: node build/lib/rebuild-native-modules.js
-
-      - name: Verify .npmrc target matches resolved Electron version
-        run: node build/lib/verify-npmrc-target.js
-
-      - name: Verify Electron version pin chain
-        run: node build/lib/verify-electron-pins.js
-
-      - name: Verify native modules
-        run: node build/lib/verify-native-modules.js
+      - uses: ./.github/actions/verify-native-modules
 
       - name: Summary
         if: always()
@@ -127,21 +117,7 @@ jobs:
           npm_config_msvs_version: '2022'
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
-      - name: Rebuild native modules against Electron ABI
-        shell: bash
-        run: node build/lib/rebuild-native-modules.js
-
-      - name: Verify .npmrc target matches resolved Electron version
-        shell: bash
-        run: node build/lib/verify-npmrc-target.js
-
-      - name: Verify Electron version pin chain
-        shell: bash
-        run: node build/lib/verify-electron-pins.js
-
-      - name: Verify native modules
-        shell: bash
-        run: node build/lib/verify-native-modules.js
+      - uses: ./.github/actions/verify-native-modules
 
       - name: Summary
         if: always()

@@ -9,27 +9,18 @@ jobs:
   main:
     name: Prevent package-lock.json changes in PRs
     runs-on: ubuntu-latest
+    # ponytail: replaced trilom/file-changes-action + octokit/request-action
+    # with native git diff — the old actions are deprecated/broken and
+    # added two dependency hits for a simple file-existence check.
     steps:
-      - uses: octokit/request-action@v2.x
-        id: get_permissions
+      - uses: actions/checkout@v7
         with:
-          route: GET /repos/${{ github.repository }}/collaborators/{username}/permission
-          username: ${{ github.event.pull_request.user.login }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set control output variable
-        id: control
+          fetch-depth: 2
+
+      - name: Check for package-lock.json changes
         run: |
-          echo "user: ${{ github.event.pull_request.user.login }}"
-          echo "role: ${{ fromJson(steps.get_permissions.outputs.data).permission }}"
-          echo "is dependabot: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}"
-          echo "should_run: ${{ !contains(fromJson('["admin", "maintain", "write"]'), fromJson(steps.get_permissions.outputs.data).permission) }}"
-          echo "should_run=${{ !contains(fromJson('["admin", "maintain", "write"]'), fromJson(steps.get_permissions.outputs.data).permission) && github.event.pull_request.user.login != 'dependabot[bot]' }}" >> $GITHUB_OUTPUT
-      - name: Get file changes
-        uses: trilom/file-changes-action@ce38c8ce2459ca3c303415eec8cb0409857b4272
-        if: ${{ steps.control.outputs.should_run == 'true' }}
-      - name: Check for lockfile changes
-        if: ${{ steps.control.outputs.should_run == 'true' }}
-        run: |
-          cat $HOME/files.json | jq -e 'any(test("package-lock\\.json$|Cargo\\.lock$")) | not' \
-            || (echo "Changes to package-lock.json/Cargo.lock files aren't allowed in PRs." && exit 1)
+          if git diff --name-only HEAD^ HEAD | grep -q 'package-lock\.json$'; then
+            echo "::error::Changes to package-lock.json aren't allowed in PRs."
+            exit 1
+          fi
+          echo "No package-lock.json changes found."

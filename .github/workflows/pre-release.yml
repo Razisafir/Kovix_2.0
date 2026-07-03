@@ -22,12 +22,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          - os: windows-2022
             arch: x64
             gulp_task: vscode-win32-x64-inno-updater
             artifact_name: kovix-windows
             artifact_path: .build/win32-x64/**/*.exe
-          - os: macos-latest
+          - os: macos-13
             arch: x64
             gulp_task: vscode-darwin-x64
             artifact_name: kovix-macos
@@ -56,20 +56,7 @@ jobs:
 
       - run: npm ci
 
-      - name: Rebuild native modules against Electron ABI
-        shell: bash
-        run: node build/lib/rebuild-native-modules.js
-      - name: Verify .npmrc target matches resolved Electron version
-        shell: bash
-        run: node build/lib/verify-npmrc-target.js
-
-      - name: Verify Electron version pin chain (full)
-        shell: bash
-        run: node build/lib/verify-electron-pins.js
-
-      - name: Verify native modules load against current ABI
-        shell: bash
-        run: node build/lib/verify-native-modules.js
+      - uses: ./.github/actions/verify-native-modules
 
       - name: Compile
         run: npm run compile

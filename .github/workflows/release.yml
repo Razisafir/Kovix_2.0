@@ -12,7 +12,7 @@ on:
         type: string
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   PYTHON_VERSION: '3.11'
   # Native module compilation against Electron ABI.
   # Previously from .npmrc (target=, runtime=), but npm 11.13.0
@@ -86,31 +86,7 @@ jobs:
           npm_config_msvs_version: '2022'
           npm_config_build_from_source: "true"
 
-      - name: Rebuild native modules against Electron ABI
-        shell: bash
-        run: node build/lib/rebuild-native-modules.js
-      - name: Verify .npmrc target matches resolved Electron version
-        shell: bash
-        run: |
-          set -euo pipefail
-          # v1.8.0 bug guard: .npmrc target="32.2.6" was wrong while package.json
-          # declared electron "^42.4.1" — every native module built against
-          # Electron 32's ABI, then was loaded by Electron 42 at runtime.
-          # This check fails the build fast if the pin ever drifts again.
-          node build/lib/verify-npmrc-target.js
-          # Phase 1 guard (2026-06-25): verify the FULL pin chain is consistent —
-          # package.json devDependencies.electron + .npmrc target +
-          # build/checksums/electron.txt + .nvmrc Node version.
-          node build/lib/verify-electron-pins.js
-
-      - name: Verify native modules load against current ABI
-        shell: bash
-        run: |
-          set -euo pipefail
-          # v1.8.0 bug guard #2: every .node in the Windows package threw
-          # ERR_DLOPEN_FAILED at launch. This step checks each known native
-          # module is present and has the right platform binary signature.
-          node build/lib/verify-native-modules.js
+      - uses: ./.github/actions/verify-native-modules
 
       - name: Verify native modules load inside Electron (end-to-end)
         shell: bash
@@ -350,20 +326,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Rebuild native modules against Electron ABI
-        shell: bash
-        run: node build/lib/rebuild-native-modules.js
-      - name: Verify .npmrc target matches resolved Electron version
-        shell: bash
-        run: node build/lib/verify-npmrc-target.js
-
-      - name: Verify Electron version pin chain (full)
-        shell: bash
-        run: node build/lib/verify-electron-pins.js
-
-      - name: Verify native modules load against current ABI
-        shell: bash
-        run: node build/lib/verify-native-modules.js
+      - uses: ./.github/actions/verify-native-modules
 
       - name: Compile
         shell: bash
@@ -477,20 +440,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Rebuild native modules against Electron ABI
-        shell: bash
-        run: node build/lib/rebuild-native-modules.js
-      - name: Verify .npmrc target matches resolved Electron version
-        shell: bash
-        run: node build/lib/verify-npmrc-target.js
-
-      - name: Verify Electron version pin chain (full)
-        shell: bash
-        run: node build/lib/verify-electron-pins.js
-
-      - name: Verify native modules load against current ABI
-        shell: bash
-        run: node build/lib/verify-native-modules.js
+      - uses: ./.github/actions/verify-native-modules
 
       - name: Compile
         shell: bash
