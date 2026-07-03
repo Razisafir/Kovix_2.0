@@ -1,9 +1,6 @@
 name: Pre-Release
 
 on:
-  push:
-    branches:
-      - 'release/*'
   workflow_dispatch:
 
 # Global env vars for native module compilation against Electron ABI.
