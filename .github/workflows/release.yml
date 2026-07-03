@@ -33,7 +33,17 @@ permissions:
   packages: write
 
 jobs:
+  # Gate job: only proceed on tags or manual dispatch.
+  # Without this, GitHub creates a "failure" run when all jobs are skipped
+  # on non-tag pushes (which happens when the workflow file itself changes).
+  release-gate:
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Release triggered for ${{ github.ref }}"
+
   build-windows:
+    needs: release-gate
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: windows-2022
     timeout-minutes: 180
@@ -303,6 +313,7 @@ jobs:
             .build/win32-x64/checksums-sha256.txt
 
   build-macos:
+    needs: release-gate
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: macos-13
     timeout-minutes: 180
@@ -419,6 +430,7 @@ jobs:
             checksums-sha256.txt
 
   build-linux:
+    needs: release-gate
     if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 180

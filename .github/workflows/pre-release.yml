@@ -17,7 +17,14 @@ env:
   npm_config_build_from_source: 'true'
 
 jobs:
+  pre-release-gate:
+    if: startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Pre-release triggered for ${{ github.ref }}"
+
   build:
+    needs: pre-release-gate
     if: startsWith(github.ref, 'refs/heads/release/') || github.event_name == 'workflow_dispatch'
     strategy:
       fail-fast: false
