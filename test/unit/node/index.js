@@ -69,7 +69,7 @@ const baseUrl = pathToFileURL(src);
 
 //@ts-ignore
 const pkgConfig = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'package.json'), 'utf8')).config || {};
-const majorRequiredNodeVersion = `v${pkgConfig.remoteNodeVersion || process.versions.node}`.substring(0, 3);
+const majorRequiredNodeVersion = `v${process.versions.node}`.substring(0, 3);
 const currentMajorNodeVersion = process.version.substring(0, 3);
 if (majorRequiredNodeVersion !== currentMajorNodeVersion) {
         console.error(`node.js unit tests require a major node.js version of ${majorRequiredNodeVersion} (your version is: ${currentMajorNodeVersion})`);
