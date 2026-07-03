@@ -4,7 +4,7 @@
   "description": "Official Kovix dark theme with cyan accents",
   "version": "0.1.0",
   "publisher": "kovix",
-  "engines": { "vscode": "*" },
+  "engines": { "vscode": "^1.99.0" },
   "categories": ["Themes"],
   "contributes": {
     "themes": [
