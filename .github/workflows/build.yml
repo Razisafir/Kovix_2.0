@@ -48,7 +48,7 @@ jobs:
   compile:
     name: Compile Check
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
         with:
@@ -84,6 +84,7 @@ jobs:
 
       - name: Compile
         run: NODE_OPTIONS="--max-old-space-size=8192" npm run compile-build
+        timeout-minutes: 45
 
       - name: Inject commit hash and build date into product.json
         shell: bash
