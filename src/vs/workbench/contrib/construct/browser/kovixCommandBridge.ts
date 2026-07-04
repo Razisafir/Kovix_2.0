@@ -5,14 +5,14 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
 // Kovix proprietary code. See LICENSE.txt for proprietary license terms.
 /*---------------------------------------------------------------------------------------------
- *  Kovix Command Bridge — exposes a tiny `window.kovixCommandBridge` API
+ *  Kovix Command Bridge - exposes a tiny `window.kovixCommandBridge` API
  *  so DOM-injected elements (activity-bar K-logo, settings-UI CTA, welcome
  *  webview postMessage handlers) can dispatch workbench commands without
  *  needing their own service-injection wiring.
  *
  *  Without this bridge, the K-logo and settings CTA would render correctly
  *  but their clicks would be silent no-ops. With it, they delegate to
- *  ICommandService.executeCommand — the same path VS Code's own UI uses.
+ *  ICommandService.executeCommand - the same path VS Code's own UI uses.
  *
  *  Registered at LifecyclePhase.Starting so the bridge is available as
  *  soon as the workbench starts accepting DOM events.
@@ -35,7 +35,7 @@ export interface IKovixCommandBridge {
  * container) can dispatch commands.
  *
  * This is the Kovix equivalent of VS Code's own
- * `window.acquireVsCodeApi()` — but available to Kovix's own injected
+ * `window.acquireVsCodeApi()` - but available to Kovix's own injected
  * chrome rather than to webview content.
  */
 export class KovixCommandBridgeContribution extends Disposable implements IWorkbenchContribution {

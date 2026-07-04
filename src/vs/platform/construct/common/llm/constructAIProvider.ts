@@ -164,16 +164,16 @@ export enum ProviderStatus {
 }
 
 /**
- * IConstructAIProvider — the unified AI provider interface for Kovix IDE.
+ * IConstructAIProvider - the unified AI provider interface for Kovix IDE.
  *
  * This is the single abstraction that all AI consumers (agent loop, chat panel,
  * inline completions) use. Concrete implementations (OllamaProvider, XenovaProvider,
  * CloudProvider) adapt their respective backends to this interface.
  *
  * The constructAIService auto-selects the best available provider at startup:
- * 1. Try Ollama (localhost:11434) — local inference via Ollama
- * 2. Fall back to Xenova — in-process ONNX models via @xenova/transformers
- * 3. Fall back to Cloud — optional OpenAI-compatible API
+ * 1. Try Ollama (localhost:11434) - local inference via Ollama
+ * 2. Fall back to Xenova - in-process ONNX models via @xenova/transformers
+ * 3. Fall back to Cloud - optional OpenAI-compatible API
  *
  * OFFLINE FIRST: Ollama and Xenova work without internet.
  * Cloud is only used when explicitly configured.

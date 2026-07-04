@@ -1276,37 +1276,37 @@ export class CodeApplication extends Disposable {
                 const utilityProcessWorkerChannel = ProxyChannel.fromService(accessor.get(IUtilityProcessWorkerMainService), disposables);
                 mainProcessElectronServer.registerChannel(ipcUtilityProcessWorkerChannelName, utilityProcessWorkerChannel);
 
-                // Construct IPC Channels — all channel names from shared constants
+                // Construct IPC Channels - all channel names from shared constants
 
                 // MCP filesystem server process management
                 const constructMcpChannel = ProxyChannel.fromService(accessor.get(IMCPProcessNodeService), disposables);
                 mainProcessElectronServer.registerChannel(CONSTRUCT_CHANNELS.MCP, constructMcpChannel);
 
-                // Vector store — semantic code search (Qdrant)
+                // Vector store - semantic code search (Qdrant)
                 const constructVectorChannel = ProxyChannel.fromService(accessor.get(IConstructVectorStore), disposables);
                 mainProcessElectronServer.registerChannel(CONSTRUCT_CHANNELS.VECTOR_STORE, constructVectorChannel);
 
-                // Config service — centralized configuration
+                // Config service - centralized configuration
                 const constructConfigChannel = ProxyChannel.fromService(accessor.get(IConstructConfigService), disposables);
                 mainProcessElectronServer.registerChannel(CONSTRUCT_CHANNELS.CONFIG, constructConfigChannel);
 
-                // Secure key service — OS keychain access
+                // Secure key service - OS keychain access
                 const constructSecureKeysChannel = ProxyChannel.fromService(accessor.get(ISecureKeyManager), disposables);
                 mainProcessElectronServer.registerChannel(CONSTRUCT_CHANNELS.SECURE_KEYS, constructSecureKeysChannel);
 
-                // Notification service — system notifications
+                // Notification service - system notifications
                 const constructNotificationChannel = ProxyChannel.fromService(accessor.get(IConstructNotificationService), disposables);
                 mainProcessElectronServer.registerChannel(CONSTRUCT_CHANNELS.NOTIFICATION, constructNotificationChannel);
 
-                // Embedding service — text embeddings for semantic search
+                // Embedding service - text embeddings for semantic search
                 const constructEmbeddingChannel = ProxyChannel.fromService(accessor.get(IEmbeddingService), disposables);
                 mainProcessElectronServer.registerChannel(CONSTRUCT_CHANNELS.EMBEDDING, constructEmbeddingChannel);
 
-                // File watcher service — filesystem event streaming
+                // File watcher service - filesystem event streaming
                 const constructFileWatcherChannel = ProxyChannel.fromService(accessor.get(IFileWatcherService), disposables);
                 mainProcessElectronServer.registerChannel(CONSTRUCT_CHANNELS.FILE_WATCHER, constructFileWatcherChannel);
 
-                // Terminal execution service — replaces browser child_process
+                // Terminal execution service - replaces browser child_process
                 const constructTerminalChannel = ProxyChannel.fromService(accessor.get(ITerminalExecutor), disposables);
                 mainProcessElectronServer.registerChannel(CONSTRUCT_CHANNELS.TERMINAL, constructTerminalChannel);
         }

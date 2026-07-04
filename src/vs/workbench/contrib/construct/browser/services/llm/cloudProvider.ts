@@ -39,7 +39,7 @@ interface IAnthropicSSEChunk {
 }
 
 /**
- * CloudProvider — concrete AI provider for cloud APIs.
+ * CloudProvider - concrete AI provider for cloud APIs.
  *
  * This is the optional network fallback when neither Ollama nor Xenova
  * are suitable. It supports multiple cloud backends:
@@ -118,7 +118,7 @@ export class CloudProvider extends Disposable implements IConstructAIProvider {
          * a separate provider class for each.
          */
         private async _resolveApiKey(): Promise<void> {
-                // Try ISecureKeyManager first (OS keychain — single source of truth)
+                // Try ISecureKeyManager first (OS keychain - single source of truth)
                 try {
                         const activeProvider = await this._keyManager.getActiveProvider();
                         if (activeProvider) {

@@ -9,7 +9,7 @@
  * CONSTRUCT IPC Channel Constants
  *
  * All channel names MUST be defined here and imported by both main and renderer.
- * No inline string literals for channel names — compile-time safety only.
+ * No inline string literals for channel names - compile-time safety only.
  *
  * SEC-2: Channel names use shared constants to prevent silent breakage
  * if a name changes in one place but not the other.

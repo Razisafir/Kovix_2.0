@@ -71,7 +71,7 @@ export async function getDependencies(packageType: 'deb' | 'rpm', buildDir: stri
         const files = findResult.stdout.toString().trimEnd().split('\n')
                 .filter(filePath => filePath.length > 0)
                 .filter(filePath => !excludedNativeModules.some(excluded => filePath.includes(excluded)));
-        // Add the tunnel binary (optional — CLI may not be built).
+        // Add the tunnel binary (optional - CLI may not be built).
         const tunnelPath = path.join(buildDir, 'bin', product.tunnelApplicationName);
         if (existsSync(tunnelPath)) {
                 files.push(tunnelPath);

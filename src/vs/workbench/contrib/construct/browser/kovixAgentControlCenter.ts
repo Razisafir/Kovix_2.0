@@ -6,7 +6,7 @@
 // Kovix proprietary code. See LICENSE.txt for proprietary license terms.
 
 /**
- * KovixAgentControlCenter — a single pane that shows everything happening
+ * KovixAgentControlCenter - a single pane that shows everything happening
  * inside the Kovix agent subsystem, in real time.
  *
  * Layout:
@@ -286,7 +286,7 @@ export class KovixAgentControlCenter extends ViewPane {
         }
 
         private estimateCost(inputTokens: number, outputTokens: number): number {
-                // Rough heuristic — assumes Llama 3.1 70B pricing on NVIDIA NIM free tier.
+                // Rough heuristic - assumes Llama 3.1 70B pricing on NVIDIA NIM free tier.
                 // Real cost depends on the active provider and model. Replace with a
                 // per-model lookup table in a follow-up.
                 const inputPer1M = 0.0;

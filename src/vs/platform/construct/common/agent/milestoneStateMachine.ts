@@ -14,7 +14,7 @@ export enum ExecutionState {
         AwaitingApproval = 'awaiting_approval',
         Executing = 'executing',
         /**
-         * Verifying — the agent has declared the milestone complete, but the
+         * Verifying - the agent has declared the milestone complete, but the
          * harness is now running a real check (test script / build / typecheck)
          * to confirm. The loop MUST pass through this state before reaching
          * PausedAtMilestone or Complete. See agentLoop.ts runVerification().
@@ -26,7 +26,7 @@ export enum ExecutionState {
         PausedAtMilestone = 'paused_at_milestone',
         Complete = 'complete',
         /**
-         * VerificationFailed — the harness's real check returned a non-zero
+         * VerificationFailed - the harness's real check returned a non-zero
          * exit code. Routes into AgentErrorRecoveryService as a first-class
          * error type ('verification_failed'), not silently swallowed.
          */

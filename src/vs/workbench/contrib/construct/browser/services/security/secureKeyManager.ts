@@ -115,7 +115,7 @@ export const IS_LOCAL: Record<LLMProvider, boolean> = {
  * Known default models per provider.
  * Used to populate the model picker when the provider's /models endpoint
  * is unreachable or returns no models. These lists are intentionally short
- * (3-6 entries) — the live /models response is preferred when available.
+ * (3-6 entries) - the live /models response is preferred when available.
  */
 export const DEFAULT_MODELS: Record<LLMProvider, { id: string; displayName: string }[]> = {
         anthropic: [
@@ -226,7 +226,7 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
                 // BUGFIX (v1.2.0): break the constructor-time DI cycle
                 // kovix.aiService ↔ construct.secureKeyManager.
                 // Previously @IConstructAIService was injected here directly, and
-                // ConstructAIService injected @ISecureKeyManager — the VS Code
+                // ConstructAIService injected @ISecureKeyManager - the VS Code
                 // instantiator cannot satisfy a cycle and throws
                 // "Error: cyclic dependency between services", which crashed
                 // every Construct workbench contribution (status bar, autocomplete,
@@ -288,7 +288,7 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
 
         /**
          * Lazily resolve IConstructAIService on first use. This MUST NOT be called
-         * from the constructor — only from runtime methods or deferred callbacks.
+         * from the constructor - only from runtime methods or deferred callbacks.
          */
         private _resolveAIService(): IConstructAIService {
                 if (!this._aiService) {
@@ -318,7 +318,7 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
                 // SEC-7 (C1 fix): Removed plaintext IStorageService.store() calls.
                 // The OS keychain (ISecretStorageService) is the single source of truth.
                 // Writing the key to IStorageService as well defeated the keychain's
-                // encryption-at-rest and per-app ACLs — any process with read access
+                // encryption-at-rest and per-app ACLs - any process with read access
                 // to ~/.config/Kovix/User/globalStorage/storage.json could recover
                 // every provider key. CloudProvider has been updated to read from
                 // SecureKeyManager directly. Legacy plaintext keys left by previous
@@ -349,7 +349,7 @@ export class SecureKeyManagerService extends Disposable implements ISecureKeyMan
                 // on disk) in addition to the OS keychain. If the keychain is empty
                 // but a legacy plaintext entry exists, migrate it into the keychain
                 // and purge the plaintext copy. This runs at most once per provider
-                // per profile — after migration the plaintext entry is gone.
+                // per profile - after migration the plaintext entry is gone.
                 const legacyStorageKey = `construct.${provider}.apiKey`;
                 const legacyValue = this.storageService.get(legacyStorageKey, StorageScope.PROFILE);
                 if (legacyValue) {

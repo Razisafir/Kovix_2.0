@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  Kovix Brand — VS Code theme variable overrides.
+ *  Kovix Brand - VS Code theme variable overrides.
  *
  *  This is the single file that re-themes the entire VS Code workbench shell
  *  without touching individual component CSS. Every `--vscode-*` color token
@@ -12,14 +12,14 @@
  *  All values reference `--kovix-*` tokens defined in kovix-tokens.css so the
  *  palette stays in one place.
  *
- *  This file is additive — it does not delete VS Code CSS, only overrides
+ *  This file is additive - it does not delete VS Code CSS, only overrides
  *  custom properties. Safe under upstream VS Code merges.
  *--------------------------------------------------------------------------------------------*/
 
 .monaco-workbench {
   /* ── Editor canvas ──────────────────────────────────────────────────────
      VS Code Dark+ uses #1E1E1E for everything. Kovix uses true black for
-     the shell and a near-black elevated surface for the editor — so the
+     the shell and a near-black elevated surface for the editor - so the
      editor reads as a single elevated plane floating in a darker void. */
 
   --vscode-editor-background: var(--kovix-bg-ink);
@@ -279,14 +279,14 @@
 
 /* ─────────────────────────────────────────────────────────────────────────
    Kovix-specific surface tweaks that aren't expressible as theme tokens.
-   These are scoped to the workbench only — they don't leak into webviews
+   These are scoped to the workbench only - they don't leak into webviews
    or iframes, and they're additive (no `display:none`, no layout breaks).
    ───────────────────────────────────────────────────────────────────────── */
 
 .monaco-workbench .activitybar {
   /* Push the activity bar content down so the Kovix K logo can sit
      above the default VS Code icons. The logo itself is injected by
-     kovixWelcome.ts (Phase 2 contribution) — this just reserves space. */
+     kovixWelcome.ts (Phase 2 contribution) - this just reserves space. */
   padding-top: 0;
   background: var(--kovix-bg-surface);
   border-right: 1px solid var(--kovix-hairline);
@@ -315,7 +315,7 @@
   display: block;
 }
 
-/* Status bar — the Kovix logo sits at the far left, before any VS Code entry. */
+/* Status bar - the Kovix logo sits at the far left, before any VS Code entry. */
 .monaco-workbench .statusbar .kovix-status-logo {
   display: inline-flex;
   align-items: center;
@@ -328,7 +328,7 @@
   display: block;
 }
 
-/* Volt pulsing dot — used by the status bar when the agent is actively working. */
+/* Volt pulsing dot - used by the status bar when the agent is actively working. */
 .monaco-workbench .statusbar .kovix-status-dot {
   width: 8px;
   height: 8px;
@@ -364,7 +364,7 @@
   100% { box-shadow: 0 0 0 0 rgba(255, 194, 51, 0); }
 }
 
-/* Command palette — Kovix title + logo. The markup is injected by a
+/* Command palette - Kovix title + logo. The markup is injected by a
    workbench contribution; this just styles it. */
 .monaco-workbench .quick-input-widget .kovix-quickinput-header {
   display: flex;
@@ -401,7 +401,7 @@
   border-radius: 2px;
 }
 
-/* Settings UI — Kovix header band (injects above the standard Settings header) */
+/* Settings UI - Kovix header band (injects above the standard Settings header) */
 .monaco-workbench .settings-editor .kovix-settings-header {
   display: flex;
   align-items: center;
@@ -448,7 +448,7 @@
   background: var(--kovix-accent-hover);
 }
 
-/* About dialog — the Kovix brand panel that replaces VS Code's About content. */
+/* About dialog - the Kovix brand panel that replaces VS Code's About content. */
 .monaco-workbench .dialog .kovix-about-row {
   display: flex;
   align-items: center;

@@ -19,10 +19,10 @@ import {
 export const ICreditSystem = createDecorator<ICreditSystem>('creditSystemService');
 
 /**
- * ICreditSystem — Transparent credit-based pricing system.
+ * ICreditSystem - Transparent credit-based pricing system.
  *
  * One credit = one action. Premium models consume more credits via multiplier.
- * Users see exact cost before execution. No overage charges — actions are blocked
+ * Users see exact cost before execution. No overage charges - actions are blocked
  * when credits are exhausted, never charged beyond allocation.
  */
 export interface ICreditSystem {
@@ -146,13 +146,13 @@ export interface ICreditSystem {
 export const ICostGovernor = createDecorator<ICostGovernor>('costGovernorEnhancedService');
 
 /**
- * ICostGovernor — Enhanced cost governor for LLM API spend management.
+ * ICostGovernor - Enhanced cost governor for LLM API spend management.
  *
  * Integrates with ICreditSystem for credit-aware cost management.
  * Provides auto-switch to cheaper models, budget recommendations,
  * and emergency mode blocking.
  *
- * Note: the older permissive ICostGovernorService stub was deleted 2026-06-25 —
+ * Note: the older permissive ICostGovernorService stub was deleted 2026-06-25 -
  * it always returned true with Infinity ceilings, which gave a false impression
  * of spending-cap protection. This is now the sole cost governor.
  */

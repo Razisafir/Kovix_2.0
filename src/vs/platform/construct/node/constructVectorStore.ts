@@ -18,7 +18,7 @@ const CHUNK_OVERLAP_TOKENS = 64;
 const CHARS_PER_TOKEN = 4; // Approximate
 
 /**
- * ConstructVectorStore — Qdrant-backed vector store for workspace file chunks.
+ * ConstructVectorStore - Qdrant-backed vector store for workspace file chunks.
  *
  * This service runs on the Node.js side and connects to a local Qdrant instance
  * at localhost:6333. It indexes workspace files by chunking them into 512-token
@@ -29,7 +29,7 @@ const CHARS_PER_TOKEN = 4; // Approximate
  *    Requires Ollama running and the model pulled (`ollama pull nomic-embed-text`).
  * 2. **BM25 keyword search** (fallback): When Ollama is not available or the model
  *    isn't pulled, uses a pure TypeScript BM25 scorer for keyword-based retrieval.
- *    No external dependencies — works fully offline.
+ *    No external dependencies - works fully offline.
  *
  * OFFLINE FIRST: If Qdrant is not running, all operations are no-ops that return
  * empty results. The user is warned once via the log service.
@@ -280,7 +280,7 @@ export class ConstructVectorStoreService extends Disposable implements IConstruc
                                         this._warnedEmbedFallback = true;
                                 }
                                 this._embedMode = 'bm25';
-                                // Return zero vector — caller should skip Qdrant storage for this chunk
+                                // Return zero vector - caller should skip Qdrant storage for this chunk
                                 return new Array(EMBEDDING_DIMENSION).fill(0);
                         }
                 }
@@ -473,10 +473,10 @@ export class ConstructVectorStoreService extends Disposable implements IConstruc
         }
 }
 
-// ─── BM25 Index — Pure TypeScript keyword search fallback ────────────────────
+// ─── BM25 Index - Pure TypeScript keyword search fallback ────────────────────
 
 /**
- * BM25Index — a simple BM25 scorer implemented in pure TypeScript.
+ * BM25Index - a simple BM25 scorer implemented in pure TypeScript.
  *
  * When Ollama is not available (or the embedding model isn't pulled),
  * this provides keyword-based document retrieval using term frequency

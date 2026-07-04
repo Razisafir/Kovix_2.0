@@ -27,7 +27,7 @@ const endpointHealthUrl = 'https://mobile.events.data.microsoft.com/ping';
 /**
  * Kovix IDE: AbstractOneDataSystemAppender with telemetry disabled.
  *
- * All telemetry is neutralized — log() is a no-op, flush() resolves immediately.
+ * All telemetry is neutralized - log() is a no-op, flush() resolves immediately.
  * This ensures Kovix IDE never sends data to Microsoft's 1DS endpoints.
  * The class structure is preserved for compatibility with subclasses and tests.
  */

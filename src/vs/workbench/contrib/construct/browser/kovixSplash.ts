@@ -5,11 +5,11 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
 // Kovix proprietary code. See LICENSE.txt for proprietary license terms.
 /*---------------------------------------------------------------------------------------------
- *  Kovix Splash Overlay — in-workbench launch splash.
+ *  Kovix Splash Overlay - in-workbench launch splash.
  *
  *  Renders a full-bleed Kovix splash screen OVER the workbench DOM during
  *  the boot window (between LifecyclePhase.Starting and Restored). This is
- *  the single highest-impact "this is not VS Code" signal — a user sees
+ *  the single highest-impact "this is not VS Code" signal - a user sees
  *  the K mark glow against true-black before any VS Code chrome is
  *  visible.
  *
@@ -66,7 +66,7 @@ export class KovixSplashContribution extends Disposable implements IWorkbenchCon
       this.hideOverlay();
     }).catch(err => {
       this.logService.error('[Kovix] Splash lifecycle when() failed:', err);
-      this.hideOverlay(); // fail safe — always hide, even on error
+      this.hideOverlay(); // fail safe - always hide, even on error
     });
 
     // Safety cap: never let the splash linger longer than 1.5s. If the
@@ -94,7 +94,7 @@ export class KovixSplashContribution extends Disposable implements IWorkbenchCon
 
     // Inline the styles so the splash renders correctly even before the
     // workbench's global stylesheet (style.css + kovix-brand.css) has
-    // loaded — the splash must be visible the INSTANT the body mounts.
+    // loaded - the splash must be visible the INSTANT the body mounts.
     const style = document.createElement('style');
     style.textContent = KOVIX_SPLASH_CSS;
     overlay.appendChild(style);
@@ -102,7 +102,7 @@ export class KovixSplashContribution extends Disposable implements IWorkbenchCon
     // Click-to-dismiss.
     overlay.addEventListener('click', () => this.hideOverlay(), { once: true });
 
-    // Position the overlay ABOVE everything in the body — z-index 99999
+    // Position the overlay ABOVE everything in the body - z-index 99999
     // beats VS Code's own z-index ceiling of ~25000.
     document.body.appendChild(overlay);
     this.overlay = overlay;
@@ -115,7 +115,7 @@ export class KovixSplashContribution extends Disposable implements IWorkbenchCon
 
     if (!this.overlay) { return; }
 
-    // Fade out rather than instant-remove — feels like a real app.
+    // Fade out rather than instant-remove - feels like a real app.
     this.overlay.style.transition = 'opacity 320ms cubic-bezier(0.4, 0, 0.2, 1)';
     this.overlay.style.opacity = '0';
 

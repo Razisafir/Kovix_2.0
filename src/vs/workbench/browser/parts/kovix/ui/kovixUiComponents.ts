@@ -8,13 +8,13 @@
  *  Kovix shared UI component library.
  *
  *  Built in Prompt 3 (Phase F) per KOVIX_DESIGN_SYSTEM_FOUNDATION.md.
- *  Consumed by Prompt 4's agent surfaces — every agent panel, plan-approval
+ *  Consumed by Prompt 4's agent surfaces - every agent panel, plan-approval
  *  UI, milestone status, memory browser, and error state must import from
  *  here rather than rolling its own one-off styles.
  *
  *  Ponytail discipline: only components Prompt 4 will actually consume.
  *  Skipping for now: Tooltip, Modal, Toast (VS Code already provides these
- *  via IHoverService, IDialogService, INotificationService — reusing them
+ *  via IHoverService, IDialogService, INotificationService - reusing them
  *  is one line of code, not a custom component).
  *
  *  Every component:
@@ -27,7 +27,7 @@
 import * as dom from '../../../../../base/browser/dom.js';
 
 // ─────────────────────────────────────────────────────────────────────────
-// Button — primary / secondary / ghost / destructive variants
+// Button - primary / secondary / ghost / destructive variants
 // ─────────────────────────────────────────────────────────────────────────
 
 export type KovixButtonVariant = 'primary' | 'secondary' | 'ghost' | 'destructive';
@@ -67,7 +67,7 @@ export function createButton(opts: IKovixButtonOptions): HTMLButtonElement {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Input — text input field
+// Input - text input field
 // ─────────────────────────────────────────────────────────────────────────
 
 export interface IKovixInputOptions {
@@ -97,7 +97,7 @@ export function createInput(opts: IKovixInputOptions = {}): HTMLInputElement {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Checkbox — specifically for plan-approval per-task checkboxes
+// Checkbox - specifically for plan-approval per-task checkboxes
 // States: unchecked, checked, indeterminate, disabled
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -153,7 +153,7 @@ export function createCheckbox(opts: IKovixCheckboxOptions): { container: HTMLEl
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Badge / Tag — small status indicators
+// Badge / Tag - small status indicators
 // ─────────────────────────────────────────────────────────────────────────
 
 export type KovixBadgeVariant = 'default' | 'success' | 'warning' | 'error' | 'info' | 'accent';
@@ -176,7 +176,7 @@ export function createBadge(opts: IKovixBadgeOptions): HTMLElement {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// EmptyState — for empty file explorer, no project, agent idle, no memories
+// EmptyState - for empty file explorer, no project, agent idle, no memories
 // ─────────────────────────────────────────────────────────────────────────
 
 export interface IKovixEmptyStateOptions {
@@ -216,7 +216,7 @@ export function createEmptyState(opts: IKovixEmptyStateOptions): HTMLElement {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Skeleton — loading placeholder that reserves space (no layout shift)
+// Skeleton - loading placeholder that reserves space (no layout shift)
 // ─────────────────────────────────────────────────────────────────────────
 
 export interface IKovixSkeletonOptions {
@@ -244,7 +244,7 @@ export function createSkeleton(opts: IKovixSkeletonOptions = {}): HTMLElement {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// ErrorState — for agent failures, API errors, network issues
+// ErrorState - for agent failures, API errors, network issues
 // Per anti-pattern: must show what failed, what was attempted, what user can do
 // ─────────────────────────────────────────────────────────────────────────
 

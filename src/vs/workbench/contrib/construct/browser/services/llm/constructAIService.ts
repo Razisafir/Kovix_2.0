@@ -26,12 +26,12 @@ import { CloudProvider } from './cloudProvider.js';
 const STORAGE_KEY_PREFERRED_PROVIDER = 'kovix.preferredProvider';
 
 /**
- * ConstructAIService — the unified AI service that auto-selects the best provider.
+ * ConstructAIService - the unified AI service that auto-selects the best provider.
  *
  * This service orchestrates three AI providers:
- * 1. OllamaProvider — local inference via Ollama (preferred)
- * 2. XenovaProvider — in-process ONNX models (offline fallback)
- * 3. CloudProvider — optional OpenAI-compatible API (last resort)
+ * 1. OllamaProvider - local inference via Ollama (preferred)
+ * 2. XenovaProvider - in-process ONNX models (offline fallback)
+ * 3. CloudProvider - optional OpenAI-compatible API (last resort)
  *
  * At startup, it checks each provider in priority order and selects the
  * first one that reports ProviderStatus.Available. If the user has
@@ -71,14 +71,14 @@ export class ConstructAIService extends Disposable implements IConstructAIServic
                 // BUGFIX (v1.2.0): break the constructor-time DI cycle
                 // kovix.aiService ↔ construct.secureKeyManager.
                 // Previously @ISecureKeyManager was injected here directly, and
-                // SecureKeyManager injected @IConstructAIService — the
+                // SecureKeyManager injected @IConstructAIService - the
                 // instantiator cannot satisfy a cycle and throws
                 // "Error: cyclic dependency between services", which crashed
                 // every Construct workbench contribution (status bar, autocomplete,
                 // and the agent panel itself) on Kovix v1.1.0.
                 // Fix: take IInstantiationService instead and lazily resolve
                 // ISecureKeyManager on first use. Both services still see each
-                // other at runtime — just not during construction.
+                // other at runtime - just not during construction.
                 @IInstantiationService private readonly _instantiationService: IInstantiationService,
         ) {
                 super();
@@ -90,7 +90,7 @@ export class ConstructAIService extends Disposable implements IConstructAIServic
                 this._providers.set('ollama', ollama);
                 this._providers.set('xenova', xenova);
 
-                // CloudProvider needs ISecureKeyManager — register it lazily so we
+                // CloudProvider needs ISecureKeyManager - register it lazily so we
                 // don't trigger SecureKeyManager construction (which would re-enter
                 // IConstructAIService and trip the cycle). The CloudProvider is
                 // instantiated on first use of getProvider('cloud') or autoSelect.
@@ -265,7 +265,7 @@ export class ConstructAIService extends Disposable implements IConstructAIServic
 
         /**
          * Lazily resolve ISecureKeyManager on first use. This MUST NOT be called
-         * from the constructor — only from runtime methods. Breaking this rule
+         * from the constructor - only from runtime methods. Breaking this rule
          * re-introduces the cyclic dependency that crashed Kovix v1.1.0.
          */
         private _resolveKeyManager(): ISecureKeyManager {
@@ -299,7 +299,7 @@ export class ConstructAIService extends Disposable implements IConstructAIServic
 }
 
 /**
- * LazyCloudProvider — proxy that defers construction of the real CloudProvider
+ * LazyCloudProvider - proxy that defers construction of the real CloudProvider
  * until the first method call. This breaks the constructor-time DI cycle
  * between IConstructAIService and ISecureKeyManager in Kovix v1.2.0.
  *

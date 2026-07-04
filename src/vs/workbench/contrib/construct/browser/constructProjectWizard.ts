@@ -832,7 +832,7 @@ class ProjectWizard extends Disposable {
                         this.state.step = (this.state.step + 1) as WizardStep;
                         this.renderCurrentStep();
                 } else {
-                        // Final step — create the project
+                        // Final step - create the project
                         await this.createProject();
                 }
         }

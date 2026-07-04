@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  Kovix shared UI component library — styles.
+ *  Kovix shared UI component library - styles.
  *
  *  Every component uses --kovix-* tokens defined in kovix-tokens.css.
  *  No hardcoded hex values anywhere in this file.
@@ -8,7 +8,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Button — primary / secondary / ghost / destructive
+   Button - primary / secondary / ghost / destructive
    ───────────────────────────────────────────────────────────────────────── */
 
 .kovix-btn {
@@ -117,7 +117,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Checkbox — for plan-approval per-task checkboxes
+   Checkbox - for plan-approval per-task checkboxes
    Custom-styled native input (preserves keyboard nav + screen reader support)
    ───────────────────────────────────────────────────────────────────────── */
 
@@ -287,7 +287,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Skeleton — loading placeholder with shimmer animation
+   Skeleton - loading placeholder with shimmer animation
    ───────────────────────────────────────────────────────────────────────── */
 
 .kovix-skeleton {

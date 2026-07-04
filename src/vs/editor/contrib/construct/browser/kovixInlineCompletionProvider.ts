@@ -16,7 +16,7 @@ import { IConstructAIService } from '../../../../platform/construct/common/llm/c
 import { ILogService } from '../../../../platform/log/common/log.js';
 
 /**
- * KovixInlineCompletionProvider — Patch A
+ * KovixInlineCompletionProvider - Patch A
  *
  * Registers an InlineCompletionsProvider with the editor that calls the active
  * AI provider's complete() method (Ollama / Xenova / Cloud) and returns a single

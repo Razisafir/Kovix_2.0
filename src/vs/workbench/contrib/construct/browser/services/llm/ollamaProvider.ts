@@ -20,7 +20,7 @@ const REQUEST_TIMEOUT_MS = 120_000;
 const MAX_RETRIES = 3;
 
 /**
- * OllamaProvider — concrete AI provider that connects to a local Ollama instance.
+ * OllamaProvider - concrete AI provider that connects to a local Ollama instance.
  *
  * Communication is via HTTP to localhost:11434 using Ollama's native API:
  * - /api/chat for streaming chat with tool support

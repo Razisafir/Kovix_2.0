@@ -4,7 +4,7 @@
  *
  *  Replaces opaque usage tracking with transparent credit system.
  *  One credit = one action. Premium models consume 2-3 credits.
- *  No overage charges — actions are blocked when credits are exhausted.
+ *  No overage charges - actions are blocked when credits are exhausted.
  *--------------------------------------------------------------------------------------------*/
 
 import { Disposable } from '../../../../../../base/common/lifecycle.js';
@@ -60,7 +60,7 @@ const GRACE_PERIOD_MS = 24 * 60 * 60 * 1000; // 24 hours
 const ESSENTIAL_ACTION_TYPES: CreditActionType[] = ['file_edit'];
 
 // ══════════════════════════════════════════════════════════════
-// CreditSystemService — Main ICreditSystem implementation
+// CreditSystemService - Main ICreditSystem implementation
 // ══════════════════════════════════════════════════════════════
 
 export class CreditSystemService extends Disposable implements ICreditSystem {
@@ -113,7 +113,7 @@ export class CreditSystemService extends Disposable implements ICreditSystem {
                 // Check if billing period needs reset
                 this._checkPeriodReset();
 
-                // Phase 27: Telemetry tier sync — Free tier = telemetry active, paid = off
+                // Phase 27: Telemetry tier sync - Free tier = telemetry active, paid = off
                 this._syncTelemetryWithTier();
 
                 // Register disposables
@@ -707,7 +707,7 @@ export class CreditSystemService extends Disposable implements ICreditSystem {
 }
 
 // ══════════════════════════════════════════════════════════════
-// CostGovernorEnhancedService — ICostGovernor implementation
+// CostGovernorEnhancedService - ICostGovernor implementation
 // ══════════════════════════════════════════════════════════════
 
 /**

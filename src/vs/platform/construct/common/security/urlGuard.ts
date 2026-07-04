@@ -118,7 +118,7 @@ export function assertSafeUrl(rawUrl: string): void {
 
         const host = parsed.hostname;
 
-        // IPv6 in brackets — URL.hostname may or may not strip them depending on
+        // IPv6 in brackets - URL.hostname may or may not strip them depending on
         // the runtime (browsers strip, Node keeps). Strip explicitly before classify.
         const ipv6Match = host.match(/^\[?([0-9a-fA-F:]+)\]?$/);
         if (ipv6Match && host.includes(':')) {
@@ -139,7 +139,7 @@ export function assertSafeUrl(rawUrl: string): void {
                 return;
         }
 
-        // Hostname — block obvious internal names
+        // Hostname - block obvious internal names
         const lowered = host.toLowerCase();
         const BLOCKED_HOSTNAMES = new Set([
                 'localhost', 'metadata', 'metadata.google.internal',
@@ -155,12 +155,12 @@ export function assertSafeUrl(rawUrl: string): void {
 /**
  * Fetch wrapper that enforces the SSRF guard on both the request URL and any
  * redirect target. Redirects are followed manually so we can re-validate each
- * hop — `fetch()`'s built-in redirect-following would skip validation.
+ * hop - `fetch()`'s built-in redirect-following would skip validation.
  *
  * After DNS resolution, you can pass `validateResolvedIp` to also block
  * hostnames that resolve to private IPs (defends against DNS rebinding).
  * In browser contexts, DNS resolution isn't directly accessible, so this is
- * a string-level guard only — but the manual redirect validation still closes
+ * a string-level guard only - but the manual redirect validation still closes
  * the most common SSRF vector (attacker server 302s to 169.254.169.254).
  */
 export async function safeFetch(
@@ -180,7 +180,7 @@ export async function safeFetch(
                 if (response.status >= 300 && response.status < 400) {
                         const location = response.headers.get('location');
                         if (!location) {
-                                // No Location header — return the response as-is, caller decides
+                                // No Location header - return the response as-is, caller decides
                                 return response;
                         }
                         // Resolve relative redirects against the current URL

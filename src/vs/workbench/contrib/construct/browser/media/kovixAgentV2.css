@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------
- *  Kovix Agent Panel — v2.0 Teal Identity + agent-first surfaces.
+ *  Kovix Agent Panel - v2.0 Teal Identity + agent-first surfaces.
  *
  *  This file is ADDED to kovixAgent.css (the existing 1,073-line file keeps
  *  working via the backward-compat token aliases). It adds:
@@ -57,7 +57,7 @@
   animation: kovix-status-pulse 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-/* Phase 3.1 — State: verifying (Ignite-orange pulse, slower)
+/* Phase 3.1 - State: verifying (Ignite-orange pulse, slower)
    Distinct from executing so the user can see "the harness is checking the
    agent's work" vs "the agent is running". Slower pulse (1.8s vs 1.2s)
    signals "wait, real check in progress" without being alarming. */
@@ -66,15 +66,15 @@
   animation: kovix-status-pulse 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-/* Phase 3.1 — State: verification failed (solid Ignite-red, no pulse)
-   Solid (not pulsing) because the failure has already happened — the user
+/* Phase 3.1 - State: verification failed (solid Ignite-red, no pulse)
+   Solid (not pulsing) because the failure has already happened - the user
    needs to see it and decide what to do. Slightly more saturated than
    plain error to signal "this is a trust signal, not just a crash". */
 .kovix-agent-statusbar.is-verification-failed .kovix-agent-statusbar__dot {
   background: var(--kovix-error);
 }
 
-/* Phase 3.1 — Workbench statusbar modifier for verifying state.
+/* Phase 3.1 - Workbench statusbar modifier for verifying state.
    When the harness is running its check, the bottom status bar shifts to
    an Ignite-orange tint so the user can see at a glance that verification
    (not the agent) is in control. Mirrors the existing kovix-status-running
@@ -321,7 +321,7 @@
 
 /* ═════════════════════════════════════════════════════════════════════════
    4. MESSAGE-CATEGORY VISUAL DISTINCTIONS
-   User / agent-text / agent-tool / agent-question — distinguishable at a glance.
+   User / agent-text / agent-tool / agent-question - distinguishable at a glance.
    ═════════════════════════════════════════════════════════════════════════ */
 
 /* User messages: teal-tinted bubble, right-aligned content feel */
@@ -463,7 +463,7 @@
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
-   7. ONBOARDING WIZARD — focused single-purpose flow treatment
+   7. ONBOARDING WIZARD - focused single-purpose flow treatment
    Larger type, more whitespace, centered layout (per foundation doc).
    ═════════════════════════════════════════════════════════════════════════ */
 

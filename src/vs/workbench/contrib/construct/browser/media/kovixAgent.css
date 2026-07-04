@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 /* ===========================================================================
-   Kovix Agent Panel — Luxury Chromium
+   Kovix Agent Panel - Luxury Chromium
    Matches kovix_ui_preview.png reference exactly.
    All inline styles in constructAgentView.ts have been replaced with the
    classes below so the design system owns the look end-to-end.
@@ -958,7 +958,7 @@
 /* ===========================================================================
    P1-1: Secondary button row in agent panel header (mode/swarm/skills/MCP/
    autonomous/ponytail). Currently these are injected as a follow-up to the
-   existing 4 header buttons. The styling is intentionally compact — these
+   existing 4 header buttons. The styling is intentionally compact - these
    are secondary actions, not primary CTAs.
    =========================================================================== */
 
@@ -983,7 +983,7 @@
         color: var(--kovix-accent-hover);
 }
 
-/* Active state for the ponytail button — shows the current mode in the badge */
+/* Active state for the ponytail button - shows the current mode in the badge */
 .kovix-agent__header-secondary .kovix-icon-btn.is-active {
         background: var(--kovix-accent-subtle);
         color: var(--kovix-accent-hover);

@@ -268,7 +268,7 @@ export class ConstructMemoryViewPane extends ViewPane {
                                 `;
                                 row.title = item.fullContent ?? item.label;
 
-                                // v2.0: Scope badge — project-scoped vs universal
+                                // v2.0: Scope badge - project-scoped vs universal
                                 const isProject = item.category === MemoryCategory.WorkspaceContext;
                                 const scopeBadge = dom.$(`.kovix-memory-entry__scope--${isProject ? 'project' : 'universal'}`);
                                 scopeBadge.textContent = isProject ? 'PROJ' : 'UNIV';

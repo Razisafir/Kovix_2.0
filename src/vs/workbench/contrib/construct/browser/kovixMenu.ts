@@ -5,7 +5,7 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
 // Kovix proprietary code. See LICENSE.txt for proprietary license terms.
 /*---------------------------------------------------------------------------------------------
- *  Kovix Menu — registers a top-level "Kovix" menu in the workbench menu bar
+ *  Kovix Menu - registers a top-level "Kovix" menu in the workbench menu bar
  *  (between Terminal and Help) containing all 53 Kovix commands organized
  *  into 8 submenus: Welcome, Agent, Memory, Skills, Swarm, Autonomous, MCP,
  *  Tools, and Settings.
@@ -13,7 +13,7 @@
  *  This is the single highest-impact fix for feature discoverability.
  *  Without this menu, every Kovix command is reachable ONLY via the Command
  *  Palette (Ctrl+Shift+P → type the command name). With this menu, every
- *  command has a visible entry point — bringing Kovix in line with VS Code's
+ *  command has a visible entry point - bringing Kovix in line with VS Code's
  *  most fundamental UX contract: every feature has a button.
  *
  *  The menu structure:
@@ -84,13 +84,13 @@ import { localize } from '../../../../nls.js';
  * VS Code's MenuId class has a private constructor but allows new instances
  * via `new MenuId('id')`. We register 9 new MenuIds: one for the top-level
  * "Kovix" menu, and 8 for the submenus (Agent, Memory, Skills, Swarm,
- * Autonomous, MCP, Tools — Settings/Welcome/About are flat groups in the
+ * Autonomous, MCP, Tools - Settings/Welcome/About are flat groups in the
  * top-level menu rather than submenus).
  */
-// Top-level menu — appears in the menu bar between Terminal and Help.
+// Top-level menu - appears in the menu bar between Terminal and Help.
 const MenuIdKovixMainMenu = new MenuId('KovixMainMenu');
 
-// Submenus — each becomes a flyout when the user hovers the parent entry.
+// Submenus - each becomes a flyout when the user hovers the parent entry.
 const MenuIdKovixAgentMenu = new MenuId('KovixAgentMenu');
 const MenuIdKovixMemoryMenu = new MenuId('KovixMemoryMenu');
 const MenuIdKovixSkillsMenu = new MenuId('KovixSkillsMenu');
@@ -101,7 +101,7 @@ const MenuIdKovixToolsMenu = new MenuId('KovixToolsMenu');
 
 /**
  * Register the top-level "Kovix" menu in the menu bar. Order 7 places it
- * between Terminal (order 6) and Help (order 8) — exactly where the mockup
+ * between Terminal (order 6) and Help (order 8) - exactly where the mockup
  * shows it.
  */
 MenuRegistry.appendMenuItem(MenuId.MenubarMainMenu, {
@@ -589,7 +589,7 @@ MenuRegistry.appendMenuItem(MenuIdKovixMainMenu, {
 	order: 92,
 });
 
-// "About Kovix" — opens VS Code's About dialog (which our surface-branding
+// "About Kovix" - opens VS Code's About dialog (which our surface-branding
 // contribution already Kovix-ifies with the K logo + version + tagline).
 MenuRegistry.appendMenuItem(MenuIdKovixMainMenu, {
 	command: {

@@ -110,7 +110,7 @@ export class FileWatcherService extends Disposable implements IFileWatcherServic
                 this.logService.info(`[FileWatcher] Starting watch on: ${workspaceRoot.toString()}`);
 
                 try {
-                        // Use createWatcher for correlated events — events are delivered
+                        // Use createWatcher for correlated events - events are delivered
                         // on the returned IFileSystemWatcher.onDidChange, keeping them
                         // isolated from the global onDidFilesChange channel.
                         this.watcher = this.fileService.createWatcher(workspaceRoot, {
@@ -265,7 +265,7 @@ export class FileWatcherService extends Disposable implements IFileWatcherServic
                 const existingIndex = this.pendingChanges.findIndex(c => c.uri.toString() === uriKey);
 
                 if (existingIndex === -1) {
-                        // No existing entry for this URI — just append
+                        // No existing entry for this URI - just append
                         this.pendingChanges.push(change);
                         return;
                 }
@@ -274,7 +274,7 @@ export class FileWatcherService extends Disposable implements IFileWatcherServic
                 const merged = this.coalesceChanges(existing, change);
 
                 if (merged === null) {
-                        // created + deleted — cancel out, remove the entry
+                        // created + deleted - cancel out, remove the entry
                         this.pendingChanges.splice(existingIndex, 1);
                 } else {
                         // Replace with the coalesced result
@@ -318,7 +318,7 @@ export class FileWatcherService extends Disposable implements IFileWatcherServic
                         case 'modified+created':
                                 return { uri: existing.uri, type: 'modified', timestamp: incoming.timestamp };
 
-                        // Same type combinations — collapse, keep later timestamp
+                        // Same type combinations - collapse, keep later timestamp
                         case 'created+created':
                                 return { uri: existing.uri, type: 'created', timestamp: incoming.timestamp };
 

@@ -5,12 +5,12 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
 // Kovix proprietary code. See LICENSE.txt for proprietary license terms.
 /*---------------------------------------------------------------------------------------------
- *  Kovix Surface Branding — injects the Kovix identity into three remaining
+ *  Kovix Surface Branding - injects the Kovix identity into three remaining
  *  VS Code surfaces the brand-chrome contribution doesn't cover:
  *
- *    Phase 5  — Command Palette / Quick Pick header
- *    Phase 6  — Settings UI header band
- *    Phase 7  — About dialog brand panel
+ *    Phase 5  - Command Palette / Quick Pick header
+ *    Phase 6  - Settings UI header band
+ *    Phase 7  - About dialog brand panel
  *
  *  Each injection is DOM-only: we hook the relevant VS Code container,
  *  prepend a Kovix-branded element, and never delete or hide VS Code's
@@ -26,7 +26,7 @@ import { IWorkbenchContribution } from '../../../common/contributions.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
 import { localize } from '../../../../nls.js';
 
-/** Inline K mark — 18px variant for the command palette + settings headers. */
+/** Inline K mark - 18px variant for the command palette + settings headers. */
 const KOVIX_K_SVG_18 = `
 <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
@@ -80,7 +80,7 @@ function getKovixVersion(): string {
  * target surfaces and prepends a Kovix-branded element when they appear.
  *
  * Uses a single MutationObserver rather than multiple setInterval polls
- * — cheaper, and naturally handles late-mounting VS Code surfaces.
+ * - cheaper, and naturally handles late-mounting VS Code surfaces.
  */
 export class KovixSurfaceBrandingContribution extends Disposable implements IWorkbenchContribution {
   static readonly ID = 'workbench.contrib.kovixSurfaceBranding';
@@ -181,7 +181,7 @@ export class KovixSurfaceBrandingContribution extends Disposable implements IWor
     // VS Code's About dialog is a `.dialog` container with `.dialog-message`
     // at its head. We prepend a Kovix brand row above the existing content.
     // Match by looking for a dialog containing the literal "VS Code" or
-    // "Visual Studio Code" text — that's the About dialog.
+    // "Visual Studio Code" text - that's the About dialog.
     const dialogs = document.querySelectorAll('.monaco-workbench .dialog');
     dialogs.forEach((dialog) => {
       if (dialog.querySelector('.kovix-about-row')) { return; } // already injected

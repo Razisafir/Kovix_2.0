@@ -10,7 +10,7 @@
 // still register IMCPProcessNodeService and the other live services.
 
 // ---------------------------------------------------------------------------
-// Construct AI Agent System — Public API re-exports
+// Construct AI Agent System - Public API re-exports
 //
 // "Construct" is the internal name for Kovix's AI agent feature.
 // This module re-exports the public API surface so that other modules can

@@ -17,7 +17,7 @@
 	margin-left: -2px;
 }
 
-/* The inline agent widget itself — most styling is inline (theme-aware) */
+/* The inline agent widget itself - most styling is inline (theme-aware) */
 .kovix-inline-agent {
 	font-family: var(--vscode-editor-font-family, -apple-system, BlinkMacSystemFont, sans-serif);
 }

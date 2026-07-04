@@ -46,7 +46,7 @@ export class PendingChangesService extends Disposable implements IPendingChanges
                         const content = await this.fileService.readFile(uri);
                         originalContent = content.value.toString();
                 } catch {
-                        // File doesn't exist yet — this is a new file creation
+                        // File doesn't exist yet - this is a new file creation
                         isNewFile = true;
                 }
 
@@ -75,7 +75,7 @@ export class PendingChangesService extends Disposable implements IPendingChanges
         }
 
         async stageEdit(uri: URI, diff: string): Promise<void> {
-                // For edit_file, we stage the diff itself — the diff will be applied
+                // For edit_file, we stage the diff itself - the diff will be applied
                 // at accept time. We still capture the original content.
                 const key = uri.toString();
 
@@ -95,7 +95,7 @@ export class PendingChangesService extends Disposable implements IPendingChanges
                         isNewFile = true;
                 }
 
-                // Store the diff as proposedContent marker — actual diff application
+                // Store the diff as proposedContent marker - actual diff application
                 // happens at accept time via DiffApplierService
                 this._entries.set(key, {
                         uri,

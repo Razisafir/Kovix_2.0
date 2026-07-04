@@ -113,7 +113,7 @@ export interface ICreditRule {
 }
 
 /**
- * Default credit rules — configurable via IConfigurationService.
+ * Default credit rules - configurable via IConfigurationService.
  */
 export const DEFAULT_CREDIT_RULES: ICreditRule[] = [
         { actionType: 'message_standard', baseCredits: 1, modelMultiplier: 1, description: 'Standard model message (gpt-4o, claude-sonnet, etc.)' },
@@ -223,7 +223,7 @@ export const CREDIT_PACKAGES: ICreditPackage[] = [
 ];
 
 /**
- * Standard model identifiers — 1x multiplier.
+ * Standard model identifiers - 1x multiplier.
  */
 export const STANDARD_MODELS = [
         'gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo',
@@ -233,7 +233,7 @@ export const STANDARD_MODELS = [
 ];
 
 /**
- * Premium model identifiers — 3x multiplier.
+ * Premium model identifiers - 3x multiplier.
  */
 export const PREMIUM_MODELS = [
         'gpt-4o-opus', 'opus', 'claude-opus', 'claude-3-opus',

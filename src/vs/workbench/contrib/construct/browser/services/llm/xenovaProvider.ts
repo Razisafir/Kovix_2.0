@@ -16,7 +16,7 @@ import {
 } from '../../../../../../platform/construct/common/llm/constructAIProvider.js';
 
 /**
- * XenovaProvider — concrete AI provider that runs ONNX models in-process
+ * XenovaProvider - concrete AI provider that runs ONNX models in-process
  * using @xenova/transformers.
  *
  * This is the offline fallback when Ollama is not available. It loads
@@ -42,10 +42,10 @@ import {
  *   by the user. A compromised model file can execute arbitrary code inside
  *   the Worker thread (any browser API available to workers is reachable).
  * - In Electron desktop: the sandboxed renderer blocks Worker creation, so
- *   this provider always reports Unreachable — the L4 attack surface does
+ *   this provider always reports Unreachable - the L4 attack surface does
  *   not exist on desktop builds.
  * - In vscode-web (browser): Workers ARE available. The user explicitly
- *   chose the model, so this is "user-accepted risk" — but a future
+ *   chose the model, so this is "user-accepted risk" - but a future
  *   hardening pass should run the Worker inside a `sandbox` iframe with
  *   `allow-scripts` and NO `allow-same-origin`, so a malicious model
  *   cannot read the parent's localStorage / IndexedDB / cookies.

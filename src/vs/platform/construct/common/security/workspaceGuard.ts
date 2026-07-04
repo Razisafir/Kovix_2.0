@@ -6,7 +6,7 @@
 // Kovix proprietary code. See LICENSE.txt for proprietary license terms.
 
 import { IWorkspaceContextService } from '../../../workspace/common/workspace.js';
-// Use VS Code's browser-safe path utilities — Node 'path' is NOT available in the renderer
+// Use VS Code's browser-safe path utilities - Node 'path' is NOT available in the renderer
 import * as path from '../../../../base/common/path.js';
 
 /**
@@ -34,10 +34,10 @@ export function assertWithinWorkspace(
                 if (typeof workspaceRoot === 'string') {
                         root = path.resolve(workspaceRoot);
                 } else {
-                        // IWorkspaceContextService — extract first workspace folder
+                        // IWorkspaceContextService - extract first workspace folder
                         const folders = workspaceRoot.getWorkspace().folders;
                         if (folders.length === 0) {
-                                // No workspace open — only allow relative paths within CWD
+                                // No workspace open - only allow relative paths within CWD
                                 if (path.isAbsolute(filePath)) {
                                         throw new Error(`No workspace open. Absolute paths are not allowed: "${filePath}"`);
                                 }
@@ -56,7 +56,7 @@ export function assertWithinWorkspace(
                         throw new Error(`Security: path "${resolved}" is outside workspace "${root}"`);
                 }
         } else {
-                // No workspace root provided — reject absolute paths as a safety measure
+                // No workspace root provided - reject absolute paths as a safety measure
                 if (path.isAbsolute(filePath)) {
                         throw new Error(`Absolute paths require a workspace context: "${filePath}"`);
                 }

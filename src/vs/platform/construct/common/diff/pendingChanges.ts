@@ -13,7 +13,7 @@ export const IPendingChangesService = createDecorator<IPendingChangesService>('k
 
 /**
  * A single pending change entry staged by the agent.
- * The change exists in memory only — disk is not modified until accept().
+ * The change exists in memory only - disk is not modified until accept().
  */
 export interface PendingChangeEntry {
         /** URI of the file being changed. */
@@ -51,7 +51,7 @@ export interface IPendingChangesService {
         /**
          * Stage a new file creation or full file replacement.
          * Captures the original file content BEFORE staging.
-         * Does NOT write to disk — the change is in memory only.
+         * Does NOT write to disk - the change is in memory only.
          */
         stageFile(uri: URI, proposedContent: string): Promise<void>;
 
@@ -63,12 +63,12 @@ export interface IPendingChangesService {
         stageEdit(uri: URI, diff: string): Promise<void>;
 
         /**
-         * Accept a pending change — writes the proposed content to disk.
+         * Accept a pending change - writes the proposed content to disk.
          */
         accept(uri: URI): Promise<void>;
 
         /**
-         * Reject a pending change — discards the in-memory proposal.
+         * Reject a pending change - discards the in-memory proposal.
          * If this was a new file that doesn't exist on disk, nothing happens.
          * If the file existed before, the disk remains unchanged.
          */

@@ -22,18 +22,18 @@ export const ISecureKeyManager = createDecorator<ISecureKeyManager>('kovix.secur
  * Provider → label mapping lives in SecureKeyManagerService.PROVIDER_LABELS.
  */
 export type LLMProvider =
-        | 'anthropic'    // Claude API (api.anthropic.com) — native Anthropic format
-        | 'openai'       // OpenAI API (api.openai.com) — OpenAI Chat Completions
-        | 'nvidia'       // NVIDIA NIM (integrate.api.nvidia.com/v1) — OpenAI-compatible
-        | 'openrouter'   // OpenRouter (openrouter.ai/api/v1) — OpenAI-compatible, multi-model router
-        | 'lmstudio'     // LM Studio local (localhost:1234/v1) — OpenAI-compatible, no auth
-        | 'together'     // Together AI (api.together.xyz/v1) — OpenAI-compatible
-        | 'groq'         // Groq (api.groq.com/openai/v1) — OpenAI-compatible, fast inference
-        | 'mistral'      // Mistral AI (api.mistral.ai/v1) — OpenAI-compatible
-        | 'gemini'       // Google Gemini (generativelanguage.googleapis.com/v1beta/openai) — OpenAI-compatible mode
-        | 'deepseek'     // DeepSeek (api.deepseek.com/v1) — OpenAI-compatible
-        | 'ollama'       // Ollama local (localhost:11434) — native Ollama API
-        | 'litellm'      // LiteLLM proxy (user-defined) — OpenAI-compatible router
+        | 'anthropic'    // Claude API (api.anthropic.com) - native Anthropic format
+        | 'openai'       // OpenAI API (api.openai.com) - OpenAI Chat Completions
+        | 'nvidia'       // NVIDIA NIM (integrate.api.nvidia.com/v1) - OpenAI-compatible
+        | 'openrouter'   // OpenRouter (openrouter.ai/api/v1) - OpenAI-compatible, multi-model router
+        | 'lmstudio'     // LM Studio local (localhost:1234/v1) - OpenAI-compatible, no auth
+        | 'together'     // Together AI (api.together.xyz/v1) - OpenAI-compatible
+        | 'groq'         // Groq (api.groq.com/openai/v1) - OpenAI-compatible, fast inference
+        | 'mistral'      // Mistral AI (api.mistral.ai/v1) - OpenAI-compatible
+        | 'gemini'       // Google Gemini (generativelanguage.googleapis.com/v1beta/openai) - OpenAI-compatible mode
+        | 'deepseek'     // DeepSeek (api.deepseek.com/v1) - OpenAI-compatible
+        | 'ollama'       // Ollama local (localhost:11434) - native Ollama API
+        | 'litellm'      // LiteLLM proxy (user-defined) - OpenAI-compatible router
         | 'custom';      // Custom OpenAI-compatible endpoint (user-defined)
 
 /**

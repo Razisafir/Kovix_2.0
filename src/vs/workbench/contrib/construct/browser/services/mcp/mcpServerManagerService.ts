@@ -77,7 +77,7 @@ export class MCPServerManagerService extends Disposable implements IMCPServerMan
                 this.registry = this._register(instantiationService.createInstance(MCPServerRegistry));
 
                 // M6: Compute the capability once at startup. See MCPConnectionPool
-                // constructor for the full rationale — the same flag is computed there
+                // constructor for the full rationale - the same flag is computed there
                 // as well, but we keep a local copy here to avoid coupling the
                 // auto-discovery path to the connection pool's internal state.
                 this.canSpawnChildProcesses = (
@@ -121,7 +121,7 @@ export class MCPServerManagerService extends Disposable implements IMCPServerMan
                 // unavailable because `child_process` doesn't exist in the
                 // renderer.
                 if (!this.canSpawnChildProcesses) {
-                        // Log already emitted at construction time — no need to spam.
+                        // Log already emitted at construction time - no need to spam.
                         return common;
                 }
 

@@ -170,10 +170,10 @@ export class MCPProcessNodeService extends Disposable implements IMCPProcessNode
                 // instead of spreading `{ ...process.env }`. The prior SEC-7
                 // H2 fix added _buildChildEnv() only in mcpConnectionPool.ts;
                 // this separate spawn path (the built-in MCP filesystem
-                // server) was missed and still leaked the full parent env —
+                // server) was missed and still leaked the full parent env -
                 // including any secret in AWS_*, GITHUB_TOKEN,
                 // KOVIX_ENCRYPTION_KEY_HEX, NODE_OPTIONS=--require ...,
-                // LD_PRELOAD=..., etc. — into the npx child and whatever npx
+                // LD_PRELOAD=..., etc. - into the npx child and whatever npx
                 // pulls down at install time.
                 //
                 // The shared helper applies BOTH the PARENT_ENV_ALLOWLIST

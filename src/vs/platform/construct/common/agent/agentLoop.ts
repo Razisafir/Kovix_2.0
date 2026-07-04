@@ -42,7 +42,7 @@ export type AgentLoopEvent =
         | { type: 'milestone_skipped'; milestone: IMilestone }
         | { type: 'milestone_completed'; milestone: IMilestone }
         /**
-         * Emitted when the harness enters the Verifying state — i.e. the agent
+         * Emitted when the harness enters the Verifying state - i.e. the agent
          * has declared the milestone complete and the harness is now running a
          * real check (test / build / typecheck). The UI shows a "Verifying…"
          * chip while this is in flight.

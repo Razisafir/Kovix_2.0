@@ -6,7 +6,7 @@
 // Kovix proprietary code. See LICENSE.txt for proprietary license terms.
 
 /**
- * KovixMemoryGraphPane — Obsidian-style force-directed graph view of the
+ * KovixMemoryGraphPane - Obsidian-style force-directed graph view of the
  * universal memory system.
  *
  * Each memory entry is a node. Nodes are linked when:
@@ -74,7 +74,7 @@ const CATEGORY_COLORS: Record<UniversalMemoryCategory, string> = {
         [UniversalMemoryCategory.Semantic]: '#C586C0',
         [UniversalMemoryCategory.Procedural]: '#D7BA7D',
         [UniversalMemoryCategory.Universal]: '#14B8A6',
-        // Original seven categories (kept for completeness — Record<K,V> requires all keys)
+        // Original seven categories (kept for completeness - Record<K,V> requires all keys)
         [UniversalMemoryCategory.Preference]: '#569CD6',
         [UniversalMemoryCategory.Pattern]: '#4EC9B0',
         [UniversalMemoryCategory.Convention]: '#C586C0',
@@ -483,7 +483,7 @@ export class KovixMemoryGraphPane extends ViewPane {
 
                 const meta = dom.$('.kovix-mg-meta');
                 // SECURITY FIX (M1): Use textContent + DOM construction instead of innerHTML.
-                // `node.tags` come from user-created memory nodes or agent-generated memories —
+                // `node.tags` come from user-created memory nodes or agent-generated memories -
                 // either could contain HTML metacharacters. innerHTML would execute them in the
                 // workbench renderer (no CSP here, unlike webviews).
                 const tagSpan = dom.$('span.kovix-mg-tag');
@@ -541,7 +541,7 @@ export class KovixMemoryGraphPane extends ViewPane {
                 const nodes = this.nodes;
                 if (nodes.length === 0) { return; }
 
-                // Repulsion (Coulomb-ish) — O(n²) but capped at 500 nodes
+                // Repulsion (Coulomb-ish) - O(n²) but capped at 500 nodes
                 const cap = Math.min(nodes.length, 500);
                 for (let i = 0; i < cap; i++) {
                         const a = nodes[i];

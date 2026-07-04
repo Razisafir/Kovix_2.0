@@ -1,12 +1,12 @@
 /*---------------------------------------------------------------------------------------------
- *  Kovix Design Tokens — single source of truth for the Kovix visual identity.
+ *  Kovix Design Tokens - single source of truth for the Kovix visual identity.
  *
- *  v2.0 — Teal Identity Release.
+ *  v2.0 - Teal Identity Release.
  *  Discards the previous Volt-violet (#6E42FF) + Ignite-orange (#FF5A36) palette.
  *  New signature: teal #14B8A6 on blue-black #0B1115.
  *
  *  Source of truth: KOVIX_DESIGN_SYSTEM_FOUNDATION.md (repo root).
- *  No UI code should hardcode hex values — reference these tokens instead.
+ *  No UI code should hardcode hex values - reference these tokens instead.
  *
  *  Scoped to .monaco-workbench so they're available everywhere in the
  *  workbench DOM. Webviews (splash, welcome, onboarding) duplicate the
@@ -15,24 +15,24 @@
 
 .monaco-workbench {
   /* ─────────────────────────────────────────────────────────────────────
-     SURFACES — blue-black background scale, NOT pure black, NOT VS Code gray
+     SURFACES - blue-black background scale, NOT pure black, NOT VS Code gray
      ───────────────────────────────────────────────────────────────────── */
   --kovix-bg-base:      #0B1115;  /* deepest: app background behind everything */
   --kovix-bg-surface:   #121A20;  /* panels: activity bar, sidebar, status bar */
   --kovix-bg-elevated:  #1A242C;  /* cards, dropdowns, popovers, command palette */
-  --kovix-bg-input:     #0E1419;  /* text inputs, textarea — recedes until focused */
+  --kovix-bg-input:     #0E1419;  /* text inputs, textarea - recedes until focused */
   --kovix-bg-overlay:   rgba(11, 17, 21, 0.85); /* modal scrims */
 
   /* ─────────────────────────────────────────────────────────────────────
-     TEXT — WCAG AAA against bg-base where it matters
+     TEXT - WCAG AAA against bg-base where it matters
      ───────────────────────────────────────────────────────────────────── */
-  --kovix-text-primary:    #E6EDF3;  /* main text — 15.2:1 against bg-base (AAA) */
-  --kovix-text-secondary:  #9DA7B0;  /* labels, metadata — 7.4:1 (AAA) */
-  --kovix-text-muted:      #5C6770;  /* line numbers, disabled, placeholder — 3.6:1 (AA large only) */
-  --kovix-text-on-accent:  #0B1115;  /* text on teal surfaces — dark-on-teal for contrast */
+  --kovix-text-primary:    #E6EDF3;  /* main text - 15.2:1 against bg-base (AAA) */
+  --kovix-text-secondary:  #9DA7B0;  /* labels, metadata - 7.4:1 (AAA) */
+  --kovix-text-muted:      #5C6770;  /* line numbers, disabled, placeholder - 3.6:1 (AA large only) */
+  --kovix-text-on-accent:  #0B1115;  /* text on teal surfaces - dark-on-teal for contrast */
 
   /* ─────────────────────────────────────────────────────────────────────
-     ACCENT — teal #14B8A6, the Kovix signature
+     ACCENT - teal #14B8A6, the Kovix signature
      The only hue in the system. No purple, no blue, no gradients.
      ───────────────────────────────────────────────────────────────────── */
   --kovix-accent:         #14B8A6;  /* primary brand color */
@@ -42,19 +42,19 @@
   --kovix-accent-glow:    rgba(20, 184, 166, 0.35);  /* box-shadow on focused inputs, working dot */
 
   /* ─────────────────────────────────────────────────────────────────────
-     BORDERS — hairline scale
+     BORDERS - hairline scale
      ───────────────────────────────────────────────────────────────────── */
   --kovix-border:        rgba(255, 255, 255, 0.08);  /* default hairline */
   --kovix-border-strong: rgba(255, 255, 255, 0.14);  /* active container outlines */
   --kovix-border-accent: rgba(20, 184, 166, 0.30);   /* active tab, focus ring outer */
 
   /* ─────────────────────────────────────────────────────────────────────
-     STATUS — semantic, GitHub-derived for developer familiarity
+     STATUS - semantic, GitHub-derived for developer familiarity
      ───────────────────────────────────────────────────────────────────── */
   --kovix-success: #3FB950;  /* shipped/merged, diff-added */
   --kovix-warning: #D29922;  /* awaiting approval */
   --kovix-error:   #F85149;  /* diff-removed, destructive */
-  --kovix-info:    #58A6FF;  /* non-accent info (remote, web results) — never as brand */
+  --kovix-info:    #58A6FF;  /* non-accent info (remote, web results) - never as brand */
 
   /* Status-tinted backgrounds (low-opacity) for badges, banners, toasts */
   --kovix-success-bg: rgba(63, 185, 80, 0.12);
@@ -63,7 +63,7 @@
   --kovix-info-bg:    rgba(88, 166, 255, 0.12);
 
   /* ─────────────────────────────────────────────────────────────────────
-     DIFF — added / removed (editor + chat diff cards)
+     DIFF - added / removed (editor + chat diff cards)
      ───────────────────────────────────────────────────────────────────── */
   --kovix-diff-added-bg:   rgba(63, 185, 80, 0.15);
   --kovix-diff-added-fg:   #3FB950;
@@ -71,7 +71,7 @@
   --kovix-diff-removed-fg: #F85149;
 
   /* ─────────────────────────────────────────────────────────────────────
-     SYNTAX — GitHub-Dark-derived, high familiarity for developers
+     SYNTAX - GitHub-Dark-derived, high familiarity for developers
      ───────────────────────────────────────────────────────────────────── */
   --kovix-syntax-keyword:  #FF7B72;
   --kovix-syntax-string:   #A5D6FF;
@@ -82,8 +82,8 @@
   --kovix-syntax-type:     #7EE787;
 
   /* ─────────────────────────────────────────────────────────────────────
-     TYPOGRAPHY — Inter (UI + chat) + JetBrains Mono (editor + inline code)
-     Two families, not three — the chat panel is part of the workbench.
+     TYPOGRAPHY - Inter (UI + chat) + JetBrains Mono (editor + inline code)
+     Two families, not three - the chat panel is part of the workbench.
      ───────────────────────────────────────────────────────────────────── */
   --kovix-font-ui:   "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --kovix-font-mono: "JetBrains Mono", "SF Mono", "Cascadia Code", "Menlo", "Consolas", monospace;
@@ -109,7 +109,7 @@
   --kovix-weight-bold:     700;
 
   /* ─────────────────────────────────────────────────────────────────────
-     SPACING — 4px base, near-Fibonacci step
+     SPACING - 4px base, near-Fibonacci step
      ───────────────────────────────────────────────────────────────────── */
   --kovix-space-0:  0;
   --kovix-space-1:  4px;   /* icon-to-label gap, tight inline padding */
@@ -122,7 +122,7 @@
   --kovix-space-16: 64px;  /* welcome screen hero padding */
 
   /* ─────────────────────────────────────────────────────────────────────
-     RADIUS — sharp for code, soft for chrome, pill for tags
+     RADIUS - sharp for code, soft for chrome, pill for tags
      ───────────────────────────────────────────────────────────────────── */
   --kovix-radius-sharp: 0;       /* code blocks, diff lines, editor gutter */
   --kovix-radius-sm:    3px;     /* inputs, textareas, buttons */
@@ -131,7 +131,7 @@
   --kovix-radius-pill:  9999px;  /* tags, badges, status dots, primary CTA */
 
   /* ─────────────────────────────────────────────────────────────────────
-     ELEVATION — only 3 levels. Hierarchy comes from bg lightness step,
+     ELEVATION - only 3 levels. Hierarchy comes from bg lightness step,
      not shadow. Shadow only on floating elements.
      ───────────────────────────────────────────────────────────────────── */
   --kovix-shadow-none:    none;
@@ -140,7 +140,7 @@
   --kovix-shadow-accent:  0 0 0 1px var(--kovix-border-accent), 0 0 0 4px var(--kovix-accent-glow);
 
   /* ─────────────────────────────────────────────────────────────────────
-     MOTION — 150ms default, 300ms ceiling for modals. Reduced-motion = 0ms.
+     MOTION - 150ms default, 300ms ceiling for modals. Reduced-motion = 0ms.
      ───────────────────────────────────────────────────────────────────── */
   --kovix-motion-instant: 0ms linear;
   --kovix-motion-fast:    120ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -150,7 +150,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Reduced motion — all transitions become instant. No exceptions.
+   Reduced motion - all transitions become instant. No exceptions.
    ───────────────────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .monaco-workbench {
@@ -163,7 +163,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Backward-compatibility aliases — old token names map to the new canonical
+   Backward-compatibility aliases - old token names map to the new canonical
    equivalents. Volt-violet and Ignite aliases have been removed (all usages
    migrated to --kovix-accent* / --kovix-warning / --kovix-error).
    ───────────────────────────────────────────────────────────────────────── */
@@ -176,8 +176,8 @@
   /* Old text tokens → new text tokens */
   --kovix-text-tertiary: var(--kovix-text-muted);
 
-  /* Old state tokens (mostly compatible — slightly different hues) */
-  --kovix-state-running:  #58A6FF;   /* was #21D3A8 — info-blue for "working" */
+  /* Old state tokens (mostly compatible - slightly different hues) */
+  --kovix-state-running:  #58A6FF;   /* was #21D3A8 - info-blue for "working" */
   --kovix-state-pending:  var(--kovix-warning);
   --kovix-state-error:    var(--kovix-error);
   --kovix-state-success:  var(--kovix-success);
@@ -193,7 +193,7 @@
   --kovix-badge-info-bg:    var(--kovix-info-bg);
   --kovix-badge-info-fg:    var(--kovix-info);
 
-  /* Old gradients — explicitly disabled. Anti-pattern: no gradients. */
+  /* Old gradients - explicitly disabled. Anti-pattern: no gradients. */
   --kovix-gradient:       var(--kovix-accent);
   --kovix-gradient-ink:   var(--kovix-bg-base);
   --kovix-gradient-statusbar: var(--kovix-bg-surface);

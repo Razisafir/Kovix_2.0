@@ -35,13 +35,13 @@ import { IConfigurationService } from '../../../../../../platform/configuration/
  * disabled by the user.
  */
 const BLOCKLIST_PATTERNS: RegExp[] = [
-        // rm — any recursive/force flag targeting /, ~, $HOME, *, or absolute paths
+        // rm - any recursive/force flag targeting /, ~, $HOME, *, or absolute paths
         // outside the workspace. Closes `rm -rf ~` and `rm -rf $HOME` bypasses.
         /rm\s+(-[a-zA-Z]*[rRf][a-zA-Z]*\s+|--)recursive.*\s+\/(?:\s|$)/,           // rm -rf /
         /rm\s+-[a-zA-Z]*[rRf][a-zA-Z]*\s+\/(?:\s|$)/,                              // rm -rf /
         /rm\s+-[a-zA-Z]*[rRf][a-zA-Z]*\s+(?:~|\$home|\$\{home\}|\*|\.\.\/)/,       // rm -rf ~ / $home / * / ../
         /rm\s+--recursive.*\s+(?:~|\$home|\$\{home\}|\*|\.\.\/)/,                    // rm --recursive ~ / $home / *
-        // Privilege escalation — close su/doas/pkexec gaps (was: only sudo).
+        // Privilege escalation - close su/doas/pkexec gaps (was: only sudo).
         // `su` is matched with optional flags (`-`, `--`, `-l`, `- root`, etc.) so
         // `su - root`, `su -- root`, `su -l root` all match. The command is
         // lowercased before matching, so all literal strings here are lowercase.
@@ -49,7 +49,7 @@ const BLOCKLIST_PATTERNS: RegExp[] = [
         /\bsu\s+(?:-+\s*\w*\s+)?(?:root|[\w-]+)/,                                  // su root / su - root / su -l root / su someuser
         /\bdoas\b/,
         /\bpkexec\b/,
-        // Fetch-and-execute — curl/wget piped to shell (still common LLM-escape vector).
+        // Fetch-and-execute - curl/wget piped to shell (still common LLM-escape vector).
         /curl\s+.*\|\s*(sh|bash)/,
         /wget\s+.*\|\s*(sh|bash)/,
         /curl\s+.*\|\s*\/bin\/(?:sh|bash)/,
@@ -58,17 +58,17 @@ const BLOCKLIST_PATTERNS: RegExp[] = [
         /\bmkfs\b/,
         /\bdd\s+.*of=\/dev\//,                                                     // dd if=...of=/dev/...
         /\bchmod\s+777\s+\//,                                                      // chmod 777 /
-        // Persistence — writes to /etc/, /etc/cron.d/, /etc/passwd, /etc/shadow.
+        // Persistence - writes to /etc/, /etc/cron.d/, /etc/passwd, /etc/shadow.
         // Closes `tee /etc/cron.d/...`, `cp payload /etc/...`, `install ... /etc/...`
         // bypasses (was: only `> /etc/`).
         />\s*\/etc\//,                                                              // > /etc/...
         /tee\s+(?:-a\s+)?\/etc\//,                                                 // tee /etc/...
         /\b(?:cp|mv|install|dd)\s+.*\s+\/etc\//,                                   // cp/mv/install/dd ... /etc/...
         /\b(?:cp|mv|install|dd)\s+.*\s+\/etc\/(?:passwd|shadow|sudoers|cron\.\w)/,  // explicit /etc/passwd etc.
-        // Fork bomb — both classic and brace-expanded variants.
+        // Fork bomb - both classic and brace-expanded variants.
         /:\(\)\s*\{\s*:\|:&\s*\}/,
         /\(\)\s*\{\s*\*\|&\s*\}/,
-        // Power control — expanded from `shutdown`/`reboot`/`init 0|6` to cover
+        // Power control - expanded from `shutdown`/`reboot`/`init 0|6` to cover
         // `halt`, `poweroff`, `telinit`, `systemctl reboot/poweroff/halt`.
         /\bshutdown\b/,
         /\breboot\b/,

@@ -49,14 +49,14 @@ export interface IVectorSearchResult {
 }
 
 /**
- * IConstructVectorStore — interface for the Qdrant-backed vector store.
+ * IConstructVectorStore - interface for the Qdrant-backed vector store.
  *
  * Stores workspace file chunks as embeddings and supports semantic search.
  * The collection is identified by a hash of the workspace root path,
  * ensuring each workspace gets its own isolated vector space.
  *
  * OFFLINE FIRST: Qdrant runs locally (localhost:6333). If Qdrant is not
- * running, the service skips memory with a clear warning — never crashes.
+ * running, the service skips memory with a clear warning - never crashes.
  *
  * Graceful degradation:
  * - If Qdrant is not reachable: all operations return empty results

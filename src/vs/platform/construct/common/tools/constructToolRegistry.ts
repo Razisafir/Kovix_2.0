@@ -79,7 +79,7 @@ export interface IToolResult {
 }
 
 /**
- * IConstructToolRegistry — registry and executor for agent tools.
+ * IConstructToolRegistry - registry and executor for agent tools.
  *
  * Manages the lifecycle of tools available to the agent, including:
  * - Built-in tools (read_file, write_file, run_terminal, search_codebase, web_search)

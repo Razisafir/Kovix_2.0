@@ -5,14 +5,14 @@
 // Copyright (c) 2025 Razisafir. All rights reserved.
 // Kovix proprietary code. See LICENSE.txt for proprietary license terms.
 /*---------------------------------------------------------------------------------------------
- *  Kovix Slash Command Dropdown — autocomplete widget for the agent input.
+ *  Kovix Slash Command Dropdown - autocomplete widget for the agent input.
  *
  *  When the user types "/" at the start of the input (or after a space), a
  *  dropdown appears above the input listing all available slash commands.
  *  The list filters as the user types, navigates with arrow keys, and
  *  selects with Enter / Tab / click.
  *
- *  This closes the "slash commands are invisible" gap — previously users
+ *  This closes the "slash commands are invisible" gap - previously users
  *  had to read the README to learn that /skills, /memory, /swarm, /idea,
  *  /autonomous, /forget-everything existed, then type them perfectly with
  *  no visual feedback.
@@ -28,14 +28,14 @@
  *      selector (added by this commit).
  *
  *  Slash commands supported (mirrors handleSlashCommand in constructAgentView.ts):
- *    /skills                 — list all installed skills
- *    /<slug>                 — invoke a named skill (handled inline, no dropdown)
- *    /skill-create           — create a skill from the current document
- *    /forget-everything      — wipe all stored memories (with confirm)
- *    /memory                 — show current memory privacy posture
- *    /swarm                  — open the swarm spawner
- *    /idea <description>     — kick off the autonomous idea→app wizard
- *    /autonomous             — alias for /idea (start autonomous build)
+ *    /skills                 - list all installed skills
+ *    /<slug>                 - invoke a named skill (handled inline, no dropdown)
+ *    /skill-create           - create a skill from the current document
+ *    /forget-everything      - wipe all stored memories (with confirm)
+ *    /memory                 - show current memory privacy posture
+ *    /swarm                  - open the swarm spawner
+ *    /idea <description>     - kick off the autonomous idea→app wizard
+ *    /autonomous             - alias for /idea (start autonomous build)
  *--------------------------------------------------------------------------------------------*/
 
 import { Disposable } from '../../../../base/common/lifecycle.js';
@@ -83,7 +83,7 @@ export class KovixSlashDropdown extends Disposable {
 		super();
 
 		// Hook input + keyboard events. We don't own the textarea (the parent
-		// view does), so we just listen — we never replace the existing handlers.
+		// view does), so we just listen - we never replace the existing handlers.
 		this._register({
 			dispose: () => {
 				this.textarea.removeEventListener('input', this.handleInput);

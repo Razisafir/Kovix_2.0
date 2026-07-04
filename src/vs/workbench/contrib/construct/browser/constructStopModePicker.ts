@@ -33,7 +33,7 @@ interface IMilestonePickItem extends IQuickPickItem {
  * @returns The selected execution mode, or undefined if cancelled.
  */
 /**
- * Result of showStopModePicker — includes both the chosen ExecutionMode
+ * Result of showStopModePicker - includes both the chosen ExecutionMode
  * and (in Selective mode) the milestone IDs the user picked.
  * Fix for F-007 (#77): the picker previously discarded the user's milestone
  * selection. Now it returns the IDs so the caller can wire them into the
