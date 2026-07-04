@@ -8,8 +8,8 @@ import { ServicesAccessor } from '../../../../../platform/instantiation/common/i
 import { IWorkbenchEnvironmentService } from '../../../../services/environment/common/environmentService.js';
 
 export default function content(accessor: ServicesAccessor) {
-        const isServerless = platform.isWeb && !accessor.get(IWorkbenchEnvironmentService).remoteAuthority;
-        return `
+	const isServerless = platform.isWeb && !accessor.get(IWorkbenchEnvironmentService).remoteAuthority;
+	return `
 ## Interactive Editor Playground
 The core editor in Kovix IDE is packed with features.  This page highlights a number of them and lets you interactively try them out through the use of a number of embedded editors.  For full details on the editor features for Kovix IDE and more head over to our [documentation](https://github.com/Razisafir/KOVIX).
 

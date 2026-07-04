@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-/* Kovix Identity — design tokens + VS Code theme overrides.
+/* Kovix Identity - design tokens + VS Code theme overrides.
    These two imports are the single highest-impact change to re-theme the
    VS Code workbench shell as Kovix. They are intentionally FIRST in this
    file so every subsequent rule can reference the tokens.

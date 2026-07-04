@@ -6,7 +6,7 @@
 // Kovix proprietary code. See LICENSE.txt for proprietary license terms.
 
 /**
- * KovixAccessibilityContribution — applies kovix.accessibility.* and
+ * KovixAccessibilityContribution - applies kovix.accessibility.* and
  * kovix.appearance.* settings to the .monaco-workbench root element
  * as CSS classes.
  *
@@ -50,7 +50,7 @@ class KovixAccessibilityContribution extends Disposable implements IWorkbenchCon
 	private applyAll(): void {
 		const wb = this.workbench;
 		if (!wb) {
-			// Workbench not yet rendered — retry on next tick
+			// Workbench not yet rendered - retry on next tick
 			setTimeout(() => this.applyAll(), 100);
 			return;
 		}

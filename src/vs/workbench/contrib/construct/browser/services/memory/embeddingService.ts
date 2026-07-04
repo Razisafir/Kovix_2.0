@@ -19,7 +19,7 @@ const XENOVA_DIMENSION = 384;
 const BATCH_SIZE = 32;
 
 /**
- * EmbeddingService — generates text embeddings using Ollama (primary)
+ * EmbeddingService - generates text embeddings using Ollama (primary)
  * or Xenova (fallback), with graceful degradation.
  *
  * Embedding strategy (offline-first):
@@ -83,7 +83,7 @@ export class EmbeddingService extends Disposable implements IEmbeddingService {
 			} else if (this._mode === 'xenova') {
 				return await this.embedXenova(text);
 			} else {
-				// No embedding available — return zero vector
+				// No embedding available - return zero vector
 				const dimension = XENOVA_DIMENSION;
 				return new Array(dimension).fill(0);
 			}
@@ -260,7 +260,7 @@ export class EmbeddingService extends Disposable implements IEmbeddingService {
 		} catch (error) {
 			this.logService.error('[Embedding] Failed to load Xenova model:', error);
 			this._onDidError.fire(error instanceof Error ? error.message : String(error));
-			// No pseudo-embedding fallback — we'd rather report the error
+			// No pseudo-embedding fallback - we'd rather report the error
 			this.modelLoaded = false;
 			throw error;
 		}

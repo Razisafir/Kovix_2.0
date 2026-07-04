@@ -20,18 +20,18 @@ export type ConstructConfigScope = 'machine' | 'workspace' | 'profile';
  * A single configuration entry with metadata.
  */
 export interface IConstructConfigEntry<T = unknown> {
-        /** The configuration key (e.g., 'kovix.cloud.apiKey'). */
-        readonly key: string;
-        /** The current value. */
-        value: T;
-        /** The scope where this value is stored. */
-        scope: ConstructConfigScope;
-        /** Whether the value has been modified from its default. */
-        isModified: boolean;
-        /** The default value for this key. */
-        defaultValue: T;
-        /** Human-readable description of this setting. */
-        description: string;
+	/** The configuration key (e.g., 'kovix.cloud.apiKey'). */
+	readonly key: string;
+	/** The current value. */
+	value: T;
+	/** The scope where this value is stored. */
+	scope: ConstructConfigScope;
+	/** Whether the value has been modified from its default. */
+	isModified: boolean;
+	/** The default value for this key. */
+	defaultValue: T;
+	/** Human-readable description of this setting. */
+	description: string;
 }
 
 /**
@@ -49,58 +49,58 @@ export interface IConstructConfigEntry<T = unknown> {
  * 4. Default values
  */
 export interface IConstructConfigService {
-        readonly _serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
-        /** Event fired when any configuration value changes. */
-        readonly onDidChangeConfiguration: Event<string>;
+	/** Event fired when any configuration value changes. */
+	readonly onDidChangeConfiguration: Event<string>;
 
-        /**
-         * Get a configuration value.
-         * @param key The configuration key (e.g., 'kovix.cloud.baseUrl').
-         * @param scope Optional scope to read from (defaults to most specific).
-         */
-        getValue<T>(key: string, scope?: ConstructConfigScope): T;
+	/**
+	 * Get a configuration value.
+	 * @param key The configuration key (e.g., 'kovix.cloud.baseUrl').
+	 * @param scope Optional scope to read from (defaults to most specific).
+	 */
+	getValue<T>(key: string, scope?: ConstructConfigScope): T;
 
-        /**
-         * Set a configuration value.
-         * @param key The configuration key.
-         * @param value The value to set.
-         * @param scope The scope to write to.
-         */
-        setValue<T>(key: string, value: T, scope: ConstructConfigScope): Promise<void>;
+	/**
+	 * Set a configuration value.
+	 * @param key The configuration key.
+	 * @param value The value to set.
+	 * @param scope The scope to write to.
+	 */
+	setValue<T>(key: string, value: T, scope: ConstructConfigScope): Promise<void>;
 
-        /**
-         * Remove a configuration value (reverts to default).
-         */
-        removeValue(key: string): Promise<void>;
+	/**
+	 * Remove a configuration value (reverts to default).
+	 */
+	removeValue(key: string): Promise<void>;
 
-        /**
-         * Get all configuration entries, optionally filtered by prefix.
-         */
-        getAllEntries(prefix?: string): IConstructConfigEntry[];
+	/**
+	 * Get all configuration entries, optionally filtered by prefix.
+	 */
+	getAllEntries(prefix?: string): IConstructConfigEntry[];
 
-        /**
-         * Check if a configuration key exists.
-         */
-        hasValue(key: string): boolean;
+	/**
+	 * Check if a configuration key exists.
+	 */
+	hasValue(key: string): boolean;
 
-        /**
-         * Reset all configuration to defaults.
-         */
-        resetAll(): Promise<void>;
+	/**
+	 * Reset all configuration to defaults.
+	 */
+	resetAll(): Promise<void>;
 
-        /**
-         * Get the path to the .construct directory for the current workspace.
-         */
-        getConstructDir(): URI;
+	/**
+	 * Get the path to the .construct directory for the current workspace.
+	 */
+	getConstructDir(): URI;
 
-        /**
-         * Export all settings as a JSON object (for backup/migration).
-         */
-        exportSettings(): Record<string, unknown>;
+	/**
+	 * Export all settings as a JSON object (for backup/migration).
+	 */
+	exportSettings(): Record<string, unknown>;
 
-        /**
-         * Import settings from a JSON object.
-         */
-        importSettings(settings: Record<string, unknown>): Promise<void>;
+	/**
+	 * Import settings from a JSON object.
+	 */
+	importSettings(settings: Record<string, unknown>): Promise<void>;
 }

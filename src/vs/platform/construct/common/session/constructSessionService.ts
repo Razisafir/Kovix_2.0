@@ -14,20 +14,20 @@ export const IConstructSessionService = createDecorator<IConstructSessionService
  * A conversation session with the AI agent.
  */
 export interface IConstructSession {
-        /** Unique identifier for this session. */
-        readonly id: string;
-        /** Display title (auto-generated from first message or user-set). */
-        readonly title: string;
-        /** When this session was created. */
-        readonly createdAt: number;
-        /** When this session was last active. */
-        readonly lastActiveAt: number;
-        /** Number of messages in the session. */
-        readonly messageCount: number;
-        /** The AI provider used in this session. */
-        readonly providerType?: string;
-        /** The model used in this session. */
-        readonly modelId?: string;
+	/** Unique identifier for this session. */
+	readonly id: string;
+	/** Display title (auto-generated from first message or user-set). */
+	readonly title: string;
+	/** When this session was created. */
+	readonly createdAt: number;
+	/** When this session was last active. */
+	readonly lastActiveAt: number;
+	/** Number of messages in the session. */
+	readonly messageCount: number;
+	/** The AI provider used in this session. */
+	readonly providerType?: string;
+	/** The model used in this session. */
+	readonly modelId?: string;
 }
 
 /**
@@ -40,59 +40,59 @@ export interface IConstructSession {
  * Sessions are persisted via the ChatHistoryService (SQLite) through IPC.
  */
 export interface IConstructSessionService {
-        readonly _serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
-        /** Event fired when a session is created. */
-        readonly onDidCreateSession: Event<IConstructSession>;
-        /** Event fired when a session is deleted. */
-        readonly onDidDeleteSession: Event<string>;
-        /** Event fired when the active session changes. */
-        readonly onDidChangeActiveSession: Event<IConstructSession | null>;
+	/** Event fired when a session is created. */
+	readonly onDidCreateSession: Event<IConstructSession>;
+	/** Event fired when a session is deleted. */
+	readonly onDidDeleteSession: Event<string>;
+	/** Event fired when the active session changes. */
+	readonly onDidChangeActiveSession: Event<IConstructSession | null>;
 
-        /** Currently active session. */
-        readonly activeSession: IConstructSession | null;
+	/** Currently active session. */
+	readonly activeSession: IConstructSession | null;
 
-        /** All sessions, sorted by most recent first. */
-        readonly sessions: ReadonlyArray<IConstructSession>;
+	/** All sessions, sorted by most recent first. */
+	readonly sessions: ReadonlyArray<IConstructSession>;
 
-        /**
-         * Create a new session.
-         */
-        createSession(title?: string): Promise<IConstructSession>;
+	/**
+	 * Create a new session.
+	 */
+	createSession(title?: string): Promise<IConstructSession>;
 
-        /**
-         * Delete a session and all its messages.
-         */
-        deleteSession(id: string): Promise<void>;
+	/**
+	 * Delete a session and all its messages.
+	 */
+	deleteSession(id: string): Promise<void>;
 
-        /**
-         * Switch to a different session.
-         */
-        switchToSession(id: string): Promise<void>;
+	/**
+	 * Switch to a different session.
+	 */
+	switchToSession(id: string): Promise<void>;
 
-        /**
-         * Get a session by ID.
-         */
-        getSession(id: string): IConstructSession | undefined;
+	/**
+	 * Get a session by ID.
+	 */
+	getSession(id: string): IConstructSession | undefined;
 
-        /**
-         * Rename a session.
-         */
-        renameSession(id: string, newTitle: string): Promise<void>;
+	/**
+	 * Rename a session.
+	 */
+	renameSession(id: string, newTitle: string): Promise<void>;
 
-        /**
-         * Auto-generate a session title from the first user message.
-         * Only updates the title if it is still the default.
-         */
-        updateSessionFromFirstMessage(sessionId: string, firstMessage: string): void;
+	/**
+	 * Auto-generate a session title from the first user message.
+	 * Only updates the title if it is still the default.
+	 */
+	updateSessionFromFirstMessage(sessionId: string, firstMessage: string): void;
 
-        /**
-         * Increment the message count for a session.
-         */
-        incrementMessageCount(sessionId: string): void;
+	/**
+	 * Increment the message count for a session.
+	 */
+	incrementMessageCount(sessionId: string): void;
 
-        /**
-         * Update the provider/model info for a session.
-         */
-        updateSessionProviderInfo(sessionId: string, providerType?: string, modelId?: string): void;
+	/**
+	 * Update the provider/model info for a session.
+	 */
+	updateSessionProviderInfo(sessionId: string, providerType?: string, modelId?: string): void;
 }

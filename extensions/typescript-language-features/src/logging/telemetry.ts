@@ -6,28 +6,28 @@
 import { IExperimentationTelemetryReporter } from '../experimentTelemetryReporter';
 
 export interface TelemetryProperties {
-        readonly [prop: string]: string | number | boolean | undefined;
+	readonly [prop: string]: string | number | boolean | undefined;
 }
 
 export interface TelemetryReporter {
-        logTelemetry(eventName: string, properties?: TelemetryProperties): void;
+	logTelemetry(eventName: string, properties?: TelemetryProperties): void;
 }
 
 export class VSCodeTelemetryReporter implements TelemetryReporter {
-        constructor(
-                private readonly reporter: IExperimentationTelemetryReporter | undefined
-        ) { }
+	constructor(
+		private readonly reporter: IExperimentationTelemetryReporter | undefined
+	) { }
 
-        public logTelemetry(eventName: string, properties: { [prop: string]: string } = {}) {
-                const reporter = this.reporter;
-                if (!reporter) {
-                        return;
-                }
+	public logTelemetry(eventName: string, properties: { [prop: string]: string } = {}) {
+		const reporter = this.reporter;
+		if (!reporter) {
+			return;
+		}
 
-                /* __GDPR__FRAGMENT__
-                        "TypeScriptCommonProperties" : {
-                        }
-                */
-                reporter.postEventObj(eventName, properties);
-        }
+		/* __GDPR__FRAGMENT__
+				"TypeScriptCommonProperties" : {
+				}
+		*/
+		reporter.postEventObj(eventName, properties);
+	}
 }

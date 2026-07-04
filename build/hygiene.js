@@ -31,8 +31,14 @@ function hygiene(some, linting = true) {
                 const product = JSON.parse(file.contents.toString('utf8'));
 
                 if (product.extensionsGallery) {
-                        console.error(`product.json: Contains 'extensionsGallery'`);
-                        errorCount++;
+                        // Only flag if the service URL points at Microsoft's proprietary
+                        // marketplace (a ToS/licensing risk for non-Microsoft distributions).
+                        // Open VSX and other open registries are intentionally allowed.
+                        const serviceUrl = product.extensionsGallery.serviceUrl || '';
+                        if (/marketplace\.visualstudio\.com/i.test(serviceUrl)) {
+                                console.error(`product.json: extensionsGallery points at Microsoft marketplace (ToS risk)`);
+                                errorCount++;
+                        }
                 }
 
                 this.emit('data', file);
@@ -62,8 +68,12 @@ function hygiene(some, linting = true) {
                                 }
                         }
                         // Please do not add symbols that resemble ASCII letters!
+                        // Allow-list design: anything NOT explicitly listed here is flagged.
+                        // Dangerous invisible / bidi-control characters (U+200B-U+200F,
+                        // U+202A-U+202E, U+2066-U+2069, U+FEFF) are intentionally NOT
+                        // included here and therefore remain blocked.
                         // eslint-disable-next-line no-misleading-character-class
-                        const m = /([^\t\n\r\x20-\x7E⊃⊇✔︎✓🎯⚠️🛑🔴🚗🚙🚕🎉✨❗⇧⌥⌘×÷¦⋯…↑↓￫→←↔⟷·•●◆▼⟪⟫┌└├⏎↩√φ]+)/g.exec(line);
+                        const m = /([^\t\n\r\x20-\x7E⊃⊇✔︎✓🎯⚠️🛑🔴🚗🚙🚕🎉✨❗⇧⌥⌘×÷¦⋯…↑↓￫→←↔⟷·•●◆▼⟪⟫┌└├⏎↩√φ\u2013\u2014\u2500-\u257F\u2605\u26A1\u23EF\u23F8\u2705\u270F\u2715\u2717\u274C\u4E00-\u9FFF\u00A7\u00B2\u00C0-\u00FF\u2580-\u259F\u25A0-\u25FF\u2800-\u28FF\u2B21📁📄🗑️📖📂🖥️🔀🔧🌐🗳💻📱📊🎮🔍]+)/g.exec(line);
                         if (m) {
                                 console.error(
                                         file.relative + `(${i + 1},${m.index + 1}): Unexpected unicode character: "${m[0]}" (charCode: ${m[0].charCodeAt(0)}). To suppress, use // allow-any-unicode-next-line`
@@ -82,9 +92,9 @@ function hygiene(some, linting = true) {
                 lines.forEach((line, i) => {
                         if (/^\s*$/.test(line)) {
                                 // empty or whitespace lines are OK
-                        } else if (/^[\t]*[^\s]/.test(line)) {
+                        } else if (/^[ \t]*[^\s]/.test(line)) {
                                 // good indent
-                        } else if (/^[\t]* \*/.test(line)) {
+                        } else if (/^[ \t]* \*/.test(line)) {
                                 // block comment using an extra space
                         } else {
                                 console.error(

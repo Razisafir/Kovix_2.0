@@ -1,4 +1,11 @@
 /*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+// Copyright (c) 2025 Razisafir. All rights reserved.
+// Kovix proprietary code. See LICENSE.txt for proprietary license terms.
+
+/*---------------------------------------------------------------------------------------------
  *  Patch streamx to avoid 'this.pipeTo.end is not a function' TypeError.
  *
  *  Background: streamx@2.x (hoisted by npm under vinyl-fs@4 / gulp 5) calls

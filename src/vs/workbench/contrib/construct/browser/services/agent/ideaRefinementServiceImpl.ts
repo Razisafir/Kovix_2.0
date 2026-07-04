@@ -194,11 +194,10 @@ export class IdeaRefinementServiceImpl extends Disposable implements IIdeaRefine
 			});
 			const userMessage: IChatMessage = {
 				role: 'user',
-				content: `Here are my answers:\n\n${answerLines.join('\n\n')}\n\n${
-					this._currentRound < MAX_REFINEMENT_ROUNDS - 1
-						? 'If you have enough information to produce a refined specification, respond with a JSON object. Otherwise, generate more clarifying questions as a JSON array.'
-						: 'Please produce the final refined specification now as a JSON object.'
-				}`,
+				content: `Here are my answers:\n\n${answerLines.join('\n\n')}\n\n${this._currentRound < MAX_REFINEMENT_ROUNDS - 1
+					? 'If you have enough information to produce a refined specification, respond with a JSON object. Otherwise, generate more clarifying questions as a JSON array.'
+					: 'Please produce the final refined specification now as a JSON object.'
+					}`,
 			};
 
 			this._conversationMessages.push(userMessage);

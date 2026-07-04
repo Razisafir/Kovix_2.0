@@ -6,7 +6,7 @@
 // Kovix proprietary code. See LICENSE.txt for proprietary license terms.
 
 /**
- * PromptSanitizer — sanitizes user-provided memory/context before injection
+ * PromptSanitizer - sanitizes user-provided memory/context before injection
  * into the LLM system prompt to prevent prompt injection attacks.
  *
  * Security measures:

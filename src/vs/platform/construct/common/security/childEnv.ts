@@ -12,15 +12,15 @@
  * `MCPConnectionPool` with an allowlist of parent-env keys. The v2 audit
  * (Kovix-Security-Audit-v2.docx) found four gaps:
  *
- *   K2-H1 — `mcpProcessNode.spawnServer()` still spread `{ ...process.env }`,
+ *   K2-H1 - `mcpProcessNode.spawnServer()` still spread `{ ...process.env }`,
  *           bypassing the allowlist entirely (separate spawn path).
- *   K2-H2 — `_buildChildEnv()` layered `def.env` on top of the allowlisted
+ *   K2-H2 - `_buildChildEnv()` layered `def.env` on top of the allowlisted
  *           parent env WITHOUT validating `def.env` keys against a dangerous-
  *           env denylist. A malicious marketplace entry could set
  *           `NODE_OPTIONS=--require /tmp/evil.js` or `LD_PRELOAD=/tmp/x.so`.
- *   K2-H3 — `agentReachMcpServer.buildCommandEnv()` spread `...process.env`
+ *   K2-H3 - `agentReachMcpServer.buildCommandEnv()` spread `...process.env`
  *           for curl/yt-dlp/python3/mcporter grandchildren.
- *   K2-H4 — `uiuxProMaxMcpServer` spawned python3 with `...process.env`.
+ *   K2-H4 - `uiuxProMaxMcpServer` spawned python3 with `...process.env`.
  *
  * This module is the single canonical implementation. Every spawn site in the
  * Kovix tree (both the VS Code integrated code and the standalone MCP server
@@ -37,7 +37,7 @@
 
 /**
  * Parent-env keys that are safe to pass through to spawned MCP server
- * children. Everything else is dropped — a malicious `def.env` cannot
+ * children. Everything else is dropped - a malicious `def.env` cannot
  * reach the child via the parent env, and a compromised parent shell
  * cannot leak secrets (AWS_*, GITHUB_TOKEN, KOVIX_ENCRYPTION_KEY_HEX,
  * database URLs, etc.) into MCP grandchildren.
@@ -53,7 +53,7 @@ export const PARENT_ENV_ALLOWLIST: readonly string[] = [
 	'USER', 'LOGNAME', 'SHELL', 'TERM',
 	// OS basics (Windows + temp dirs)
 	'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP', 'TMPDIR',
-	// Kovix read-only config flags (NOT secrets — secrets live in SecretStorage)
+	// Kovix read-only config flags (NOT secrets - secrets live in SecretStorage)
 	'KOVIX_ALLOW_PRIVATE_NET', 'KOVIX_ALLOW_LOOPBACK',
 	'PONYTAIL_DEFAULT_MODE',
 ];
@@ -110,7 +110,7 @@ export const DENIED_ENV_KEYS: readonly string[] = [
 	'BASH_ENV',
 	'ZDOTDIR',
 	'ENVFILE',
-	// npm / yarn config — can pull arbitrary tarballs
+	// npm / yarn config - can pull arbitrary tarballs
 	'npm_config_prefix',
 	'npm_config_userconfig',
 	'npm_config_globalconfig',
@@ -128,7 +128,7 @@ export const DENIED_ENV_KEYS: readonly string[] = [
  *    element so callers can log them.
  *
  * @param serverEnv  The per-server env block from the MCP server definition.
- * @returns `[childEnv, strippedKeys]` — the env to pass to spawn(), and the
+ * @returns `[childEnv, strippedKeys]` - the env to pass to spawn(), and the
  *          list of denied keys that were stripped (for telemetry / logging).
  */
 export function buildChildEnv(

@@ -17,69 +17,69 @@ export const IAgentLoop = createDecorator<IAgentLoop>('kovix.agentLoop');
  * Events emitted by the agent loop during execution.
  */
 export type AgentLoopEvent =
-        | { type: 'thinking'; text: string }
-        | { type: 'token'; text: string }
-        | { type: 'tool_start'; toolId: string; toolName: string; toolInput?: unknown }
-        | { type: 'tool_executing'; toolId: string; toolName: string; detail?: string }
-        | { type: 'tool_result'; toolId: string; toolName: string; result: string; success: boolean }
-        | { type: 'file_written'; filePath: string }
-        | { type: 'complete'; summary: string }
-        | { type: 'error'; text: string; recoverable: boolean }
-        | { type: 'milestone_reached'; milestone: IMilestone }
-        | { type: 'milestone_paused'; milestone: IMilestone }
-        | { type: 'milestone_resumed'; milestone: IMilestone }
-        /**
-         * Emitted when the user clicks 'Skip' on a paused milestone.
-         *
-         * Distinct from milestone_resumed: the skipped milestone is NOT
-         * counted as completed. milestone_completed does NOT fire for this
-         * milestone. The helper proceeds to the next milestone.
-         *
-         * Downstream consumers (memory, verification, UI) should treat
-         * this milestone as not-done -- its work may have been executed
-         * by the LLM, but the user chose not to count it as completed.
-         */
-        | { type: 'milestone_skipped'; milestone: IMilestone }
-        | { type: 'milestone_completed'; milestone: IMilestone }
-        /**
-         * Emitted when the harness enters the Verifying state — i.e. the agent
-         * has declared the milestone complete and the harness is now running a
-         * real check (test / build / typecheck). The UI shows a "Verifying…"
-         * chip while this is in flight.
-         */
-        | { type: 'verification_start'; command: string }
-        /**
-         * Emitted when the harness's verification check finishes.
-         *
-         * - passed=true  → milestone advances normally (PausedAtMilestone or Complete)
-         * - passed=false → ExecutionState transitions to VerificationFailed and
-         *   the failure routes through AgentErrorRecoveryService as a
-         *   'verification_failed' error type (budget 3, then escalate).
-         *
-         * If no test/build/typecheck command exists for the workspace, the
-         * milestone is marked "unverified" (passed=true but output contains
-         * the literal marker "unverified:no-command") and the UI surfaces a
-         * distinct warning-toned badge rather than reporting it as done.
-         */
-        | { type: 'verification_result'; passed: boolean; output: string; unverified?: boolean };
+	| { type: 'thinking'; text: string }
+	| { type: 'token'; text: string }
+	| { type: 'tool_start'; toolId: string; toolName: string; toolInput?: unknown }
+	| { type: 'tool_executing'; toolId: string; toolName: string; detail?: string }
+	| { type: 'tool_result'; toolId: string; toolName: string; result: string; success: boolean }
+	| { type: 'file_written'; filePath: string }
+	| { type: 'complete'; summary: string }
+	| { type: 'error'; text: string; recoverable: boolean }
+	| { type: 'milestone_reached'; milestone: IMilestone }
+	| { type: 'milestone_paused'; milestone: IMilestone }
+	| { type: 'milestone_resumed'; milestone: IMilestone }
+	/**
+	 * Emitted when the user clicks 'Skip' on a paused milestone.
+	 *
+	 * Distinct from milestone_resumed: the skipped milestone is NOT
+	 * counted as completed. milestone_completed does NOT fire for this
+	 * milestone. The helper proceeds to the next milestone.
+	 *
+	 * Downstream consumers (memory, verification, UI) should treat
+	 * this milestone as not-done -- its work may have been executed
+	 * by the LLM, but the user chose not to count it as completed.
+	 */
+	| { type: 'milestone_skipped'; milestone: IMilestone }
+	| { type: 'milestone_completed'; milestone: IMilestone }
+	/**
+	 * Emitted when the harness enters the Verifying state - i.e. the agent
+	 * has declared the milestone complete and the harness is now running a
+	 * real check (test / build / typecheck). The UI shows a "Verifying…"
+	 * chip while this is in flight.
+	 */
+	| { type: 'verification_start'; command: string }
+	/**
+	 * Emitted when the harness's verification check finishes.
+	 *
+	 * - passed=true  → milestone advances normally (PausedAtMilestone or Complete)
+	 * - passed=false → ExecutionState transitions to VerificationFailed and
+	 *   the failure routes through AgentErrorRecoveryService as a
+	 *   'verification_failed' error type (budget 3, then escalate).
+	 *
+	 * If no test/build/typecheck command exists for the workspace, the
+	 * milestone is marked "unverified" (passed=true but output contains
+	 * the literal marker "unverified:no-command") and the UI surfaces a
+	 * distinct warning-toned badge rather than reporting it as done.
+	 */
+	| { type: 'verification_result'; passed: boolean; output: string; unverified?: boolean };
 
 /**
  * Plan step returned from the planning phase.
  */
 export interface IPlanStep {
-        index: number;
-        action: 'Read' | 'Create' | 'Edit' | 'Run';
-        target: string;
-        description: string;
+	index: number;
+	action: 'Read' | 'Create' | 'Edit' | 'Run';
+	target: string;
+	description: string;
 }
 
 /**
  * Result of the planning phase.
  */
 export interface IPlanResult {
-        steps: IPlanStep[];
-        summary: string;
-        rawResponse: string;
+	steps: IPlanStep[];
+	summary: string;
+	rawResponse: string;
 }
 
 /**
@@ -94,113 +94,113 @@ export interface IPlanResult {
  * 6. Stop when LLM returns end_turn or max rounds (15) reached
  */
 export interface IAgentLoop {
-        readonly _serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
-        /**
-         * Run the planning phase -- uses read-only tools to understand the codebase
-         * and generate a plan. Does NOT make any changes.
-         *
-         * @param task The user's task description.
-         * @param signal Optional AbortSignal for cancellation.
-         * @returns Plan with steps for user approval.
-         */
-        runPlanningPhase(task: string, signal?: AbortSignal): Promise<IPlanResult>;
+	/**
+	 * Run the planning phase -- uses read-only tools to understand the codebase
+	 * and generate a plan. Does NOT make any changes.
+	 *
+	 * @param task The user's task description.
+	 * @param signal Optional AbortSignal for cancellation.
+	 * @returns Plan with steps for user approval.
+	 */
+	runPlanningPhase(task: string, signal?: AbortSignal): Promise<IPlanResult>;
 
-        /**
-         * Run the full execution phase with all tools available.
-         * Yields AgentLoopEvents in real time for UI updates.
-         *
-         * @param task The user's task description.
-         * @param signal Optional AbortSignal for cancellation.
-         * @returns AsyncGenerator of events for real-time streaming.
-         */
-        run(task: string, signal?: AbortSignal): AsyncGenerator<AgentLoopEvent>;
+	/**
+	 * Run the full execution phase with all tools available.
+	 * Yields AgentLoopEvents in real time for UI updates.
+	 *
+	 * @param task The user's task description.
+	 * @param signal Optional AbortSignal for cancellation.
+	 * @returns AsyncGenerator of events for real-time streaming.
+	 */
+	run(task: string, signal?: AbortSignal): AsyncGenerator<AgentLoopEvent>;
 
-        /**
-         * Whether an agent loop is currently running.
-         */
-        readonly isRunning: boolean;
+	/**
+	 * Whether an agent loop is currently running.
+	 */
+	readonly isRunning: boolean;
 
-        /**
-         * Event fired when the loop starts.
-         */
-        readonly onDidStart: Event<string>;
+	/**
+	 * Event fired when the loop starts.
+	 */
+	readonly onDidStart: Event<string>;
 
-        /**
-         * Event fired when the loop completes.
-         */
-        readonly onDidComplete: Event<{ summary: string }>;
+	/**
+	 * Event fired when the loop completes.
+	 */
+	readonly onDidComplete: Event<{ summary: string }>;
 
-        /**
-         * Event fired when the loop encounters an error.
-         */
-        readonly onError: Event<{ text: string; recoverable: boolean }>;
+	/**
+	 * Event fired when the loop encounters an error.
+	 */
+	readonly onError: Event<{ text: string; recoverable: boolean }>;
 
-        /**
-         * Event fired when the loading state changes during planning or execution.
-         * Provides granular, function-level progress information for the UI.
-         */
-        readonly onLoadingStateChange: Event<LoadingState>;
+	/**
+	 * Event fired when the loading state changes during planning or execution.
+	 * Provides granular, function-level progress information for the UI.
+	 */
+	readonly onLoadingStateChange: Event<LoadingState>;
 
-        /**
-         * Event fired when a file is created, modified, or deleted during execution.
-         * Used for the real-time file tree diff in the progress panel.
-         */
-        readonly onFileChange: Event<FileChangeEntry>;
+	/**
+	 * Event fired when a file is created, modified, or deleted during execution.
+	 * Used for the real-time file tree diff in the progress panel.
+	 */
+	readonly onFileChange: Event<FileChangeEntry>;
 
-        /**
-         * Undo the last agent task by restoring the most recent snapshot.
-         * Reverts all file changes made during the last task.
-         *
-         * @returns The restore result, or null if no active snapshot exists.
-         */
-        undoLastTask(): Promise<IRestoreResult | null>;
+	/**
+	 * Undo the last agent task by restoring the most recent snapshot.
+	 * Reverts all file changes made during the last task.
+	 *
+	 * @returns The restore result, or null if no active snapshot exists.
+	 */
+	undoLastTask(): Promise<IRestoreResult | null>;
 
-        /**
-         * Run execution with an approved plan and milestone-based pausing.
-         * Yields AgentLoopEvents including milestone pause/resume events.
-         *
-         * @param approvedPlan The user-approved plan with selected steps and execution mode.
-         * @param signal Optional AbortSignal for cancellation.
-         * @returns AsyncGenerator of events for real-time streaming.
-         */
-        runWithApprovedPlan(approvedPlan: IApprovedPlan, signal?: AbortSignal): AsyncGenerator<AgentLoopEvent>;
+	/**
+	 * Run execution with an approved plan and milestone-based pausing.
+	 * Yields AgentLoopEvents including milestone pause/resume events.
+	 *
+	 * @param approvedPlan The user-approved plan with selected steps and execution mode.
+	 * @param signal Optional AbortSignal for cancellation.
+	 * @returns AsyncGenerator of events for real-time streaming.
+	 */
+	runWithApprovedPlan(approvedPlan: IApprovedPlan, signal?: AbortSignal): AsyncGenerator<AgentLoopEvent>;
 
-        /**
-         * Resume execution from the current milestone.
-         * Called after the user reviews and approves the milestone result.
-         */
-        resumeFromMilestone(): void;
+	/**
+	 * Resume execution from the current milestone.
+	 * Called after the user reviews and approves the milestone result.
+	 */
+	resumeFromMilestone(): void;
 
-        /**
-         * Skip the current milestone and move to the next one.
-         */
-        skipCurrentMilestone(): void;
+	/**
+	 * Skip the current milestone and move to the next one.
+	 */
+	skipCurrentMilestone(): void;
 
-        /**
-         * Current execution state for milestone-aware execution.
-         */
-        readonly executionState: ExecutionState;
+	/**
+	 * Current execution state for milestone-aware execution.
+	 */
+	readonly executionState: ExecutionState;
 
-        /**
-         * The current milestone being executed, if paused.
-         */
-        readonly currentMilestone: IMilestone | null;
+	/**
+	 * The current milestone being executed, if paused.
+	 */
+	readonly currentMilestone: IMilestone | null;
 
-        /**
-         * Extract milestones from a plan's steps.
-         * Groups plan steps into logical milestones based on action type
-         * and target patterns.
-         *
-         * @param steps The plan steps from a planning result.
-         * @returns Array of milestones with their associated steps.
-         */
-        extractMilestonesFromPlan(steps: IPlanStep[]): IMilestone[];
+	/**
+	 * Extract milestones from a plan's steps.
+	 * Groups plan steps into logical milestones based on action type
+	 * and target patterns.
+	 *
+	 * @param steps The plan steps from a planning result.
+	 * @returns Array of milestones with their associated steps.
+	 */
+	extractMilestonesFromPlan(steps: IPlanStep[]): IMilestone[];
 
-        /**
-         * Clear the accumulated conversation history.
-         * Resets any in-memory conversation state so the next
-         * agent invocation starts with a fresh context.
-         */
-        clearConversationHistory(): void;
+	/**
+	 * Clear the accumulated conversation history.
+	 * Resets any in-memory conversation state so the next
+	 * agent invocation starts with a fresh context.
+	 */
+	clearConversationHistory(): void;
 }

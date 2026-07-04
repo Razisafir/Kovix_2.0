@@ -16,12 +16,12 @@ import {
 export const IConstructAIService = createDecorator<IConstructAIService>('kovix.aiService');
 
 /**
- * IConstructAIService — the unified AI service that auto-selects the best provider.
+ * IConstructAIService - the unified AI service that auto-selects the best provider.
  *
  * At startup, this service checks providers in priority order:
- * 1. Ollama (localhost:11434) — local inference, GPU-accelerated
- * 2. Xenova — in-process ONNX models, CPU-only fallback
- * 3. Cloud — optional OpenAI-compatible API (only if explicitly configured)
+ * 1. Ollama (localhost:11434) - local inference, GPU-accelerated
+ * 2. Xenova - in-process ONNX models, CPU-only fallback
+ * 3. Cloud - optional OpenAI-compatible API (only if explicitly configured)
  *
  * The active provider delegates all chat(), complete(), listModels(), etc. calls.
  * The service also provides methods to switch providers manually and to check
