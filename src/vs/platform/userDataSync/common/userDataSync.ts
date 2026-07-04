@@ -78,7 +78,7 @@ export interface IUserDataSyncConfiguration {
 export const CONFIG_SYNC_KEYBINDINGS_PER_PLATFORM = 'settingsSync.keybindingsPerPlatform';
 
 export function registerConfiguration(): IDisposable {
-	const ignoredSettingsSchemaId = 'construct://schemas/ignoredSettings';
+	const ignoredSettingsSchemaId = 'vscode://schemas/ignoredSettings';
 	const configurationRegistry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration);
 	configurationRegistry.registerConfiguration({
 		id: 'settingsSync',

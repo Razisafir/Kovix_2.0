@@ -1173,7 +1173,7 @@ export class Emitter<T> {
 
 			if (_listenerFinalizers) {
 				const stack = new Error().stack!.split('\n').slice(2, 3).join('\n').trim();
-				const match = /(file:|construct-file:\/\/construct-app)?(\/[^:]*:\d+:\d+)/.exec(stack);
+				const match = /(file:|vscode-file:\/\/vscode-app)?(\/[^:]*:\d+:\d+)/.exec(stack);
 				_listenerFinalizers.register(result, match?.[2] ?? stack, result);
 			}
 

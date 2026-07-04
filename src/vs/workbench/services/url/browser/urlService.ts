@@ -28,9 +28,9 @@ export interface IURLCallbackProvider {
 	 * The optional `Partial<UriComponents>` must be properly restored for
 	 * the Uri passed to the `onCallback` handler.
 	 *
-	 * For example: if a Uri is to be created with `scheme:"construct"`,
+	 * For example: if a Uri is to be created with `scheme:"vscode"`,
 	 * `authority:"foo"` and `path:"bar"` the `onCallback` should fire
-	 * with a Uri `construct://foo/bar`.
+	 * with a Uri `vscode://foo/bar`.
 	 *
 	 * If there are additional `query` values in the Uri, they should
 	 * be added to the list of provided `query` arguments from the

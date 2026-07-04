@@ -4,5 +4,5 @@
  *--------------------------------------------------------------------------------------------*/
 
 .katex-error {
-	color: var(--construct-editorError-foreground);
+	color: var(--vscode-editorError-foreground);
 }

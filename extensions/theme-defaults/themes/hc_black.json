@@ -1,5 +1,5 @@
 {
-	"$schema": "construct://schemas/color-theme",
+	"$schema": "vscode://schemas/color-theme",
 	"name": "Dark High Contrast",
 	"colors": {
 		"editor.background": "#000000",

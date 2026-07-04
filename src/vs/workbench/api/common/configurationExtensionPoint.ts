@@ -294,7 +294,7 @@ configurationExtPoint.setHandler((extensions, { added, removed }) => {
 });
 // END VSCode extension point `configuration`
 
-jsonRegistry.registerSchema('construct://schemas/workspaceConfig', {
+jsonRegistry.registerSchema('vscode://schemas/workspaceConfig', {
 	allowComments: true,
 	allowTrailingCommas: true,
 	default: {
@@ -364,7 +364,7 @@ jsonRegistry.registerSchema('construct://schemas/workspaceConfig', {
 			type: 'object',
 			default: {},
 			description: nls.localize('workspaceConfig.extensions.description', "Workspace extensions"),
-			$ref: 'construct://schemas/extensions'
+			$ref: 'vscode://schemas/extensions'
 		},
 		'remoteAuthority': {
 			type: 'string',

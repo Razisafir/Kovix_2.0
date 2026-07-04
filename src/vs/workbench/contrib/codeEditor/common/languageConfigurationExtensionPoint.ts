@@ -484,7 +484,7 @@ export class LanguageConfigurationFileHandler extends Disposable {
 	}
 }
 
-const schemaId = 'construct://schemas/language-configuration';
+const schemaId = 'vscode://schemas/language-configuration';
 const schema: IJSONSchema = {
 	allowComments: true,
 	allowTrailingCommas: true,

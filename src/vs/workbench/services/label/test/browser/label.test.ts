@@ -32,7 +32,7 @@ suite('URI Label', () => {
 
 	test('custom scheme', function () {
 		labelService.registerFormatter({
-			scheme: 'construct',
+			scheme: 'vscode',
 			formatting: {
 				label: 'LABEL/${path}/${authority}/END',
 				separator: '/',
@@ -41,7 +41,7 @@ suite('URI Label', () => {
 			}
 		});
 
-		const uri1 = URI.parse('construct://microsoft.com/1/2/3/4/5');
+		const uri1 = URI.parse('vscode://microsoft.com/1/2/3/4/5');
 		assert.strictEqual(labelService.getUriLabel(uri1, { relative: false }), 'LABEL//1/2/3/4/5/microsoft.com/END');
 		assert.strictEqual(labelService.getUriBasenameLabel(uri1), 'END');
 	});
@@ -69,7 +69,7 @@ suite('URI Label', () => {
 
 	test('separator', function () {
 		labelService.registerFormatter({
-			scheme: 'construct',
+			scheme: 'vscode',
 			formatting: {
 				label: 'LABEL\\${path}\\${authority}\\END',
 				separator: '\\',
@@ -78,14 +78,14 @@ suite('URI Label', () => {
 			}
 		});
 
-		const uri1 = URI.parse('construct://microsoft.com/1/2/3/4/5');
+		const uri1 = URI.parse('vscode://microsoft.com/1/2/3/4/5');
 		assert.strictEqual(labelService.getUriLabel(uri1, { relative: false }), 'LABEL\\\\1\\2\\3\\4\\5\\microsoft.com\\END');
 		assert.strictEqual(labelService.getUriBasenameLabel(uri1), 'END');
 	});
 
 	test('custom authority', function () {
 		labelService.registerFormatter({
-			scheme: 'construct',
+			scheme: 'vscode',
 			authority: 'micro*',
 			formatting: {
 				label: 'LABEL/${path}/${authority}/END',
@@ -93,14 +93,14 @@ suite('URI Label', () => {
 			}
 		});
 
-		const uri1 = URI.parse('construct://microsoft.com/1/2/3/4/5');
+		const uri1 = URI.parse('vscode://microsoft.com/1/2/3/4/5');
 		assert.strictEqual(labelService.getUriLabel(uri1, { relative: false }), 'LABEL//1/2/3/4/5/microsoft.com/END');
 		assert.strictEqual(labelService.getUriBasenameLabel(uri1), 'END');
 	});
 
 	test('mulitple authority', function () {
 		labelService.registerFormatter({
-			scheme: 'construct',
+			scheme: 'vscode',
 			authority: 'not_matching_but_long',
 			formatting: {
 				label: 'first',
@@ -108,7 +108,7 @@ suite('URI Label', () => {
 			}
 		});
 		labelService.registerFormatter({
-			scheme: 'construct',
+			scheme: 'vscode',
 			authority: 'microsof*',
 			formatting: {
 				label: 'second',
@@ -116,7 +116,7 @@ suite('URI Label', () => {
 			}
 		});
 		labelService.registerFormatter({
-			scheme: 'construct',
+			scheme: 'vscode',
 			authority: 'mi*',
 			formatting: {
 				label: 'third',
@@ -125,14 +125,14 @@ suite('URI Label', () => {
 		});
 
 		// Make sure the most specific authority is picked
-		const uri1 = URI.parse('construct://microsoft.com/1/2/3/4/5');
+		const uri1 = URI.parse('vscode://microsoft.com/1/2/3/4/5');
 		assert.strictEqual(labelService.getUriLabel(uri1, { relative: false }), 'second');
 		assert.strictEqual(labelService.getUriBasenameLabel(uri1), 'second');
 	});
 
 	test('custom query', function () {
 		labelService.registerFormatter({
-			scheme: 'construct',
+			scheme: 'vscode',
 			formatting: {
 				label: 'LABEL${query.prefix}: ${query.path}/END',
 				separator: '/',
@@ -141,13 +141,13 @@ suite('URI Label', () => {
 			}
 		});
 
-		const uri1 = URI.parse(`construct://microsoft.com/1/2/3/4/5?${encodeURIComponent(JSON.stringify({ prefix: 'prefix', path: 'path' }))}`);
+		const uri1 = URI.parse(`vscode://microsoft.com/1/2/3/4/5?${encodeURIComponent(JSON.stringify({ prefix: 'prefix', path: 'path' }))}`);
 		assert.strictEqual(labelService.getUriLabel(uri1, { relative: false }), 'LABELprefix: path/END');
 	});
 
 	test('custom query without value', function () {
 		labelService.registerFormatter({
-			scheme: 'construct',
+			scheme: 'vscode',
 			formatting: {
 				label: 'LABEL${query.prefix}: ${query.path}/END',
 				separator: '/',
@@ -156,13 +156,13 @@ suite('URI Label', () => {
 			}
 		});
 
-		const uri1 = URI.parse(`construct://microsoft.com/1/2/3/4/5?${encodeURIComponent(JSON.stringify({ path: 'path' }))}`);
+		const uri1 = URI.parse(`vscode://microsoft.com/1/2/3/4/5?${encodeURIComponent(JSON.stringify({ path: 'path' }))}`);
 		assert.strictEqual(labelService.getUriLabel(uri1, { relative: false }), 'LABEL: path/END');
 	});
 
 	test('custom query without query json', function () {
 		labelService.registerFormatter({
-			scheme: 'construct',
+			scheme: 'vscode',
 			formatting: {
 				label: 'LABEL${query.prefix}: ${query.path}/END',
 				separator: '/',
@@ -171,13 +171,13 @@ suite('URI Label', () => {
 			}
 		});
 
-		const uri1 = URI.parse('construct://microsoft.com/1/2/3/4/5?path=foo');
+		const uri1 = URI.parse('vscode://microsoft.com/1/2/3/4/5?path=foo');
 		assert.strictEqual(labelService.getUriLabel(uri1, { relative: false }), 'LABEL: /END');
 	});
 
 	test('custom query without query', function () {
 		labelService.registerFormatter({
-			scheme: 'construct',
+			scheme: 'vscode',
 			formatting: {
 				label: 'LABEL${query.prefix}: ${query.path}/END',
 				separator: '/',
@@ -186,7 +186,7 @@ suite('URI Label', () => {
 			}
 		});
 
-		const uri1 = URI.parse('construct://microsoft.com/1/2/3/4/5');
+		const uri1 = URI.parse('vscode://microsoft.com/1/2/3/4/5');
 		assert.strictEqual(labelService.getUriLabel(uri1, { relative: false }), 'LABEL: /END');
 	});
 

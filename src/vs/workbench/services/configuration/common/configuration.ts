@@ -16,14 +16,14 @@ export const LEGACY_FOLDER_CONFIG_FOLDER_NAME = '.vscode';
 export const FOLDER_SETTINGS_NAME = 'settings';
 export const FOLDER_SETTINGS_PATH = `${FOLDER_CONFIG_FOLDER_NAME}/${FOLDER_SETTINGS_NAME}.json`;
 
-export const defaultSettingsSchemaId = 'construct://schemas/settings/default';
-export const userSettingsSchemaId = 'construct://schemas/settings/user';
-export const profileSettingsSchemaId = 'construct://schemas/settings/profile';
-export const machineSettingsSchemaId = 'construct://schemas/settings/machine';
-export const workspaceSettingsSchemaId = 'construct://schemas/settings/workspace';
-export const folderSettingsSchemaId = 'construct://schemas/settings/folder';
-export const launchSchemaId = 'construct://schemas/launch';
-export const tasksSchemaId = 'construct://schemas/tasks';
+export const defaultSettingsSchemaId = 'vscode://schemas/settings/default';
+export const userSettingsSchemaId = 'vscode://schemas/settings/user';
+export const profileSettingsSchemaId = 'vscode://schemas/settings/profile';
+export const machineSettingsSchemaId = 'vscode://schemas/settings/machine';
+export const workspaceSettingsSchemaId = 'vscode://schemas/settings/workspace';
+export const folderSettingsSchemaId = 'vscode://schemas/settings/folder';
+export const launchSchemaId = 'vscode://schemas/launch';
+export const tasksSchemaId = 'vscode://schemas/tasks';
 
 export const APPLICATION_SCOPES = [ConfigurationScope.APPLICATION];
 export const PROFILE_SCOPES = [ConfigurationScope.MACHINE, ConfigurationScope.WINDOW, ConfigurationScope.RESOURCE, ConfigurationScope.LANGUAGE_OVERRIDABLE, ConfigurationScope.MACHINE_OVERRIDABLE];

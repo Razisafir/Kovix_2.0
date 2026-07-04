@@ -38,9 +38,9 @@
 	let configuration: ISandboxConfiguration | undefined = undefined;
 
 	const resolveConfiguration: Promise<ISandboxConfiguration> = (async () => {
-		const windowConfigIpcChannel = parseArgv('construct-window-config') ?? parseArgv('vscode-window-config');
+		const windowConfigIpcChannel = parseArgv('vscode-window-config');
 		if (!windowConfigIpcChannel) {
-			throw new Error('Preload: did not find expected construct-window-config in renderer process arguments list.');
+			throw new Error('Preload: did not find expected vscode-window-config in renderer process arguments list.');
 		}
 
 		try {
@@ -56,13 +56,13 @@
 			// window DOM elements to avoid UI flicker. We always
 			// have to set the zoom level from within the window
 			// because Chrome has it's own way of remembering zoom
-			// settings per origin (if construct-file:// is used) and
+			// settings per origin (if vscode-file:// is used) and
 			// we want to ensure that the user configuration wins.
 			webFrame.setZoomLevel(resolvedConfiguration.zoomLevel ?? 0);
 
 			return resolvedConfiguration;
 		} catch (error) {
-			throw new Error(`Preload: unable to fetch construct-window-config: ${error}`);
+			throw new Error(`Preload: unable to fetch vscode-window-config: ${error}`);
 		}
 	})();
 
