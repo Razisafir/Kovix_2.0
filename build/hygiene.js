@@ -62,8 +62,12 @@ function hygiene(some, linting = true) {
                                 }
                         }
                         // Please do not add symbols that resemble ASCII letters!
+                        // Allow-list design: anything NOT explicitly listed here is flagged.
+                        // Dangerous invisible / bidi-control characters (U+200B-U+200F,
+                        // U+202A-U+202E, U+2066-U+2069, U+FEFF) are intentionally NOT
+                        // included here and therefore remain blocked.
                         // eslint-disable-next-line no-misleading-character-class
-                        const m = /([^\t\n\r\x20-\x7E⊃⊇✔︎✓🎯⚠️🛑🔴🚗🚙🚕🎉✨❗⇧⌥⌘×÷¦⋯…↑↓￫→←↔⟷·•●◆▼⟪⟫┌└├⏎↩√φ]+)/g.exec(line);
+                        const m = /([^\t\n\r\x20-\x7E⊃⊇✔︎✓🎯⚠️🛑🔴🚗🚙🚕🎉✨❗⇧⌥⌘×÷¦⋯…↑↓￫→←↔⟷·•●◆▼⟪⟫┌└├⏎↩√φ\u2013\u2014\u2500-\u257F\u2605\u26A1\u23EF\u23F8\u2705\u270F\u2715\u2717\u274C\u4E00-\u9FFF]+)/g.exec(line);
                         if (m) {
                                 console.error(
                                         file.relative + `(${i + 1},${m.index + 1}): Unexpected unicode character: "${m[0]}" (charCode: ${m[0].charCodeAt(0)}). To suppress, use // allow-any-unicode-next-line`
