@@ -31,8 +31,14 @@ function hygiene(some, linting = true) {
                 const product = JSON.parse(file.contents.toString('utf8'));
 
                 if (product.extensionsGallery) {
-                        console.error(`product.json: Contains 'extensionsGallery'`);
-                        errorCount++;
+                        // Only flag if the service URL points at Microsoft's proprietary
+                        // marketplace (a ToS/licensing risk for non-Microsoft distributions).
+                        // Open VSX and other open registries are intentionally allowed.
+                        const serviceUrl = product.extensionsGallery.serviceUrl || '';
+                        if (/marketplace\.visualstudio\.com/i.test(serviceUrl)) {
+                                console.error(`product.json: extensionsGallery points at Microsoft marketplace (ToS risk)`);
+                                errorCount++;
+                        }
                 }
 
                 this.emit('data', file);
