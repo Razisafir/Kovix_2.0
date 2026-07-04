@@ -82,9 +82,9 @@ function hygiene(some, linting = true) {
                 lines.forEach((line, i) => {
                         if (/^\s*$/.test(line)) {
                                 // empty or whitespace lines are OK
-                        } else if (/^[\t]*[^\s]/.test(line)) {
+                        } else if (/^[ \t]*[^\s]/.test(line)) {
                                 // good indent
-                        } else if (/^[\t]* \*/.test(line)) {
+                        } else if (/^[ \t]* \*/.test(line)) {
                                 // block comment using an extra space
                         } else {
                                 console.error(

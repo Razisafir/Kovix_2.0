@@ -5,7 +5,8 @@ root = true
 
 # Tab indentation
 [*]
-indent_style = tab
+indent_style = space
+indent_size = 8
 trim_trailing_whitespace = true
 
 # The indent size used in the `package.json` file cannot be changed
