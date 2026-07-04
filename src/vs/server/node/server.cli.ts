@@ -492,7 +492,7 @@ function translatePath(input: string, mapFileUri: (input: string) => string, fol
 }
 
 function mapFileToRemoteUri(uri: string): string {
-	return uri.replace(/^file:\/\//, 'construct-remote://' + cliRemoteAuthority);
+	return uri.replace(/^file:\/\//, 'vscode-remote://' + cliRemoteAuthority);
 }
 
 function getAppRoot() {

@@ -285,18 +285,26 @@ All `construct.*` setting keys are feature-level and must remain unchanged:
 
 ### 2.5 URI Scheme Identifiers (Internal Protocol Schemes)
 
-These `construct-*` schemes in `src/vs/base/common/network.ts` are internal Electron protocol handlers, NOT user-facing product names. They function like namespace identifiers and renaming them would be a breaking change requiring changes across 20+ files. **Recommend keeping as-is** unless a full protocol migration is planned:
+These were originally `vscode-*` schemes in upstream VS Code. The rebrand commit `87c7479c` rewrote the string values to `construct-*` (while keeping the constant names like `Schemas.vscodeRemote` unchanged). This audit flagged that rename as a breaking change requiring changes across 20+ files and **recommended reverting** to `vscode-*`.
 
-- `construct`, `construct-remote`, `construct-remote-resource`, `construct-managed-remote-resource`
-- `construct-userdata`, `construct-custom-editor`, `construct-notebook-cell`, `construct-notebook-cell-metadata`
-- `construct-notebook-cell-metadata-diff`, `construct-notebook-cell-output`, `construct-notebook-cell-output-diff`
-- `construct-notebook-metadata`, `construct-interactive-input`, `construct-settings`
-- `construct-workspace-trust`, `construct-terminal`, `construct-chat-code-block`
-- `construct-chat-code-compare-block`, `construct-chat-editor`, `construct-webview`
-- `construct-file`, `construct-scm`
-- `construct-app` (VSCODE_AUTHORITY)
-- `construct-tkn` (connection token cookie)
-- `construct-coi` (COI search param)
+✅ **REVERTED** in commit `fix: revert vscode-remote URI scheme rename (construct-remote broke SSH/WSL/remote compatibility)` on branch `fix/revert-uri-scheme-rebrand`. All ~25 scheme string values in `src/vs/base/common/network.ts` were changed back from `construct-*` to `vscode-*`, along with the literal references in 7 production files, 2 HTML CSP headers, 4 JSDoc/comment blocks, and 4 test files. The original `vscode-*` scheme values are now restored:
+
+- `vscode`, `vscode-remote`, `vscode-remote-resource`, `vscode-managed-remote-resource`
+- `vscode-userdata`, `vscode-custom-editor`, `vscode-notebook-cell`, `vscode-notebook-cell-metadata`
+- `vscode-notebook-cell-metadata-diff`, `vscode-notebook-cell-output`, `vscode-notebook-cell-output-diff`
+- `vscode-notebook-metadata`, `vscode-interactive-input`, `vscode-settings`
+- `vscode-workspace-trust`, `vscode-terminal`, `vscode-chat-code-block`
+- `vscode-chat-code-compare-block`, `vscode-chat-editor`, `vscode-webview`
+- `vscode-file`, `vscode-scm`
+- `vscode-app` (VSCODE_AUTHORITY)
+- `vscode-tkn` (connection token cookie)
+- `vscode-coi` (COI search param)
+
+**External Microsoft identifiers that were intentionally NOT touched** (these are real Microsoft extension/marketplace IDs, not Kovix's own schemes):
+- `ms-vscode-remote.remote-wsl` (Microsoft WSL extension publisher ID)
+- `ms-vscode-remote.remote-containers` (Microsoft Containers extension publisher ID)
+- `https://aka.ms/vscode-remote/...` URLs (external Microsoft documentation)
+- `https://github.com/microsoft/vscode-remote-release/...` URLs (external GitHub repo)
 
 ### 2.6 File Paths Under `contrib/construct/` and `platform/construct/`
 

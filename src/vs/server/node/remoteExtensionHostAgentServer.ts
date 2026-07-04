@@ -137,7 +137,7 @@ class RemoteExtensionHostAgentServer extends Disposable implements IServerAPI {
 			return serveError(req, res, 403, `Forbidden.`);
 		}
 
-		if (pathname === '/construct-remote-resource') {
+		if (pathname === '/vscode-remote-resource') {
 			// Handle HTTP requests for resources rendered in the rich client (images, fonts, etc.)
 			// These resources could be files shipped with extensions or even workspace files.
 			const desiredPath = parsedUrl.query['path'];

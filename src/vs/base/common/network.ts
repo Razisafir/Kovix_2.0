@@ -20,7 +20,7 @@ export namespace Schemas {
 	/**
 	 * A schema that is used for setting files
 	 */
-	export const vscode = 'construct';
+	export const vscode = 'vscode';
 
 	/**
 	 * A schema that is used for internal private files
@@ -51,38 +51,38 @@ export namespace Schemas {
 
 	export const command = 'command';
 
-	export const vscodeRemote = 'construct-remote';
+	export const vscodeRemote = 'vscode-remote';
 
-	export const vscodeRemoteResource = 'construct-remote-resource';
+	export const vscodeRemoteResource = 'vscode-remote-resource';
 
-	export const vscodeManagedRemoteResource = 'construct-managed-remote-resource';
+	export const vscodeManagedRemoteResource = 'vscode-managed-remote-resource';
 
-	export const vscodeUserData = 'construct-userdata';
+	export const vscodeUserData = 'vscode-userdata';
 
-	export const vscodeCustomEditor = 'construct-custom-editor';
+	export const vscodeCustomEditor = 'vscode-custom-editor';
 
-	export const vscodeNotebookCell = 'construct-notebook-cell';
-	export const vscodeNotebookCellMetadata = 'construct-notebook-cell-metadata';
-	export const vscodeNotebookCellMetadataDiff = 'construct-notebook-cell-metadata-diff';
-	export const vscodeNotebookCellOutput = 'construct-notebook-cell-output';
-	export const vscodeNotebookCellOutputDiff = 'construct-notebook-cell-output-diff';
-	export const vscodeNotebookMetadata = 'construct-notebook-metadata';
-	export const vscodeInteractiveInput = 'construct-interactive-input';
+	export const vscodeNotebookCell = 'vscode-notebook-cell';
+	export const vscodeNotebookCellMetadata = 'vscode-notebook-cell-metadata';
+	export const vscodeNotebookCellMetadataDiff = 'vscode-notebook-cell-metadata-diff';
+	export const vscodeNotebookCellOutput = 'vscode-notebook-cell-output';
+	export const vscodeNotebookCellOutputDiff = 'vscode-notebook-cell-output-diff';
+	export const vscodeNotebookMetadata = 'vscode-notebook-metadata';
+	export const vscodeInteractiveInput = 'vscode-interactive-input';
 
-	export const vscodeSettings = 'construct-settings';
+	export const vscodeSettings = 'vscode-settings';
 
-	export const vscodeWorkspaceTrust = 'construct-workspace-trust';
+	export const vscodeWorkspaceTrust = 'vscode-workspace-trust';
 
-	export const vscodeTerminal = 'construct-terminal';
+	export const vscodeTerminal = 'vscode-terminal';
 
 	/** Scheme used for code blocks in chat. */
-	export const vscodeChatCodeBlock = 'construct-chat-code-block';
+	export const vscodeChatCodeBlock = 'vscode-chat-code-block';
 
 	/** Scheme used for LHS of code compare (aka diff) blocks in chat. */
-	export const vscodeChatCodeCompareBlock = 'construct-chat-code-compare-block';
+	export const vscodeChatCodeCompareBlock = 'vscode-chat-code-compare-block';
 
 	/** Scheme used for the chat input editor. */
-	export const vscodeChatSesssion = 'construct-chat-editor';
+	export const vscodeChatSesssion = 'vscode-chat-editor';
 
 	/**
 	 * Scheme used internally for webviews that aren't linked to a resource (i.e. not custom editors)
@@ -92,7 +92,7 @@ export namespace Schemas {
 	/**
 	 * Scheme used for loading the wrapper html and script in webviews.
 	 */
-	export const vscodeWebview = 'construct-webview';
+	export const vscodeWebview = 'vscode-webview';
 
 	/**
 	 * Scheme used for extension pages
@@ -103,7 +103,7 @@ export namespace Schemas {
 	 * Scheme used as a replacement of `file` scheme to load
 	 * files with our custom protocol handler (desktop only).
 	 */
-	export const vscodeFileResource = 'construct-file';
+	export const vscodeFileResource = 'vscode-file';
 
 	/**
 	 * Scheme used for temporary resources
@@ -118,7 +118,7 @@ export namespace Schemas {
 	/**
 	 * Scheme used for the Source Control commit input's text document
 	 */
-	export const vscodeSourceControl = 'construct-scm';
+	export const vscodeSourceControl = 'vscode-scm';
 
 	/**
 	 * Scheme used for input box for creating comments.
@@ -153,7 +153,7 @@ export function matchesSomeScheme(target: URI | string, ...schemes: string[]): b
 	return schemes.some(scheme => matchesScheme(target, scheme));
 }
 
-export const connectionTokenCookieName = 'construct-tkn';
+export const connectionTokenCookieName = 'vscode-tkn';
 export const connectionTokenQueryName = 'tkn';
 
 class RemoteAuthoritiesImpl {
@@ -248,7 +248,7 @@ export const nodeModulesPath: AppResourcePath = 'vs/../../node_modules';
 export const nodeModulesAsarPath: AppResourcePath = 'vs/../../node_modules.asar';
 export const nodeModulesAsarUnpackedPath: AppResourcePath = 'vs/../../node_modules.asar.unpacked';
 
-export const VSCODE_AUTHORITY = 'construct-app';
+export const VSCODE_AUTHORITY = 'vscode-app';
 
 class FileAccessImpl {
 
@@ -368,7 +368,7 @@ export namespace COI {
 
 	export const CoopAndCoep = Object.freeze(coiHeaders.get('3'));
 
-	const coiSearchParamName = 'construct-coi';
+	const coiSearchParamName = 'vscode-coi';
 
 	/**
 	 * Extract desired headers from `vscode-coi` invocation

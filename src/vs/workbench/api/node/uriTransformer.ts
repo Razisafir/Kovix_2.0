@@ -18,27 +18,27 @@ import { UriParts, IRawURITransformer, URITransformer, IURITransformer } from '.
 function createRawURITransformer(remoteAuthority: string): IRawURITransformer {
 	return {
 		transformIncoming: (uri: UriParts): UriParts => {
-			if (uri.scheme === 'construct-remote') {
+			if (uri.scheme === 'vscode-remote') {
 				return { scheme: 'file', path: uri.path, query: uri.query, fragment: uri.fragment };
 			}
 			if (uri.scheme === 'file') {
-				return { scheme: 'construct-local', path: uri.path, query: uri.query, fragment: uri.fragment };
+				return { scheme: 'vscode-local', path: uri.path, query: uri.query, fragment: uri.fragment };
 			}
 			return uri;
 		},
 		transformOutgoing: (uri: UriParts): UriParts => {
 			if (uri.scheme === 'file') {
-				return { scheme: 'construct-remote', authority: remoteAuthority, path: uri.path, query: uri.query, fragment: uri.fragment };
+				return { scheme: 'vscode-remote', authority: remoteAuthority, path: uri.path, query: uri.query, fragment: uri.fragment };
 			}
-			if (uri.scheme === 'construct-local') {
+			if (uri.scheme === 'vscode-local') {
 				return { scheme: 'file', path: uri.path, query: uri.query, fragment: uri.fragment };
 			}
 			return uri;
 		},
 		transformOutgoingScheme: (scheme: string): string => {
 			if (scheme === 'file') {
-				return 'construct-remote';
-			} else if (scheme === 'construct-local') {
+				return 'vscode-remote';
+			} else if (scheme === 'vscode-local') {
 				return 'file';
 			}
 			return scheme;

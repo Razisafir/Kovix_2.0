@@ -317,7 +317,7 @@ export class CodeApplication extends Disposable {
 				}
 
 				// remote extension schemes have the following format
-				// http://127.0.0.1:<port>/construct-remote-resource?path=
+				// http://127.0.0.1:<port>/vscode-remote-resource?path=
 				if (!uri.path.endsWith(Schemas.vscodeRemoteResource) && contentTypes.some(contentType => contentType.toLowerCase().includes('image/svg'))) {
 					return callback({ cancel: !isSvgRequestFromSafeContext(details) });
 				}
@@ -624,7 +624,7 @@ export class CodeApplication extends Disposable {
 		// Setup Protocol URL Handlers
 		const initialProtocolUrls = await appInstantiationService.invokeFunction(accessor => this.setupProtocolUrlHandlers(accessor, mainProcessElectronServer));
 
-		// Setup construct-remote-resource protocol handler.
+		// Setup vscode-remote-resource protocol handler.
 		this.setupManagedRemoteResourceUrlHandler(mainProcessElectronServer);
 
 		// Signal phase: ready - before opening first window
@@ -857,7 +857,7 @@ export class CodeApplication extends Disposable {
 
 			// Example conversion:
 			// From: construct://vscode-remote/wsl+ubuntu/mnt/c/GitDevelopment/monaco
-			//   To: construct-remote://wsl+ubuntu/mnt/c/GitDevelopment/monaco
+			//   To: vscode-remote://wsl+ubuntu/mnt/c/GitDevelopment/monaco
 
 			const secondSlash = uri.path.indexOf(posix.sep, 1 /* skip over the leading slash */);
 			let authority: string;
@@ -1439,7 +1439,7 @@ export class CodeApplication extends Disposable {
 		// Remote Authorities
 		protocol.registerHttpProtocol(Schemas.vscodeRemoteResource, (request, callback) => {
 			callback({
-				url: request.url.replace(/^construct-remote-resource:/, 'http:'),
+				url: request.url.replace(/^vscode-remote-resource:/, 'http:'),
 				method: request.method
 			});
 		});
