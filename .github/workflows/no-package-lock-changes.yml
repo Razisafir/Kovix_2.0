@@ -21,7 +21,7 @@ jobs:
 
       - name: Check author permission
         id: permission
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const { data } = await github.rest.repos.getCollaboratorPermissionLevel({
