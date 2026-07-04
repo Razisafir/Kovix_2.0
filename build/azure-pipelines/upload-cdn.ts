@@ -23,14 +23,8 @@ import * as Vinyl from 'vinyl';
 import * as vfs from 'vinyl-fs';
 import * as filter from 'gulp-filter';
 import * as gzip from 'gulp-gzip';
-import * as mime from 'mime';
 
 const commit = process.env['GITHUB_SHA'] || process.env['BUILD_SOURCEVERSION'] ?? 'unknown';
-
-mime.define({
-        'application/typescript': ['ts'],
-        'application/json': ['code-snippets'],
-});
 
 const MimeTypesToCompress = new Set([
         'application/eot',
@@ -215,6 +209,18 @@ function githubApiRequest(
 }
 
 async function main(): Promise<void> {
+        // mime v4 is ESM-only, so we use a dynamic import() and build a custom
+        // Mime instance with our custom type overrides (forced, since '.ts'
+        // collides with the default 'video/mp2t' mapping).
+        const { Mime } = await import('mime');
+        const standardTypes = (await import('mime/types/standard.js')).default;
+        const otherTypes = (await import('mime/types/other.js')).default;
+        const mime = new Mime(standardTypes, otherTypes);
+        mime.define({
+                'application/typescript': ['ts'],
+                'application/json': ['code-snippets'],
+        }, true);
+
         const files: string[] = [];
         const stagingDir = path.join('.build', 'cdn', commit);
 
@@ -226,7 +232,7 @@ async function main(): Promise<void> {
 
         // Compressed files → gzip → local staging
         const compressed = all
-                .pipe(filter(f => MimeTypesToCompress.has(mime.lookup(f.path))))
+                .pipe(filter(f => MimeTypesToCompress.has(mime.getType(f.path) ?? '')))
                 .pipe(gzip({ append: false }))
                 .pipe(vfs.dest(stagingDir))
                 .pipe(es.through(function (f: Vinyl) {
@@ -237,7 +243,7 @@ async function main(): Promise<void> {
 
         // Uncompressed files → local staging
         const uncompressed = all
-                .pipe(filter(f => !MimeTypesToCompress.has(mime.lookup(f.path))))
+                .pipe(filter(f => !MimeTypesToCompress.has(mime.getType(f.path) ?? '')))
                 .pipe(vfs.dest(stagingDir))
                 .pipe(es.through(function (f: Vinyl) {
                         console.log('Staged:', f.relative);
