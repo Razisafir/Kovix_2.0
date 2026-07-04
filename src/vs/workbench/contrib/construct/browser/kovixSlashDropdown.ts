@@ -52,13 +52,13 @@ export interface IKovixSlashCommand {
 
 /** The static catalog of slash commands. Kept in sync with handleSlashCommand. */
 export const KOVIX_SLASH_COMMANDS: readonly IKovixSlashCommand[] = [
-	{ command: '/skills',             description: 'List all installed skills' },
-	{ command: '/skill-create',       description: 'Create a skill from the current document' },
-	{ command: '/memory',             description: 'Show current memory privacy posture' },
-	{ command: '/swarm',              description: 'Open the swarm spawner' },
-	{ command: '/idea',               description: 'Kick off the autonomous idea → app wizard', usage: '<description>' },
-	{ command: '/autonomous',         description: 'Start autonomous build (alias for /idea)' },
-	{ command: '/forget-everything',  description: 'Wipe all stored memories (with confirmation)' },
+	{ command: '/skills', description: 'List all installed skills' },
+	{ command: '/skill-create', description: 'Create a skill from the current document' },
+	{ command: '/memory', description: 'Show current memory privacy posture' },
+	{ command: '/swarm', description: 'Open the swarm spawner' },
+	{ command: '/idea', description: 'Kick off the autonomous idea → app wizard', usage: '<description>' },
+	{ command: '/autonomous', description: 'Start autonomous build (alias for /idea)' },
+	{ command: '/forget-everything', description: 'Wipe all stored memories (with confirmation)' },
 ];
 
 /** Callback invoked when the user selects a command from the dropdown. */

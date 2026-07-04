@@ -45,130 +45,130 @@ const KOVIX_WELCOME_VIEW_TYPE = 'kovix.welcome';
  * styles.
  */
 export class KovixWelcomeView extends Disposable {
-  private webview: IOverlayWebview | undefined;
+	private webview: IOverlayWebview | undefined;
 
-  constructor(
-    @IWebviewWorkbenchService private readonly webviewWorkbenchService: IWebviewWorkbenchService,
-    @IStorageService private readonly storageService: IStorageService,
-    @ILogService private readonly logService: ILogService,
-  ) {
-    super();
-  }
+	constructor(
+		@IWebviewWorkbenchService private readonly webviewWorkbenchService: IWebviewWorkbenchService,
+		@IStorageService private readonly storageService: IStorageService,
+		@ILogService private readonly logService: ILogService,
+	) {
+		super();
+	}
 
-  /** True if the user has dismissed the welcome screen at least once. */
-  static hasSeenFirstLaunch(storageService: IStorageService): boolean {
-    return storageService.getBoolean(KOVIX_FIRST_LAUNCH_KEY, StorageScope.APPLICATION, false);
-  }
+	/** True if the user has dismissed the welcome screen at least once. */
+	static hasSeenFirstLaunch(storageService: IStorageService): boolean {
+		return storageService.getBoolean(KOVIX_FIRST_LAUNCH_KEY, StorageScope.APPLICATION, false);
+	}
 
-  /** Open (or reveal) the welcome webview. */
-  show(): void {
-    if (this.webview) { return; } // already open
+	/** Open (or reveal) the welcome webview. */
+	show(): void {
+		if (this.webview) { return; } // already open
 
-    const input = this.webviewWorkbenchService.openWebview(
-      {
-        title: localize('kovixWelcomeTitle', "Welcome to Kovix"),
-        options: {
-          retainContextWhenHidden: false,
-          enableFindWidget: false,
-        },
-        contentOptions: {
-          // SEC-1: Strict webview security - same posture as constructOnboarding.
-          allowScripts: true,
-          allowForms: true,
-          enableCommandUris: true,
-          localResourceRoots: [],
-        },
-        extension: undefined,
-      },
-      KOVIX_WELCOME_VIEW_TYPE,
-      localize('kovixWelcomeTitleShort', "Welcome"),
-      {},
-    );
+		const input = this.webviewWorkbenchService.openWebview(
+			{
+				title: localize('kovixWelcomeTitle', "Welcome to Kovix"),
+				options: {
+					retainContextWhenHidden: false,
+					enableFindWidget: false,
+				},
+				contentOptions: {
+					// SEC-1: Strict webview security - same posture as constructOnboarding.
+					allowScripts: true,
+					allowForms: true,
+					enableCommandUris: true,
+					localResourceRoots: [],
+				},
+				extension: undefined,
+			},
+			KOVIX_WELCOME_VIEW_TYPE,
+			localize('kovixWelcomeTitleShort', "Welcome"),
+			{},
+		);
 
-    this.webview = input.webview;
+		this.webview = input.webview;
 
-    // Listen for postMessage from the webview - used for CTA clicks so we
-    // don't need command: URIs (which require registering commands).
-    this._register(input.webview.onMessage(async (e) => {
-      const message = e.message as { type: string };
-      await this.handleMessage(message);
-    }));
+		// Listen for postMessage from the webview - used for CTA clicks so we
+		// don't need command: URIs (which require registering commands).
+		this._register(input.webview.onMessage(async (e) => {
+			const message = e.message as { type: string };
+			await this.handleMessage(message);
+		}));
 
-    // SEC-1: Strict CSP on the webview HTML.
-    const nonce = this.generateNonce();
-    input.webview.setHtml(this.getHtml(nonce));
+		// SEC-1: Strict CSP on the webview HTML.
+		const nonce = this.generateNonce();
+		input.webview.setHtml(this.getHtml(nonce));
 
-    // When the webview is closed by the user, dispose our reference so a
-    // subsequent open() can create a fresh one.
-    this._register(input.onWillDispose(() => {
-      this.webview = undefined;
-    }));
-  }
+		// When the webview is closed by the user, dispose our reference so a
+		// subsequent open() can create a fresh one.
+		this._register(input.onWillDispose(() => {
+			this.webview = undefined;
+		}));
+	}
 
-  private async handleMessage(message: { type: string }): Promise<void> {
-    switch (message.type) {
-      case 'cta-new-project':
-        this.markSeen();
-        // Trigger the existing Kovix Project Wizard command (if registered).
-        this.dispatchCommand('kovix.openProjectWizard');
-        break;
-      case 'cta-open-folder':
-        this.markSeen();
-        this.dispatchCommand('workbench.action.files.openFolder');
-        break;
-      case 'cta-tour':
-        this.markSeen();
-        // Reuse the onboarding wizard as the "60-second tour".
-        this.dispatchCommand('kovix.openOnboarding');
-        break;
-      case 'cta-skip':
-        this.markSeen();
-        // Close the webview by triggering the close-editor command.
-        this.dispatchCommand('workbench.action.closeActiveEditor');
-        break;
-    }
-  }
+	private async handleMessage(message: { type: string }): Promise<void> {
+		switch (message.type) {
+			case 'cta-new-project':
+				this.markSeen();
+				// Trigger the existing Kovix Project Wizard command (if registered).
+				this.dispatchCommand('kovix.openProjectWizard');
+				break;
+			case 'cta-open-folder':
+				this.markSeen();
+				this.dispatchCommand('workbench.action.files.openFolder');
+				break;
+			case 'cta-tour':
+				this.markSeen();
+				// Reuse the onboarding wizard as the "60-second tour".
+				this.dispatchCommand('kovix.openOnboarding');
+				break;
+			case 'cta-skip':
+				this.markSeen();
+				// Close the webview by triggering the close-editor command.
+				this.dispatchCommand('workbench.action.closeActiveEditor');
+				break;
+		}
+	}
 
-  private markSeen(): void {
-    this.storageService.store(KOVIX_FIRST_LAUNCH_KEY, true, StorageScope.APPLICATION, StorageTarget.USER);
-  }
+	private markSeen(): void {
+		this.storageService.store(KOVIX_FIRST_LAUNCH_KEY, true, StorageScope.APPLICATION, StorageTarget.USER);
+	}
 
-  /** Best-effort command dispatch - works if a global command bridge is
-   *  registered (e.g. by the agent host); no-ops silently otherwise. */
-  private dispatchCommand(commandId: string): void {
-    try {
-      const bridge = (window as any).kovixCommandBridge;
-      if (bridge && typeof bridge.executeCommand === 'function') {
-        bridge.executeCommand(commandId);
-      }
-    } catch (err) {
-      this.logService.error('[Kovix] Welcome CTA command dispatch failed:', err);
-    }
-  }
+	/** Best-effort command dispatch - works if a global command bridge is
+	 *  registered (e.g. by the agent host); no-ops silently otherwise. */
+	private dispatchCommand(commandId: string): void {
+		try {
+			const bridge = (window as any).kovixCommandBridge;
+			if (bridge && typeof bridge.executeCommand === 'function') {
+				bridge.executeCommand(commandId);
+			}
+		} catch (err) {
+			this.logService.error('[Kovix] Welcome CTA command dispatch failed:', err);
+		}
+	}
 
-  /**
-   * SECURITY FIX (M4/L2): CSP nonce must be cryptographically random.
-   * Previous implementation used Math.random() - V8's XorShift128+ PRNG is
-   * not crypto-grade and the CSP nonce protects every <script> tag in the
-   * welcome webview from injection. Use the Web Crypto API instead, which is
-   * available in both the Electron renderer and the browser.
-   */
-  private generateNonce(): string {
-    // 32 bytes (256 bits) hex-encoded → 64 chars. Same entropy as the prior
-    // 32-char base62 string but from a CSPRNG.
-    const array = new Uint8Array(32);
-    globalThis.crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-  }
+	/**
+	 * SECURITY FIX (M4/L2): CSP nonce must be cryptographically random.
+	 * Previous implementation used Math.random() - V8's XorShift128+ PRNG is
+	 * not crypto-grade and the CSP nonce protects every <script> tag in the
+	 * welcome webview from injection. Use the Web Crypto API instead, which is
+	 * available in both the Electron renderer and the browser.
+	 */
+	private generateNonce(): string {
+		// 32 bytes (256 bits) hex-encoded → 64 chars. Same entropy as the prior
+		// 32-char base62 string but from a CSPRNG.
+		const array = new Uint8Array(32);
+		globalThis.crypto.getRandomValues(array);
+		return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+	}
 
-  /**
-   * Welcome screen HTML with strict CSP. All styling is inlined - no
-   * external CSS fetches, no fonts from CDN. The design system tokens
-   * are reproduced here as plain values so the webview looks identical
-   * to the rest of the Kovix chrome.
-   */
-  private getHtml(nonce: string): string {
-    return `<!DOCTYPE html>
+	/**
+	 * Welcome screen HTML with strict CSP. All styling is inlined - no
+	 * external CSS fetches, no fonts from CDN. The design system tokens
+	 * are reproduced here as plain values so the webview looks identical
+	 * to the rest of the Kovix chrome.
+	 */
+	private getHtml(nonce: string): string {
+		return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -420,7 +420,7 @@ export class KovixWelcomeView extends Disposable {
   </script>
 </body>
 </html>`;
-  }
+	}
 }
 
 /**
@@ -430,35 +430,35 @@ export class KovixWelcomeView extends Disposable {
  * command so the K-logo in the activity bar can re-open it on demand.
  */
 export class KovixWelcomeContribution extends Disposable implements IWorkbenchContribution {
-  static readonly ID = 'workbench.contrib.kovixWelcome';
+	static readonly ID = 'workbench.contrib.kovixWelcome';
 
-  constructor(
-    @IInstantiationService private readonly instantiationService: IInstantiationService,
-    @IStorageService private readonly storageService: IStorageService,
-    @IConfigurationService private readonly configurationService: IConfigurationService,
-    @ILogService private readonly logService: ILogService,
-  ) {
-    super();
+	constructor(
+		@IInstantiationService private readonly instantiationService: IInstantiationService,
+		@IStorageService private readonly storageService: IStorageService,
+		@IConfigurationService private readonly configurationService: IConfigurationService,
+		@ILogService private readonly logService: ILogService,
+	) {
+		super();
 
-    // Respect a config escape hatch - useful for automation / headless setups.
-    const welcomeEnabled = this.configurationService.getValue<boolean>('kovix.welcome.enabled') ?? true;
-    if (!welcomeEnabled) { return; }
+		// Respect a config escape hatch - useful for automation / headless setups.
+		const welcomeEnabled = this.configurationService.getValue<boolean>('kovix.welcome.enabled') ?? true;
+		if (!welcomeEnabled) { return; }
 
-    const seen = KovixWelcomeView.hasSeenFirstLaunch(this.storageService);
-    if (seen) { return; }
+		const seen = KovixWelcomeView.hasSeenFirstLaunch(this.storageService);
+		if (seen) { return; }
 
-    // Defer one tick so the workbench layout has settled and the default
-    // editor (if any) has resolved - we want to REPLACE it, not stack.
-    setTimeout(() => this.openWelcome(), 350);
-  }
+		// Defer one tick so the workbench layout has settled and the default
+		// editor (if any) has resolved - we want to REPLACE it, not stack.
+		setTimeout(() => this.openWelcome(), 350);
+	}
 
-  private openWelcome(): void {
-    try {
-      const view = this.instantiationService.createInstance(KovixWelcomeView);
-      view.show();
-      this.logService.info('[Kovix] Welcome screen opened for first launch.');
-    } catch (err) {
-      this.logService.error('[Kovix] Failed to open welcome screen:', err);
-    }
-  }
+	private openWelcome(): void {
+		try {
+			const view = this.instantiationService.createInstance(KovixWelcomeView);
+			view.show();
+			this.logService.info('[Kovix] Welcome screen opened for first launch.');
+		} catch (err) {
+			this.logService.error('[Kovix] Failed to open welcome screen:', err);
+		}
+	}
 }

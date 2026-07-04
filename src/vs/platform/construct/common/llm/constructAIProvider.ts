@@ -9,24 +9,24 @@ import { createDecorator } from '../../../instantiation/common/instantiation.js'
 import { Event } from '../../../../base/common/event.js';
 
 export class ConstructAuthError extends Error {
-        constructor(message: string) {
-                super(message);
-                this.name = 'ConstructAuthError';
-        }
+	constructor(message: string) {
+		super(message);
+		this.name = 'ConstructAuthError';
+	}
 }
 
 export class ConstructRateLimitError extends Error {
-        constructor(message: string, public readonly retryAfter?: number) {
-                super(message);
-                this.name = 'ConstructRateLimitError';
-        }
+	constructor(message: string, public readonly retryAfter?: number) {
+		super(message);
+		this.name = 'ConstructRateLimitError';
+	}
 }
 
 export class ConstructOverloadedError extends Error {
-        constructor(message: string) {
-                super(message);
-                this.name = 'ConstructOverloadedError';
-        }
+	constructor(message: string) {
+		super(message);
+		this.name = 'ConstructOverloadedError';
+	}
 }
 
 export const IConstructAIProvider = createDecorator<IConstructAIProvider>('kovix.aiProvider');
@@ -37,18 +37,18 @@ export const IConstructAIProvider = createDecorator<IConstructAIProvider>('kovix
  * for model selection in the UI and agent system.
  */
 export interface IModelInfo {
-        /** Unique identifier for the model (e.g. 'llama3.1:8b', 'claude-sonnet-4-20250514') */
-        id: string;
-        /** Human-readable name for display in the model picker */
-        displayName: string;
-        /** The provider that hosts this model */
-        provider: AIProviderType;
-        /** Approximate context window size in tokens */
-        contextWindowTokens: number;
-        /** Whether this model supports tool/function calling */
-        supportsTools: boolean;
-        /** Whether this model supports streaming responses */
-        supportsStreaming: boolean;
+	/** Unique identifier for the model (e.g. 'llama3.1:8b', 'claude-sonnet-4-20250514') */
+	id: string;
+	/** Human-readable name for display in the model picker */
+	displayName: string;
+	/** The provider that hosts this model */
+	provider: AIProviderType;
+	/** Approximate context window size in tokens */
+	contextWindowTokens: number;
+	/** Whether this model supports tool/function calling */
+	supportsTools: boolean;
+	/** Whether this model supports streaming responses */
+	supportsStreaming: boolean;
 }
 
 /**
@@ -56,24 +56,24 @@ export interface IModelInfo {
  * Each provider adapter translates between this format and its native API format.
  */
 export interface IChatMessage {
-        role: 'system' | 'user' | 'assistant' | 'tool';
-        content: string;
-        /** For tool_result messages: the ID of the tool call this is responding to */
-        toolCallId?: string;
-        /** For assistant messages: tool calls requested by the model */
-        toolCalls?: IToolCall[];
+	role: 'system' | 'user' | 'assistant' | 'tool';
+	content: string;
+	/** For tool_result messages: the ID of the tool call this is responding to */
+	toolCallId?: string;
+	/** For assistant messages: tool calls requested by the model */
+	toolCalls?: IToolCall[];
 }
 
 /**
  * A tool call requested by the model during a response.
  */
 export interface IToolCall {
-        /** Unique ID for this tool call */
-        id: string;
-        /** Name of the tool to invoke */
-        name: string;
-        /** JSON-encoded arguments for the tool */
-        arguments: string;
+	/** Unique ID for this tool call */
+	id: string;
+	/** Name of the tool to invoke */
+	name: string;
+	/** JSON-encoded arguments for the tool */
+	arguments: string;
 }
 
 /**
@@ -81,13 +81,13 @@ export interface IToolCall {
  * Follows the OpenAI function-calling schema convention.
  */
 export interface IToolDefinition {
-        name: string;
-        description: string;
-        inputSchema: {
-                type: 'object';
-                properties: Record<string, unknown>;
-                required?: string[];
-        };
+	name: string;
+	description: string;
+	inputSchema: {
+		type: 'object';
+		properties: Record<string, unknown>;
+		required?: string[];
+	};
 }
 
 /**
@@ -96,26 +96,26 @@ export interface IToolDefinition {
  * loop and UI can consume them without provider-specific logic.
  */
 export type AIStreamEvent =
-        | { type: 'token'; text: string }
-        | { type: 'tool_start'; toolId: string; toolName: string }
-        | { type: 'tool_input'; toolId: string; text: string }
-        | { type: 'tool_end'; toolId: string; toolName: string; toolInput: unknown }
-        | { type: 'done'; stopReason: string }
-        | { type: 'error'; text: string };
+	| { type: 'token'; text: string }
+	| { type: 'tool_start'; toolId: string; toolName: string }
+	| { type: 'tool_input'; toolId: string; text: string }
+	| { type: 'tool_end'; toolId: string; toolName: string; toolInput: unknown }
+	| { type: 'done'; stopReason: string }
+	| { type: 'error'; text: string };
 
 /**
  * Options for the chat method.
  * Controls behavior of the AI response generation.
  */
 export interface IChatOptions {
-        /** AbortSignal for cancelling the request */
-        signal?: AbortSignal;
-        /** System prompt to prepend to the conversation */
-        systemPrompt?: string;
-        /** Maximum tokens to generate in the response */
-        maxTokens?: number;
-        /** Temperature for sampling (0.0 = deterministic, 1.0 = creative) */
-        temperature?: number;
+	/** AbortSignal for cancelling the request */
+	signal?: AbortSignal;
+	/** System prompt to prepend to the conversation */
+	systemPrompt?: string;
+	/** Maximum tokens to generate in the response */
+	maxTokens?: number;
+	/** Temperature for sampling (0.0 = deterministic, 1.0 = creative) */
+	temperature?: number;
 }
 
 /**
@@ -123,24 +123,24 @@ export interface IChatOptions {
  * Used for inline code completion (e.g. Copilot-style suggestions).
  */
 export interface ICompleteOptions {
-        /** AbortSignal for cancellation */
-        signal?: AbortSignal;
-        /** Maximum tokens to generate */
-        maxTokens?: number;
-        /** Temperature for sampling */
-        temperature?: number;
-        /** Stop sequences that end generation */
-        stop?: string[];
+	/** AbortSignal for cancellation */
+	signal?: AbortSignal;
+	/** Maximum tokens to generate */
+	maxTokens?: number;
+	/** Temperature for sampling */
+	temperature?: number;
+	/** Stop sequences that end generation */
+	stop?: string[];
 }
 
 /**
  * Result of an inline completion request.
  */
 export interface ICompleteResult {
-        /** The generated completion text */
-        text: string;
-        /** Whether the completion was truncated due to maxTokens */
-        finished: boolean;
+	/** The generated completion text */
+	text: string;
+	/** Whether the completion was truncated due to maxTokens */
+	finished: boolean;
 }
 
 /**
@@ -153,14 +153,14 @@ export type AIProviderType = 'ollama' | 'xenova' | 'cloud';
  * Status of a provider, used for health checks and auto-selection.
  */
 export enum ProviderStatus {
-        /** Provider is available and ready to serve requests */
-        Available = 'available',
-        /** Provider is reachable but no models are loaded/available */
-        NoModels = 'noModels',
-        /** Provider endpoint is not reachable */
-        Unreachable = 'unreachable',
-        /** Provider has not been checked yet */
-        Unknown = 'unknown',
+	/** Provider is available and ready to serve requests */
+	Available = 'available',
+	/** Provider is reachable but no models are loaded/available */
+	NoModels = 'noModels',
+	/** Provider endpoint is not reachable */
+	Unreachable = 'unreachable',
+	/** Provider has not been checked yet */
+	Unknown = 'unknown',
 }
 
 /**
@@ -179,85 +179,85 @@ export enum ProviderStatus {
  * Cloud is only used when explicitly configured.
  */
 export interface IConstructAIProvider {
-        readonly _serviceBrand: undefined;
+	readonly _serviceBrand: undefined;
 
-        /**
-         * Stream a conversation to the active model, yielding AIStreamEvents.
-         * ALL AI responses must stream token-by-token. Never await a full
-         * response before showing output.
-         *
-         * @param messages Conversation messages in unified format.
-         * @param tools Tool definitions available to the model.
-         * @param options Chat options (signal, systemPrompt, maxTokens, temperature).
-         * @returns AsyncIterable of AIStreamEvent items.
-         */
-        chat(messages: IChatMessage[], tools: IToolDefinition[], options?: IChatOptions): AsyncIterable<AIStreamEvent>;
+	/**
+	 * Stream a conversation to the active model, yielding AIStreamEvents.
+	 * ALL AI responses must stream token-by-token. Never await a full
+	 * response before showing output.
+	 *
+	 * @param messages Conversation messages in unified format.
+	 * @param tools Tool definitions available to the model.
+	 * @param options Chat options (signal, systemPrompt, maxTokens, temperature).
+	 * @returns AsyncIterable of AIStreamEvent items.
+	 */
+	chat(messages: IChatMessage[], tools: IToolDefinition[], options?: IChatOptions): AsyncIterable<AIStreamEvent>;
 
-        /**
-         * Generate an inline code completion for the given prefix/suffix.
-         * Used for Copilot-style code suggestions.
-         *
-         * @param prefix Code before the cursor position.
-         * @param suffix Code after the cursor position (optional).
-         * @param options Completion options.
-         * @returns The completion result.
-         */
-        complete(prefix: string, suffix: string, options?: ICompleteOptions): Promise<ICompleteResult>;
+	/**
+	 * Generate an inline code completion for the given prefix/suffix.
+	 * Used for Copilot-style code suggestions.
+	 *
+	 * @param prefix Code before the cursor position.
+	 * @param suffix Code after the cursor position (optional).
+	 * @param options Completion options.
+	 * @returns The completion result.
+	 */
+	complete(prefix: string, suffix: string, options?: ICompleteOptions): Promise<ICompleteResult>;
 
-        /**
-         * List all models available from this provider.
-         * For Ollama, this queries /api/tags.
-         * For Xenova, this returns cached ONNX model info.
-         * For Cloud, this queries /v1/models.
-         *
-         * @returns Array of model info objects.
-         */
-        listModels(): Promise<IModelInfo[]>;
+	/**
+	 * List all models available from this provider.
+	 * For Ollama, this queries /api/tags.
+	 * For Xenova, this returns cached ONNX model info.
+	 * For Cloud, this queries /v1/models.
+	 *
+	 * @returns Array of model info objects.
+	 */
+	listModels(): Promise<IModelInfo[]>;
 
-        /**
-         * Get the currently active model.
-         * This is the model that will be used for chat() and complete() calls.
-         */
-        getActiveModel(): IModelInfo | undefined;
+	/**
+	 * Get the currently active model.
+	 * This is the model that will be used for chat() and complete() calls.
+	 */
+	getActiveModel(): IModelInfo | undefined;
 
-        /**
-         * Set the active model by ID.
-         * The model must be available from listModels().
-         *
-         * @param modelId The model ID to activate.
-         * @returns True if the model was successfully activated.
-         */
-        setActiveModel(modelId: string): Promise<boolean>;
+	/**
+	 * Set the active model by ID.
+	 * The model must be available from listModels().
+	 *
+	 * @param modelId The model ID to activate.
+	 * @returns True if the model was successfully activated.
+	 */
+	setActiveModel(modelId: string): Promise<boolean>;
 
-        /**
-         * Whether this provider can operate without internet.
-         * Ollama and Xenova return true; Cloud returns false.
-         */
-        isOffline(): boolean;
+	/**
+	 * Whether this provider can operate without internet.
+	 * Ollama and Xenova return true; Cloud returns false.
+	 */
+	isOffline(): boolean;
 
-        /**
-         * Check the current status of this provider.
-         * Used by the auto-selection logic and status bar.
-         */
-        checkStatus(): Promise<ProviderStatus>;
+	/**
+	 * Check the current status of this provider.
+	 * Used by the auto-selection logic and status bar.
+	 */
+	checkStatus(): Promise<ProviderStatus>;
 
-        /**
-         * The type of this provider (ollama, xenova, or cloud).
-         */
-        readonly providerType: AIProviderType;
+	/**
+	 * The type of this provider (ollama, xenova, or cloud).
+	 */
+	readonly providerType: AIProviderType;
 
-        /**
-         * Event fired when the active model changes.
-         */
-        readonly onDidChangeActiveModel: Event<IModelInfo | undefined>;
+	/**
+	 * Event fired when the active model changes.
+	 */
+	readonly onDidChangeActiveModel: Event<IModelInfo | undefined>;
 
-        /**
-         * Event fired when the provider status changes.
-         */
-        readonly onDidChangeStatus: Event<ProviderStatus>;
+	/**
+	 * Event fired when the provider status changes.
+	 */
+	readonly onDidChangeStatus: Event<ProviderStatus>;
 
-        /**
-         * Dispose the provider and release resources (worker threads, connections, etc.).
-         */
-        dispose(): void;
+	/**
+	 * Dispose the provider and release resources (worker threads, connections, etc.).
+	 */
+	dispose(): void;
 }

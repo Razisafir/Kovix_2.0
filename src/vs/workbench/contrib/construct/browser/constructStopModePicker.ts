@@ -13,16 +13,16 @@ import { IMilestone } from '../../../../platform/construct/common/agent/mileston
  * Quick-pick item extended with execution mode metadata.
  */
 interface IExecutionModePickItem extends IQuickPickItem {
-        /** The execution mode represented by this pick item. */
-        readonly mode: ExecutionMode;
+	/** The execution mode represented by this pick item. */
+	readonly mode: ExecutionMode;
 }
 
 /**
  * Quick-pick item extended with milestone metadata.
  */
 interface IMilestonePickItem extends IQuickPickItem {
-        /** The milestone ID represented by this pick item. */
-        readonly milestoneId: string;
+	/** The milestone ID represented by this pick item. */
+	readonly milestoneId: string;
 }
 
 /**
@@ -40,56 +40,56 @@ interface IMilestonePickItem extends IQuickPickItem {
  * IApprovedPlan.
  */
 export interface IStopModePickResult {
-        readonly mode: ExecutionMode;
-        readonly selectedMilestoneIds?: string[];
+	readonly mode: ExecutionMode;
+	readonly selectedMilestoneIds?: string[];
 }
 
 export async function showStopModePicker(
-        quickInputService: IQuickInputService,
-        milestones?: IMilestone[],
+	quickInputService: IQuickInputService,
+	milestones?: IMilestone[],
 ): Promise<IStopModePickResult | undefined> {
-        const configs = Object.values(DEFAULT_EXECUTION_MODE_CONFIGS);
+	const configs = Object.values(DEFAULT_EXECUTION_MODE_CONFIGS);
 
-        const items: IExecutionModePickItem[] = configs.map(config => ({
-                label: `${config.icon} ${config.label}`,
-                description: config.description,
-                detail: config.pausesAtMilestones ? 'Pauses between milestones' : 'Runs without pausing',
-                mode: config.mode,
-        }));
+	const items: IExecutionModePickItem[] = configs.map(config => ({
+		label: `${config.icon} ${config.label}`,
+		description: config.description,
+		detail: config.pausesAtMilestones ? 'Pauses between milestones' : 'Runs without pausing',
+		mode: config.mode,
+	}));
 
-        const pick = await quickInputService.pick(items, {
-                placeHolder: 'Select execution mode...',
-                title: 'Stop Mode',
-        });
+	const pick = await quickInputService.pick(items, {
+		placeHolder: 'Select execution mode...',
+		title: 'Stop Mode',
+	});
 
-        if (!pick) {
-                return undefined;
-        }
+	if (!pick) {
+		return undefined;
+	}
 
-        const selectedMode = (pick as IExecutionModePickItem).mode;
+	const selectedMode = (pick as IExecutionModePickItem).mode;
 
-        // If Selective mode and milestones are available, show milestone picker
-        // Fix for F-007 (#77): actually capture the user's selection this time.
-        let selectedMilestoneIds: string[] | undefined;
-        if (selectedMode === ExecutionMode.Selective && milestones && milestones.length > 0) {
-                const milestoneItems: IMilestonePickItem[] = milestones.map(m => ({
-                        label: `${m.isMajor ? '\u2B50' : '\uD83D\uDFE2'} ${m.name}`,
-                        description: m.description,
-                        detail: `Steps: ${m.stepIndices.length} | ${m.isMajor ? 'Major' : 'Minor'} milestone`,
-                        picked: m.isMajor, // Default: pause at major milestones
-                        milestoneId: m.id,
-                }));
+	// If Selective mode and milestones are available, show milestone picker
+	// Fix for F-007 (#77): actually capture the user's selection this time.
+	let selectedMilestoneIds: string[] | undefined;
+	if (selectedMode === ExecutionMode.Selective && milestones && milestones.length > 0) {
+		const milestoneItems: IMilestonePickItem[] = milestones.map(m => ({
+			label: `${m.isMajor ? '\u2B50' : '\uD83D\uDFE2'} ${m.name}`,
+			description: m.description,
+			detail: `Steps: ${m.stepIndices.length} | ${m.isMajor ? 'Major' : 'Minor'} milestone`,
+			picked: m.isMajor, // Default: pause at major milestones
+			milestoneId: m.id,
+		}));
 
-                const milestonePicks = await quickInputService.pick(milestoneItems, {
-                        placeHolder: 'Select milestones to pause at...',
-                        title: 'Select Pause Points',
-                        canPickMany: true,
-                });
+		const milestonePicks = await quickInputService.pick(milestoneItems, {
+			placeHolder: 'Select milestones to pause at...',
+			title: 'Select Pause Points',
+			canPickMany: true,
+		});
 
-                if (milestonePicks && milestonePicks.length > 0) {
-                        selectedMilestoneIds = (milestonePicks as IMilestonePickItem[]).map(p => p.milestoneId);
-                }
-        }
+		if (milestonePicks && milestonePicks.length > 0) {
+			selectedMilestoneIds = (milestonePicks as IMilestonePickItem[]).map(p => p.milestoneId);
+		}
+	}
 
-        return { mode: selectedMode, selectedMilestoneIds };
+	return { mode: selectedMode, selectedMilestoneIds };
 }

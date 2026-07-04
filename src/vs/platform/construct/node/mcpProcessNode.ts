@@ -16,20 +16,20 @@ import { buildChildEnv } from '../common/security/childEnv.js';
  * JSON-RPC 2.0 request structure for MCP protocol.
  */
 interface IJsonRpcRequest {
-        jsonrpc: '2.0';
-        id: number;
-        method: string;
-        params?: Record<string, unknown>;
+	jsonrpc: '2.0';
+	id: number;
+	method: string;
+	params?: Record<string, unknown>;
 }
 
 /**
  * JSON-RPC 2.0 response structure for MCP protocol.
  */
 interface IJsonRpcResponse {
-        jsonrpc: '2.0';
-        id: number;
-        result?: unknown;
-        error?: { code: number; message: string; data?: unknown };
+	jsonrpc: '2.0';
+	id: number;
+	result?: unknown;
+	error?: { code: number; message: string; data?: unknown };
 }
 
 /**
@@ -48,286 +48,286 @@ interface IJsonRpcResponse {
  * to this service when available, falling back to IFileService in browser mode.
  */
 export class MCPProcessNodeService extends Disposable implements IMCPProcessNodeService {
-        declare readonly _serviceBrand: undefined;
+	declare readonly _serviceBrand: undefined;
 
-        private process: ChildProcess | null = null;
-        private requestId = 0;
-        private readonly pendingRequests = new Map<number, { resolve: (value: unknown) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }>();
-        private buffer = '';
-        private initialized = false;
-        private crashCount = 0;
-        private readonly maxCrashes = 5;
-        private readonly crashBackoffMs = 3000;
-        private rootPath: string = '';
-        private readonly timeoutMs = 30000;
+	private process: ChildProcess | null = null;
+	private requestId = 0;
+	private readonly pendingRequests = new Map<number, { resolve: (value: unknown) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }>();
+	private buffer = '';
+	private initialized = false;
+	private crashCount = 0;
+	private readonly maxCrashes = 5;
+	private readonly crashBackoffMs = 3000;
+	private rootPath: string = '';
+	private readonly timeoutMs = 30000;
 
-        constructor(
-                private readonly logService: ILogService,
-        ) {
-                super();
-        }
+	constructor(
+		private readonly logService: ILogService,
+	) {
+		super();
+	}
 
-        /**
-         * Spawn the MCP filesystem server and perform the initialization handshake.
-         */
-        async start(rootPath: string): Promise<void> {
-                // Validate path to prevent directory traversal attacks
-                assertWithinWorkspace(rootPath);
+	/**
+	 * Spawn the MCP filesystem server and perform the initialization handshake.
+	 */
+	async start(rootPath: string): Promise<void> {
+		// Validate path to prevent directory traversal attacks
+		assertWithinWorkspace(rootPath);
 
-                this.rootPath = rootPath;
-                await this.spawnServer();
-                await this.initializeHandshake();
-                this.logService.info(`[MCPProcessNode] Started with root: ${rootPath}`);
-        }
+		this.rootPath = rootPath;
+		await this.spawnServer();
+		await this.initializeHandshake();
+		this.logService.info(`[MCPProcessNode] Started with root: ${rootPath}`);
+	}
 
-        /**
-         * Stop the MCP server process.
-         */
-        async stop(): Promise<void> {
-                if (this.process && !this.process.killed) {
-                        this.process.kill();
-                        this.process = null;
-                }
-                this.initialized = false;
-                this.logService.info('[MCPProcessNode] Stopped');
-        }
+	/**
+	 * Stop the MCP server process.
+	 */
+	async stop(): Promise<void> {
+		if (this.process && !this.process.killed) {
+			this.process.kill();
+			this.process = null;
+		}
+		this.initialized = false;
+		this.logService.info('[MCPProcessNode] Stopped');
+	}
 
-        /**
-         * Send a JSON-RPC request and wait for the response.
-         */
-        async sendRequest(method: string, params?: Record<string, unknown>): Promise<unknown> {
-                // Validate MCP method against allowlist to prevent arbitrary RPC calls
-                if (!validateMcpMethod(method)) {
-                        throw new Error(`MCP method not allowed: "${method}"`);
-                }
+	/**
+	 * Send a JSON-RPC request and wait for the response.
+	 */
+	async sendRequest(method: string, params?: Record<string, unknown>): Promise<unknown> {
+		// Validate MCP method against allowlist to prevent arbitrary RPC calls
+		if (!validateMcpMethod(method)) {
+			throw new Error(`MCP method not allowed: "${method}"`);
+		}
 
-                const id = ++this.requestId;
-                const request: IJsonRpcRequest = {
-                        jsonrpc: '2.0',
-                        id,
-                        method,
-                        params,
-                };
+		const id = ++this.requestId;
+		const request: IJsonRpcRequest = {
+			jsonrpc: '2.0',
+			id,
+			method,
+			params,
+		};
 
-                return new Promise((resolve, reject) => {
-                        const timer = setTimeout(() => {
-                                this.pendingRequests.delete(id);
-                                reject(new Error(`MCP request timed out after ${this.timeoutMs}ms: ${method}`));
-                        }, this.timeoutMs);
+		return new Promise((resolve, reject) => {
+			const timer = setTimeout(() => {
+				this.pendingRequests.delete(id);
+				reject(new Error(`MCP request timed out after ${this.timeoutMs}ms: ${method}`));
+			}, this.timeoutMs);
 
-                        this.pendingRequests.set(id, { resolve, reject, timer });
+			this.pendingRequests.set(id, { resolve, reject, timer });
 
-                        if (!this.process?.stdin) {
-                                this.pendingRequests.delete(id);
-                                clearTimeout(timer);
-                                reject(new Error('MCP server process not running'));
-                                return;
-                        }
+			if (!this.process?.stdin) {
+				this.pendingRequests.delete(id);
+				clearTimeout(timer);
+				reject(new Error('MCP server process not running'));
+				return;
+			}
 
-                        const message = JSON.stringify(request) + '\n';
-                        this.process.stdin.write(message);
-                });
-        }
+			const message = JSON.stringify(request) + '\n';
+			this.process.stdin.write(message);
+		});
+	}
 
-        /**
-         * Call a tool on the MCP server.
-         */
-        async callTool(name: string, args: Record<string, unknown>): Promise<unknown> {
-                // Validate tool name against allowlist to prevent arbitrary tool execution
-                if (!validateToolName(name)) {
-                        throw new Error(`MCP tool not allowed: "${name}"`);
-                }
+	/**
+	 * Call a tool on the MCP server.
+	 */
+	async callTool(name: string, args: Record<string, unknown>): Promise<unknown> {
+		// Validate tool name against allowlist to prevent arbitrary tool execution
+		if (!validateToolName(name)) {
+			throw new Error(`MCP tool not allowed: "${name}"`);
+		}
 
-                return this.sendRequest('tools/call', {
-                        name,
-                        arguments: args,
-                });
-        }
+		return this.sendRequest('tools/call', {
+			name,
+			arguments: args,
+		});
+	}
 
-        /**
-         * List available tools on the MCP server.
-         */
-        async listTools(): Promise<unknown> {
-                return this.sendRequest('tools/list');
-        }
+	/**
+	 * List available tools on the MCP server.
+	 */
+	async listTools(): Promise<unknown> {
+		return this.sendRequest('tools/list');
+	}
 
-        get isRunning(): boolean {
-                return this.process !== null && !this.process.killed;
-        }
+	get isRunning(): boolean {
+		return this.process !== null && !this.process.killed;
+	}
 
-        get isInitialized(): boolean {
-                return this.initialized;
-        }
+	get isInitialized(): boolean {
+		return this.initialized;
+	}
 
-        private async spawnServer(): Promise<void> {
-                // Resolve npx relative to the current Node.js executable
-                const nodeDir = process.execPath.substring(0, process.execPath.lastIndexOf('/'));
-                const npxPath = `${nodeDir}/npx`;
+	private async spawnServer(): Promise<void> {
+		// Resolve npx relative to the current Node.js executable
+		const nodeDir = process.execPath.substring(0, process.execPath.lastIndexOf('/'));
+		const npxPath = `${nodeDir}/npx`;
 
-                this.logService.info(`[MCPProcessNode] Spawning MCP filesystem server: ${npxPath} -y @modelcontextprotocol/server-filesystem ${this.rootPath}`);
+		this.logService.info(`[MCPProcessNode] Spawning MCP filesystem server: ${npxPath} -y @modelcontextprotocol/server-filesystem ${this.rootPath}`);
 
-                // SEC-9 (K2-H1 fix): Use the shared buildChildEnv() helper
-                // instead of spreading `{ ...process.env }`. The prior SEC-7
-                // H2 fix added _buildChildEnv() only in mcpConnectionPool.ts;
-                // this separate spawn path (the built-in MCP filesystem
-                // server) was missed and still leaked the full parent env -
-                // including any secret in AWS_*, GITHUB_TOKEN,
-                // KOVIX_ENCRYPTION_KEY_HEX, NODE_OPTIONS=--require ...,
-                // LD_PRELOAD=..., etc. - into the npx child and whatever npx
-                // pulls down at install time.
-                //
-                // The shared helper applies BOTH the PARENT_ENV_ALLOWLIST
-                // (drops everything not on the list) AND the DENIED_ENV_KEYS
-                // denylist (strips NODE_OPTIONS/LD_PRELOAD/etc. from serverEnv).
-                // See src/vs/platform/construct/common/security/childEnv.ts.
-                const { env: childEnv, strippedKeys } = buildChildEnv();
-                if (strippedKeys.length > 0) {
-                        // Should never happen for the built-in filesystem server
-                        // (no serverEnv passed), but log defensively in case a
-                        // future caller adds one.
-                        this.logService.warn(
-                                `[MCPProcessNode] Stripped ${strippedKeys.length} dangerous env key(s) from child env: ${strippedKeys.join(', ')}`
-                        );
-                }
+		// SEC-9 (K2-H1 fix): Use the shared buildChildEnv() helper
+		// instead of spreading `{ ...process.env }`. The prior SEC-7
+		// H2 fix added _buildChildEnv() only in mcpConnectionPool.ts;
+		// this separate spawn path (the built-in MCP filesystem
+		// server) was missed and still leaked the full parent env -
+		// including any secret in AWS_*, GITHUB_TOKEN,
+		// KOVIX_ENCRYPTION_KEY_HEX, NODE_OPTIONS=--require ...,
+		// LD_PRELOAD=..., etc. - into the npx child and whatever npx
+		// pulls down at install time.
+		//
+		// The shared helper applies BOTH the PARENT_ENV_ALLOWLIST
+		// (drops everything not on the list) AND the DENIED_ENV_KEYS
+		// denylist (strips NODE_OPTIONS/LD_PRELOAD/etc. from serverEnv).
+		// See src/vs/platform/construct/common/security/childEnv.ts.
+		const { env: childEnv, strippedKeys } = buildChildEnv();
+		if (strippedKeys.length > 0) {
+			// Should never happen for the built-in filesystem server
+			// (no serverEnv passed), but log defensively in case a
+			// future caller adds one.
+			this.logService.warn(
+				`[MCPProcessNode] Stripped ${strippedKeys.length} dangerous env key(s) from child env: ${strippedKeys.join(', ')}`
+			);
+		}
 
-                try {
-                        this.process = spawn(npxPath, ['-y', '@modelcontextprotocol/server-filesystem', this.rootPath], {
-                                stdio: ['pipe', 'pipe', 'pipe'],
-                                env: childEnv,
-                        });
-                } catch {
-                        // Fallback: try bare npx
-                        this.logService.warn('[MCPProcessNode] npx not found at resolved path, falling back to bare npx');
-                        this.process = spawn('npx', ['-y', '@modelcontextprotocol/server-filesystem', this.rootPath], {
-                                stdio: ['pipe', 'pipe', 'pipe'],
-                                env: childEnv,
-                        });
-                }
+		try {
+			this.process = spawn(npxPath, ['-y', '@modelcontextprotocol/server-filesystem', this.rootPath], {
+				stdio: ['pipe', 'pipe', 'pipe'],
+				env: childEnv,
+			});
+		} catch {
+			// Fallback: try bare npx
+			this.logService.warn('[MCPProcessNode] npx not found at resolved path, falling back to bare npx');
+			this.process = spawn('npx', ['-y', '@modelcontextprotocol/server-filesystem', this.rootPath], {
+				stdio: ['pipe', 'pipe', 'pipe'],
+				env: childEnv,
+			});
+		}
 
-                this.process.stdout?.on('data', (data: Buffer) => {
-                        this.handleStdout(data.toString());
-                });
+		this.process.stdout?.on('data', (data: Buffer) => {
+			this.handleStdout(data.toString());
+		});
 
-                this.process.stderr?.on('data', (data: Buffer) => {
-                        this.logService.debug(`[MCPProcessNode] stderr: ${data.toString().trim()}`);
-                });
+		this.process.stderr?.on('data', (data: Buffer) => {
+			this.logService.debug(`[MCPProcessNode] stderr: ${data.toString().trim()}`);
+		});
 
-                this.process.on('exit', (code, signal) => {
-                        this.logService.warn(`[MCPProcessNode] Process exited with code=${code}, signal=${signal}`);
-                        this.initialized = false;
-                        this.handleCrash();
-                });
+		this.process.on('exit', (code, signal) => {
+			this.logService.warn(`[MCPProcessNode] Process exited with code=${code}, signal=${signal}`);
+			this.initialized = false;
+			this.handleCrash();
+		});
 
-                this.process.on('error', (err) => {
-                        this.logService.error(`[MCPProcessNode] Process error: ${err.message}`);
-                        this.initialized = false;
-                });
+		this.process.on('error', (err) => {
+			this.logService.error(`[MCPProcessNode] Process error: ${err.message}`);
+			this.initialized = false;
+		});
 
-                // Wait a bit for the server to start
-                await new Promise<void>(resolve => setTimeout(resolve, 2000));
-        }
+		// Wait a bit for the server to start
+		await new Promise<void>(resolve => setTimeout(resolve, 2000));
+	}
 
-        private async initializeHandshake(): Promise<void> {
-                try {
-                        await this.sendRequest('initialize', {
-                                protocolVersion: '2024-11-05',
-                                capabilities: {},
-                                clientInfo: {
-                                        name: 'kovix',
-                                        version: '1.0.0',
-                                },
-                        });
+	private async initializeHandshake(): Promise<void> {
+		try {
+			await this.sendRequest('initialize', {
+				protocolVersion: '2024-11-05',
+				capabilities: {},
+				clientInfo: {
+					name: 'kovix',
+					version: '1.0.0',
+				},
+			});
 
-                        // Send initialized notification
-                        if (this.process?.stdin) {
-                                const notification = JSON.stringify({
-                                        jsonrpc: '2.0',
-                                        method: 'notifications/initialized',
-                                }) + '\n';
-                                this.process.stdin.write(notification);
-                        }
+			// Send initialized notification
+			if (this.process?.stdin) {
+				const notification = JSON.stringify({
+					jsonrpc: '2.0',
+					method: 'notifications/initialized',
+				}) + '\n';
+				this.process.stdin.write(notification);
+			}
 
-                        this.initialized = true;
-                        this.crashCount = 0; // Reset on successful init
-                        this.logService.info('[MCPProcessNode] Initialization handshake complete');
-                } catch (error) {
-                        const msg = error instanceof Error ? error.message : String(error);
-                        this.logService.error(`[MCPProcessNode] Initialization failed: ${msg}`);
-                        throw error;
-                }
-        }
+			this.initialized = true;
+			this.crashCount = 0; // Reset on successful init
+			this.logService.info('[MCPProcessNode] Initialization handshake complete');
+		} catch (error) {
+			const msg = error instanceof Error ? error.message : String(error);
+			this.logService.error(`[MCPProcessNode] Initialization failed: ${msg}`);
+			throw error;
+		}
+	}
 
-        private handleStdout(data: string): void {
-                this.buffer += data;
+	private handleStdout(data: string): void {
+		this.buffer += data;
 
-                // Parse line-delimited JSON
-                const lines = this.buffer.split('\n');
-                this.buffer = lines.pop() ?? ''; // Keep incomplete line
+		// Parse line-delimited JSON
+		const lines = this.buffer.split('\n');
+		this.buffer = lines.pop() ?? ''; // Keep incomplete line
 
-                for (const line of lines) {
-                        const trimmed = line.trim();
-                        if (!trimmed) { continue; }
+		for (const line of lines) {
+			const trimmed = line.trim();
+			if (!trimmed) { continue; }
 
-                        try {
-                                const response = JSON.parse(trimmed) as IJsonRpcResponse;
+			try {
+				const response = JSON.parse(trimmed) as IJsonRpcResponse;
 
-                                // Match response to pending request by ID
-                                const pending = this.pendingRequests.get(response.id);
-                                if (pending) {
-                                        clearTimeout(pending.timer);
-                                        this.pendingRequests.delete(response.id);
+				// Match response to pending request by ID
+				const pending = this.pendingRequests.get(response.id);
+				if (pending) {
+					clearTimeout(pending.timer);
+					this.pendingRequests.delete(response.id);
 
-                                        if (response.error) {
-                                                pending.reject(new Error(`MCP error [${response.error.code}]: ${response.error.message}`));
-                                        } else {
-                                                pending.resolve(response.result);
-                                        }
-                                }
-                        } catch {
-                                // Not a valid JSON-RPC response -- skip
-                        }
-                }
-        }
+					if (response.error) {
+						pending.reject(new Error(`MCP error [${response.error.code}]: ${response.error.message}`));
+					} else {
+						pending.resolve(response.result);
+					}
+				}
+			} catch {
+				// Not a valid JSON-RPC response -- skip
+			}
+		}
+	}
 
-        private async handleCrash(): Promise<void> {
-                if (this.crashCount >= this.maxCrashes) {
-                        this.logService.error(`[MCPProcessNode] Max crash count (${this.maxCrashes}) reached. Not restarting.`);
-                        return;
-                }
+	private async handleCrash(): Promise<void> {
+		if (this.crashCount >= this.maxCrashes) {
+			this.logService.error(`[MCPProcessNode] Max crash count (${this.maxCrashes}) reached. Not restarting.`);
+			return;
+		}
 
-                this.crashCount++;
-                this.logService.warn(`[MCPProcessNode] Crash ${this.crashCount}/${this.maxCrashes}. Restarting in ${this.crashBackoffMs}ms...`);
+		this.crashCount++;
+		this.logService.warn(`[MCPProcessNode] Crash ${this.crashCount}/${this.maxCrashes}. Restarting in ${this.crashBackoffMs}ms...`);
 
-                // Clean up old process
-                this.process = null;
+		// Clean up old process
+		this.process = null;
 
-                // Wait with backoff
-                await new Promise<void>(resolve => setTimeout(resolve, this.crashBackoffMs));
+		// Wait with backoff
+		await new Promise<void>(resolve => setTimeout(resolve, this.crashBackoffMs));
 
-                // Restart
-                try {
-                        await this.spawnServer();
-                        await this.initializeHandshake();
-                } catch (error) {
-                        this.logService.error(`[MCPProcessNode] Restart failed: ${error instanceof Error ? error.message : String(error)}`);
-                }
-        }
+		// Restart
+		try {
+			await this.spawnServer();
+			await this.initializeHandshake();
+		} catch (error) {
+			this.logService.error(`[MCPProcessNode] Restart failed: ${error instanceof Error ? error.message : String(error)}`);
+		}
+	}
 
-        public override dispose(): void {
-                // Reject all pending requests
-                for (const [id, pending] of this.pendingRequests) {
-                        clearTimeout(pending.timer);
-                        pending.reject(new Error('MCP service disposed'));
-                        this.pendingRequests.delete(id);
-                }
+	public override dispose(): void {
+		// Reject all pending requests
+		for (const [id, pending] of this.pendingRequests) {
+			clearTimeout(pending.timer);
+			pending.reject(new Error('MCP service disposed'));
+			this.pendingRequests.delete(id);
+		}
 
-                // Kill the process
-                if (this.process && !this.process.killed) {
-                        this.process.kill();
-                        this.process = null;
-                }
+		// Kill the process
+		if (this.process && !this.process.killed) {
+			this.process.kill();
+			this.process = null;
+		}
 
-                this.initialized = false;
-                super.dispose();
-        }
+		this.initialized = false;
+		super.dispose();
+	}
 }

@@ -28,27 +28,27 @@ const ONBOARDING_VIEW_TYPE = 'kovix.onboarding';
  * Messages sent from the webview to the extension host.
  */
 type WebviewToHostMessage =
-        | { type: 'ready' }
-        | { type: 'checkOllama' }
-        | { type: 'retryOllama' }
-        | { type: 'selectModel'; modelId: string }
-        | { type: 'selectXenova' }
-        | { type: 'configureCloud' }
-        | { type: 'checkKaliWSL' }
-        | { type: 'enableKaliWSL' }
-        | { type: 'skipKali' }
-        | { type: 'installAgentReach' }
-        | { type: 'skipAgentReach' }
-        | { type: 'finish'; config: OnboardingConfig };
+	| { type: 'ready' }
+	| { type: 'checkOllama' }
+	| { type: 'retryOllama' }
+	| { type: 'selectModel'; modelId: string }
+	| { type: 'selectXenova' }
+	| { type: 'configureCloud' }
+	| { type: 'checkKaliWSL' }
+	| { type: 'enableKaliWSL' }
+	| { type: 'skipKali' }
+	| { type: 'installAgentReach' }
+	| { type: 'skipAgentReach' }
+	| { type: 'finish'; config: OnboardingConfig };
 
 /**
  * Configuration collected during onboarding and saved at the end.
  */
 interface OnboardingConfig {
-        providerType: AIProviderType;
-        modelId?: string;
-        kaliWSLEnabled?: boolean;
-        agentReachInstalled?: boolean;
+	providerType: AIProviderType;
+	modelId?: string;
+	kaliWSLEnabled?: boolean;
+	agentReachInstalled?: boolean;
 }
 
 /**
@@ -63,328 +63,328 @@ interface OnboardingConfig {
  */
 export class ConstructOnboardingWizard extends Disposable {
 
-        private webview: IOverlayWebview | undefined;
+	private webview: IOverlayWebview | undefined;
 
-        constructor(
-                @IConstructAIService private readonly aiService: IConstructAIService,
-                @IConstructToolRegistry private readonly toolRegistry: IConstructToolRegistry,
-                @INotificationService private readonly notificationService: INotificationService,
-                @IConfigurationService private readonly configurationService: IConfigurationService,
-                @ILogService private readonly logService: ILogService,
-                @IStorageService private readonly storageService: IStorageService,
-                @IWorkspaceContextService private readonly workspaceContextService: IWorkspaceContextService,
-                @IWebviewWorkbenchService private readonly webviewWorkbenchService: IWebviewWorkbenchService,
-        ) {
-                super();
-        }
+	constructor(
+		@IConstructAIService private readonly aiService: IConstructAIService,
+		@IConstructToolRegistry private readonly toolRegistry: IConstructToolRegistry,
+		@INotificationService private readonly notificationService: INotificationService,
+		@IConfigurationService private readonly configurationService: IConfigurationService,
+		@ILogService private readonly logService: ILogService,
+		@IStorageService private readonly storageService: IStorageService,
+		@IWorkspaceContextService private readonly workspaceContextService: IWorkspaceContextService,
+		@IWebviewWorkbenchService private readonly webviewWorkbenchService: IWebviewWorkbenchService,
+	) {
+		super();
+	}
 
-        /**
-         * Whether the onboarding wizard has already been completed.
-         */
-        static isComplete(storageService: IStorageService): boolean {
-                return storageService.getBoolean(ONBOARDING_COMPLETE_KEY, StorageScope.PROFILE, false);
-        }
+	/**
+	 * Whether the onboarding wizard has already been completed.
+	 */
+	static isComplete(storageService: IStorageService): boolean {
+		return storageService.getBoolean(ONBOARDING_COMPLETE_KEY, StorageScope.PROFILE, false);
+	}
 
-        /**
-         * Open (or reveal) the onboarding wizard.
-         */
-        show(): void {
-                if (this.webview) {
-                        // Already open — reveal it
-                        return;
-                }
+	/**
+	 * Open (or reveal) the onboarding wizard.
+	 */
+	show(): void {
+		if (this.webview) {
+			// Already open — reveal it
+			return;
+		}
 
-                const input = this.webviewWorkbenchService.openWebview(
-                        {
-                                title: 'Kovix Setup',
-                                options: {
-                                        retainContextWhenHidden: true,
-                                        enableFindWidget: false,
-                                },
-                                contentOptions: {
-                                        // SEC-1: Strict webview security
-                                        allowScripts: true,
-                                        allowForms: true,
-                                        enableCommandUris: true,
-                                        localResourceRoots: [],
-                                },
-                                extension: undefined,
-                        },
-                        ONBOARDING_VIEW_TYPE,
-                        'Kovix Setup',
-                        {},
-                );
+		const input = this.webviewWorkbenchService.openWebview(
+			{
+				title: 'Kovix Setup',
+				options: {
+					retainContextWhenHidden: true,
+					enableFindWidget: false,
+				},
+				contentOptions: {
+					// SEC-1: Strict webview security
+					allowScripts: true,
+					allowForms: true,
+					enableCommandUris: true,
+					localResourceRoots: [],
+				},
+				extension: undefined,
+			},
+			ONBOARDING_VIEW_TYPE,
+			'Kovix Setup',
+			{},
+		);
 
-                this.webview = input.webview;
+		this.webview = input.webview;
 
-                this._register(input.webview.onMessage(async (e) => {
-                        // SEC-1: Validate sender origin — WebviewMessageReceivedEvent does not expose source;
-                        // origin validation is handled at the webview layer via CSP.
-                        const message = e.message as WebviewToHostMessage;
-                        await this.handleMessage(message);
-                }));
+		this._register(input.webview.onMessage(async (e) => {
+			// SEC-1: Validate sender origin — WebviewMessageReceivedEvent does not expose source;
+			// origin validation is handled at the webview layer via CSP.
+			const message = e.message as WebviewToHostMessage;
+			await this.handleMessage(message);
+		}));
 
-                // SEC-1: Apply strict CSP to the webview HTML
-                const nonce = this.generateNonce();
-                input.webview.setHtml(this.getHtml(nonce));
+		// SEC-1: Apply strict CSP to the webview HTML
+		const nonce = this.generateNonce();
+		input.webview.setHtml(this.getHtml(nonce));
 
-                this.logService.info('[ConstructOnboarding] Wizard opened');
-        }
+		this.logService.info('[ConstructOnboarding] Wizard opened');
+	}
 
-        // -----------------------------------------------------------------------
-        // Message handling
-        // -----------------------------------------------------------------------
+	// -----------------------------------------------------------------------
+	// Message handling
+	// -----------------------------------------------------------------------
 
-        private async handleMessage(message: WebviewToHostMessage): Promise<void> {
-                switch (message.type) {
-                        case 'ready':
-                                // Webview loaded — nothing extra needed, HTML already rendered
-                                this.logService.info('[ConstructOnboarding] Webview ready');
-                                break;
+	private async handleMessage(message: WebviewToHostMessage): Promise<void> {
+		switch (message.type) {
+			case 'ready':
+				// Webview loaded — nothing extra needed, HTML already rendered
+				this.logService.info('[ConstructOnboarding] Webview ready');
+				break;
 
-                        case 'checkOllama':
-                        case 'retryOllama': {
-                                await this.checkAndSendOllamaStatus();
-                                break;
-                        }
+			case 'checkOllama':
+			case 'retryOllama': {
+				await this.checkAndSendOllamaStatus();
+				break;
+			}
 
-                        case 'selectModel': {
-                                const success = await this.aiService.setActiveModel(message.modelId);
-                                if (success) {
-                                        this.postMessage({ type: 'modelSelected', modelId: message.modelId });
-                                } else {
-                                        this.postMessage({ type: 'modelSelectError', modelId: message.modelId });
-                                }
-                                break;
-                        }
+			case 'selectModel': {
+				const success = await this.aiService.setActiveModel(message.modelId);
+				if (success) {
+					this.postMessage({ type: 'modelSelected', modelId: message.modelId });
+				} else {
+					this.postMessage({ type: 'modelSelectError', modelId: message.modelId });
+				}
+				break;
+			}
 
-                        case 'selectXenova': {
-                                const success = await this.aiService.switchProvider('xenova');
-                                this.postMessage({ type: 'providerSwitched', providerType: 'xenova', success });
-                                break;
-                        }
+			case 'selectXenova': {
+				const success = await this.aiService.switchProvider('xenova');
+				this.postMessage({ type: 'providerSwitched', providerType: 'xenova', success });
+				break;
+			}
 
-                        case 'configureCloud': {
-                                // Switch to cloud provider — the user can configure API key via settings
-                                const success = await this.aiService.switchProvider('cloud');
-                                this.postMessage({ type: 'providerSwitched', providerType: 'cloud', success });
-                                break;
-                        }
+			case 'configureCloud': {
+				// Switch to cloud provider — the user can configure API key via settings
+				const success = await this.aiService.switchProvider('cloud');
+				this.postMessage({ type: 'providerSwitched', providerType: 'cloud', success });
+				break;
+			}
 
-                        case 'checkKaliWSL': {
-                                if (!isWindows) {
-                                        this.postMessage({ type: 'kaliStatus', available: false, notWindows: true });
-                                        break;
-                                }
-                                const available = await this.toolRegistry.isKaliWSLAvailable();
-                                this.postMessage({ type: 'kaliStatus', available, notWindows: false });
-                                break;
-                        }
+			case 'checkKaliWSL': {
+				if (!isWindows) {
+					this.postMessage({ type: 'kaliStatus', available: false, notWindows: true });
+					break;
+				}
+				const available = await this.toolRegistry.isKaliWSLAvailable();
+				this.postMessage({ type: 'kaliStatus', available, notWindows: false });
+				break;
+			}
 
-                        case 'enableKaliWSL': {
-                                this.toolRegistry.setTerminalProfile('kali');
-                                this.postMessage({ type: 'kaliEnabled' });
-                                break;
-                        }
+			case 'enableKaliWSL': {
+				this.toolRegistry.setTerminalProfile('kali');
+				this.postMessage({ type: 'kaliEnabled' });
+				break;
+			}
 
-                        case 'skipKali': {
-                                this.postMessage({ type: 'kaliSkipped' });
-                                break;
-                        }
+			case 'skipKali': {
+				this.postMessage({ type: 'kaliSkipped' });
+				break;
+			}
 
-                        case 'installAgentReach': {
-                                try {
-                                        // Since we can't easily get the service accessor here, just notify
-                                        this.notificationService.info('Agent Reach: Starting installation. Run "Construct: Install Agent Reach" from the command palette for automated setup.');
-                                        this.postMessage({ type: 'agentReachInstalled' });
-                                } catch {
-                                        this.notificationService.info('Agent Reach: Installation started. Ensure pipx is installed.');
-                                        this.postMessage({ type: 'agentReachInstalled' });
-                                }
-                                break;
-                        }
+			case 'installAgentReach': {
+				try {
+					// Since we can't easily get the service accessor here, just notify
+					this.notificationService.info('Agent Reach: Starting installation. Run "Construct: Install Agent Reach" from the command palette for automated setup.');
+					this.postMessage({ type: 'agentReachInstalled' });
+				} catch {
+					this.notificationService.info('Agent Reach: Installation started. Ensure pipx is installed.');
+					this.postMessage({ type: 'agentReachInstalled' });
+				}
+				break;
+			}
 
-                        case 'skipAgentReach': {
-                                this.postMessage({ type: 'agentReachSkipped' });
-                                break;
-                        }
+			case 'skipAgentReach': {
+				this.postMessage({ type: 'agentReachSkipped' });
+				break;
+			}
 
-                        case 'finish': {
-                                await this.saveConfig(message.config);
-                                break;
-                        }
+			case 'finish': {
+				await this.saveConfig(message.config);
+				break;
+			}
 
-                        default:
-                                this.logService.warn('[ConstructOnboarding] Unknown message type:', (message as { type: string }).type);
-                }
-        }
+			default:
+				this.logService.warn('[ConstructOnboarding] Unknown message type:', (message as { type: string }).type);
+		}
+	}
 
-        // -----------------------------------------------------------------------
-        // Provider checks
-        // -----------------------------------------------------------------------
+	// -----------------------------------------------------------------------
+	// Provider checks
+	// -----------------------------------------------------------------------
 
-        private async checkAndSendOllamaStatus(): Promise<void> {
-                try {
-                        const statuses = await this.aiService.getAllProviderStatuses();
-                        const ollamaStatus = statuses.get('ollama') ?? ProviderStatus.Unknown;
+	private async checkAndSendOllamaStatus(): Promise<void> {
+		try {
+			const statuses = await this.aiService.getAllProviderStatuses();
+			const ollamaStatus = statuses.get('ollama') ?? ProviderStatus.Unknown;
 
-                        let models: Array<{ id: string; displayName: string; contextWindowTokens: number; supportsTools: boolean }> = [];
+			let models: Array<{ id: string; displayName: string; contextWindowTokens: number; supportsTools: boolean }> = [];
 
-                        if (ollamaStatus === ProviderStatus.Available) {
-                                try {
-                                        const modelInfos = await this.aiService.listModels();
-                                        models = modelInfos.map(m => ({
-                                                id: m.id,
-                                                displayName: m.displayName,
-                                                contextWindowTokens: m.contextWindowTokens,
-                                                supportsTools: m.supportsTools,
-                                        }));
-                                } catch {
-                                        // List models may fail even if Ollama is reachable
-                                }
-                        }
+			if (ollamaStatus === ProviderStatus.Available) {
+				try {
+					const modelInfos = await this.aiService.listModels();
+					models = modelInfos.map(m => ({
+						id: m.id,
+						displayName: m.displayName,
+						contextWindowTokens: m.contextWindowTokens,
+						supportsTools: m.supportsTools,
+					}));
+				} catch {
+					// List models may fail even if Ollama is reachable
+				}
+			}
 
-                        // Also check Xenova and Cloud statuses
-                        const xenovaStatus = statuses.get('xenova') ?? ProviderStatus.Unknown;
-                        const cloudStatus = statuses.get('cloud') ?? ProviderStatus.Unknown;
+			// Also check Xenova and Cloud statuses
+			const xenovaStatus = statuses.get('xenova') ?? ProviderStatus.Unknown;
+			const cloudStatus = statuses.get('cloud') ?? ProviderStatus.Unknown;
 
-                        this.postMessage({
-                                type: 'ollamaStatus',
-                                ollamaStatus,
-                                models,
-                                xenovaStatus,
-                                cloudStatus,
-                        });
-                } catch (error) {
-                        this.logService.error('[ConstructOnboarding] Failed to check Ollama:', error);
-                        this.postMessage({
-                                type: 'ollamaStatus',
-                                ollamaStatus: ProviderStatus.Unreachable,
-                                models: [],
-                                xenovaStatus: ProviderStatus.Unknown,
-                                cloudStatus: ProviderStatus.Unknown,
-                        });
-                }
-        }
+			this.postMessage({
+				type: 'ollamaStatus',
+				ollamaStatus,
+				models,
+				xenovaStatus,
+				cloudStatus,
+			});
+		} catch (error) {
+			this.logService.error('[ConstructOnboarding] Failed to check Ollama:', error);
+			this.postMessage({
+				type: 'ollamaStatus',
+				ollamaStatus: ProviderStatus.Unreachable,
+				models: [],
+				xenovaStatus: ProviderStatus.Unknown,
+				cloudStatus: ProviderStatus.Unknown,
+			});
+		}
+	}
 
-        // -----------------------------------------------------------------------
-        // Save config
-        // -----------------------------------------------------------------------
+	// -----------------------------------------------------------------------
+	// Save config
+	// -----------------------------------------------------------------------
 
-        private async saveConfig(config: OnboardingConfig): Promise<void> {
-                try {
-                        // Persist the provider selection
-                        await this.aiService.switchProvider(config.providerType);
+	private async saveConfig(config: OnboardingConfig): Promise<void> {
+		try {
+			// Persist the provider selection
+			await this.aiService.switchProvider(config.providerType);
 
-                        // Persist the model selection if applicable
-                        if (config.modelId) {
-                                await this.aiService.setActiveModel(config.modelId);
-                        }
+			// Persist the model selection if applicable
+			if (config.modelId) {
+				await this.aiService.setActiveModel(config.modelId);
+			}
 
-                        // Persist Kali WSL preference
-                        if (config.kaliWSLEnabled) {
-                                this.toolRegistry.setTerminalProfile('kali');
-                        }
+			// Persist Kali WSL preference
+			if (config.kaliWSLEnabled) {
+				this.toolRegistry.setTerminalProfile('kali');
+			}
 
-                        // Write .construct/settings.json via configuration service
-                        await this.configurationService.updateValue(
-                                'kovix.provider.default',
-                                config.providerType,
-                                ConfigurationTarget.USER,
-                        );
-                        if (config.modelId) {
-                                await this.configurationService.updateValue(
-                                        'kovix.provider.model',
-                                        config.modelId,
-                                        ConfigurationTarget.USER,
-                                );
-                        }
-                        if (config.kaliWSLEnabled !== undefined) {
-                                await this.configurationService.updateValue(
-                                        'kovix.terminal.kaliWSL',
-                                        config.kaliWSLEnabled,
-                                        ConfigurationTarget.USER,
-                                );
-                        }
-                        if (config.agentReachInstalled !== undefined) {
-                                await this.configurationService.updateValue(
-                                        'kovix.agentReach.enabled',
-                                        config.agentReachInstalled,
-                                        ConfigurationTarget.USER,
-                                );
-                        }
+			// Write .construct/settings.json via configuration service
+			await this.configurationService.updateValue(
+				'kovix.provider.default',
+				config.providerType,
+				ConfigurationTarget.USER,
+			);
+			if (config.modelId) {
+				await this.configurationService.updateValue(
+					'kovix.provider.model',
+					config.modelId,
+					ConfigurationTarget.USER,
+				);
+			}
+			if (config.kaliWSLEnabled !== undefined) {
+				await this.configurationService.updateValue(
+					'kovix.terminal.kaliWSL',
+					config.kaliWSLEnabled,
+					ConfigurationTarget.USER,
+				);
+			}
+			if (config.agentReachInstalled !== undefined) {
+				await this.configurationService.updateValue(
+					'kovix.agentReach.enabled',
+					config.agentReachInstalled,
+					ConfigurationTarget.USER,
+				);
+			}
 
-                        // Also write to .construct/settings.json for easy direct editing
-                        try {
-                                const workspace = this.workspaceContextService.getWorkspace();
-                                const workspaceRoot = workspace.folders[0]?.uri.fsPath;
-                                if (workspaceRoot) {
-                                        const fs = await import('fs');
-                                        const path = await import('path');
-                                        const constructDir = path.join(workspaceRoot, '.construct');
-                                        const settingsPath = path.join(constructDir, 'settings.json');
+			// Also write to .construct/settings.json for easy direct editing
+			try {
+				const workspace = this.workspaceContextService.getWorkspace();
+				const workspaceRoot = workspace.folders[0]?.uri.fsPath;
+				if (workspaceRoot) {
+					const fs = await import('fs');
+					const path = await import('path');
+					const constructDir = path.join(workspaceRoot, '.construct');
+					const settingsPath = path.join(constructDir, 'settings.json');
 
-                                        // Ensure .construct directory exists
-                                        if (!fs.existsSync(constructDir)) {
-                                                fs.mkdirSync(constructDir, { recursive: true });
-                                        }
+					// Ensure .construct directory exists
+					if (!fs.existsSync(constructDir)) {
+						fs.mkdirSync(constructDir, { recursive: true });
+					}
 
-                                        const settings = {
-                                                defaultModel: config.modelId ?? '',
-                                                ollamaEndpoint: 'http://localhost:11434',
-                                                kaliEnabled: config.kaliWSLEnabled ?? false,
-                                                agentReachEnabled: config.agentReachInstalled ?? false,
-                                                providerType: config.providerType,
-                                                embeddingModel: 'nomic-embed-text',
-                                        };
+					const settings = {
+						defaultModel: config.modelId ?? '',
+						ollamaEndpoint: 'http://localhost:11434',
+						kaliEnabled: config.kaliWSLEnabled ?? false,
+						agentReachEnabled: config.agentReachInstalled ?? false,
+						providerType: config.providerType,
+						embeddingModel: 'nomic-embed-text',
+					};
 
-                                        fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
-                                        this.logService.info('[ConstructOnboarding] Wrote .construct/settings.json');
-                                }
-                        } catch (error) {
-                                // Non-critical — settings are also saved via IConfigurationService
-                                this.logService.warn('[ConstructOnboarding] Could not write .construct/settings.json:', error instanceof Error ? error.message : String(error));
-                        }
+					fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf-8');
+					this.logService.info('[ConstructOnboarding] Wrote .construct/settings.json');
+				}
+			} catch (error) {
+				// Non-critical — settings are also saved via IConfigurationService
+				this.logService.warn('[ConstructOnboarding] Could not write .construct/settings.json:', error instanceof Error ? error.message : String(error));
+			}
 
-                        // Mark onboarding as complete so it doesn't auto-open again
-                        this.storageService.store(ONBOARDING_COMPLETE_KEY, true, StorageScope.PROFILE, StorageTarget.USER);
+			// Mark onboarding as complete so it doesn't auto-open again
+			this.storageService.store(ONBOARDING_COMPLETE_KEY, true, StorageScope.PROFILE, StorageTarget.USER);
 
-                        this.postMessage({ type: 'configSaved' });
+			this.postMessage({ type: 'configSaved' });
 
-                        this.notificationService.info('Kovix: Setup complete! Your IDE is ready.');
-                        this.logService.info('[ConstructOnboarding] Config saved:', JSON.stringify(config));
-                } catch (error) {
-                        this.logService.error('[ConstructOnboarding] Failed to save config:', error);
-                        this.notificationService.error(
-                                `Kovix: Failed to save settings: ${error instanceof Error ? error.message : String(error)}`
-                        );
-                }
-        }
+			this.notificationService.info('Kovix: Setup complete! Your IDE is ready.');
+			this.logService.info('[ConstructOnboarding] Config saved:', JSON.stringify(config));
+		} catch (error) {
+			this.logService.error('[ConstructOnboarding] Failed to save config:', error);
+			this.notificationService.error(
+				`Kovix: Failed to save settings: ${error instanceof Error ? error.message : String(error)}`
+			);
+		}
+	}
 
-        // -----------------------------------------------------------------------
-        // Post message helper
-        // -----------------------------------------------------------------------
+	// -----------------------------------------------------------------------
+	// Post message helper
+	// -----------------------------------------------------------------------
 
-        private postMessage(msg: object): void {
-                this.webview?.postMessage(msg);
-        }
+	private postMessage(msg: object): void {
+		this.webview?.postMessage(msg);
+	}
 
-        // -----------------------------------------------------------------------
-        // HTML
-        // -----------------------------------------------------------------------
+	// -----------------------------------------------------------------------
+	// HTML
+	// -----------------------------------------------------------------------
 
-        // SEC-1: Generate a cryptographically random nonce for CSP
-        private generateNonce(): string {
-                const array = new Uint8Array(32);
-                crypto.getRandomValues(array);
-                return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-        }
+	// SEC-1: Generate a cryptographically random nonce for CSP
+	private generateNonce(): string {
+		const array = new Uint8Array(32);
+		crypto.getRandomValues(array);
+		return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+	}
 
-        private getHtml(nonce?: string): string {
-                const isWin = isWindows;
-                const cspNonce = nonce ?? this.generateNonce();
+	private getHtml(nonce?: string): string {
+		const isWin = isWindows;
+		const cspNonce = nonce ?? this.generateNonce();
 
-                return /* html */`<!DOCTYPE html>
+		return /* html */`<!DOCTYPE html>
 <html lang="en">
 <head>
         <meta charset="UTF-8">
@@ -1420,5 +1420,5 @@ export class ConstructOnboardingWizard extends Disposable {
 </body>
 
 </html>`;
-        }
+	}
 }

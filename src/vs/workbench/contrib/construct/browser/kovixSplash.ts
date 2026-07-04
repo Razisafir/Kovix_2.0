@@ -41,100 +41,100 @@ const KOVIX_SPLASH_MAX_MS = 1500;
  * 1.5s safety cap fires, whichever is first).
  */
 export class KovixSplashContribution extends Disposable implements IWorkbenchContribution {
-  static readonly ID = 'workbench.contrib.kovixSplash';
+	static readonly ID = 'workbench.contrib.kovixSplash';
 
-  private overlay: HTMLDivElement | undefined;
-  private removed = false;
-  private removeTimeout: ReturnType<typeof setTimeout> | undefined;
+	private overlay: HTMLDivElement | undefined;
+	private removed = false;
+	private removeTimeout: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(
-    @ILifecycleService private readonly lifecycleService: ILifecycleService,
-    @ILogService private readonly logService: ILogService,
-  ) {
-    super();
+	constructor(
+		@ILifecycleService private readonly lifecycleService: ILifecycleService,
+		@ILogService private readonly logService: ILogService,
+	) {
+		super();
 
-    try {
-      this.showOverlay();
-    } catch (err) {
-      this.logService.error('[Kovix] Splash show failed:', err);
-    }
+		try {
+			this.showOverlay();
+		} catch (err) {
+			this.logService.error('[Kovix] Splash show failed:', err);
+		}
 
-    // Hide the overlay the moment the workbench signals Restored.
-    // ILifecycleService exposes `when(phase): Promise<void>` that resolves
-    // when the requested phase is reached.
-    this.lifecycleService.when(LifecyclePhase.Restored).then(() => {
-      this.hideOverlay();
-    }).catch(err => {
-      this.logService.error('[Kovix] Splash lifecycle when() failed:', err);
-      this.hideOverlay(); // fail safe - always hide, even on error
-    });
+		// Hide the overlay the moment the workbench signals Restored.
+		// ILifecycleService exposes `when(phase): Promise<void>` that resolves
+		// when the requested phase is reached.
+		this.lifecycleService.when(LifecyclePhase.Restored).then(() => {
+			this.hideOverlay();
+		}).catch(err => {
+			this.logService.error('[Kovix] Splash lifecycle when() failed:', err);
+			this.hideOverlay(); // fail safe - always hide, even on error
+		});
 
-    // Safety cap: never let the splash linger longer than 1.5s. If the
-    // workbench somehow fails to reach Restored (slow disk, broken
-    // contribution), we don't want to wedge the UI behind an overlay.
-    this.removeTimeout = setTimeout(() => this.hideOverlay(), KOVIX_SPLASH_MAX_MS);
-  }
+		// Safety cap: never let the splash linger longer than 1.5s. If the
+		// workbench somehow fails to reach Restored (slow disk, broken
+		// contribution), we don't want to wedge the UI behind an overlay.
+		this.removeTimeout = setTimeout(() => this.hideOverlay(), KOVIX_SPLASH_MAX_MS);
+	}
 
-  private showOverlay(): void {
-    // Only show on first paint of the document body. If body doesn't exist
-    // yet, defer one frame.
-    if (!document.body) {
-      requestAnimationFrame(() => this.showOverlay());
-      return;
-    }
+	private showOverlay(): void {
+		// Only show on first paint of the document body. If body doesn't exist
+		// yet, defer one frame.
+		if (!document.body) {
+			requestAnimationFrame(() => this.showOverlay());
+			return;
+		}
 
-    // Bail if there's already a Kovix splash (shouldn't happen, but cheap
-    // insurance against double-mounting).
-    if (document.getElementById('kovix-splash-overlay')) { return; }
+		// Bail if there's already a Kovix splash (shouldn't happen, but cheap
+		// insurance against double-mounting).
+		if (document.getElementById('kovix-splash-overlay')) { return; }
 
-    const overlay = document.createElement('div');
-    overlay.id = 'kovix-splash-overlay';
-    overlay.setAttribute('aria-hidden', 'true');
-    overlay.innerHTML = KOVIX_SPLASH_HTML;
+		const overlay = document.createElement('div');
+		overlay.id = 'kovix-splash-overlay';
+		overlay.setAttribute('aria-hidden', 'true');
+		overlay.innerHTML = KOVIX_SPLASH_HTML;
 
-    // Inline the styles so the splash renders correctly even before the
-    // workbench's global stylesheet (style.css + kovix-brand.css) has
-    // loaded - the splash must be visible the INSTANT the body mounts.
-    const style = document.createElement('style');
-    style.textContent = KOVIX_SPLASH_CSS;
-    overlay.appendChild(style);
+		// Inline the styles so the splash renders correctly even before the
+		// workbench's global stylesheet (style.css + kovix-brand.css) has
+		// loaded - the splash must be visible the INSTANT the body mounts.
+		const style = document.createElement('style');
+		style.textContent = KOVIX_SPLASH_CSS;
+		overlay.appendChild(style);
 
-    // Click-to-dismiss.
-    overlay.addEventListener('click', () => this.hideOverlay(), { once: true });
+		// Click-to-dismiss.
+		overlay.addEventListener('click', () => this.hideOverlay(), { once: true });
 
-    // Position the overlay ABOVE everything in the body - z-index 99999
-    // beats VS Code's own z-index ceiling of ~25000.
-    document.body.appendChild(overlay);
-    this.overlay = overlay;
-  }
+		// Position the overlay ABOVE everything in the body - z-index 99999
+		// beats VS Code's own z-index ceiling of ~25000.
+		document.body.appendChild(overlay);
+		this.overlay = overlay;
+	}
 
-  private hideOverlay(): void {
-    if (this.removed) { return; }
-    this.removed = true;
-    if (this.removeTimeout) { clearTimeout(this.removeTimeout); }
+	private hideOverlay(): void {
+		if (this.removed) { return; }
+		this.removed = true;
+		if (this.removeTimeout) { clearTimeout(this.removeTimeout); }
 
-    if (!this.overlay) { return; }
+		if (!this.overlay) { return; }
 
-    // Fade out rather than instant-remove - feels like a real app.
-    this.overlay.style.transition = 'opacity 320ms cubic-bezier(0.4, 0, 0.2, 1)';
-    this.overlay.style.opacity = '0';
+		// Fade out rather than instant-remove - feels like a real app.
+		this.overlay.style.transition = 'opacity 320ms cubic-bezier(0.4, 0, 0.2, 1)';
+		this.overlay.style.opacity = '0';
 
-    // Drop it from the DOM once the transition ends (or after 400ms as a
-    // safety net in case the transitionend event doesn't fire).
-    const drop = () => {
-      this.overlay?.remove();
-      this.overlay = undefined;
-    };
-    this.overlay.addEventListener('transitionend', drop, { once: true });
-    setTimeout(drop, 500);
-  }
+		// Drop it from the DOM once the transition ends (or after 400ms as a
+		// safety net in case the transitionend event doesn't fire).
+		const drop = () => {
+			this.overlay?.remove();
+			this.overlay = undefined;
+		};
+		this.overlay.addEventListener('transitionend', drop, { once: true });
+		setTimeout(drop, 500);
+	}
 
-  override dispose(): void {
-    if (this.removeTimeout) { clearTimeout(this.removeTimeout); }
-    this.overlay?.remove();
-    this.overlay = undefined;
-    super.dispose();
-  }
+	override dispose(): void {
+		if (this.removeTimeout) { clearTimeout(this.removeTimeout); }
+		this.overlay?.remove();
+		this.overlay = undefined;
+		super.dispose();
+	}
 }
 
 /**
