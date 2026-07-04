@@ -13,8 +13,8 @@
                                         'self'
                                         data:
                                         blob:
-                                        construct-remote-resource:
-                                        construct-managed-remote-resource:
+                                        vscode-remote-resource:
+                                        vscode-managed-remote-resource:
                                         https:
                                 ;
                                 media-src
@@ -22,7 +22,7 @@
                                 ;
                                 frame-src
                                         'self'
-                                        construct-webview:
+                                        vscode-webview:
                                 ;
                                 script-src
                                         'self'
@@ -40,8 +40,8 @@
                                 ;
                                 font-src
                                         'self'
-                                        construct-remote-resource:
-                                        construct-managed-remote-resource:
+                                        vscode-remote-resource:
+                                        vscode-managed-remote-resource:
                                         https://*.vscode-unpkg.net
                                 ;
                                 require-trusted-types-for

@@ -46,7 +46,7 @@ export interface IBaseOpenWindowsOptions {
 	/**
 	 * The remote authority to use when windows are opened with either
 	 * - no workspace (empty window)
-	 * - a workspace that is neither `file://` nor `construct-remote://`
+	 * - a workspace that is neither `file://` nor `vscode-remote://`
 	 * Use 'null' for a local window.
 	 * If not set, defaults to the remote authority of the current window.
 	 */

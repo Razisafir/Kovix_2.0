@@ -1683,12 +1683,12 @@ suite('ExtensionsWorkbenchServiceTest', () => {
 
 	function aMultiExtensionManagementServerService(instantiationService: TestInstantiationService, localExtensionManagementService?: IProfileAwareExtensionManagementService, remoteExtensionManagementService?: IProfileAwareExtensionManagementService): IExtensionManagementServerService {
 		const localExtensionManagementServer: IExtensionManagementServer = {
-			id: 'construct-local',
+			id: 'vscode-local',
 			label: 'local',
 			extensionManagementService: localExtensionManagementService || createExtensionManagementService(),
 		};
 		const remoteExtensionManagementServer: IExtensionManagementServer = {
-			id: 'construct-remote',
+			id: 'vscode-remote',
 			label: 'remote',
 			extensionManagementService: remoteExtensionManagementService || createExtensionManagementService(),
 		};
