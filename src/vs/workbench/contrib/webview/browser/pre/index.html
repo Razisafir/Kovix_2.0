@@ -88,16 +88,16 @@
                 defaultStyles.id = '_defaultStyles';
                 defaultStyles.textContent = `
                         html {
-                                scrollbar-color: var(--construct-scrollbarSlider-background) var(--construct-editor-background);
+                                scrollbar-color: var(--vscode-scrollbarSlider-background) var(--vscode-editor-background);
                         }
 
                         body {
                                 overscroll-behavior-x: none;
                                 background-color: transparent;
-                                color: var(--construct-editor-foreground);
-                                font-family: var(--construct-font-family);
-                                font-weight: var(--construct-font-weight);
-                                font-size: var(--construct-font-size);
+                                color: var(--vscode-editor-foreground);
+                                font-family: var(--vscode-font-family);
+                                font-weight: var(--vscode-font-weight);
+                                font-size: var(--vscode-font-size);
                                 margin: 0;
                                 padding: 0 20px;
                         }
@@ -108,7 +108,7 @@
                         }
 
                         a, a code {
-                                color: var(--construct-textLink-foreground);
+                                color: var(--vscode-textLink-foreground);
                         }
 
                         p > a {
@@ -116,7 +116,7 @@
                         }
 
                         a:hover {
-                                color: var(--construct-textLink-activeForeground);
+                                color: var(--vscode-textLink-activeForeground);
                         }
 
                         a:focus,
@@ -129,8 +129,8 @@
 
                         code {
                                 font-family: var(--monaco-monospace-font);
-                                color: var(--construct-textPreformat-foreground);
-                                background-color: var(--construct-textPreformat-background);
+                                color: var(--vscode-textPreformat-foreground);
+                                background-color: var(--vscode-textPreformat-background);
                                 padding: 1px 3px;
                                 border-radius: 4px;
                         }
@@ -140,19 +140,19 @@
                         }
 
                         blockquote {
-                                background: var(--construct-textBlockQuote-background);
-                                border-color: var(--construct-textBlockQuote-border);
+                                background: var(--vscode-textBlockQuote-background);
+                                border-color: var(--vscode-textBlockQuote-border);
                         }
 
                         kbd {
-                                background-color: var(--construct-keybindingLabel-background);
-                                color: var(--construct-keybindingLabel-foreground);
+                                background-color: var(--vscode-keybindingLabel-background);
+                                color: var(--vscode-keybindingLabel-foreground);
                                 border-style: solid;
                                 border-width: 1px;
                                 border-radius: 3px;
-                                border-color: var(--construct-keybindingLabel-border);
-                                border-bottom-color: var(--construct-keybindingLabel-bottomBorder);
-                                box-shadow: inset 0 -1px 0 var(--construct-widget-shadow);
+                                border-color: var(--vscode-keybindingLabel-border);
+                                border-bottom-color: var(--vscode-keybindingLabel-bottomBorder);
+                                box-shadow: inset 0 -1px 0 var(--vscode-widget-shadow);
                                 vertical-align: middle;
                                 padding: 1px 3px;
                         }
@@ -163,23 +163,23 @@
                         }
 
                         ::-webkit-scrollbar-corner {
-                                background-color: var(--construct-editor-background);
+                                background-color: var(--vscode-editor-background);
                         }
 
                         ::-webkit-scrollbar-thumb {
-                                background-color: var(--construct-scrollbarSlider-background);
+                                background-color: var(--vscode-scrollbarSlider-background);
                         }
                         ::-webkit-scrollbar-thumb:hover {
-                                background-color: var(--construct-scrollbarSlider-hoverBackground);
+                                background-color: var(--vscode-scrollbarSlider-hoverBackground);
                         }
                         ::-webkit-scrollbar-thumb:active {
-                                background-color: var(--construct-scrollbarSlider-activeBackground);
+                                background-color: var(--vscode-scrollbarSlider-activeBackground);
                         }
                         ::highlight(find-highlight) {
-                                background-color: var(--construct-editor-findMatchHighlightBackground);
+                                background-color: var(--vscode-editor-findMatchHighlightBackground);
                         }
                         ::highlight(current-find-highlight) {
-                                background-color: var(--construct-editor-findMatchBackground);
+                                background-color: var(--vscode-editor-findMatchBackground);
                         }`;
 
                 /**
@@ -524,7 +524,7 @@
                                         const property = documentStyle[i];
 
                                         // Don't remove properties that the webview might have added separately
-                                        if (property && property.startsWith('--construct-')) {
+                                        if (property && property.startsWith('--vscode-')) {
                                                 documentStyle.removeProperty(property);
                                         }
                                 }
@@ -1040,7 +1040,7 @@
                                 // into it to get around this.
                                 const fakeUrlParams = new URLSearchParams({ id: ID });
                                 if (globalThis.crossOriginIsolated) {
-                                        fakeUrlParams.set('construct-coi', '3'); /*COOP+COEP*/
+                                        fakeUrlParams.set('vscode-coi', '3'); /*COOP+COEP*/
                                 }
                                 newFrame.src = `./fake.html?${fakeUrlParams.toString()}`;
 

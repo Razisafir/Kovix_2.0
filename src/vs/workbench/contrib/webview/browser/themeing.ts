@@ -61,7 +61,7 @@ export class WebviewThemeDataProvider extends Disposable {
 			const exportedColors = colorRegistry.getColorRegistry().getColors().reduce<Record<string, string>>((colors, entry) => {
 				const color = theme.getColor(entry.id);
 				if (color) {
-					colors['construct-' + entry.id.replace('.', '-')] = color.toString();
+					colors['vscode-' + entry.id.replace('.', '-')] = color.toString();
 				}
 				return colors;
 			}, {});

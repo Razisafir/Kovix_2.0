@@ -277,14 +277,14 @@ export class CodeApplication extends Disposable {
 			const uri = URI.parse(details.url);
 			if (uri.scheme === Schemas.vscodeWebview) {
 				if (!isAllowedWebviewRequest(uri, details)) {
-					this.logService.error('Blocked construct-webview request', details.url);
+					this.logService.error('Blocked vscode-webview request', details.url);
 					return callback({ cancel: true });
 				}
 			}
 
 			if (uri.scheme === Schemas.vscodeFileResource) {
 				if (!isAllowedVsCodeFileRequest(details)) {
-					this.logService.error('Blocked construct-file request', details.url);
+					this.logService.error('Blocked vscode-file request', details.url);
 					return callback({ cancel: true });
 				}
 			}
@@ -856,7 +856,7 @@ export class CodeApplication extends Disposable {
 		else if (uri.authority === Schemas.vscodeRemote) {
 
 			// Example conversion:
-			// From: construct://vscode-remote/wsl+ubuntu/mnt/c/GitDevelopment/monaco
+			// From: vscode-remote://wsl+ubuntu/mnt/c/GitDevelopment/monaco
 			//   To: vscode-remote://wsl+ubuntu/mnt/c/GitDevelopment/monaco
 
 			const secondSlash = uri.path.indexOf(posix.sep, 1 /* skip over the leading slash */);

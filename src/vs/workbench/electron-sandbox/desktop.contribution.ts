@@ -351,7 +351,7 @@ import product from '../../platform/product/common/product.js';
 
 // JSON Schemas
 (function registerJSONSchemas(): void {
-	const argvDefinitionFileSchemaId = 'construct://schemas/argv';
+	const argvDefinitionFileSchemaId = 'vscode://schemas/argv';
 	const jsonRegistry = Registry.as<IJSONContributionRegistry>(JSONExtensions.JSONContribution);
 	const schema: IJSONSchema = {
 		id: argvDefinitionFileSchemaId,

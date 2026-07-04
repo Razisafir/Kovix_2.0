@@ -49,7 +49,7 @@ export class ProtocolMainService extends Disposable implements IProtocolMainServ
 	private handleProtocols(): void {
 		const { defaultSession } = session;
 
-		// Register construct-file:// handler
+		// Register vscode-file:// handler
 		defaultSession.protocol.registerFileProtocol(Schemas.vscodeFileResource, (request, callback) => this.handleResourceRequest(request, callback));
 
 		// Block any file:// access
@@ -89,7 +89,7 @@ export class ProtocolMainService extends Disposable implements IProtocolMainServ
 
 	//#endregion
 
-	//#region construct-file://
+	//#region vscode-file://
 
 	private handleResourceRequest(request: Electron.ProtocolRequest, callback: ProtocolCallback): void {
 		const path = this.requestToNormalizedFilePath(request);

@@ -170,7 +170,7 @@ const extensionKindSchema: IJSONSchema = {
 	],
 };
 
-const schemaId = 'construct://schemas/construct-extensions';
+const schemaId = 'vscode://schemas/vscode-extensions';
 export const schema: IJSONSchema = {
 	properties: {
 		engines: {

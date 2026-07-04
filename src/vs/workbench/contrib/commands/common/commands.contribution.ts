@@ -40,7 +40,7 @@ class RunCommands extends Action2 {
 									items: {
 										anyOf: [
 											{
-												$ref: 'construct://schemas/keybindings#/definitions/commandNames'
+												$ref: 'vscode://schemas/keybindings#/definitions/commandNames'
 											},
 											{
 												type: 'string',
@@ -52,7 +52,7 @@ class RunCommands extends Action2 {
 													command: {
 														'anyOf': [
 															{
-																$ref: 'construct://schemas/keybindings#/definitions/commandNames'
+																$ref: 'vscode://schemas/keybindings#/definitions/commandNames'
 															},
 															{
 																type: 'string'
@@ -60,7 +60,7 @@ class RunCommands extends Action2 {
 														]
 													}
 												},
-												$ref: 'construct://schemas/keybindings#/definitions/commandsSchemas'
+												$ref: 'vscode://schemas/keybindings#/definitions/commandsSchemas'
 											}
 										]
 									}

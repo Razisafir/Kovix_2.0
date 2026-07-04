@@ -343,7 +343,7 @@ export function resolveColorValue(colorValue: ColorValue | null, theme: IColorTh
 	return undefined;
 }
 
-export const workbenchColorsSchemaId = 'construct://schemas/workbench-colors';
+export const workbenchColorsSchemaId = 'vscode://schemas/workbench-colors';
 
 const schemaRegistry = platform.Registry.as<IJSONContributionRegistry>(JSONExtensions.JSONContribution);
 schemaRegistry.registerSchema(workbenchColorsSchemaId, colorRegistry.getColorSchema());

@@ -14,4 +14,4 @@ export interface IProductService extends Readonly<IProductConfiguration> {
 
 }
 
-export const productSchemaId = 'construct://schemas/product';
+export const productSchemaId = 'vscode://schemas/product';
