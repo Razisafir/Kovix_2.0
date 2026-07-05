@@ -164,9 +164,27 @@ function toStream(zip) {
                                 q.push(function (cb) {
                                         zip.openReadStream(entry, function (err, readStream) {
                                                 if (err) { return cb(err); }
-                                                file.contents = readStream;
-                                                result.emit('data', new File(file));
-                                                cb();
+                                                // Read the entry's stream into a Buffer BEFORE emitting the
+                                                // file. yauzl@3's BufferSlicer.createReadStream writes data
+                                                // to a PassThrough synchronously and calls .end() before
+                                                // returning; when the resulting stream is wrapped in a
+                                                // Vinyl File and emitted via es.through, downstream
+                                                // consumers hang for entries larger than the PassThrough's
+                                                // highWaterMark (~16KB). js-debug's package.json (251KB)
+                                                // triggers this reliably. Consuming the stream here (in
+                                                // the same call stack as openReadStream) avoids the hang;
+                                                // the emitted file has Buffer contents, which all standard
+                                                // gulp plugins (gulp-filter, es.mapSync, gulp-buffer)
+                                                // handle natively. This matches gulp.src's { buffer: true }
+                                                // default behavior.
+                                                var chunks = [];
+                                                readStream.on('data', function (c) { chunks.push(c); });
+                                                readStream.on('error', cb);
+                                                readStream.on('end', function () {
+                                                        file.contents = Buffer.concat(chunks);
+                                                        result.emit('data', new File(file));
+                                                        cb();
+                                                });
                                         });
                                 });
 

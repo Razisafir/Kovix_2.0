@@ -227,11 +227,28 @@ const baseHeaders = {
     'X-Market-User-Id': '291C1CD0-051A-4123-9B4B-30D60EF52EE2',
 };
 function fromMarketplace(serviceUrl, { name: extensionName, version, sha256, metadata }) {
-    const json = require('gulp-json-editor');
     const [publisher, name] = extensionName.split('.');
     const url = `${serviceUrl}/publishers/${publisher}/vsextensions/${name}/${version}/vspackage`;
     fancyLog('Downloading extension:', ansiColors.yellow(`${extensionName}@${version}`), '...');
-    const packageJsonFilter = filter('package.json', { restore: true });
+    // NOTE: previously used gulp-filter + restore to isolate package.json for
+    // __metadata injection via gulp-json-editor. Same bug pattern as
+    // minifyExtensionResources (PR #70): gulp-filter@5.1.0's restore stream
+    // fails to end under concurrent es.merge of multiple vsix pipelines
+    // (hangs at 58/59 files for ms-vscode.js-debug). Inline conditional
+    // transform via es.mapSync avoids the filter/restore split entirely.
+    //
+    // No buffer() call is needed: vzip.src() (./vzip-fixed) was updated to
+    // read each entry's stream into a Buffer BEFORE emitting the file, so
+    // all files arrive here with Buffer contents. This avoids a separate
+    // hang where yauzl@3's content streams (wrapped in Vinyl Files and
+    // emitted via es.through) couldn't be consumed by downstream plugins
+    // for entries larger than the PassThrough's highWaterMark (~16KB);
+    // js-debug's package.json (251KB) triggered this reliably. With Buffer
+    // contents, the conditional transform is a simple sync in-memory edit,
+    // and downstream minifyExtensionResources can also minify all JSON
+    // files (not just package.json) — restoring the pre-PR-#70 behavior
+    // for marketplace extensions (PR #70's .code-snippets skip was an
+    // unintended side effect of its Stream-contents guard).
     return (0, fetch_1.fetchUrls)('', {
         base: url,
         nodeFetchOptions: {
@@ -242,10 +259,15 @@ function fromMarketplace(serviceUrl, { name: extensionName, version, sha256, met
         .pipe(vzip.src())
         .pipe(filter('extension/**'))
         .pipe(rename(p => p.dirname = p.dirname.replace(/^extension\/?/, '')))
-        .pipe(packageJsonFilter)
-        .pipe(buffer())
-        .pipe(json({ __metadata: metadata }))
-        .pipe(packageJsonFilter.restore);
+        .pipe(es.mapSync((f) => {
+        if (f.relative !== 'package.json') {
+            return f;
+        }
+        const data = JSON.parse(f.contents.toString('utf8'));
+        data.__metadata = metadata;
+        f.contents = Buffer.from(JSON.stringify(data, null, 2));
+        return f;
+    }));
 }
 function fromGithub({ name, version, repo, sha256, metadata }) {
     const json = require('gulp-json-editor');
