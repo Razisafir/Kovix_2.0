@@ -150,7 +150,7 @@
                 "@types/yauzl": "^2.10.0",
                 "@types/yazl": "^2.4.2",
                 "@typescript-eslint/utils": "^8.62.0",
-                "@vscode/gulp-electron": "1.36.0",
+                "@vscode/gulp-electron": "^1.42.1",
                 "@vscode/l10n-dev": "0.0.35",
                 "@vscode/telemetry-extractor": "^1.20.4",
                 "@vscode/test-cli": "^0.0.12",
@@ -211,7 +211,7 @@
                 "os-browserify": "^0.3.0",
                 "p-all": "^1.0.0",
                 "path-browserify": "^1.0.1",
-                "postcss": "^8.4.33",
+                "postcss": "^8.5.10",
                 "postcss-nesting": "^12.0.2",
                 "pump": "^1.0.1",
                 "rcedit": "^1.1.0",
@@ -247,7 +247,11 @@
                         "node-addon-api": "7.1.0"
                 },
                 "protobufjs": "7.6.4",
-                "streamx": "^2.20.0"
+                "streamx": "^2.20.0",
+                "serialize-javascript": "^7.0.5",
+                "tar": "^7.5.7",
+                "postcss": "^8.5.10",
+                "diff": "^8.0.3"
         },
         "repository": {
                 "type": "git",
