@@ -34,6 +34,7 @@ const rename = require("gulp-rename");
 const fancyLog = require("fancy-log");
 const ansiColors = require("ansi-colors");
 const buffer = require('gulp-buffer');
+const minimatch = require('minimatch');
 const jsoncParser = require("jsonc-parser");
 const dependencies_1 = require("./dependencies");
 const builtInExtensions_1 = require("./builtInExtensions");
@@ -43,11 +44,24 @@ const root = path.dirname(path.dirname(__dirname));
 const commit = (0, getVersion_1.getVersion)(root);
 const sourceMappingURLBase = `https://main.vscode-cdn.net/sourcemaps/${commit}`;
 function minifyExtensionResources(input) {
-    const jsonFilter = filter(['**/*.json', '**/*.code-snippets'], { restore: true });
+    const jsonPatterns = ['**/*.json', '**/*.code-snippets'];
+    // NOTE: previously used gulp-filter + restore to split JSON files out for
+    // minification. gulp-filter@5.1.0's restore stream fails to end when the
+    // upstream is a concurrent es.merge of multiple vsix pipelines (only ~33
+    // of 84 files emerge; the stream never ends). Recurrence of upstream
+    // gulp-filter#29 (fixed in 2.0.1 but fix is incomplete under concurrent
+    // merge). Inline path check via minimatch avoids the filter/restore split
+    // entirely. Minor behavior change: JSON files with stream contents that
+    // haven't been buffered upstream (e.g. .code-snippets) are passed through
+    // unchanged instead of being buffered+minified. updateExtensionPackageJSON
+    // already buffers package.json files, so those are still minified.
     return input
-        .pipe(jsonFilter)
-        .pipe(buffer())
         .pipe(es.mapSync((f) => {
+        const rel = f.relative;
+        const isJson = jsonPatterns.some(p => minimatch(rel, p));
+        if (!isJson || !Buffer.isBuffer(f.contents)) {
+            return f;
+        }
         const errors = [];
         const value = jsoncParser.parse(f.contents.toString('utf8'), errors, { allowTrailingComma: true });
         if (errors.length === 0) {
@@ -55,8 +69,7 @@ function minifyExtensionResources(input) {
             f.contents = Buffer.from(JSON.stringify(value));
         }
         return f;
-    }))
-        .pipe(jsonFilter.restore);
+    }));
 }
 function updateExtensionPackageJSON(input, update) {
     const packageJsonFilter = filter('extensions/*/package.json', { restore: true });
