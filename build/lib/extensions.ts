@@ -13,7 +13,12 @@ import { Stream } from 'stream';
 import * as File from 'vinyl';
 import { createStatsStream } from './stats';
 import * as util2 from './util';
-const vzip = require('gulp-vinyl-zip');
+// NOTE: requires ./vzip-fixed (vendored fixed copy of gulp-vinyl-zip@2.5.0)
+// instead of 'gulp-vinyl-zip'. The upstream package is unmaintained (last
+// release 2021) and has a race condition in its toStream() that hangs the
+// Linux x64 Build CI job. See build/lib/vzip-fixed.js header comment for
+// the full investigation and rationale.
+const vzip = require('./vzip-fixed');
 import filter = require('gulp-filter');
 import rename = require('gulp-rename');
 import * as fancyLog from 'fancy-log';
