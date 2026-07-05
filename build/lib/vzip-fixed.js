@@ -70,174 +70,200 @@ var through = require('through');
 var map = require('through2').obj;
 
 function modeFromEntry(entry) {
-	var attr = entry.externalFileAttributes >> 16 || 33188;
+        var attr = entry.externalFileAttributes >> 16 || 33188;
 
-	// The following constants are not available on all platforms:
-	// 448 = constants.S_IRWXU, 56 = constants.S_IRWXG, 7 = constants.S_IRWXO
-	return [448, 56, 7]
-		.map(function (mask) { return attr & mask; })
-		.reduce(function (a, b) { return a + b; }, attr & constants.S_IFMT);
+        // The following constants are not available on all platforms:
+        // 448 = constants.S_IRWXU, 56 = constants.S_IRWXG, 7 = constants.S_IRWXO
+        return [448, 56, 7]
+                .map(function (mask) { return attr & mask; })
+                .reduce(function (a, b) { return a + b; }, attr & constants.S_IFMT);
 }
 
 function mtimeFromEntry(entry) {
-	return yauzl.dosDateTimeToDate(entry.lastModFileDate, entry.lastModFileTime);
+        return yauzl.dosDateTimeToDate(entry.lastModFileDate, entry.lastModFileTime);
 }
 
 function toStream(zip) {
-	var result = through();
-	var q = queue();
-	var didErr = false;
-	var zipEnded = false;
-	var resultEnded = false;
+        var result = through();
+        var q = queue();
+        var didErr = false;
+        var zipEnded = false;
+        var resultEnded = false;
 
-	// Guard so result.end() is only ever called once, even if both the
-	// zip-end branch and the queue-end branch try to fire (defensive —
-	// through() tolerates double-end, but this makes the logic explicit).
-	function endResult() {
-		if (!resultEnded && !didErr) {
-			resultEnded = true;
-			result.end();
-		}
-	}
+        // Guard so result.end() is only ever called once, even if both the
+        // zip-end branch and the queue-end branch try to fire (defensive —
+        // through() tolerates double-end, but this makes the logic explicit).
+        function endResult() {
+                if (!resultEnded && !didErr) {
+                        resultEnded = true;
+                        result.end();
+                }
+        }
 
-	q.on('error', function (err) {
-		didErr = true;
-		result.emit('error', err);
-	});
+        q.on('error', function (err) {
+                didErr = true;
+                result.emit('error', err);
+        });
 
-	// FIX 1 (race condition): Attach the queue 'end' listener EAGERLY,
-	// BEFORE any q.start() call. The original code attached this listener
-	// lazily inside the zip.on('end') handler — but if all openReadStream
-	// callbacks had already fired synchronously within q.start() (queue@4
-	// runs jobs via `job(next)` synchronously at line 142 of queue/index.js),
-	// the queue would have called done() → emit('end') before any listener
-	// was attached, the lazy listener would never fire, and result.end()
-	// would never be called (race condition → stream hang → gulp timeout).
-	//
-	// The fix uses two flags (zipEnded, resultEnded) to coordinate:
-	//   - If queue ends BEFORE zip ends: listener fires, but zipEnded is
-	//     false, so endResult() is NOT called yet. When zip later emits
-	//     'end', the q.length === 0 check will call endResult().
-	//   - If queue ends AFTER zip ends: listener fires with zipEnded true,
-	//     endResult() is called.
-	//   - If queue ends MULTIPLE times (it can be restarted after draining):
-	//     listener fires multiple times, but resultEnded guard ensures
-	//     result.end() is only called once.
-	q.on('end', function () {
-		if (zipEnded) {
-			endResult();
-		}
-	});
+        // FIX 1 (race condition): Attach the queue 'end' listener EAGERLY,
+        // BEFORE any q.start() call. The original code attached this listener
+        // lazily inside the zip.on('end') handler — but if all openReadStream
+        // callbacks had already fired synchronously within q.start() (queue@4
+        // runs jobs via `job(next)` synchronously at line 142 of queue/index.js),
+        // the queue would have called done() → emit('end') before any listener
+        // was attached, the lazy listener would never fire, and result.end()
+        // would never be called (race condition → stream hang → gulp timeout).
+        //
+        // The fix uses two flags (zipEnded, resultEnded) to coordinate:
+        //   - If queue ends BEFORE zip ends: listener fires, but zipEnded is
+        //     false, so endResult() is NOT called yet. When zip later emits
+        //     'end', the q.length === 0 check will call endResult().
+        //   - If queue ends AFTER zip ends: listener fires with zipEnded true,
+        //     endResult() is called.
+        //   - If queue ends MULTIPLE times (it can be restarted after draining):
+        //     listener fires multiple times, but resultEnded guard ensures
+        //     result.end() is only called once.
+        q.on('end', function () {
+                if (zipEnded) {
+                        endResult();
+                }
+        });
 
-	zip.on('entry', function (entry) {
-		if (didErr) { return; }
+        zip.on('entry', function (entry) {
+                if (didErr) { return; }
 
-		// FIX 2 (Node 22+ compat): Replace `new fs.Stats()` (DEP0180
-		// deprecated in Node 18+, broken on future Node versions) with
-		// `Object.create(fs.Stats.prototype)`. The prototype methods
-		// (isFile, isDirectory, isSymbolicLink, etc.) read `this.mode`,
-		// `this.size`, etc., so setting those properties on the created
-		// object is sufficient. Verified to work correctly on Node 22/24:
-		//   Object.create(fs.Stats.prototype) → set mode=0o100644 → isFile()=true
-		//   Object.create(fs.Stats.prototype) → set mode=0o040755 → isDirectory()=true
-		//   Object.create(fs.Stats.prototype) → set mode=0o120755 → isSymbolicLink()=true
-		var stat = Object.create(fs.Stats.prototype);
-		stat.mode = modeFromEntry(entry);
-		stat.mtime = mtimeFromEntry(entry);
+                // FIX 2 (Node 22+ compat): Replace `new fs.Stats()` (DEP0180
+                // deprecated in Node 18+, broken on future Node versions) with
+                // `Object.create(fs.Stats.prototype)`. The prototype methods
+                // (isFile, isDirectory, isSymbolicLink, etc.) read `this.mode`,
+                // `this.size`, etc., so setting those properties on the created
+                // object is sufficient. Verified to work correctly on Node 22/24:
+                //   Object.create(fs.Stats.prototype) → set mode=0o100644 → isFile()=true
+                //   Object.create(fs.Stats.prototype) → set mode=0o040755 → isDirectory()=true
+                //   Object.create(fs.Stats.prototype) → set mode=0o120755 → isSymbolicLink()=true
+                var stat = Object.create(fs.Stats.prototype);
+                stat.mode = modeFromEntry(entry);
+                stat.mtime = mtimeFromEntry(entry);
 
-		// directories
-		if (/\/$/.test(entry.fileName)) {
-			stat.mode = (stat.mode & ~constants.S_IFMT) | constants.S_IFDIR;
-		}
+                // directories
+                if (/\/$/.test(entry.fileName)) {
+                        stat.mode = (stat.mode & ~constants.S_IFMT) | constants.S_IFDIR;
+                }
 
-		var file = {
-			path: entry.fileName,
-			stat: stat
-		};
+                var file = {
+                        path: entry.fileName,
+                        stat: stat
+                };
 
-		if (stat.isFile()) {
-			stat.size = entry.uncompressedSize;
-			if (entry.uncompressedSize === 0) {
-				file.contents = Buffer.alloc(0);
-				result.emit('data', new File(file));
-			} else {
-				q.push(function (cb) {
-					zip.openReadStream(entry, function (err, readStream) {
-						if (err) { return cb(err); }
-						file.contents = readStream;
-						result.emit('data', new File(file));
-						cb();
-					});
-				});
+                if (stat.isFile()) {
+                        stat.size = entry.uncompressedSize;
+                        if (entry.uncompressedSize === 0) {
+                                file.contents = Buffer.alloc(0);
+                                result.emit('data', new File(file));
+                        } else {
+                                q.push(function (cb) {
+                                        zip.openReadStream(entry, function (err, readStream) {
+                                                if (err) { return cb(err); }
+                                                file.contents = readStream;
+                                                result.emit('data', new File(file));
+                                                cb();
+                                        });
+                                });
 
-				q.start();
-			}
-		} else if (stat.isSymbolicLink()) {
-			stat.size = entry.uncompressedSize;
-			q.push(function (cb) {
-				zip.openReadStream(entry, function (err, readStream) {
-					if (err) { return cb(err); }
-					file.symlink = '';
-					readStream.on('data', function (c) { file.symlink += c; });
-					readStream.on('error', cb);
-					readStream.on('end', function () {
-						result.emit('data', new File(file));
-						cb();
-					});
-				});
-			});
+                                q.start();
+                        }
+                } else if (stat.isSymbolicLink()) {
+                        stat.size = entry.uncompressedSize;
+                        q.push(function (cb) {
+                                zip.openReadStream(entry, function (err, readStream) {
+                                        if (err) { return cb(err); }
+                                        file.symlink = '';
+                                        readStream.on('data', function (c) { file.symlink += c; });
+                                        readStream.on('error', cb);
+                                        readStream.on('end', function () {
+                                                result.emit('data', new File(file));
+                                                cb();
+                                        });
+                                });
+                        });
 
-			q.start();
-		} else if (stat.isDirectory()) {
-			result.emit('data', new File(file));
-		} else {
-			result.emit('data', new File(file));
-		}
-	});
+                        q.start();
+                } else if (stat.isDirectory()) {
+                        result.emit('data', new File(file));
+                } else {
+                        result.emit('data', new File(file));
+                }
+        });
 
-	zip.on('end', function () {
-		if (didErr) {
-			return;
-		}
+        zip.on('end', function () {
+                if (didErr) {
+                        return;
+                }
 
-		zipEnded = true;
+                zipEnded = true;
 
-		// If the queue is empty (either no jobs were ever pushed, or all
-		// jobs have already completed), end the result stream immediately.
-		// Otherwise, the eagerly-attached q.on('end') listener above will
-		// call endResult() when the queue drains.
-		if (q.length === 0) {
-			endResult();
-		}
-	});
+                // If the queue is empty (either no jobs were ever pushed, or all
+                // jobs have already completed), end the result stream immediately.
+                // Otherwise, the eagerly-attached q.on('end') listener above will
+                // call endResult() when the queue drains.
+                if (q.length === 0) {
+                        endResult();
+                }
+        });
 
-	return result;
+        return result;
 }
 
 function unzipFile(zipPath) {
-	var result = through();
-	yauzl.open(zipPath, function (err, zip) {
-		if (err) { return result.emit('error', err); }
-		toStream(zip).pipe(result);
-	});
-	return result;
+        var result = through();
+        yauzl.open(zipPath, function (err, zip) {
+                if (err) { return result.emit('error', err); }
+                toStream(zip).pipe(result);
+        });
+        return result;
 }
 
 function unzip() {
-	return map(function (file, enc, next) {
-		if (!file.isBuffer()) return next(new Error('Only supports buffers'));
-		yauzl.fromBuffer(file.contents, (err, zip) => {
-			if (err) return this.emit('error', err);
-			toStream(zip)
-				.on('error', next)
-				.on('data', (data) => this.push(data))
-				.on('end', next);
-		});
-	});
+        return map(function (file, enc, next) {
+                if (!file.isBuffer()) return next(new Error('Only supports buffers'));
+                yauzl.fromBuffer(file.contents, (err, zip) => {
+                        if (err) return this.emit('error', err);
+                        toStream(zip)
+                                .on('error', next)
+                                .on('data', (data) => this.push(data))
+                                .on('end', next);
+                });
+        });
 }
 
 function src(zipPath) {
-	return zipPath ? unzipFile(zipPath) : unzip();
+        return zipPath ? unzipFile(zipPath) : unzip();
 }
 
-module.exports = src;
+// IMPORTANT: Export shape MUST match gulp-vinyl-zip's index.js, which exports
+// an OBJECT { src, zip, dest } — NOT the src function directly. The production
+// code in build/lib/extensions.ts does `const vzip = require('./vzip-fixed')`
+// then calls `vzip.src()` (treating vzip as an object with a .src method).
+// If we did `module.exports = src` instead, vzip would be the src function
+// itself, vzip.src would be undefined, and the call would fail with
+// "TypeError: vzip.src is not a function" — which is exactly what happened
+// in CI run #91 (commit 5b4ca8f5) before this fix was applied.
+//
+// The `zip` and `dest` functions are NOT used by our code (verified:
+// `rg "vzip\.(zip|dest)" build/` returns no matches), but we re-export them
+// from the original gulp-vinyl-zip package for API completeness. Those code
+// paths do NOT go through the vulnerable toStream() function — `zip` uses
+// yazl for writing (not yauzl for reading) and `dest` is a thin wrapper
+// around `zip` + vinyl-fs. Neither has the race condition.
+var originalPackage;
+try {
+        originalPackage = require('gulp-vinyl-zip');
+} catch (e) {
+        originalPackage = null;
+}
+
+module.exports = {
+        src: src,
+        zip: originalPackage ? originalPackage.zip : function () { throw new Error('gulp-vinyl-zip not installed; zip() unavailable'); },
+        dest: originalPackage ? originalPackage.dest : function () { throw new Error('gulp-vinyl-zip not installed; dest() unavailable'); }
+};
