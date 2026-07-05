@@ -24,6 +24,7 @@ import rename = require('gulp-rename');
 import * as fancyLog from 'fancy-log';
 import * as ansiColors from 'ansi-colors';
 const buffer = require('gulp-buffer');
+const minimatch = require('minimatch');
 import * as jsoncParser from 'jsonc-parser';
 import webpack = require('webpack');
 import { getProductionDependencies } from './dependencies';
@@ -36,11 +37,24 @@ const commit = getVersion(root);
 const sourceMappingURLBase = `https://main.vscode-cdn.net/sourcemaps/${commit}`;
 
 function minifyExtensionResources(input: Stream): Stream {
-	const jsonFilter = filter(['**/*.json', '**/*.code-snippets'], { restore: true });
+	const jsonPatterns = ['**/*.json', '**/*.code-snippets'];
+	// NOTE: previously used gulp-filter + restore to split JSON files out for
+	// minification. gulp-filter@5.1.0's restore stream fails to end when the
+	// upstream is a concurrent es.merge of multiple vsix pipelines (only ~33
+	// of 84 files emerge; the stream never ends). Recurrence of upstream
+	// gulp-filter#29 (fixed in 2.0.1 but fix is incomplete under concurrent
+	// merge). Inline path check via minimatch avoids the filter/restore split
+	// entirely. Minor behavior change: JSON files with stream contents that
+	// haven't been buffered upstream (e.g. .code-snippets) are passed through
+	// unchanged instead of being buffered+minified. updateExtensionPackageJSON
+	// already buffers package.json files, so those are still minified.
 	return input
-		.pipe(jsonFilter)
-		.pipe(buffer())
 		.pipe(es.mapSync((f: File) => {
+			const rel = f.relative;
+			const isJson = jsonPatterns.some(p => minimatch(rel, p));
+			if (!isJson || !Buffer.isBuffer(f.contents)) {
+				return f;
+			}
 			const errors: jsoncParser.ParseError[] = [];
 			const value = jsoncParser.parse(f.contents.toString('utf8'), errors, { allowTrailingComma: true });
 			if (errors.length === 0) {
@@ -48,8 +62,7 @@ function minifyExtensionResources(input: Stream): Stream {
 				f.contents = Buffer.from(JSON.stringify(value));
 			}
 			return f;
-		}))
-		.pipe(jsonFilter.restore);
+		}));
 }
 
 function updateExtensionPackageJSON(input: Stream, update: (data: any) => any): Stream {
