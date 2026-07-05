@@ -243,7 +243,18 @@ const RULES: IRule[] = [
 	// Browser
 	{
 		target: '**/vs/**/browser/**',
-		allowedTypes: CORE_TYPES,
+		allowedTypes: [
+			...CORE_TYPES,
+
+			// DOM-standard globals that @types/node@20+ also re-declares in its web-globals/ subdir (false positive in disallowedDefinitions check)
+			'MessageEvent',
+			'WebSocket',
+			'CustomEvent',
+			'ReadableStreamDefaultReader',
+			'DOMException',
+			'EventListenerOptions',
+			'AddEventListenerOptions',
+		],
 		disallowedTypes: NATIVE_TYPES,
 		allowedDefinitions: [
 			'@types/node/stream/consumers.d.ts' // node.js started to duplicate types from lib.dom.d.ts so we have to account for that
@@ -275,7 +286,18 @@ const RULES: IRule[] = [
 	// Electron (sandbox)
 	{
 		target: '**/vs/**/electron-sandbox/**',
-		allowedTypes: CORE_TYPES,
+		allowedTypes: [
+			...CORE_TYPES,
+
+			// Same DOM-standard globals as browser rule (duplicated by @types/node@20+ web-globals/)
+			'MessageEvent',
+			'WebSocket',
+			'CustomEvent',
+			'ReadableStreamDefaultReader',
+			'DOMException',
+			'EventListenerOptions',
+			'AddEventListenerOptions',
+		],
 		disallowedDefinitions: [
 			'@types/node'	// no node.js
 		]
