@@ -23,7 +23,12 @@ const path = require("path");
 const File = require("vinyl");
 const stats_1 = require("./stats");
 const util2 = require("./util");
-const vzip = require('gulp-vinyl-zip');
+// NOTE: requires ./vzip-fixed (vendored fixed copy of gulp-vinyl-zip@2.5.0)
+// instead of 'gulp-vinyl-zip'. The upstream package is unmaintained (last
+// release 2021) and has a race condition in its toStream() that hangs the
+// Linux x64 Build CI job. See build/lib/vzip-fixed.js header comment for
+// the full investigation and rationale.
+const vzip = require('./vzip-fixed');
 const filter = require("gulp-filter");
 const rename = require("gulp-rename");
 const fancyLog = require("fancy-log");
