@@ -294,25 +294,36 @@ export function fromMarketplace(serviceUrl: string, { name: extensionName, versi
 
 
 export function fromGithub({ name, version, repo, sha256, metadata }: IExtensionDefinition): Stream {
-	const json = require('gulp-json-editor') as typeof import('gulp-json-editor');
-
 	fancyLog('Downloading extension from GH:', ansiColors.yellow(`${name}@${version}`), '...');
 
-	const packageJsonFilter = filter('package.json', { restore: true });
-
+	// NOTE: previously used gulp-filter + restore to isolate package.json for
+	// __metadata injection via gulp-json-editor. Same bug pattern as
+	// minifyExtensionResources (PR #70) and fromMarketplace (follow-up fix):
+	// gulp-filter@5.1.0's restore stream fails to end under concurrent
+	// es.merge of multiple vsix pipelines. Inline conditional transform via
+	// es.mapSync avoids the filter/restore split entirely. No buffer() call
+	// is needed: fetchGithub already returns Buffer contents (via fetchUrl),
+	// and vzip.src() (./vzip-fixed) reads each entry's stream into a Buffer
+	// before emitting the file. This is the path actually exercised by CI
+	// for the 3 builtInExtensions in product.json (all use repo, not
+	// serviceUrl, so they go through fromGithub, not fromMarketplace).
 	return fetchGithub(new URL(repo).pathname, {
 		version,
 		name: name => name.endsWith('.vsix'),
 		checksumSha256: sha256
 	})
-		.pipe(buffer())
 		.pipe(vzip.src())
 		.pipe(filter('extension/**'))
 		.pipe(rename(p => p.dirname = p.dirname!.replace(/^extension\/?/, '')))
-		.pipe(packageJsonFilter)
-		.pipe(buffer())
-		.pipe(json({ __metadata: metadata }))
-		.pipe(packageJsonFilter.restore);
+		.pipe(es.mapSync((f: File) => {
+			if (f.relative !== 'package.json') {
+				return f;
+			}
+			const data = JSON.parse(f.contents.toString('utf8'));
+			data.__metadata = metadata;
+			f.contents = Buffer.from(JSON.stringify(data, null, 2));
+			return f;
+		}));
 }
 
 /**
