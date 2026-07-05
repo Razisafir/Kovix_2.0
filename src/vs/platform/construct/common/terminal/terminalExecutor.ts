@@ -181,16 +181,6 @@ export function isCommandInAllowlist(command: string, allowlist?: string[]): boo
 }
 
 /**
- * SEC-3: Enforce workspace directory jail — prevent cd to paths outside workspace root.
- */
-export async function isPathWithinWorkspace(filePath: string, workspaceRoot: string): Promise<boolean> {
-	const path = await import('path');
-	const resolved = path.resolve(filePath);
-	const root = path.resolve(workspaceRoot);
-	return resolved.startsWith(root + path.sep) || resolved === root;
-}
-
-/**
  * SEC-3: Rate limiter for terminal command execution.
  * Tracks command timestamps per session.
  */
