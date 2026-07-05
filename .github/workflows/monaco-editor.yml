@@ -41,7 +41,7 @@ jobs:
         id: cacheNodeModules
         uses: actions/cache@v6
         with:
-          path: "**/node_modules"
+          path: '**/node_modules'
           key: ${{ runner.os }}-cacheNodeModules20-${{ steps.nodeModulesCacheKey.outputs.value }}
           restore-keys: ${{ runner.os }}-cacheNodeModules20-
       - name: Get npm cache directory path

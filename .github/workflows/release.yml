@@ -100,7 +100,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GYP_MSVS_VERSION: '2022'
           npm_config_msvs_version: '2022'
-          npm_config_build_from_source: "true"
+          npm_config_build_from_source: 'true'
 
       - uses: ./.github/actions/verify-native-modules
 
@@ -135,7 +135,7 @@ jobs:
         timeout-minutes: 180
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: '--max-old-space-size=4096'
 
       - name: Copy Inno Updater
         run: npx gulp vscode-win32-x64-inno-updater
@@ -361,7 +361,7 @@ jobs:
         timeout-minutes: 180
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: '--max-old-space-size=4096'
 
       - name: Create macOS ZIP archive
         run: |
@@ -477,7 +477,7 @@ jobs:
         timeout-minutes: 180
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_OPTIONS: "--max-old-space-size=4096"
+          NODE_OPTIONS: '--max-old-space-size=4096'
 
       - name: Build Linux DEB
         run: |
