@@ -60,7 +60,7 @@ jobs:
         id: cacheNodeModules
         uses: actions/cache@v6
         with:
-          path: "**/node_modules"
+          path: '**/node_modules'
           key: ${{ runner.os }}-cacheNodeModulesLinux-${{ steps.nodeModulesCacheKey.outputs.value }}
       - name: Get npm cache directory path
         id: npmCacheDirPath
@@ -155,7 +155,7 @@ jobs:
         id: cacheNodeModules
         uses: actions/cache@v6
         with:
-          path: "**/node_modules"
+          path: '**/node_modules'
           key: ${{ runner.os }}-cacheNodeModulesLinux-${{ steps.nodeModulesCacheKey.outputs.value }}
       - name: Get npm cache directory path
         id: npmCacheDirPath
@@ -355,7 +355,7 @@ jobs:
           npx gulp vscode-linux-x64-build-deb
         timeout-minutes: 120
         env:
-          NODE_OPTIONS: "--max-old-space-size=8192"
+          NODE_OPTIONS: '--max-old-space-size=8192'
 
       - name: Package Windows (.exe)
         if: runner.os == 'Windows'
@@ -366,7 +366,7 @@ jobs:
           npx gulp vscode-win32-x64-system-setup
         timeout-minutes: 120
         env:
-          NODE_OPTIONS: "--max-old-space-size=8192"
+          NODE_OPTIONS: '--max-old-space-size=8192'
 
       - name: Package macOS (.zip)
         if: runner.os == 'macOS'
@@ -396,7 +396,7 @@ jobs:
             exit 1
           fi
         env:
-          NODE_OPTIONS: "--max-old-space-size=8192"
+          NODE_OPTIONS: '--max-old-space-size=8192'
 
       # ── Generate checksums ────────────────────────────────
       - name: Generate SHA256 checksums (Linux)

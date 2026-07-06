@@ -45,7 +45,7 @@ jobs:
         id: cacheNodeModules
         uses: actions/cache@v6
         with:
-          path: "**/node_modules"
+          path: '**/node_modules'
           key: ${{ runner.os }}-cacheNodeModulesLinux2-${{ steps.nodeModulesCacheKey.outputs.value }}
       - name: Get npm cache directory path
         id: npmCacheDirPath
@@ -107,7 +107,7 @@ jobs:
         id: cacheNodeModules
         uses: actions/cache@v6
         with:
-          path: "**/node_modules"
+          path: '**/node_modules'
           key: ${{ runner.os }}-cacheNodeModulesLinux2-${{ steps.nodeModulesCacheKey.outputs.value }}
       - name: Get npm cache directory path
         id: npmCacheDirPath
@@ -143,6 +143,9 @@ jobs:
       - name: Run eslint
         run: npm run eslint
 
+      - name: Check Prettier formatting (JSON/YAML/MD only)
+        run: npm run format:check
+
       - name: Run vscode-dts Compile Checks
         run: npm run vscode-dts-compile-check
 
@@ -175,7 +178,7 @@ jobs:
         id: cacheNodeModules
         uses: actions/cache@v6
         with:
-          path: "**/node_modules"
+          path: '**/node_modules'
           key: ${{ runner.os }}-cacheNodeModulesLinux2-${{ steps.nodeModulesCacheKey.outputs.value }}
       - name: Get npm cache directory path
         id: npmCacheDirPath
