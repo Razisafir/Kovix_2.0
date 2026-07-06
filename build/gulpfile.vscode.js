@@ -323,7 +323,17 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
                 const jsFilter = util.filter(data => !data.isDirectory() && /\.js$/.test(data.path));
                 const root = path.resolve(path.join(__dirname, '..'));
                 const productionDependencies = getProductionDependencies(root);
+                // Exclude node_modules/.bin/ symlink shims from the production dependency tree.
+                // These are npm-generated relative symlinks (e.g. node_modules/.bin/mkdirp -> ../mkdirp/bin/cmd.js)
+                // that trip a latent bug in vinyl-fs@4.0.2's findSymlinkHardpath: it does fs.lstat(readlinkTarget)
+                // on the raw relative target, which resolves against process.cwd() (the repo root) instead of the
+                // symlink's own directory, producing `ENOENT: lstat '../mkdirp/bin/cmd.js'` during gulp.src.
+                // The .bin/ shims are dev-tooling CLI entry points, never invoked by the packaged runtime app,
+                // and their targets are already pulled in via each owning package's own glob (e.g. mkdirp/**).
+                // Filtering them out at the glob level (rather than after gulp.src) is required because the
+                // symlink-resolution crash happens inside gulp.src itself, before any downstream pipe stage.
                 const dependenciesSrc = productionDependencies.map(d => path.relative(root, d)).map(d => [`${d}/**`, `!${d}/**/{test,tests}/**`, `!**/*.mk`]).flat();
+                dependenciesSrc.push('!**/node_modules/.bin/**');
 
                 const deps = gulp.src(dependenciesSrc, { base: '.', dot: true })
                         .pipe(filter(['**', `!**/${config.version}/**`, '!**/bin/darwin-arm64-87/**', '!**/package-lock.json', '!**/yarn.lock', '!**/*.js.map']))
