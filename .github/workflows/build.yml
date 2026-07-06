@@ -235,10 +235,25 @@ jobs:
           Write-Host "Size: $((Get-Item $binary).Length) bytes"
           Write-Host ""
           Write-Host "Executing: $binary --version"
-          $output = & $binary --version 2>&1
-          $exitCode = $LASTEXITCODE
+          # Use Start-Process with redirection because Electron is a GUI
+          # subsystem app — PowerShell's & operator doesn't capture stdout
+          # or exit codes for GUI apps. Start-Process -Wait -PassThru
+          # properly waits for the process and gives us the exit code.
+          $stdoutFile = [System.IO.Path]::GetTempFileName()
+          $stderrFile = [System.IO.Path]::GetTempFileName()
+          try {
+            $process = Start-Process -FilePath $binary -ArgumentList "--version" -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+            $exitCode = $process.ExitCode
+          } catch {
+            Write-Host "ERROR: Failed to start process: $_"
+            exit 1
+          }
+          $output = Get-Content $stdoutFile -Raw -ErrorAction SilentlyContinue
+          $stderrOutput = Get-Content $stderrFile -Raw -ErrorAction SilentlyContinue
+          Remove-Item $stdoutFile, $stderrFile -ErrorAction SilentlyContinue
           Write-Host "Exit code: $exitCode"
-          Write-Host "Output: $output"
+          Write-Host "Stdout: $output"
+          Write-Host "Stderr: $stderrOutput"
           if ($exitCode -ne 0) {
             Write-Host "ERROR: Binary failed to execute (exit code $exitCode)."
             Write-Host "This typically means the PE binary is corrupted."
