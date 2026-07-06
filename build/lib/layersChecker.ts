@@ -114,7 +114,7 @@ const RULES: IRule[] = [
 		disallowedTypes: NATIVE_TYPES,
 		disallowedDefinitions: [
 			'lib.dom.d.ts', // no DOM
-			'@types/node'	// no node.js
+			'@types/node'   // no node.js
 		]
 	},
 
@@ -131,7 +131,7 @@ const RULES: IRule[] = [
 		disallowedTypes: NATIVE_TYPES,
 		disallowedDefinitions: [
 			'lib.dom.d.ts', // no DOM
-			'@types/node'	// no node.js
+			'@types/node'   // no node.js
 		]
 	},
 
@@ -149,7 +149,7 @@ const RULES: IRule[] = [
 		disallowedTypes: NATIVE_TYPES,
 		disallowedDefinitions: [
 			'lib.dom.d.ts', // no DOM
-			'@types/node'	// no node.js
+			'@types/node'   // no node.js
 		]
 	},
 
@@ -160,7 +160,7 @@ const RULES: IRule[] = [
 		disallowedTypes: [/* Ignore native types that are defined from here */],
 		disallowedDefinitions: [
 			'lib.dom.d.ts', // no DOM
-			'@types/node'	// no node.js
+			'@types/node'   // no node.js
 		]
 	},
 
@@ -171,7 +171,7 @@ const RULES: IRule[] = [
 		disallowedTypes: [/* Ignore native types that are defined from here */],
 		disallowedDefinitions: [
 			'lib.dom.d.ts', // no DOM
-			'@types/node'	// no node.js
+			'@types/node'   // no node.js
 		]
 	},
 
@@ -182,7 +182,7 @@ const RULES: IRule[] = [
 		disallowedTypes: [/* Ignore native types that are defined from here */],
 		disallowedDefinitions: [
 			'lib.dom.d.ts', // no DOM
-			'@types/node'	// no node.js
+			'@types/node'   // no node.js
 		]
 	},
 
@@ -193,7 +193,7 @@ const RULES: IRule[] = [
 		disallowedTypes: [/* Ignore native types that are defined from here */],
 		disallowedDefinitions: [
 			'lib.dom.d.ts', // no DOM
-			'@types/node'	// no node.js
+			'@types/node'   // no node.js
 		]
 	},
 
@@ -209,7 +209,7 @@ const RULES: IRule[] = [
 		disallowedTypes: NATIVE_TYPES,
 		disallowedDefinitions: [
 			'lib.dom.d.ts', // no DOM
-			'@types/node'	// no node.js
+			'@types/node'   // no node.js
 		]
 	},
 
@@ -225,8 +225,45 @@ const RULES: IRule[] = [
 		],
 		disallowedTypes: NATIVE_TYPES,
 		disallowedDefinitions: [
-			'@types/node'	// no node.js
+			'@types/node'   // no node.js
 		]
+	},
+
+	// Kovix Construct feature: AI agent integration that intentionally uses Node.js APIs
+	// in browser/common layers for local file system access, terminal execution, native
+	// module loading, and MCP server management. This is a deliberate architectural
+	// decision for the local-first AI coding assistant feature, not a layering mistake.
+	// MUST appear before the generic common/browser/node rules below so construct files
+	// match this exemption first.
+	{
+		target: '**/vs/workbench/contrib/construct/**',
+		allowedTypes: [
+			...CORE_TYPES,
+
+			// Node.js APIs (intentional use for local-first AI agent)
+			'fs', 'fs/promises', 'path', 'os', 'process', 'sep',
+			'Buffer', 'ChildProcess', 'SpawnOptions', 'ExecOptions',
+
+			// DOM-standard globals (also duplicated by @types/node web-globals)
+			'MessageEvent', 'WebSocket', 'CustomEvent', 'ReadableStreamDefaultReader',
+			'DOMException', 'EventListenerOptions', 'AddEventListenerOptions',
+		],
+		// No disallowedDefinitions: construct feature is allowed to reference @types/node
+	},
+	{
+		target: '**/vs/platform/construct/**',
+		allowedTypes: [
+			...CORE_TYPES,
+
+			// Node.js APIs (intentional use for local-first AI agent)
+			'fs', 'fs/promises', 'path', 'os', 'process', 'sep',
+			'Buffer', 'ChildProcess', 'SpawnOptions', 'ExecOptions',
+
+			// DOM-standard globals (also duplicated by @types/node web-globals)
+			'MessageEvent', 'WebSocket', 'CustomEvent', 'ReadableStreamDefaultReader',
+			'DOMException', 'EventListenerOptions', 'AddEventListenerOptions',
+		],
+		// No disallowedDefinitions: construct feature is allowed to reference @types/node
 	},
 
 	// Common
@@ -236,7 +273,7 @@ const RULES: IRule[] = [
 		disallowedTypes: NATIVE_TYPES,
 		disallowedDefinitions: [
 			'lib.dom.d.ts', // no DOM
-			'@types/node'	// no node.js
+			'@types/node'   // no node.js
 		]
 	},
 
@@ -257,10 +294,11 @@ const RULES: IRule[] = [
 		],
 		disallowedTypes: NATIVE_TYPES,
 		allowedDefinitions: [
-			'@types/node/stream/consumers.d.ts' // node.js started to duplicate types from lib.dom.d.ts so we have to account for that
+			'@types/node/stream/consumers.d.ts', // node.js started to duplicate types from lib.dom.d.ts so we have to account for that
+			'@types/node/web-globals/', // @types/node@20+ re-declares DOM-standard types in web-globals/ subdir; whitelist to avoid false positive
 		],
 		disallowedDefinitions: [
-			'@types/node'	// no node.js
+			'@types/node'   // no node.js
 		]
 	},
 
@@ -270,7 +308,7 @@ const RULES: IRule[] = [
 		allowedTypes: CORE_TYPES,
 		disallowedTypes: NATIVE_TYPES,
 		disallowedDefinitions: [
-			'@types/node'	// no node.js
+			'@types/node'   // no node.js
 		]
 	},
 
@@ -279,7 +317,7 @@ const RULES: IRule[] = [
 		target: '**/vs/**/node/**',
 		allowedTypes: CORE_TYPES,
 		disallowedDefinitions: [
-			'lib.dom.d.ts'	// no DOM
+			'lib.dom.d.ts'  // no DOM
 		]
 	},
 
@@ -298,8 +336,11 @@ const RULES: IRule[] = [
 			'EventListenerOptions',
 			'AddEventListenerOptions',
 		],
+		allowedDefinitions: [
+			'@types/node/web-globals/', // same false-positive whitelist as browser rule
+		],
 		disallowedDefinitions: [
-			'@types/node'	// no node.js
+			'@types/node'   // no node.js
 		]
 	},
 
@@ -317,7 +358,7 @@ const RULES: IRule[] = [
 			'ipcMain' // not allowed, use validatedIpcMain instead
 		],
 		disallowedDefinitions: [
-			'lib.dom.d.ts'	// no DOM
+			'lib.dom.d.ts'  // no DOM
 		]
 	},
 
@@ -335,7 +376,7 @@ const RULES: IRule[] = [
 			'ipcMain' // not allowed, use validatedIpcMain instead
 		],
 		disallowedDefinitions: [
-			'lib.dom.d.ts'	// no DOM
+			'lib.dom.d.ts'  // no DOM
 		]
 	}
 ];
