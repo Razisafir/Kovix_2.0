@@ -1,0 +1,65 @@
+# Prettier ignore — match the existing .eslint-ignore and VS Code hygiene patterns.
+# Prettier is OPT-IN for new Kovix code; existing VS Code files are NOT reformatted
+# (would create huge churn and conflict with VS Code's own hygiene.js rules).
+
+# Build artifacts
+out/
+out-build/
+out-vscode/
+out-vscode-web/
+out-vscode-reh/
+out-vscode-reh-web/
+.build/
+extensions/**/dist/
+extensions/**/out/
+test/smoke/out/
+cli/target/
+**/*.js.map
+
+# Generated / vendored
+node_modules/
+**/node_modules/
+package-lock.json
+yarn.lock
+extensions/**/package-lock.json
+
+# Third-party sources
+extensions/**/syntaxes/**
+extensions/**/build/update-*.js
+
+# Minified / compiled
+**/*.min.js
+**/*.min.css
+
+# Data files
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+*.icns
+*.svg
+*.woff
+*.woff2
+*.ttf
+*.eot
+*.pdf
+*.zip
+*.vsix
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Don't reformat upstream VS Code source (would conflict with hygiene.js)
+# Only format new Kovix-specific code under src/vs/workbench/contrib/construct/
+src/vs/**
+!src/vs/workbench/contrib/construct/**
+
+# Don't touch build/ (uses tabs, has its own tsconfig)
+build/**
+
+# Test fixtures
+test/**/fixtures/**
+test/**/colorize-fixtures/**
+test/**/colorize-results/**

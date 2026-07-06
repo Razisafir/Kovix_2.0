@@ -1,0 +1,7 @@
+# Husky pre-commit hook — runs lint-staged on staged files.
+# lint-staged config is in package.json:
+#   - *.{json,yml,yaml,md,markdown} -> prettier --write
+#   - src/vs/workbench/contrib/construct/**/*.{ts,tsx,js,jsx} -> eslint --fix
+# Conservative: does NOT reformat existing VS Code JS/TS (avoids massive churn
+# and conflicts with VS Code's own hygiene.js system).
+npx lint-staged

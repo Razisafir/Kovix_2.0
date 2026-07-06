@@ -1,0 +1,19 @@
+{
+        "tabWidth": 8,
+        "useTabs": false,
+        "singleQuote": true,
+        "trailingComma": "none",
+        "arrowParens": "avoid",
+        "endOfLine": "lf",
+        "printWidth": 120,
+        "overrides": [
+                {
+                        "files": ["*.yml", "*.yaml", "package.json", "package-lock.json"],
+                        "options": { "tabWidth": 2 }
+                },
+                {
+                        "files": ["*.md", "*.markdown"],
+                        "options": { "proseWrap": "preserve", "printWidth": 120 }
+                }
+        ]
+}
