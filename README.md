@@ -1,6 +1,6 @@
 <div align="center">
 
-# Kovix
+<img src="docs/images/kovix-wordmark.png" alt="Kovix" width="480">
 
 **AI-native development environment — Claude Code, in your IDE, with its own OS.**
 
