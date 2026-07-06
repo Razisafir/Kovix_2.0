@@ -58,7 +58,11 @@ function candidateModules() {
         add('@vscode/policy-watcher/build/Release/vscode-policy-watcher.node');
 
         if (platform === 'win32') {
-                add('@vscode/windows-registry/build/Release/vscode-windows-registry.node');
+                // @vscode/windows-registry@1.2.0's binding.gyp defines target_name
+                // as "winregistry" (not "vscode-windows-registry"), so the built
+                // binary is winregistry.node. The package's dist/index.js confirms
+                // this: require('../build/Release/winregistry.node').
+                add('@vscode/windows-registry/build/Release/winregistry.node');
                 add('windows-foreground-love/build/Release/foreground_love.node');
         }
 
