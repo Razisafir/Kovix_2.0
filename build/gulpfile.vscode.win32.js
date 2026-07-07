@@ -140,7 +140,7 @@ defineWin32SetupTasks('arm64', 'user');
  */
 function copyInnoUpdater(arch) {
         return () => {
-                return gulp.src('build/win32/{inno_updater.exe,vcruntime140.dll}', { base: 'build/win32' })
+                return gulp.src('build/win32/{inno_updater.exe,vcruntime140.dll}', { base: 'build/win32', encoding: false })
                         .pipe(vfs.dest(path.join(buildPath(arch), 'tools')));
         };
 }

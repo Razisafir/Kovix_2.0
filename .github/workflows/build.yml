@@ -195,6 +195,36 @@ jobs:
           "$hash  $($exe.Name)" | Out-File -FilePath .build\win32-x64\checksums-sha256.txt -Encoding utf8
           Get-Content .build\win32-x64\checksums-sha256.txt
 
+      - name: Smoke test - kovix.exe --version
+        # Mandatory gate: refuse to upload a broken Windows build.
+        # Runs the freshly-built kovix.exe with --version and verifies the
+        # process exits 0 and emits a non-empty version string. This catches
+        # the binary-corruption regression (vinyl-fs@4.0.2 UTF-8 round-trip
+        # on binary files) before it reaches the artifact store.
+        shell: pwsh
+        run: |
+          $kovixExe = Join-Path '..\VSCode-win32-x64' 'kovix.exe'
+          if (-not (Test-Path $kovixExe)) {
+            Write-Error "kovix.exe not found at $kovixExe"
+            exit 1
+          }
+          Write-Host "==> Running: $kovixExe --version"
+          $output = & $kovixExe --version 2>&1
+          $exitCode = $LASTEXITCODE
+          Write-Host "Exit code: $exitCode"
+          Write-Host "Output:"
+          Write-Host $output
+          if ($exitCode -ne 0) {
+            Write-Error "kovix.exe --version exited with code $exitCode"
+            exit 1
+          }
+          $version = ($output | Out-String).Trim()
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            Write-Error "kovix.exe --version produced empty output"
+            exit 1
+          }
+          Write-Host "Smoke test PASSED: kovix.exe --version -> $version"
+
       - name: Upload Windows installer
         uses: actions/upload-artifact@v7
         with:
@@ -281,6 +311,96 @@ jobs:
           find . -name "*.rpm" -exec sha256sum {} \; >> checksums-sha256.txt 2>/dev/null || true
           find . -name "*.tar.gz" -exec sha256sum {} \; >> checksums-sha256.txt 2>/dev/null || true
           cat checksums-sha256.txt
+
+      - name: Smoke test - kovix --version
+        # Mandatory gate: refuse to upload a broken Linux build.
+        # Extracts the freshly-built .deb, runs ./kovix --version against the
+        # unpacked binary, and verifies the process exits 0 with a non-empty
+        # version string. This catches the binary-corruption regression
+        # (vinyl-fs@4.0.2 UTF-8 round-trip on binary files) before it reaches
+        # the artifact store. Also runs readelf -h on the binary as a
+        # secondary integrity check (corrupt ELF headers cause readelf to
+        # emit impossible values like e_ehsize=0 or e_shoff in the terabytes).
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEB=$(find .build/linux/deb -name '*.deb' | head -1)
+          if [ -z "$DEB" ]; then
+            echo "ERROR: no .deb found in .build/linux/deb/" >&2
+            exit 1
+          fi
+          echo "==> Found .deb: $DEB"
+          echo "==> SHA256 of .deb: $(sha256sum "$DEB" | cut -d' ' -f1)"
+
+          # Extract .deb to a clean staging dir
+          STAGE="/tmp/kovix-smoke-$$"
+          mkdir -p "$STAGE"
+          dpkg-deb -x "$DEB" "$STAGE"
+
+          BIN="$STAGE/usr/share/kovix/kovix"
+          if [ ! -x "$BIN" ]; then
+            echo "ERROR: kovix binary not found at $BIN" >&2
+            ls -la "$STAGE/usr/share/kovix/" | head -20
+            exit 1
+          fi
+          echo "==> Binary path: $BIN"
+          echo "==> Binary size: $(stat -c%s "$BIN") bytes"
+
+          # ELF integrity check: readelf must succeed and report sane values
+          echo "==> ELF header (first 64 bytes hex):"
+          od -A x -t x1z -v "$BIN" | head -4
+          echo "==> readelf -h output:"
+          if ! readelf -h "$BIN" > /tmp/readelf.out 2>&1; then
+            echo "ERROR: readelf -h failed — binary is not a valid ELF" >&2
+            cat /tmp/readelf.out >&2
+            exit 1
+          fi
+          cat /tmp/readelf.out
+          # Sanity-check e_shoff (section header offset) — a corrupt ELF has
+          # impossibly large values like 14009108476760 (~14 TB).
+          E_SHOFF=$(grep -i 'Start of section headers' /tmp/readelf.out | awk '{print $(NF-1)}')
+          E_EHSIZE=$(grep -i 'Size of this header' /tmp/readelf.out | awk '{print $NF}')
+          echo "==> e_shoff=$E_SHOFF, e_ehsize=$E_EHSIZE"
+          if [ "$E_EHSIZE" != "64" ]; then
+            echo "ERROR: e_ehsize=$E_EHSIZE (expected 64) — binary is corrupt" >&2
+            exit 1
+          fi
+          if [ "$E_SHOFF" -gt 100000000 ]; then
+            echo "ERROR: e_shoff=$E_SHOFF is unreasonably large — binary is corrupt" >&2
+            exit 1
+          fi
+
+          # Functional smoke test: ./kovix --version
+          echo "==> Running: $BIN --version"
+          # xvfb-run is not needed for --version (no GUI required).
+          # Time out after 30s in case the binary hangs.
+          VERSION_OUTPUT=$(timeout 30 "$BIN" --version 2>&1) || true
+          EXIT_CODE=$?
+          echo "Exit code: $EXIT_CODE"
+          echo "Output: $VERSION_OUTPUT"
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "ERROR: kovix --version exited with code $EXIT_CODE" >&2
+            exit 1
+          fi
+          if [ -z "$VERSION_OUTPUT" ]; then
+            echo "ERROR: kovix --version produced empty output" >&2
+            exit 1
+          fi
+          # Scan for the UTF-8 replacement character signature (ef bf bd)
+          # in the binary itself — this is the corruption fingerprint.
+          CORRUPT_COUNT=$(od -A n -t x1 "$BIN" | tr ' ' '\n' | grep -c 'ef' || true)
+          # A more direct check: count ef-bf-bd triplets in the binary
+          CORRUPT_SIG=$(python3 -c "
+          import sys
+          with open('$BIN','rb') as f: data=f.read()
+          print(data.count(b'\xef\xbf\xbd'))
+          ")
+          echo "==> U+FFFD (ef bf bd) sequences in binary: $CORRUPT_SIG"
+          if [ "$CORRUPT_SIG" -gt 0 ]; then
+            echo "ERROR: binary contains $CORRUPT_SIG U+FFFD sequences — corruption present" >&2
+            exit 1
+          fi
+          echo "Smoke test PASSED: kovix --version -> $VERSION_OUTPUT"
 
       - name: Upload Linux packages
         uses: actions/upload-artifact@v7

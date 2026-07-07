@@ -261,7 +261,7 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
                 // instead of crashing the build. Same defensive pattern as the
                 // 'licenses/**' and '.build/telemetry/**' fixes from v1.5.4/v1.5.9.
                 fs.mkdirSync('.build/extensions', { recursive: true });
-                const extensions = gulp.src(['.build/extensions/**', ...platformSpecificBuiltInExtensionsExclusions], { base: '.build', dot: true, allowEmpty: true });
+                const extensions = gulp.src(['.build/extensions/**', ...platformSpecificBuiltInExtensionsExclusions], { base: '.build', dot: true, allowEmpty: true, encoding: false });
 
                 const sources = es.merge(src, extensions)
                         .pipe(filter(['**', '!**/*.js.map'], { dot: true }));
@@ -307,7 +307,7 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
                                 fs.copyFileSync('LICENSE.txt', product.licenseFileName);
                         }
                 }
-                const license = gulp.src([product.licenseFileName, 'ThirdPartyNotices.txt', 'licenses/**'], { base: '.', allowEmpty: true });
+                const license = gulp.src([product.licenseFileName, 'ThirdPartyNotices.txt', 'licenses/**'], { base: '.', allowEmpty: true, encoding: false });
 
                 // TODO the API should be copied to `out` during compile, not here
                 const api = gulp.src('src/vscode-dts/vscode.d.ts').pipe(rename('out/vscode-dts/vscode.d.ts'));
@@ -349,7 +349,7 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
                 dependenciesSrc.push('!**/node_modules/.bin/**');
                 dependenciesSrc.push('!**/.bin/**');
 
-                const deps = gulp.src(dependenciesSrc, { base: '.', dot: true, resolveSymlinks: false })
+                const deps = gulp.src(dependenciesSrc, { base: '.', dot: true, resolveSymlinks: false, encoding: false })
                         .pipe(filter(['**', `!**/${config.version}/**`, '!**/bin/darwin-arm64-87/**', '!**/package-lock.json', '!**/yarn.lock', '!**/*.js.map']))
                         .pipe(util.cleanNodeModules(path.join(__dirname, '.moduleignore')))
                         .pipe(util.cleanNodeModules(path.join(__dirname, `.moduleignore.${process.platform}`)))
@@ -413,9 +413,9 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
                                 'resources/win32/yaml.ico',
                                 'resources/win32/kovix_70x70.png',
                                 'resources/win32/kovix_150x150.png'
-                        ], { base: '.' }));
+                        ], { base: '.', encoding: false }));
                 } else if (platform === 'linux') {
-                        all = es.merge(all, gulp.src('resources/linux/kovix.png', { base: '.' }));
+                        all = es.merge(all, gulp.src('resources/linux/kovix.png', { base: '.', encoding: false }));
                 } else if (platform === 'darwin') {
                         const shortcut = gulp.src('resources/darwin/bin/kovix.sh')
                                 .pipe(replace('@@APPNAME@@', product.applicationName))
@@ -467,7 +467,7 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
 
                         if (quality === 'insider') {
                                 fs.mkdirSync('.build/win32/appx', { recursive: true });
-                                result = es.merge(result, gulp.src('.build/win32/appx/**', { base: '.build/win32', allowEmpty: true }));
+                                result = es.merge(result, gulp.src('.build/win32/appx/**', { base: '.build/win32', allowEmpty: true, encoding: false }));
                         }
                 } else if (platform === 'linux') {
                         result = es.merge(result, gulp.src('resources/linux/bin/kovix.sh', { base: '.' })
