@@ -382,10 +382,11 @@ jobs:
           echo "Size: $(stat -c%s "$BINARY") bytes"
           echo ""
           echo "Executing: $BINARY --version"
-          # xvfb-run is needed because Electron requires a display even
-          # for --version (it initializes the GPU process). The runner
-          # has xvfb installed via the Linux deps setup step.
-          OUTPUT=$(xvfb-run -a "$BINARY" --version 2>&1) || {
+          # --no-sandbox is required because the chrome-sandbox helper
+          # binary needs root ownership + mode 4755 (setuid), which the
+          # build output doesn't have. This is standard for CI smoke
+          # tests of Electron apps.
+          OUTPUT=$(xvfb-run -a "$BINARY" --no-sandbox --version 2>&1) || {
             echo "ERROR: Binary failed to execute. Output:"
             echo "$OUTPUT"
             echo ""
