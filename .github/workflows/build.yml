@@ -195,6 +195,79 @@ jobs:
           "$hash  $($exe.Name)" | Out-File -FilePath .build\win32-x64\checksums-sha256.txt -Encoding utf8
           Get-Content .build\win32-x64\checksums-sha256.txt
 
+      - name: Smoke test — verify built binary executes
+        shell: pwsh
+        run: |
+          # CRITICAL GUARDRAIL: This step proves the built Windows binary
+          # actually executes. Before this check existed, every "green" CI
+          # run produced a corrupted artifact (vinyl-fs@4's default encoding
+          # is 'utf8', which UTF-8 decodes and re-encodes binary files,
+          # replacing every byte in 0x80-0xFF with U+FFFD). The result was
+          # an .exe installer that passed all build checks but contained a
+          # non-executable PE binary.
+          #
+          # This check runs the ACTUAL binary from the unpacked build
+          # output (../VSCode-win32-x64/Kovix.exe), BEFORE it gets packaged
+          # into the .exe installer. If this fails, the artifact is
+          # unusable and the job must fail — do not soften this check.
+          $ErrorActionPreference = 'Stop'
+          $binary = "..\VSCode-win32-x64\Kovix.exe"
+          if (-not (Test-Path $binary)) {
+            # The binary might be named differently — search for it
+            $candidate = Get-ChildItem -Path "..\VSCode-win32-x64\" -Filter "*.exe" -ErrorAction SilentlyContinue | Where-Object { $_.Length -gt 100MB } | Select-Object -First 1
+            if ($candidate) {
+              $binary = $candidate.FullName
+              Write-Host "Binary found at alternate path: $binary"
+            } else {
+              Write-Host "ERROR: Built binary not found at ..\VSCode-win32-x64\Kovix.exe"
+              Write-Host "Listing ..\VSCode-win32-x64\ for diagnosis:"
+              if (Test-Path "..\VSCode-win32-x64\") {
+                Get-ChildItem "..\VSCode-win32-x64\" | Format-Table Name, Length -AutoSize
+              } else {
+                Write-Host "..\VSCode-win32-x64\ does not exist"
+                Write-Host "Listing ..\ for diagnosis:"
+                Get-ChildItem "..\" | Format-Table Name -AutoSize
+              }
+              exit 1
+            }
+          }
+          Write-Host "Binary found: $binary"
+          Write-Host "Size: $((Get-Item $binary).Length) bytes"
+          Write-Host ""
+          Write-Host "Executing: $binary --version"
+          # Use Start-Process with redirection because Electron is a GUI
+          # subsystem app — PowerShell's & operator doesn't capture stdout
+          # or exit codes for GUI apps. Start-Process -Wait -PassThru
+          # properly waits for the process and gives us the exit code.
+          $stdoutFile = [System.IO.Path]::GetTempFileName()
+          $stderrFile = [System.IO.Path]::GetTempFileName()
+          try {
+            $process = Start-Process -FilePath $binary -ArgumentList "--version" -Wait -PassThru -NoNewWindow -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+            $exitCode = $process.ExitCode
+          } catch {
+            Write-Host "ERROR: Failed to start process: $_"
+            exit 1
+          }
+          $output = Get-Content $stdoutFile -Raw -ErrorAction SilentlyContinue
+          $stderrOutput = Get-Content $stderrFile -Raw -ErrorAction SilentlyContinue
+          Remove-Item $stdoutFile, $stderrFile -ErrorAction SilentlyContinue
+          Write-Host "Exit code: $exitCode"
+          Write-Host "Stdout: $output"
+          Write-Host "Stderr: $stderrOutput"
+          if ($exitCode -ne 0) {
+            Write-Host "ERROR: Binary failed to execute (exit code $exitCode)."
+            Write-Host "This typically means the PE binary is corrupted."
+            Write-Host "Check that encoding:false is set on all gulp.src calls"
+            Write-Host "that read binary files in build/gulpfile.vscode.js."
+            exit 1
+          }
+          if ([string]::IsNullOrWhiteSpace($output)) {
+            Write-Host "ERROR: Binary executed but produced no output"
+            exit 1
+          }
+          Write-Host ""
+          Write-Host "Smoke test PASSED: binary is executable and returns a version string."
+
       - name: Upload Windows installer
         uses: actions/upload-artifact@v7
         with:
@@ -281,6 +354,60 @@ jobs:
           find . -name "*.rpm" -exec sha256sum {} \; >> checksums-sha256.txt 2>/dev/null || true
           find . -name "*.tar.gz" -exec sha256sum {} \; >> checksums-sha256.txt 2>/dev/null || true
           cat checksums-sha256.txt
+
+      - name: Smoke test — verify built binary executes
+        run: |
+          # CRITICAL GUARDRAIL: This step proves the built binary actually
+          # executes. Before this check existed, every "green" CI run
+          # produced a corrupted artifact (vinyl-fs@4's default encoding
+          # is 'utf8', which UTF-8 decodes and re-encodes binary files,
+          # replacing every byte in 0x80-0xFF with U+FFFD). The result
+          # was a .deb that passed all build checks but contained a
+          # non-executable ELF binary ("Exec format error" on launch).
+          #
+          # This check runs the ACTUAL binary from the unpacked build
+          # output (../VSCode-linux-x64/kovix), BEFORE it gets packaged
+          # into the .deb. If this fails, the artifact is unusable and
+          # the job must fail — do not soften this check.
+          set -e
+          BINARY="../VSCode-linux-x64/kovix"
+          if [ ! -f "$BINARY" ]; then
+            echo "ERROR: Built binary not found at $BINARY"
+            echo "Listing ../ for diagnosis:"
+            ls -la ../ | head -20
+            exit 1
+          fi
+          echo "Binary found: $BINARY"
+          echo "File type: $(file "$BINARY")"
+          echo "Size: $(stat -c%s "$BINARY") bytes"
+          echo ""
+          echo "Executing: $BINARY --version"
+          # --no-sandbox is required because the chrome-sandbox helper
+          # binary needs root ownership + mode 4755 (setuid), which the
+          # build output doesn't have. This is standard for CI smoke
+          # tests of Electron apps.
+          OUTPUT=$(xvfb-run -a "$BINARY" --no-sandbox --version 2>&1) || {
+            echo "ERROR: Binary failed to execute. Output:"
+            echo "$OUTPUT"
+            echo ""
+            echo "First 64 bytes of binary (hex dump):"
+            od -A d -t x1 -N 64 "$BINARY"
+            echo ""
+            echo "If bytes 40-47 contain 'ef bf bd' (UTF-8 U+FFFD), the"
+            echo "binary is corrupted by vinyl-fs@4's encoding bug."
+            echo "Check that encoding:false is set on all gulp.src calls"
+            echo "that read binary files."
+            exit 1
+          }
+          echo "SUCCESS: Binary executed. Output:"
+          echo "$OUTPUT"
+          # Verify the output contains a version string (not empty, not an error)
+          if [ -z "$OUTPUT" ]; then
+            echo "ERROR: Binary executed but produced no output"
+            exit 1
+          fi
+          echo ""
+          echo "Smoke test PASSED: binary is executable and returns a version string."
 
       - name: Upload Linux packages
         uses: actions/upload-artifact@v7

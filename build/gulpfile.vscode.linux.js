@@ -65,7 +65,7 @@ function prepareDebPackage(arch) {
 			.pipe(replace('@@NAME@@', product.applicationName))
 			.pipe(rename('usr/share/mime/packages/' + product.applicationName + '-workspace.xml'));
 
-		const icon = gulp.src('resources/linux/kovix.png', { base: '.' })
+		const icon = gulp.src('resources/linux/kovix.png', { base: '.', encoding: false })
 			.pipe(rename('usr/share/pixmaps/' + product.linuxIconName + '.png'));
 
 		const bash_completion = gulp.src('resources/completions/bash/kovix')
@@ -76,7 +76,14 @@ function prepareDebPackage(arch) {
 			.pipe(replace('@@APPNAME@@', product.applicationName))
 			.pipe(rename('usr/share/zsh/vendor-completions/_' + product.applicationName));
 
-		const code = gulp.src(binaryDir + '/**/*', { base: binaryDir })
+		// CRITICAL: encoding:false prevents vinyl-fs@4 from UTF-8 decoding
+		// and re-encoding binary files (Electron executable, .so, .pak,
+		// .bin, .dat, .node), which replaces every byte in 0x80-0xFF with
+		// the U+FFFD replacement character (ef bf bd), producing a
+		// non-executable ELF binary. See vinyl-fs@4 src/read-contents/
+		// read-buffer.js: the default encoding is 'utf8' (not null like
+		// vinyl-fs@3), so without encoding:false every file gets decoded.
+		const code = gulp.src(binaryDir + '/**/*', { base: binaryDir, encoding: false })
 			.pipe(rename(function (p) { p.dirname = 'usr/share/' + product.applicationName + '/' + p.dirname; }));
 
 		let size = 0;
@@ -180,7 +187,7 @@ function prepareRpmPackage(arch) {
 			.pipe(replace('@@NAME@@', product.applicationName))
 			.pipe(rename('BUILD/usr/share/mime/packages/' + product.applicationName + '-workspace.xml'));
 
-		const icon = gulp.src('resources/linux/kovix.png', { base: '.' })
+		const icon = gulp.src('resources/linux/kovix.png', { base: '.', encoding: false })
 			.pipe(rename('BUILD/usr/share/pixmaps/' + product.linuxIconName + '.png'));
 
 		const bash_completion = gulp.src('resources/completions/bash/kovix')
@@ -191,7 +198,7 @@ function prepareRpmPackage(arch) {
 			.pipe(replace('@@APPNAME@@', product.applicationName))
 			.pipe(rename('BUILD/usr/share/zsh/site-functions/_' + product.applicationName));
 
-		const code = gulp.src(binaryDir + '/**/*', { base: binaryDir })
+		const code = gulp.src(binaryDir + '/**/*', { base: binaryDir, encoding: false })
 			.pipe(rename(function (p) { p.dirname = 'BUILD/usr/share/' + product.applicationName + '/' + p.dirname; }));
 
 		const spec = code.pipe(es.through(
@@ -271,10 +278,10 @@ function prepareSnapPackage(arch) {
 			.pipe(replace('@@URLPROTOCOL@@', product.urlProtocol));
 
 		// An icon that is placed in snap/gui will be placed into meta/gui verbatim.
-		const icon = gulp.src('resources/linux/kovix.png', { base: '.' })
+		const icon = gulp.src('resources/linux/kovix.png', { base: '.', encoding: false })
 			.pipe(rename(`snap/gui/${product.linuxIconName}.png`));
 
-		const code = gulp.src(binaryDir + '/**/*', { base: binaryDir })
+		const code = gulp.src(binaryDir + '/**/*', { base: binaryDir, encoding: false })
 			.pipe(rename(function (p) { p.dirname = `usr/share/${product.applicationName}/${p.dirname}`; }));
 
 		const snapcraft = gulp.src('resources/linux/snap/snapcraft.yaml', { base: '.' })

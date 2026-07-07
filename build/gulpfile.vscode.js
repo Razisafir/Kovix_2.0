@@ -261,7 +261,7 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
                 // instead of crashing the build. Same defensive pattern as the
                 // 'licenses/**' and '.build/telemetry/**' fixes from v1.5.4/v1.5.9.
                 fs.mkdirSync('.build/extensions', { recursive: true });
-                const extensions = gulp.src(['.build/extensions/**', ...platformSpecificBuiltInExtensionsExclusions], { base: '.build', dot: true, allowEmpty: true });
+                const extensions = gulp.src(['.build/extensions/**', ...platformSpecificBuiltInExtensionsExclusions], { base: '.build', dot: true, allowEmpty: true, encoding: false });
 
                 const sources = es.merge(src, extensions)
                         .pipe(filter(['**', '!**/*.js.map'], { dot: true }));
@@ -349,7 +349,13 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
                 dependenciesSrc.push('!**/node_modules/.bin/**');
                 dependenciesSrc.push('!**/.bin/**');
 
-                const deps = gulp.src(dependenciesSrc, { base: '.', dot: true, resolveSymlinks: false })
+                // CRITICAL: encoding:false prevents vinyl-fs@4 from UTF-8 decoding
+                // and re-encoding binary files (.node native modules, .wasm,
+                // .png icons in extension assets), which replaces every byte in
+                // 0x80-0xFF with the U+FFFD replacement character (ef bf bd).
+                // See the longer comment in gulpfile.vscode.linux.js and the
+                // vinyl-fs@4 src/read-contents/read-buffer.js source.
+                const deps = gulp.src(dependenciesSrc, { base: '.', dot: true, resolveSymlinks: false, encoding: false })
                         .pipe(filter(['**', `!**/${config.version}/**`, '!**/bin/darwin-arm64-87/**', '!**/package-lock.json', '!**/yarn.lock', '!**/*.js.map']))
                         .pipe(util.cleanNodeModules(path.join(__dirname, '.moduleignore')))
                         .pipe(util.cleanNodeModules(path.join(__dirname, `.moduleignore.${process.platform}`)))
@@ -413,9 +419,9 @@ function packageTask(platform, arch, sourceFolderName, destinationFolderName, op
                                 'resources/win32/yaml.ico',
                                 'resources/win32/kovix_70x70.png',
                                 'resources/win32/kovix_150x150.png'
-                        ], { base: '.' }));
+                        ], { base: '.', encoding: false }));
                 } else if (platform === 'linux') {
-                        all = es.merge(all, gulp.src('resources/linux/kovix.png', { base: '.' }));
+                        all = es.merge(all, gulp.src('resources/linux/kovix.png', { base: '.', encoding: false }));
                 } else if (platform === 'darwin') {
                         const shortcut = gulp.src('resources/darwin/bin/kovix.sh')
                                 .pipe(replace('@@APPNAME@@', product.applicationName))
