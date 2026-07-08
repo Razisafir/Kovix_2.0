@@ -109,7 +109,7 @@ jobs:
     needs: compile
     name: Windows x64 Build
     runs-on: windows-2022
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v7
         with:
@@ -285,7 +285,7 @@ jobs:
     needs: compile
     name: Linux x64 Build
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v7
         with:
@@ -386,7 +386,12 @@ jobs:
           # binary needs root ownership + mode 4755 (setuid), which the
           # build output doesn't have. This is standard for CI smoke
           # tests of Electron apps.
-          OUTPUT=$(xvfb-run -a "$BINARY" --no-sandbox --version 2>&1) || {
+          # xvfb-run is NOT needed: Electron's --version flag exits in the
+          # main process before any window/display is created. Wrapping it
+          # in xvfb-run adds startup latency (Xvfb spin-up) and was a
+          # contributing factor to run #111 hitting the 2h job-level
+          # timeout. Drop it.
+          OUTPUT=$("$BINARY" --no-sandbox --version 2>&1) || {
             echo "ERROR: Binary failed to execute. Output:"
             echo "$OUTPUT"
             echo ""
