@@ -58,7 +58,7 @@ jobs:
           $gypPath = "$(npm root -g)\node-gyp\bin\node-gyp.js"
           echo "npm_config_node_gyp=$gypPath" >> $env:GITHUB_ENV
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         if: runner.os == 'Windows'
         with:
           python-version: '3.11'
