@@ -42,7 +42,7 @@ jobs:
           sudo update-rc.d xvfb defaults
           sudo service xvfb start
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
@@ -137,7 +137,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libkrb5-dev libx11-dev libxkbfile-dev libsecret-1-dev
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
@@ -268,7 +268,7 @@ jobs:
           node-version-file: .nvmrc
 
       - name: Setup Python (for node-gyp)
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.11'
 
